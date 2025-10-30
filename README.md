@@ -58,7 +58,7 @@ professional for questions about your specific situation.
 
 Interactive proof techniques underpin cutting-edge cryptographic protocols and blockchain consensus.
 This crate distills those advanced concepts into a standalone laboratory for experimentation, formal verification, and pedagogy.
-It emulates the essential features of the **sum-check protocol**, exhibits a **rudimentary Byzantine consensus mechanism**, and outlines a theoretical **blueprint toward a future-proof ledger** as envisioned in the **ALIEN theorem**.
+It emulates the essential features of the **sum-check protocol**, exhibits a **rudimentary Byzantine consensus mechanism**, and now powers the **JULIAN Protocol**—a proof-transparent ledger that anchors folding transcripts into verifiable consensus states.
 
 ### Features
 
@@ -81,7 +81,10 @@ It emulates the essential features of the **sum-check protocol**, exhibits a **r
   Build massive sum-checks via streaming evaluators (no full hypercube allocation), with per-round timing exported by the benchmarking CLI.
 
 -  **Ledger Transcript Logging with Integrity Hashes:**
-  Persist proofs as ASCII dossiers tagged with built-in hash digests so transcripts remain self-authenticating without external crates.
+  Persist proofs as ASCII dossiers tagged with built-in hash digests so transcripts remain self-authenticating without external crates. Ledger anchors are append-only commitments to those transcripts; a ledger state is valid iff every anchor agrees on the statement string and ordered hash list.
+
+-  **Quorum Finality for the JULIAN Protocol:**
+  `reconcile_anchors_with_quorum` formalises finality: once ≥ *q* nodes publish matching anchors, the JULIAN ledger state is final. Divergent anchors are immediately pinpointed by re-running `verify_logs`.
 
 -  **Consensus Primitive:**
   Demonstrates quorum-based agreement logic reflective of Byzantine fault tolerance in distributed systems.
@@ -176,4 +179,4 @@ Replays ledger log files, recomputes their integrity hashes, and prints a pass/f
 cargo run --example hash_pipeline
 ```
 
-Streams per-proof hashes into constant-time anchors, aggregates them (mode selectable via `POWER_HOUSE_HASH_MODE=xor|sum`), and reconciles the anchors across multiple ledgers while emitting tamper-evident logs.
+Streams per-proof hashes into constant-time anchors, aggregates them (mode selectable via `POWER_HOUSE_HASH_MODE=xor|sum`), and reconciles the anchors across multiple ledgers while emitting tamper-evident logs. This example is the reference JULIAN Protocol pipeline: nodes replay transcript logs, exchange `LedgerAnchor` structures, and call `reconcile_anchors_with_quorum` to reach finality.

@@ -4,55 +4,38 @@
 //!
 //! This crate aspires to bridge gaps between theoretical exposition and practical engineering,
 //! serving both as a didactic resource and a foundation for future cryptographic research.
-//! Blueprint for an ALIEN-like interactive proof ledger.
+//! Blueprint for the JULIAN Protocol – a proof-transparent ledger that
+//! anchors folding transcripts into deterministic consensus states.
 //!
-//! The **ALIEN theorem** described in the problem statement envisions a
-//! globally verifiable ledger for interactive proofs that combines
-//! adaptive completeness, byzantine consensus, verifiable randomness,
-//! and privacy-preserving cryptography.  While a full implementation
-//! of such a system is far beyond the scope of this crate, this module
-//! outlines, through comments and stub types, how one might begin to
-//! construct such a ledger using the primitives provided elsewhere in
-//! the crate.
+//! ## Ledger anchor definition
 //!
-//! ## Conceptual Overview
+//! * **Transcript hashes**: For every accepted proof we derive a
+//!   deterministic Fiat–Shamir trace `(challenges, round_sums,
+//!   final_evaluation)` and hash it to a `u64` digest using only
+//!   standard-library primitives.  These hashes live in
+//!   [`LedgerEntry::hashes`] and form append-only commitments to the
+//!   verification trace.
+//! * **Chain validity**: A [`LedgerAnchor`] is the ordered list of
+//!   [`EntryAnchor { statement, hashes }`].  A ledger state is valid iff
+//!   every anchor entry matches a locally recomputed digest.  The helper
+//!   [`reconcile_anchors`] enforces this condition.
+//! * **Finality predicate**: `Final(anchors, quorum)` holds when at least
+//!   *quorum* anchors agree on every statement/hash pair.  In code this is
+//!   [`reconcile_anchors_with_quorum`].  Once the predicate returns `Ok(())`
+//!   the JULIAN ledger state is final.
 //!
-//! 1. **Provers and Statements**: Provers attempt to convince the ledger
-//!    of statements belonging to some language `L` (e.g. PSPACE).  A
-//!    prover submits a claim along with the necessary interactive proof
-//!    messages.  In practice these could be STARK or SNARK proofs.
+//! ## Multi-node reconciliation protocol
 //!
-//! 2. **Random Challenges via VRF**: Challenges for the interactive
-//!    protocol are derived using a verifiable random function with
-//!    sufficient min-entropy.  In this crate, the [`prng`](crate::prng)
-//!    module demonstrates how one could derive deterministic challenges
-//!    from a transcript.  A production system would use cryptographic
-//!    VRFs.
+//! 1. Each node records ASCII transcript logs (see `examples/verify_logs`) and
+//!    recomputes its digest vector.
+//! 2. Nodes exchange [`LedgerAnchor`] structures (`Vec<EntryAnchor>`).
+//! 3. Nodes run [`reconcile_anchors_with_quorum`] with their desired quorum.
+//!    Success implies consensus finality; failure pinpoints divergent anchors.
+//! 4. When divergence occurs, fetch the offending log file and run
+//!    `verify_logs` to diagnose tampering.
 //!
-//! 3. **Consensus and Finality**: Validators aggregate proofs and use a
-//!    Byzantine-fault-tolerant consensus protocol to achieve finality.
-//!    The [`consensus`](crate::consensus) module provides a simple
-//!    threshold consensus function that counts votes.  A real system
-//!    would incorporate network, stake weighting and slashing conditions.
-//!
-//! 4. **Provability Logic**: The theorem introduces modal operators
-//!    \(\_n\) and \(\lozenge\) capturing the notion of provable at
-//!    level `n` and eventual finality.  A full ledger would track the
-//!    level of each proof and ensure monotonicity (proofs at level `n`
-//!    remain valid at level `n+1`) and finality (once finalized, proofs
-//!    cannot be contradicted).
-//!
-//! 5. **Hybrid Post-Quantum Security**: The theorem advocates
-//!    combining lattice-based and hash-based commitments along with
-//!    finite-precision Bell tests and classical verification of
-//!    quantum proofs.  Such features are not implemented here but
-//!    illustrate directions for future work.
-//!
-//! ## Stub Types
-//!
-//! The following types are provided merely as scaffolding.  They
-//! document the intended responsibilities of various components in an
-//! ALIEN-like system and serve as placeholders for future expansion.
+//! The entire pipeline relies solely on the Rust standard library—no external
+//! hashers or cryptographic crates are required.
 
 use crate::{
     transcript_digest, write_text_series, write_transcript_record, ChainedSumProof, Field,
