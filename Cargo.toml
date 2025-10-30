@@ -1,23 +1,23 @@
 [package]
 name = "power_house"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
 
-# Show README on crates.io
+
 readme = "README.md"
 
-# Non-standard custom license lives in LICENSE file
+ 
 license-file = "LICENSE"
 
-# Satisfy docs metadata warning
+ 
 documentation = "https://docs.rs/power_house"
 
 description = "Power-House: a zero-dependency Rust crate for sum-check proofs, finite-field arithmetic, deterministic PRNG, and a simple consensus primitive inspired by ALIEN."
 keywords = ["cryptography", "proofs", "sum-check", "ledger", "education"]
 categories = ["cryptography", "algorithms", "mathematics"]
 
-# Only upload these files to crates.io (avoid tarballs/backups/etc.)
+ 
 include = [
   "Cargo.toml",
   "LICENSE",

@@ -60,13 +60,26 @@
 //! primitives.  It is intentionally minimal and does not offer a complete
 //! blockchain or proof ledger implementation.
 
-mod field;
-pub mod sumcheck;
-mod prng;
-pub mod consensus;
 pub mod alien;
+pub mod consensus;
+mod data;
+mod field;
+mod io;
+mod multilinear;
+mod prng;
+mod streaming;
+pub mod sumcheck;
+mod transcript;
 
-pub use field::Field;
-pub use sumcheck::SumClaim;
-pub use prng::SimplePrng;
 pub use consensus::consensus;
+pub use data::{
+    compute_digest as transcript_digest, parse_record as parse_transcript_record,
+    verify_record_lines as verify_transcript_lines, write_record as write_transcript_record,
+};
+pub use field::Field;
+pub use io::write_text_series;
+pub use multilinear::MultilinearPolynomial;
+pub use prng::SimplePrng;
+pub use streaming::StreamingPolynomial;
+pub use sumcheck::{ChainedSumProof, GeneralSumClaim, GeneralSumProof, ProofStats, SumClaim};
+pub use transcript::Transcript;

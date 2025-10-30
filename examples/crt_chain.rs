@@ -15,10 +15,7 @@ fn lcg_advance_and_sum(field: &Field, p: u64, a: u64, b: u64, s0: u64, n: u64) -
     let s_n = field.add(field.mul(pow_a_n, s0_mod), field.mul(b_mod, a_geom));
     let sum_n = field.add(
         field.mul(s0_mod, a_geom),
-        field.mul(
-            b_mod,
-            field.mul(field.sub(a_geom, n % p), inv),
-        ),
+        field.mul(b_mod, field.mul(field.sub(a_geom, n % p), inv)),
     );
     (s_n % p, sum_n % p)
 }
@@ -49,7 +46,11 @@ fn inv_mod_u64(a: u64, p: u64) -> u64 {
         }
         r
     }
-    modpow(a as u128 % p as u128, (p as u128).wrapping_sub(2), p as u128) as u64
+    modpow(
+        a as u128 % p as u128,
+        (p as u128).wrapping_sub(2),
+        p as u128,
+    ) as u64
 }
 
 fn crt3(r1: u64, p1: u64, r2: u64, p2: u64, r3: u64, p3: u64) -> (u128, u128) {
@@ -216,16 +217,51 @@ fn main() {
     println!("Power-House CRT Chain (n={n}, rounds={rounds})");
     println!("================================================");
     for r in 0..rounds {
-        let (s1a, c1_0) =
-            lcg_advance_and_sum_with_residues(&f1, p1, a1, b1, s1, counts_mod_p1[0], counts_mod_phi1[0]);
-        let (s1b, c1_1) =
-            lcg_advance_and_sum_with_residues(&f1, p1, a1, b1, s1a, counts_mod_p1[1], counts_mod_phi1[1]);
-        let (s1c, c1_2) =
-            lcg_advance_and_sum_with_residues(&f1, p1, a1, b1, s1b, counts_mod_p1[2], counts_mod_phi1[2]);
-        let (s1d, c1_4) =
-            lcg_advance_and_sum_with_residues(&f1, p1, a1, b1, s1c, counts_mod_p1[3], counts_mod_phi1[3]);
-        let (s1e, c1_8) =
-            lcg_advance_and_sum_with_residues(&f1, p1, a1, b1, s1d, counts_mod_p1[4], counts_mod_phi1[4]);
+        let (s1a, c1_0) = lcg_advance_and_sum_with_residues(
+            &f1,
+            p1,
+            a1,
+            b1,
+            s1,
+            counts_mod_p1[0],
+            counts_mod_phi1[0],
+        );
+        let (s1b, c1_1) = lcg_advance_and_sum_with_residues(
+            &f1,
+            p1,
+            a1,
+            b1,
+            s1a,
+            counts_mod_p1[1],
+            counts_mod_phi1[1],
+        );
+        let (s1c, c1_2) = lcg_advance_and_sum_with_residues(
+            &f1,
+            p1,
+            a1,
+            b1,
+            s1b,
+            counts_mod_p1[2],
+            counts_mod_phi1[2],
+        );
+        let (s1d, c1_4) = lcg_advance_and_sum_with_residues(
+            &f1,
+            p1,
+            a1,
+            b1,
+            s1c,
+            counts_mod_p1[3],
+            counts_mod_phi1[3],
+        );
+        let (s1e, c1_8) = lcg_advance_and_sum_with_residues(
+            &f1,
+            p1,
+            a1,
+            b1,
+            s1d,
+            counts_mod_p1[4],
+            counts_mod_phi1[4],
+        );
         s1 = s1e;
         let t1 = {
             let t0 = f1.mul(c1_0 % p1, w1_0);
@@ -236,16 +272,51 @@ fn main() {
             f1.add(f1.add(t0, t_a), f1.add(f1.add(t_b, t_c), t_d))
         };
 
-        let (s2a, c2_0) =
-            lcg_advance_and_sum_with_residues(&f2, p2, a2, b2, s2, counts_mod_p2[0], counts_mod_phi2[0]);
-        let (s2b, c2_1) =
-            lcg_advance_and_sum_with_residues(&f2, p2, a2, b2, s2a, counts_mod_p2[1], counts_mod_phi2[1]);
-        let (s2c, c2_2) =
-            lcg_advance_and_sum_with_residues(&f2, p2, a2, b2, s2b, counts_mod_p2[2], counts_mod_phi2[2]);
-        let (s2d, c2_4) =
-            lcg_advance_and_sum_with_residues(&f2, p2, a2, b2, s2c, counts_mod_p2[3], counts_mod_phi2[3]);
-        let (s2e, c2_8) =
-            lcg_advance_and_sum_with_residues(&f2, p2, a2, b2, s2d, counts_mod_p2[4], counts_mod_phi2[4]);
+        let (s2a, c2_0) = lcg_advance_and_sum_with_residues(
+            &f2,
+            p2,
+            a2,
+            b2,
+            s2,
+            counts_mod_p2[0],
+            counts_mod_phi2[0],
+        );
+        let (s2b, c2_1) = lcg_advance_and_sum_with_residues(
+            &f2,
+            p2,
+            a2,
+            b2,
+            s2a,
+            counts_mod_p2[1],
+            counts_mod_phi2[1],
+        );
+        let (s2c, c2_2) = lcg_advance_and_sum_with_residues(
+            &f2,
+            p2,
+            a2,
+            b2,
+            s2b,
+            counts_mod_p2[2],
+            counts_mod_phi2[2],
+        );
+        let (s2d, c2_4) = lcg_advance_and_sum_with_residues(
+            &f2,
+            p2,
+            a2,
+            b2,
+            s2c,
+            counts_mod_p2[3],
+            counts_mod_phi2[3],
+        );
+        let (s2e, c2_8) = lcg_advance_and_sum_with_residues(
+            &f2,
+            p2,
+            a2,
+            b2,
+            s2d,
+            counts_mod_p2[4],
+            counts_mod_phi2[4],
+        );
         s2 = s2e;
         let t2 = {
             let t0 = f2.mul(c2_0 % p2, w2_0);
@@ -256,16 +327,51 @@ fn main() {
             f2.add(f2.add(t0, t_a), f2.add(f2.add(t_b, t_c), t_d))
         };
 
-        let (s3a, c3_0) =
-            lcg_advance_and_sum_with_residues(&f3, p3, a3, b3, s3, counts_mod_p3[0], counts_mod_phi3[0]);
-        let (s3b, c3_1) =
-            lcg_advance_and_sum_with_residues(&f3, p3, a3, b3, s3a, counts_mod_p3[1], counts_mod_phi3[1]);
-        let (s3c, c3_2) =
-            lcg_advance_and_sum_with_residues(&f3, p3, a3, b3, s3b, counts_mod_p3[2], counts_mod_phi3[2]);
-        let (s3d, c3_4) =
-            lcg_advance_and_sum_with_residues(&f3, p3, a3, b3, s3c, counts_mod_p3[3], counts_mod_phi3[3]);
-        let (s3e, c3_8) =
-            lcg_advance_and_sum_with_residues(&f3, p3, a3, b3, s3d, counts_mod_p3[4], counts_mod_phi3[4]);
+        let (s3a, c3_0) = lcg_advance_and_sum_with_residues(
+            &f3,
+            p3,
+            a3,
+            b3,
+            s3,
+            counts_mod_p3[0],
+            counts_mod_phi3[0],
+        );
+        let (s3b, c3_1) = lcg_advance_and_sum_with_residues(
+            &f3,
+            p3,
+            a3,
+            b3,
+            s3a,
+            counts_mod_p3[1],
+            counts_mod_phi3[1],
+        );
+        let (s3c, c3_2) = lcg_advance_and_sum_with_residues(
+            &f3,
+            p3,
+            a3,
+            b3,
+            s3b,
+            counts_mod_p3[2],
+            counts_mod_phi3[2],
+        );
+        let (s3d, c3_4) = lcg_advance_and_sum_with_residues(
+            &f3,
+            p3,
+            a3,
+            b3,
+            s3c,
+            counts_mod_p3[3],
+            counts_mod_phi3[3],
+        );
+        let (s3e, c3_8) = lcg_advance_and_sum_with_residues(
+            &f3,
+            p3,
+            a3,
+            b3,
+            s3d,
+            counts_mod_p3[4],
+            counts_mod_phi3[4],
+        );
         s3 = s3e;
         let t3 = {
             let t0 = f3.mul(c3_0 % p3, w3_0);

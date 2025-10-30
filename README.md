@@ -71,6 +71,18 @@ It emulates the essential features of the **sum-check protocol**, exhibits a **r
 -  **Deterministic PRNG:**
   A compact linear-congruential generator serving as a deterministic source of challenge derivation, thereby eliminating external entropy dependencies.
 
+-  **Generalized Multilinear Sum-Check:**
+  The `MultilinearPolynomial`, `Transcript`, and `GeneralSumClaim` types enable non-interactive proofs for arbitrary multilinear polynomials—still without any external crates.
+
+-  **Transcript & Chaining Toolkit:**
+  Capture Fiat–Shamir challenges, per-round sums, and final evaluations, then chain proofs together or feed them directly into the ALIEN ledger scaffold for deterministic auditing.
+
+-  **Streaming Proof Generation:**
+  Build massive sum-checks via streaming evaluators (no full hypercube allocation), with per-round timing exported by the benchmarking CLI.
+
+-  **Ledger Transcript Logging with Integrity Hashes:**
+  Persist proofs as ASCII dossiers tagged with built-in hash digests so transcripts remain self-authenticating without external crates.
+
 -  **Consensus Primitive:**
   Demonstrates quorum-based agreement logic reflective of Byzantine fault tolerance in distributed systems.
 
@@ -109,3 +121,59 @@ cargo run --example crt_chain
 ```
 
 It prints a 12-round trace with reproducible totals and hash pairs, highlighting how Power-House components compose into a heavier protocol.
+
+### General multilinear sum-check
+
+```rust
+use power_house::{Field, GeneralSumClaim, MultilinearPolynomial};
+
+let field = Field::new(97);
+let poly = MultilinearPolynomial::from_evaluations(3, vec![
+    0, 1, 4, 5, 7, 8, 11, 23,
+]);
+let claim = GeneralSumClaim::prove(&poly, &field);
+assert!(claim.verify(&poly, &field));
+```
+
+Re-run it interactively with:
+
+```bash
+cargo run --example general_sumcheck
+```
+
+The example exercises the Fiat–Shamir transcript helper and the generalized sum-check prover/verifier against a three-variable polynomial.
+
+Transcript outputs include deterministic Fiat–Shamir challenges; when logged via the ledger, each record carries a 64-bit integrity hash for tamper-evident storage.
+
+### Mega sum-check & chaining demo
+
+```bash
+cargo run --example mega_sumcheck
+```
+
+This walkthrough builds 10-variable polynomials, records per-round timings, and chains multiple proofs together before handing them off to the ALIEN ledger scaffold.
+
+### Scaling benchmark
+
+```bash
+cargo run --example scale_sumcheck
+```
+
+Prints a timing table for increasing numbers of variables, helping you profile how multilinear proofs scale as the hypercube size grows.
+Set `POWER_HOUSE_SCALE_OUT=/path/to/results.csv` to emit machine-readable timing data alongside the console output.
+
+### Transcript hash verification
+
+```bash
+cargo run --example verify_logs -- /tmp/power_house_ledger_logs
+```
+
+Replays ledger log files, recomputes their integrity hashes, and prints a pass/fail summary so archived transcripts remain tamper-evident.
+
+### Hash pipeline & anchor reconciliation
+
+```bash
+cargo run --example hash_pipeline
+```
+
+Streams per-proof hashes into constant-time anchors, aggregates them (mode selectable via `POWER_HOUSE_HASH_MODE=xor|sum`), and reconciles the anchors across multiple ledgers while emitting tamper-evident logs.
