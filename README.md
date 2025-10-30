@@ -1,3 +1,13 @@
+# JROC NET
+### The JULIAN Protocol Network
+Transparent Proof-Derived Consensus via Ledger Anchors
+
+Engine: power_house  
+Protocol: JULIAN  
+Network: JROC NET
+
+---
+
 # Power-House
 
 [![Crates.io](https://img.shields.io/crates/v/power_house.svg)](https://crates.io/crates/power_house)
@@ -7,6 +17,12 @@
 **Author:** Julian Christian Sanders  
 **Email:** [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)  
 **Date** 10/16/2025 
+
+---
+
+## Launch Announcement – JROC NET
+
+JROC NET is now live. The JULIAN Protocol ledger is fully operational with genesis anchors, transcript hashing, quorum-based finality, and multi-node reconciliation. All proofs, transcripts, and anchors remain fully transparent and reproducible, ensuring verifiable computation across distributed nodes.
 
 ---
 

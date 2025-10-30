@@ -1,3 +1,7 @@
+JROC NET: The JULIAN Protocol Network
+Version 0.1.6 — February 2025
+
+
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
 
 ## Abstract
@@ -171,4 +175,3 @@ By streaming sum-check transcripts, hashing them into ledger anchors, and defini
 quorum predicate, we enable multiple nodes to agree on ledger state without opaque verifier behaviour.
 Future work will explore stronger hash functions, integration with networking stacks, and recursive
 commitment layers.
-
