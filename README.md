@@ -184,3 +184,13 @@ Streams per-proof hashes into constant-time anchors, aggregates them (mode selec
 ### Whitepaper
 
 The full JULIAN Protocol write-up lives in [`JULIAN_PROTOCOL.md`](JULIAN_PROTOCOL.md).
+
+### CLI node commands
+
+```bash
+cargo run --bin julian -- node run <node_id> <log_dir> <output_anchor>
+cargo run --bin julian -- node anchor <log_dir>
+cargo run --bin julian -- node reconcile <log_dir> <peer_anchor> <quorum>
+```
+
+These commands replay transcript logs, derive JULIAN anchors, and check quorum finality using nothing beyond the Rust standard library.

@@ -77,6 +77,8 @@ pub enum ProofKind {
         /// Chained sum-check proof object.
         proof: ChainedSumProof,
     },
+    /// The JULIAN protocol genesis anchor.
+    Genesis,
 }
 
 /// Represents a proof object submitted by a prover.
@@ -138,6 +140,24 @@ pub struct LedgerAnchor {
     pub entries: Vec<EntryAnchor>,
 }
 
+/// Statement string used for the JULIAN genesis anchor.
+pub const JULIAN_GENESIS_STATEMENT: &str = "JULIAN::GENESIS";
+
+/// Returns the digest associated with the JULIAN genesis transcript.
+pub fn julian_genesis_hash() -> u64 {
+    transcript_digest(&[], &[], 0)
+}
+
+/// Returns the canonical JULIAN genesis anchor.
+pub fn julian_genesis_anchor() -> LedgerAnchor {
+    LedgerAnchor {
+        entries: vec![EntryAnchor {
+            statement: JULIAN_GENESIS_STATEMENT.to_string(),
+            hashes: vec![julian_genesis_hash()],
+        }],
+    }
+}
+
 impl ProofLedger {
     /// Creates an empty ledger.
     pub fn new() -> Self {
@@ -158,6 +178,10 @@ impl ProofLedger {
     /// demo proofs, generalized multilinear proofs, or chained proofs and logs
     /// the deterministic transcripts for future audit.
     pub fn submit(&mut self, statement: Statement, proof: Proof) {
+        if !matches!(proof.kind, ProofKind::Genesis) {
+            self.ensure_genesis();
+        }
+
         let mut transcripts = Vec::new();
         let mut round_sums = Vec::new();
         let mut final_values = Vec::new();
@@ -236,22 +260,36 @@ impl ProofLedger {
                     }
                 }
             }
+            ProofKind::Genesis => true,
         };
 
-        let entry = LedgerEntry {
-            statement,
-            proof,
-            accepted,
-            transcripts,
-            round_sums,
-            final_values,
-            log_paths,
-            log_error,
-            hashes,
+        let mut entry = if matches!(proof.kind, ProofKind::Genesis) {
+            LedgerEntry {
+                statement,
+                proof,
+                accepted,
+                transcripts: vec![Vec::new()],
+                round_sums: vec![Vec::new()],
+                final_values: vec![0],
+                log_paths: Vec::new(),
+                log_error: None,
+                hashes: vec![julian_genesis_hash()],
+            }
+        } else {
+            LedgerEntry {
+                statement,
+                proof,
+                accepted,
+                transcripts,
+                round_sums,
+                final_values,
+                log_paths,
+                log_error,
+                hashes,
+            }
         };
-        let mut entry = entry;
 
-        if entry.accepted {
+        if entry.accepted && !matches!(entry.proof.kind, ProofKind::Genesis) {
             if let Some(dir) = &self.log_dir {
                 for idx in 0..entry.transcripts.len() {
                     let mut lines = Vec::new();
@@ -267,6 +305,7 @@ impl ProofLedger {
                         entry.log_error = Some(err.to_string());
                         break;
                     }
+                    lines.insert(0, format!("statement:{}", entry.statement.description));
                     match write_text_series(dir, "ledger", self.log_counter, &lines) {
                         Ok(path) => {
                             entry.log_paths.push(path);
@@ -300,6 +339,32 @@ impl ProofLedger {
             })
             .collect();
         LedgerAnchor { entries }
+    }
+
+    /// Ensures the JULIAN genesis anchor is present at the head of the ledger.
+    pub fn ensure_genesis(&mut self) {
+        let needs_genesis = self.entries.first().map_or(true, |entry| {
+            entry.statement.description != JULIAN_GENESIS_STATEMENT
+        });
+        if needs_genesis {
+            let genesis_entry = LedgerEntry {
+                statement: Statement {
+                    description: JULIAN_GENESIS_STATEMENT.to_string(),
+                },
+                proof: Proof {
+                    kind: ProofKind::Genesis,
+                    data: Vec::new(),
+                },
+                accepted: true,
+                transcripts: vec![Vec::new()],
+                round_sums: vec![Vec::new()],
+                final_values: vec![0],
+                log_paths: Vec::new(),
+                log_error: None,
+                hashes: vec![julian_genesis_hash()],
+            };
+            self.entries.insert(0, genesis_entry);
+        }
     }
 }
 
@@ -394,15 +459,27 @@ mod tests {
         };
         ledger.submit(statement, submission);
         let entries = ledger.entries();
-        assert_eq!(entries.len(), 1);
-        assert!(entries[0].accepted);
-        assert_eq!(entries[0].transcripts.len(), 1);
-        assert_eq!(entries[0].round_sums.len(), 1);
-        assert_eq!(entries[0].final_values.len(), 1);
-        assert_eq!(entries[0].transcripts[0], proof.challenges);
-        assert!(entries[0].log_paths.is_empty());
-        assert!(entries[0].log_error.is_none());
-        assert_eq!(entries[0].hashes.len(), 1);
+        assert_eq!(entries.len(), 2);
+        let proof_entry = &entries[1];
+        assert!(proof_entry.accepted);
+        assert_eq!(proof_entry.transcripts.len(), 1);
+        assert_eq!(proof_entry.round_sums.len(), 1);
+        assert_eq!(proof_entry.final_values.len(), 1);
+        assert_eq!(proof_entry.transcripts[0], proof.challenges);
+        assert!(proof_entry.log_paths.is_empty());
+        assert!(proof_entry.log_error.is_none());
+        assert_eq!(proof_entry.hashes.len(), 1);
+    }
+
+    #[test]
+    fn test_ledger_ensures_genesis() {
+        let mut ledger = ProofLedger::new();
+        ledger.ensure_genesis();
+        assert_eq!(ledger.entries.len(), 1);
+        assert_eq!(
+            ledger.entries[0].statement.description,
+            JULIAN_GENESIS_STATEMENT
+        );
     }
 
     #[test]
@@ -428,9 +505,9 @@ mod tests {
             },
         );
         let entries = ledger.entries();
-        assert_eq!(entries.len(), 1);
-        assert!(entries[0].accepted);
-        assert_eq!(entries[0].hashes.len(), 1);
+        assert_eq!(entries.len(), 2);
+        assert!(entries[1].accepted);
+        assert_eq!(entries[1].hashes.len(), 1);
     }
 
     #[test]
@@ -462,7 +539,9 @@ mod tests {
             data: Vec::new(),
         };
         ledger.submit(statement, submission);
-        let entry = &ledger.entries()[0];
+        let entries = ledger.entries();
+        assert_eq!(entries.len(), 2);
+        let entry = &entries[1];
         assert!(!entry.accepted);
         assert!(entry.transcripts.is_empty());
         assert!(entry.log_paths.is_empty());
@@ -494,13 +573,16 @@ mod tests {
                 data: Vec::new(),
             },
         );
-        let entry = &ledger.entries()[0];
+        let entries = ledger.entries();
+        assert_eq!(entries.len(), 2);
+        let entry = &entries[1];
         assert!(entry.accepted);
         assert!(!entry.log_paths.is_empty());
         assert!(entry.log_error.is_none());
         for path in &entry.log_paths {
             assert!(path.exists());
             let contents = std::fs::read_to_string(path).unwrap();
+            assert!(contents.lines().any(|line| line.starts_with("statement:")));
             assert!(contents.lines().any(|line| line.starts_with("hash:")));
         }
         assert!(!entry.hashes.is_empty());

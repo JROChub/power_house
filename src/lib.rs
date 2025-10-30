@@ -71,6 +71,10 @@ mod streaming;
 pub mod sumcheck;
 mod transcript;
 
+pub use alien::{
+    julian_genesis_anchor, julian_genesis_hash, reconcile_anchors, reconcile_anchors_with_quorum,
+    EntryAnchor, LedgerAnchor, Proof, ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
+};
 pub use consensus::consensus;
 pub use data::{
     compute_digest as transcript_digest, parse_record as parse_transcript_record,
