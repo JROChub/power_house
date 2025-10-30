@@ -14,6 +14,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+const NETWORK_ID: &str = "JROC-NET";
+
 fn main() {
     let mut args = env::args().skip(1);
     match (args.next().as_deref(), args.next().as_deref()) {
@@ -43,6 +45,7 @@ fn cmd_node_run(args: Vec<String>) {
         std::process::exit(1);
     }
     let node_id = &args[0];
+    println!("{NETWORK_ID} node {node_id} starting…");
     let log_dir = Path::new(&args[1]);
     let output = Path::new(&args[2]);
     let anchor = match load_anchor_from_logs(log_dir) {
@@ -56,7 +59,10 @@ fn cmd_node_run(args: Vec<String>) {
         eprintln!("error writing anchor: {err}");
         std::process::exit(1);
     }
-    println!("node {node_id} anchor written to {}", output.display());
+    println!(
+        "{NETWORK_ID} node {node_id} anchor written to {}",
+        output.display()
+    );
     println!("anchor summary:\n{}", format_anchor(&anchor));
 }
 
@@ -186,7 +192,7 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
             .map(|h| h.to_string())
             .collect::<Vec<_>>()
             .join(",");
-        lines.push(format!("{}|{}", entry.statement, hash_list));
+        lines.push(format!("{}|{}|{}", NETWORK_ID, entry.statement, hash_list));
     }
     lines.join("\n")
 }
@@ -198,9 +204,19 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
         if trimmed.is_empty() {
             continue;
         }
-        let (statement, hashes_str) = trimmed
-            .split_once('|')
-            .ok_or_else(|| format!("invalid anchor line: {trimmed}"))?;
+        let segments: Vec<&str> = trimmed.split('|').collect();
+        let (statement, hashes_str) = match segments.as_slice() {
+            [network, statement, hashes] => {
+                if *network != NETWORK_ID {
+                    return Err(format!(
+                        "anchor network mismatch: expected {NETWORK_ID}, found {network}"
+                    ));
+                }
+                (*statement, *hashes)
+            }
+            [statement, hashes] => (*statement, *hashes),
+            _ => return Err(format!("invalid anchor line: {trimmed}")),
+        };
         let mut hashes = Vec::new();
         if !hashes_str.is_empty() {
             for part in hashes_str.split(',') {
@@ -230,7 +246,10 @@ fn format_anchor(anchor: &LedgerAnchor) -> String {
             .map(|h| h.to_string())
             .collect::<Vec<_>>()
             .join(", ");
-        lines.push(format!("{} -> [{}]", entry.statement, hashes));
+        lines.push(format!(
+            "{NETWORK_ID} :: {} -> [{}]",
+            entry.statement, hashes
+        ));
     }
     lines.join("\n")
 }
