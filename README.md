@@ -4,12 +4,6 @@
 
 Transparent Proof-Derived Consensus via Ledger Anchors
 
-Engine: power_house
-
-Protocol: JULIAN
-
-Network: JROC NET
-
 ---
 
 # Power-House
@@ -39,8 +33,8 @@ julian net start \
   --node-id <your_name> \
   --log-dir ./logs/<your_name> \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/boot1.jroc.net/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /dns4/boot2.jroc.net/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://<seed>
@@ -53,10 +47,10 @@ To load an encrypted identity instead of `--key`, create a file containing the b
 
 Bootstrap multiaddrs (loopback defaults shown above):
 
-- `/dns4/boot1.jroc.net/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
-- `/dns4/boot2.jroc.net/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+- `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+- `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
-`boot1.jroc.net` and `boot2.jroc.net` resolve to the current public ingress addresses for the
+`boot1.jrocnet.com` and `boot2.jrocnet.com` resolve to the current public ingress addresses for the
 bootstrap nodes. Update the DNS records (rather than editing the README) if the underlying IPs ever
 change; this keeps your home network details private while providing stable endpoints to the
 community.
