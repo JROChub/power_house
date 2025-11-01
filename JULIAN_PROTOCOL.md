@@ -1,5 +1,5 @@
 JROC NET: The JULIAN Protocol Network
-Version 0.1.6 — February 2025
+Version 0.1.7 — February 2025
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -168,10 +168,81 @@ per-round timings for each link in the chain.
 4. **Hash agility** – Replace or supplement the default hash with cryptographic hash functions or
    polynomial commitments while keeping the same ledger and reconciliation logic.
 
-## 10. Conclusion
+## 10. Networking Layer (`net` Feature)
 
-The JULIAN Protocol provides an auditable, dependency-free foundation for proof-transparent ledgers.
-By streaming sum-check transcripts, hashing them into ledger anchors, and defining finality via a
-quorum predicate, we enable multiple nodes to agree on ledger state without opaque verifier behaviour.
-Future work will explore stronger hash functions, integration with networking stacks, and recursive
-commitment layers.
+To support distributed reconciliation, the crate now ships an optional networking module gated by the
+`net` feature flag:
+
+- `net::schema` – serde-compatible structs for `jrocnet.anchor.v1` and `jrocnet.envelope.v1`, plus
+  conversion helpers to and from `LedgerAnchor`.
+- `net::sign` – ed25519 key loading, deterministic seed derivation, base64 helpers, and signature
+  verification (backed by `ed25519-dalek`).
+- `net::swarm` – libp2p stack (TCP + Noise + Yamux) with Gossipsub gossip, Kademlia discovery, and
+  Identify metadata. Nodes recompute anchors from local logs, sign them, broadcast envelopes, and run
+  quorum reconciliation upon receipt. Envelope handling now enforces schema/network identifiers,
+  caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and fumes
+  invalid senders after repeated mistakes.
+
+The `julian net` CLI subcommands—`start`, `anchor`, and `verify-envelope`—exercise this layer. They
+remain opt-in so the base library stays dependency-free by default.
+
+## 11. Network Hardening
+
+The networking layer now incorporates several safeguards:
+
+- **Envelope versioning** – `schema_version` is embedded in every envelope and rejected if it
+  advertises a newer major version than the node understands. Older envelopes default to version `1`
+  and continue to work.
+- **Resource caps** – Envelopes larger than 64 KB or containing more than 10 k anchor entries are
+  dropped before decoding. A SHA-256 LRU cache suppresses duplicate payloads, emitting metrics on
+  eviction.
+- **Peer hygiene** – Nodes track invalid submissions per peer and log when thresholds are exceeded,
+  helping operators downscore abusive sources.
+- **Prometheus metrics** – Optional `--metrics` flag exposes counters for received/verified anchors,
+  invalid envelopes, LRU evictions, finality events, and Gossipsub rejects to feed observability
+  dashboards.
+- **Identity hygiene** – Operators may supply passphrase-protected identity files (`--identity`),
+  keeping long-lived signing keys off disk in plaintext while still deriving deterministic peer IDs.
+
+## 12. JROC-NET Public Testnet Plan
+
+The A2 testnet targets transparent, tamper-evident anchor gossip:
+
+1. **Topics & behaviour** – Gossip on `jrocnet/anchors/v1`, optional ping/peer topics for liveness;
+   Kademlia DHT plus Identify for peer metadata.
+2. **Genesis anchoring** – Every broadcast anchor starts with `JULIAN::GENESIS`; the JSON schema
+   enforces this invariant alongside the network identifier.
+3. **Signed envelopes** – ed25519 signatures cover the raw anchor JSON; peers verify signatures and
+   schema before attempting reconciliation.
+4. **CLI network mode** – `julian net start` exposes `--listen`, repeated `--bootstrap`, `--key`,
+   `--broadcast-interval`, and `--quorum`; audit tooling lives in `net anchor` / `net verify-envelope`.
+5. **Security hygiene** – SHA-256 payload-based message IDs, replay caches, strict schema/network
+   checks, 64 KB envelope caps, 10k-entry limits, LRU duplicate suppression, and basic invalid-peer
+   counters to rate-limit abusive senders.
+6. **Observability** – Console summaries track peer counts and recent finality events; the optional
+   Prometheus endpoint exports `anchors_received_total`, `anchors_verified_total`,
+   `invalid_envelopes_total`, `lrucache_evictions_total`, `finality_events_total`, and
+   `gossipsub_rejects_total`.
+7. **Launch playbook** – Operate at least two bootstrap nodes, publish their multiaddrs, and share the
+   join snippet so community operators can participate with deterministic key seeds.
+
+## 13. Genesis Commitment
+
+The JROC-NET A2 testnet anchors every ledger to a fixed genesis bundle:
+
+- `statement: JULIAN::GENESIS` → `17942395924573474124`
+- `statement: Dense polynomial proof` → `1560461912026565426`
+- `statement: Hash anchor proof` → `17506285175808955616`
+
+Bootstrap nodes operate with deterministic seeds (`ed25519://boot1-seed`, `ed25519://boot2-seed`) so
+their libp2p Peer IDs remain constant across restarts. Operators joining the network should derive
+their local anchor via `julian node run` and compare the resulting statements/digests against the
+values above before accepting finality.
+
+## 13. Conclusion
+
+The JULIAN Protocol now spans two layers: a dependency-free proof/ledger core and an optional
+libp2p-based networking shell. Deterministic transcripts, append-only anchors, and quorum
+reconciliation continue to guarantee auditability, while the JROC-NET tooling demonstrates how those
+primitives generalise to a public testnet. Future work will focus on richer observability, stronger
+hash modes, and commitment layers that compress anchor histories even further.

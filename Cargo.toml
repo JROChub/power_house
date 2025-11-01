@@ -1,6 +1,6 @@
 [package]
 name = "power_house"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
 
@@ -30,5 +30,44 @@ include = [
 [badges]
 maintenance = { status = "actively-developed" }
 
+[features]
+default = []
+net = [
+    "dep:base64",
+    "dep:ed25519-dalek",
+    "dep:futures",
+    "dep:libp2p",
+    "dep:once_cell",
+    "dep:rand_core",
+    "dep:rpassword",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:sha2",
+    "dep:tokio",
+]
+
 [dependencies]
 # No external dependencies; standard library only.
+base64 = { version = "0.21", optional = true }
+ed25519-dalek = { version = "2", features = ["rand_core"], optional = true }
+futures = { version = "0.3", optional = true }
+libp2p = { version = "0.53", default-features = false, features = [
+    "gossipsub",
+    "identify",
+    "kad",
+    "macros",
+    "noise",
+    "tcp",
+    "tokio",
+    "yamux",
+], optional = true }
+once_cell = { version = "1", optional = true }
+rand_core = { version = "0.6", optional = true }
+rpassword = { version = "7", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+sha2 = { version = "0.10", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal", "net", "io-util"], optional = true }
+
+[dev-dependencies]
+proptest = "1"

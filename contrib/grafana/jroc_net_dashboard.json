@@ -1,0 +1,60 @@
+{
+  "title": "JROC NET Overview",
+  "uid": "jroc-net",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Anchors Received",
+      "targets": [
+        {
+          "expr": "anchors_received_total",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Anchors Verified",
+      "targets": [
+        {
+          "expr": "anchors_verified_total",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "Finality & Invalid Envelopes",
+      "targets": [
+        {
+          "expr": "rate(finality_events_total[5m])",
+          "legendFormat": "finality",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(invalid_envelopes_total[5m])",
+          "legendFormat": "invalid",
+          "refId": "B"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 }
+    },
+    {
+      "type": "graph",
+      "title": "Gossipsub Drops",
+      "targets": [
+        {
+          "expr": "rate(gossipsub_rejects_total[5m])",
+          "legendFormat": "rejects",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 }
+    }
+  ],
+  "templating": { "list": [] }
+}

@@ -71,6 +71,9 @@ mod streaming;
 pub mod sumcheck;
 mod transcript;
 
+#[cfg(feature = "net")]
+pub mod net;
+
 pub use alien::{
     julian_genesis_anchor, julian_genesis_hash, reconcile_anchors, reconcile_anchors_with_quorum,
     EntryAnchor, LedgerAnchor, Proof, ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
