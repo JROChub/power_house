@@ -247,7 +247,7 @@ cargo run --features net --bin julian -- net start \
   --node-id nodeB \
   --log-dir ./logs/nodeB \
   --listen /ip4/127.0.0.1/tcp/7002 \
-  --bootstrap /ip4/127.0.0.1/tcp/7001/p2p/<NODEA_PEER_ID> \
+  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://nodeB-seed
@@ -309,8 +309,8 @@ Validation steps: ensure the schema matches, base64-decode the payload, verify t
      --node-id <your_name> \
      --log-dir ./logs/<your_name> \
      --listen /ip4/0.0.0.0/tcp/0 \
-     --bootstrap /ip4/127.0.0.1/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-     --bootstrap /ip4/127.0.0.1/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+     --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+     --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
      --broadcast-interval 5000 \
      --quorum 2 \
      --key ed25519://<seed>
@@ -318,8 +318,8 @@ Validation steps: ensure the schema matches, base64-decode the payload, verify t
 
    Bootstrap multiaddrs (A2 testnet reference):
 
-   - `/ip4/127.0.0.1/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
-   - `/ip4/127.0.0.1/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+- `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+- `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
 The testnet keeps every transcript, proof, and anchor transparent so auditors can replay history end-to-end.
 
