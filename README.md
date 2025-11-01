@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="JROC-NET.jpeg" alt="JROC NET" width="420">
+  <img src="assets/JROC-NET.jpeg" alt="JROC NET" width="420">
 </p>
 
 # JROC NET
