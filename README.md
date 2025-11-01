@@ -2,12 +2,10 @@
   <img src="https://raw.githubusercontent.com/JROChub/power_house/master/assets/JROC-NET.jpeg" alt="JROC NET" width="420">
 </p>
 
-# JROC NET
-### The JULIAN Protocol Network
 Transparent Proof-Derived Consensus via Ledger Anchors
 
-Engine: power_house  
-Protocol: JULIAN  
+Engine: power_house 
+Protocol: JULIAN 
 Network: JROC NET
 
 ---
