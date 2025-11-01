@@ -4,8 +4,10 @@
 
 Transparent Proof-Derived Consensus via Ledger Anchors
 
-Engine: power_house 
-Protocol: JULIAN 
+Engine: power_house
+
+Protocol: JULIAN
+
 Network: JROC NET
 
 ---
