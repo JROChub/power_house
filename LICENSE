@@ -1,38 +1,15 @@
-#LICENSE#
-```text
+ALIEN PUBLIC LICENSE 3.0 (APL-3.0)
+
 Copyright © 2025 Julian Christian Sanders
-Email: lexluger.dev@proton.me
+Contact: lexluger.dev@proton.me
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to use,
-reproduce, and distribute the Software, subject to the following conditions:
+You may use, study, and reproduce this software and its documentation in any medium, provided every copy retains this notice. Redistribution and modification are permitted, but each derivative must:
 
-1. **Non-Commercial Use Only.**
-   The Software may be used, reproduced, and distributed solely for non-profit,
-   academic, or personal purposes. Commercial exploitation of any kind—defined as
-   use of the Software or derivative works for direct or indirect financial gain,
-   advertising, or sale—is expressly prohibited without the prior written consent
-   of the copyright holder.
+1. Preserve full source transparency, including build scripts, ledger logs, and proof transcripts.
+2. Attribute “power_house — JULIAN Protocol” in documentation, console banners, and published research.
+3. Publish any security fixes, audit findings, or benchmark data derived from the work within 30 days of discovery.
+4. Avoid relicensing under terms that restrict access to source code or verification artifacts.
 
-2. **Redistribution.**
-   Redistributions of the Software in source or binary form must retain this
-   copyright notice, the conditions of use, and the following disclaimer in all
-   such distributions.
+Commercial deployment—direct revenue, paid services, or embedded resale—requires prior written consent from the copyright holder.
 
-3. **Derivative Works.**
-   Derivative works that incorporate substantial portions of the Software must
-   not be used or distributed for any profit-seeking activity. Any derivative
-   must also prominently reproduce this notice and the non-commercial
-   restrictions.
-
-4. **No Warranty.**
-   THE SOFTWARE IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
-   OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-   SOFTWARE.
-
-This license statement does not constitute legal advice. Consult a legal
-professional for questions about your specific situation.
+THE SOFTWARE IS PROVIDED “AS IS.” THERE ARE NO WARRANTIES, EXPRESS OR IMPLIED. YOU USE, MODIFY, AND DISTRIBUTE AT YOUR OWN RISK. NO AUTHOR OR COPYRIGHT HOLDER SHALL BE LIABLE FOR ANY DAMAGES ARISING FROM THE SOFTWARE OR ITS DERIVATIVES.

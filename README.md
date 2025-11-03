@@ -1,8 +1,9 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/JROChub/power_house/master/assets/JROC-NET.jpeg" alt="JROC NET" width="420">
+<p style="margin:0;padding:0;">
+  <img src="https://raw.githubusercontent.com/JROChub/power_house/master/assets/JROC-NET.jpeg" alt="power_house" style="display:block;width:100%;max-width:100%;margin:0;padding:0;">
 </p>
 
-Transparent Proof-Derived Consensus via Ledger Anchors
+<div style="font-size:0.78rem;line-height:1.6;font-family:'IBM Plex Mono',monospace;letter-spacing:0.02em;">
+I surfaced from the basement lab with chalk dust in my lungs and a ledger that refuses to blink. power_house is carved for transparent proofs that bully silicon into confessing. Precise. Pedantic. Short-tempered.
 
 ---
 
@@ -12,15 +13,15 @@ Transparent Proof-Derived Consensus via Ledger Anchors
 [![docs.rs](https://docs.rs/power_house/badge.svg)](https://docs.rs/power_house)
 [![Build Status](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#)
 
-**Author:** Julian Christian Sanders 
+**Author:** lexluger
 **Email:** [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me) 
 **Date** 10/16/2025 
 
 ---
 
-## Launch Announcement – JROC NET
+## Field Broadcast – power_house
 
-JROC NET is now live. The JULIAN Protocol ledger is fully operational with genesis anchors, transcript hashing, quorum-based finality, and multi-node reconciliation. All proofs, transcripts, and anchors remain fully transparent and reproducible, ensuring verifiable computation across distributed nodes.
+The JULIAN Protocol ledger keeps its pulse steady—genesis anchors nailed down, transcript digests chained in order, quorum checks fired on repeat until finality stops squirming. Every transcript is reproducible; every mismatch gets dragged into the light.
 
 ---
 
@@ -419,3 +420,5 @@ cargo run --bin julian -- node reconcile <log_dir> <peer_anchor> <quorum>
 ```
 
 These commands replay transcript logs, derive JULIAN anchors, and check quorum finality using nothing beyond the Rust standard library.
+
+</div>
