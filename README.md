@@ -3,8 +3,6 @@
 </p>
 
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.6;letter-spacing:0.03em;">
-<p>I surfaced from the basement lab with chalk dust in my lungs and a ledger that refuses to blink. power_house is carved for transparent proofs that bully silicon into confessing. Precise. Pedantic. Short-tempered.</p>
-
 <h1 style="font-size:0.9rem;margin:1.4rem 0 0.6rem;">Power-House</h1>
 
 <p style="margin:0.4rem 0;">
@@ -14,9 +12,6 @@
 </p>
 
 <p style="margin:0.3rem 0;">Author: <strong style="font-weight:600;">lexluger</strong> &nbsp;|&nbsp; Email: <a href="mailto:lexluger.dev@proton.me">lexluger.dev@proton.me</a> &nbsp;|&nbsp; Last update: 2025‑10‑16</p>
-
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Field Broadcast — power_house</h2>
-<p>The JULIAN Protocol ledger keeps its pulse steady—genesis anchors nailed down, transcript digests chained in order, quorum checks fired on repeat until finality stops squirming. Every transcript is reproducible; every mismatch gets dragged into the light.</p>
 
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Quick Join (Public Testnet A2)</h2>
 <pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">cargo install power_house --features net
@@ -31,8 +26,9 @@ julian net start \
   --quorum 2 \
   --key ed25519://&lt;seed&gt;
 
-# expose Prometheus metrics (optional)
-# --metrics :9100</pre>
+  --key ed25519://&lt;seed&gt;</pre>
+
+<p style="margin:0.3rem 0;">Optional Prometheus metrics: add <code style="font-size:0.66rem;">--metrics :9100</code> (or another port) when starting a node.</p>
 
 <p>To load an encrypted identity instead of <code style="font-size:0.66rem;">--key</code>, create a file containing the base64 result of XORing your 32-byte secret key with the first 32 bytes of <code style="font-size:0.66rem;">SHA-512(passphrase)</code>, then run <code style="font-size:0.66rem;">julian net start --identity /path/to/file</code>. You’ll be prompted for the passphrase at startup.</p>
 
@@ -124,7 +120,7 @@ It emulates the essential features of the **sum-check protocol**, exhibits a **r
 -  **ALIEN Ledger Blueprint:**
   A scaffold for integrating proofs, consensus, and randomness into a unified verification ledger, pointing toward PSPACE-level expressive power and quantum-assisted extensions.
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">JULIAN CLI Workflows</h2>
+<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">CLI Workflow</h2>
 
 The `julian` binary exposes both local ledger tooling and the optional `JROC-NET` networking stack.
 
