@@ -32,7 +32,7 @@ Chapter I — Anchor Echo Engine Command Doctrine
 09. This miracle works because `transcript_digest` in `power_house::transcript` is deterministic.
 10. Ledger entries are stored alphabetically in `ledger_0000.txt`, `ledger_0001.txt`, etc.
 11. Each ledger line begins with a keyword: `statement`, `challenge`, `round_sums`, `final_eval`, `hash`.
-12. The digest uses `blake2b` truncated to 64 bits for these demonstrations; nothing random sneaks in, though production deployments should widen to 128 bits or greater to suppress birthday collisions.
+12. The digest uses `BLAKE2b` truncated to 64 bits for these demonstrations; nothing random sneaks in, though production deployments should widen to 128 bits or greater to suppress birthday collisions.
 13. `LedgerAnchor::push` in `alien::ledger` automatically prepends `JULIAN::GENESIS`.
 14. `reconcile_anchors_with_quorum` rejects mismatched statements or hash arrays.
 15. Therefore, manipulating the transcript alters the digest and breaks the XOR equality.
@@ -85,13 +85,13 @@ Chapter I — Anchor Echo Engine Command Doctrine
 62. Document the command `cargo run --example hash_pipeline` outputs to confirm digests match the printed ones.
 63. Keep a mapping between digest values and statement strings in your personal notebook.
 64. The XOR operation is immune to reordering; test `((digest_C ^ digest_A) ^ digest_B)` for proof.
-65. For team training, intentionally provide incorrect digest to see how quickly contradiction is spotted.
+65. For team training, intentionally provide an incorrect digest to see how quickly contradiction is spotted.
 66. Always accompany digests with relevant ledger lines to prevent context loss.
 67. When explaining to executives, call this “paper quorum verification.”
 68. When explaining to mathematicians, emphasize the GF(2) nature of the calculation.
 69. When explaining to public audiences, say “three numbers produce one anchor word.”
 70. The demonstration also validates that the crate intentionally exposes digests as unsigned 64-bit integers.
-71. Ensure your abacus has enough beads; 64-bit calculations require structured approach.
+71. Ensure your abacus has enough beads; 64-bit calculations require a structured approach.
 72. For analog verification, binary toggle boards can replicate the XOR step-by-step.
 73. Keep the result `ANCHOR!!` etched on the cover of your field notebook.
 74. The demonstration has been tested across hardware architectures; interpret the XOR output in big-endian byte order before ASCII translation.
@@ -202,7 +202,7 @@ Chapter II — Foundational Field Algebra Procedures
 75. They learn why sum-check reductions are safe.
 76. The manual expects you to maintain mental agility with GF(p) logic.
 77. Provide calculators but never allow them to replace manual reasoning.
-78. install mental guardrails: if exponent exceeds modulus, reduce modulo `p-1` when appropriate.
+78. Install mental guardrails: if exponent exceeds modulus, reduce modulo `p-1` when appropriate.
 79. Keep message logs that reference the field used for each transcript.
 80. The manual does not repeat this chapter; this is your single warning.
 81. Field arithmetic is the base layer; nothing above it is negotiable.
@@ -279,7 +279,7 @@ Chapter III — Hyperplane Cartography Briefing
 48. Document any mixture of dims within a proof bundle.
 49. Keep transcripts in chronological order by proof generation date.
 50. If transcripts from multiple proofs share ledger file, ensure they remain separated by blank lines.
-51. The crate uses ascii text precisely so you can audit in plain editors.
+51. The crate uses ASCII text precisely so you can audit in plain editors.
 52. Resist any request to encode transcripts in binary without justification.
 53. Provide training on reading transcripts to all on-call engineers.
 54. Without comprehension, verifying anchors becomes guesswork.
@@ -341,7 +341,7 @@ Chapter IV — Transcript Metallurgy Protocols
 06. Example round sums: `round_sums: 12 47`.
 07. Example final evaluation: `final_eval: 19`.
 08. Example digest: `hash: 999B55116F6AFC2F`.
-09. Digest is produced by `transcript_digest` using blake2b.
+09. Digest is produced by `transcript_digest` using BLAKE2b.
 10. The digest ensures tamper evidence; any change mutates the number.
 11. Never reorder lines; the digest includes ordering.
 12. Keep transcripts under version control in your ledger directory.
@@ -372,7 +372,7 @@ Chapter IV — Transcript Metallurgy Protocols
 37. Offsite storage should include this manual for context.
 38. When verifying transcripts manually, check each line for formatting errors.
 39. Example: double-check there are no tab characters.
-40. Use script to detect trailing spaces; remove them before digest generation.
+40. Use a script to detect trailing spaces; remove them before digest generation.
 41. Understand that transcripts are not logs—they are proof artifacts.
 42. Do not mix general logging messages within transcript files.
 43. Use separate log for CLI output.
@@ -399,7 +399,7 @@ Chapter IV — Transcript Metallurgy Protocols
 64. Provide training on reading transcripts before giving trainees access to ledger directories.
 65. They should be able to detect missing lines or anomalies instantly.
 66. Provide printed transcripts alongside calculators for training.
-67. Encourage trainees to compute the digest manually by re-implementing blake2b in simple terms.
+67. Encourage trainees to compute the digest manually by re-implementing BLAKE2b in simple terms.
 68. Good luck with that; still, the exercise teaches respect for determinism.
 69. The manual expects you to know the digest algorithm, not treat it as magic.
 70. Document your understanding in your training report.
@@ -563,7 +563,7 @@ Chapter VI — Deterministic Randomness Discipline Orders
 18. Should you require cryptographic randomness, handle it outside base crate.
 19. LCG output is not cryptographically secure but sufficient for sum-check demonstration.
 20. Document that assumption in your compliance statement.
-21. For higher security, integrate alternative deterministic randomness with same reproducibility guarantee.
+21. For higher security, integrate alternative deterministic randomness with the same reproducibility guarantee.
 22. When computing challenge values manually, reconstruct LCG by hand using field arithmetic.
 23. Keep tables of LCG outputs for quick reference.
 24. Validate challenge values appear in ledger logs in order; misordering breaks proofs.
@@ -700,7 +700,7 @@ Chapter VII — Consensus Theater Operations
 51. Keep DNS records up to date; stale addresses break bootstrap.
 52. Use deterministic seeds so restarting nodes retains same Peer IDs.
 53. Archive node configuration for audits.
-54. Provide offline anchor verification instructions in case network down.
+54. Provide offline anchor verification instructions in case the network is down.
 55. Encourage team to run manual XOR demonstration regularly to maintain readiness.
 56. For compliance, capture logs showing finality events with timestamps.
 57. Include metrics snapshots in compliance reports.
