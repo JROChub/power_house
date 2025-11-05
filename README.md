@@ -15,6 +15,8 @@
 
 <p style="margin:0.3rem 0;">Author: <strong style="font-weight:600;">lexluger</strong> &nbsp;|&nbsp; Email: <a href="mailto:lexluger.dev@proton.me">lexluger.dev@proton.me</a> &nbsp;|&nbsp; Site: <a href="https://jrocnet.com">jrocnet.com</a> &nbsp;|&nbsp; Last update: 2025‑10‑16</p>
 
+<p style="margin:0.6rem 0;font-size:0.7rem;">Need the full operations guide? Read the <a href="./docs/book_of_power.md">Book of Power — Condensed Graviton Edition</a> for the alien-grade user manual bundled with this crate.</p>
+
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Quick Join (Public Testnet A2)</h2>
 <pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">cargo install power_house --features net
 # optional: export a deterministic identity (ed25519://your-seed) or use an encrypted identity file
