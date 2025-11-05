@@ -9,10 +9,11 @@ Version 0.1.7 — February 2025
 We introduce the **JULIAN Protocol**, a fully self-contained Rust implementation of a
 proof-transparent ledger that derives consensus from folding-style interactive proofs.
 Streaming sum-check provers produce deterministic Fiat–Shamir transcripts that are hashed into
-64-bit anchors. These anchors are captured inside a ledger structure and reconciled across peers
-with a quorum predicate: once at least *q* replicas expose identical anchor sequences, the ledger
-state is final. The protocol relies exclusively on the Rust standard library—no external hashers or
-cryptographic crates—and ships with reproducible logging and verification tooling.
+domain-separated BLAKE2b-256 anchors. These anchors are captured inside a ledger structure and
+reconciled across peers with a quorum predicate: once at least *q* replicas expose identical anchor
+sequences, the ledger state is final. The implementation retains a minimal dependency surface while
+leaning on BLAKE2b for transcript authenticity, and ships with reproducible logging and verification
+tooling.
 
 ## 1. Introduction
 
@@ -22,9 +23,9 @@ The JULIAN Protocol takes the opposite approach. Inspired by the ALIEN theorem�
 transparent, composable ledgers, we construct a pipeline in which the transcript of every proof
 is captured, hashed, and chained into a consensus anchor. Because transcript generation is
 deterministic, independently replaying the verification yields identical anchors, enabling multiple
-nodes to agree on a ledger’s state simply by comparing ordered hash lists. All components—polynomial
-evaluation, sum-check folding, randomness derivation, and hashing—use only the Rust standard library,
-creating a minimal yet practical foundation for transparent proof ledgers.
+nodes to agree on a ledger’s state simply by comparing ordered hash lists. Polynomial evaluation,
+sum-check folding, randomness derivation, and hashing are implemented directly inside the crate,
+with BLAKE2b-256 providing deterministic commitments to each transcript.
 
 ## 2. System Overview
 
@@ -65,9 +66,9 @@ round_sums:<s_0> … <s_{k-1}>
 final:<value>
 ```
 
-It then derives a digest by hashing the concatenated `u64` values with the standard-library
-`DefaultHasher`. The resulting `u64` hash is stored in `LedgerEntry::hashes` and emitted in the
-log file as `hash:<digest>`.
+It then derives a digest by hashing the concatenated `u64` values with a domain-separated
+BLAKE2b-256 capacity expander. The resulting 32-byte digest is stored in `LedgerEntry::hashes`
+and emitted in the log file as a lowercase hex string (`hash:<digest>`).
 
 This approach has three properties:
 
@@ -78,14 +79,14 @@ This approach has three properties:
 3. **Append-only anchoring** – Transcript hashes are chained in an ordered vector; removing or reordering
    entries is detectable because the index in the chain no longer matches the statement list.
 
-Although `DefaultHasher` is not collision-resistant in the cryptographic sense, it is sufficient
-for demonstrating the protocol’s mechanics; stronger hash modes can be added (see §9).
+The BLAKE2b-256 domain tag `JROC_TRANSCRIPT` ensures transcripts, anchor folds, and challenge
+derivations remain distinct contexts while sharing the same primitive.
 
 ## 4. Ledger Anchors and Finality
 
 A **ledger anchor** is formalised in `src/alien.rs` as:
 
-- `EntryAnchor { statement: String, hashes: Vec<u64> }`
+- `EntryAnchor { statement: String, hashes: Vec<TranscriptDigest> }`
 - `LedgerAnchor { entries: Vec<EntryAnchor> }`
 
 The **validity predicate** `Valid(ledger_anchor)` holds when every hash equals the digest
@@ -148,12 +149,14 @@ per-round timings for each link in the chain.
 - **Tamper detection** – Because transcript hashes capture the full Fiat–Shamir transcript, any
   modification of the log file is detected by `verify_logs`. Ledger reconciliation spots divergent
   anchors immediately.
-- **Hash collisions** – The default 64-bit hash is selectable; the `hash_pipeline` example supports
-  `xor` and `sum` modes, and the code is structured to introduce stronger hashers while preserving
-  the pure-std property.
-- **Quorum assumptions** – `reconcile_anchors_with_quorum` assumes a benign communication setting:
-  anchors are compared post-transmission. Integrating network transport or signatures is left for
-  future work.
+- **Hash collisions** – Transcript digests default to domain-separated BLAKE2b-256. The
+  `hash_pipeline` example demonstrates folding those digests into further BLAKE2b-256 anchors,
+  and the code is structured so alternative hashers or commitment schemes can be slotted in if
+  needed.
+- **Quorum assumptions** – `reconcile_anchors_with_quorum` groups votes by anchor digest and counts
+  distinct identities (ed25519 public keys) per anchor. Honest deployments must ensure each node
+  signs its envelope once per broadcast; offline reconciliation can supply placeholder identities
+  when signatures are unavailable.
 - **Streaming closure trust** – Nodes supplying streaming evaluators must ensure identical logic;
   cross-node reconciliation is necessary to catch inconsistencies.
 

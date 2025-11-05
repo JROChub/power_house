@@ -1,17 +1,17 @@
 //! Minimal CLI for interacting with the JULIAN Protocol primitives.
 //!
 //! This binary exposes helper commands for replaying transcript logs,
-//! deriving ledger anchors, and reconciling anchors with a quorum.  It uses
-//! only the Rust standard library to remain dependency free.
+//! deriving ledger anchors, and reconciling anchors with a quorum using the
+//! crate's domain-separated hashing and signature utilities.
 
 #[cfg(feature = "net")]
 use power_house::net::{
-    load_encrypted_identity, load_or_derive_keypair, run_network, verify_signature_base64,
-    AnchorEnvelope, AnchorJson, Ed25519KeySource, NetConfig,
+    decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
+    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, NetConfig,
 };
 use power_house::{
     julian_genesis_anchor, reconcile_anchors_with_quorum, transcript_digest,
-    verify_transcript_lines, EntryAnchor, LedgerAnchor,
+    verify_transcript_lines, AnchorVote, EntryAnchor, LedgerAnchor,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -160,7 +160,17 @@ fn cmd_node_reconcile(args: Vec<String>) {
         }
     };
 
-    match reconcile_anchors_with_quorum(&[local.clone(), peer.clone()], quorum) {
+    let votes = [
+        AnchorVote {
+            anchor: &local,
+            public_key: b"LOCAL_OFFLINE",
+        },
+        AnchorVote {
+            anchor: &peer,
+            public_key: b"PEER_FILE",
+        },
+    ];
+    match reconcile_anchors_with_quorum(&votes, quorum) {
         Ok(()) => {
             println!("Finality reached with quorum {quorum}.");
             println!("Local anchor:\n{}", format_anchor(&local));
@@ -384,6 +394,9 @@ fn cmd_net_verify_envelope(args: Vec<String>) {
         .unwrap_or_else(|err| fatal(&format!("FAIL: payload decode failed: {err}")));
     verify_signature_base64(&envelope.public_key, &payload, &envelope.signature)
         .unwrap_or_else(|err| fatal(&format!("FAIL: signature verification failed: {err}")));
+    let remote_verifying = decode_public_key_base64(&envelope.public_key)
+        .unwrap_or_else(|err| fatal(&format!("FAIL: invalid public key: {err}")));
+    let remote_key_bytes = remote_verifying.to_bytes();
     let payload_str = std::str::from_utf8(&payload)
         .unwrap_or_else(|err| fatal(&format!("FAIL: payload is not UTF-8: {err}")));
     let anchor_json = AnchorJson::from_json_str(payload_str)
@@ -394,7 +407,17 @@ fn cmd_net_verify_envelope(args: Vec<String>) {
         .unwrap_or_else(|err| fatal(&format!("FAIL: anchor decode error: {err}")));
     let local = load_anchor_from_logs(Path::new(&log_dir))
         .unwrap_or_else(|err| fatal(&format!("FAIL: {err}")));
-    match reconcile_anchors_with_quorum(&[local.clone(), remote_ledger], quorum) {
+    let votes = [
+        AnchorVote {
+            anchor: &local,
+            public_key: b"LOCAL_OFFLINE",
+        },
+        AnchorVote {
+            anchor: &remote_ledger,
+            public_key: &remote_key_bytes,
+        },
+    ];
+    match reconcile_anchors_with_quorum(&votes, quorum) {
         Ok(()) => println!("PASS: envelope verified and quorum satisfied."),
         Err(err) => fatal(&format!("FAIL: quorum check failed: {err}")),
     }
@@ -434,11 +457,13 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
                 .map_err(|err| format!("{} parse error: {err}", file.display()))?;
         let computed = transcript_digest(&challenges, &round_sums, final_value);
         if computed != stored_hash {
+            let stored_hex = power_house::transcript_digest_to_hex(&stored_hash);
+            let computed_hex = power_house::transcript_digest_to_hex(&computed);
             return Err(format!(
                 "{} hash mismatch: stored={}, computed={}",
                 file.display(),
-                stored_hash,
-                computed
+                stored_hex,
+                computed_hex
             ));
         }
         entries.push(EntryAnchor {
@@ -468,7 +493,7 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
         let hash_list = entry
             .hashes
             .iter()
-            .map(|h| h.to_string())
+            .map(|h| power_house::transcript_digest_to_hex(h))
             .collect::<Vec<_>>()
             .join(",");
         lines.push(format!("{}|{}|{}", NETWORK_ID, entry.statement, hash_list));
@@ -499,9 +524,12 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
         let mut hashes = Vec::new();
         if !hashes_str.is_empty() {
             for part in hashes_str.split(',') {
-                let value = part
-                    .parse::<u64>()
-                    .map_err(|_| format!("invalid hash value: {part}"))?;
+                let trimmed = part.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                let value = power_house::transcript_digest_from_hex(trimmed)
+                    .map_err(|err| format!("invalid hash value: {trimmed}: {err}"))?;
                 hashes.push(value);
             }
         }
@@ -522,7 +550,7 @@ fn format_anchor(anchor: &LedgerAnchor) -> String {
         let hashes = entry
             .hashes
             .iter()
-            .map(|h| h.to_string())
+            .map(|h| power_house::transcript_digest_to_hex(h))
             .collect::<Vec<_>>()
             .join(", ");
         lines.push(format!(

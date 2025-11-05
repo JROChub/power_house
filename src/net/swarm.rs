@@ -5,11 +5,12 @@ use crate::net::schema::{
     SCHEMA_ENVELOPE,
 };
 use crate::net::sign::{
-    encode_public_key_base64, encode_signature_base64, sign_payload, verify_signature_base64,
-    KeyError, KeyMaterial,
+    decode_public_key_base64, encode_public_key_base64, encode_signature_base64, sign_payload,
+    verify_signature_base64, KeyError, KeyMaterial,
 };
 use crate::{
-    julian_genesis_anchor, transcript_digest, verify_transcript_lines, EntryAnchor, LedgerAnchor,
+    julian_genesis_anchor, transcript_digest, verify_transcript_lines, AnchorVote, EntryAnchor,
+    LedgerAnchor,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use futures::StreamExt;
@@ -237,7 +238,7 @@ struct JrocBehaviour {
 pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut swarm = build_swarm(&cfg)?;
     Swarm::listen_on(&mut swarm, cfg.listen_addr.clone())
-        .map_err(|err| NetworkError::Libp2p(err.to_string()))?;
+        .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
     for addr in &cfg.bootstraps {
         if let Err(err) = Swarm::dial(&mut swarm, addr.clone()) {
             eprintln!("dial {addr} failed: {err}");
@@ -301,14 +302,14 @@ fn build_swarm(cfg: &NetConfig) -> Result<Swarm<JrocBehaviour>, NetworkError> {
             noise::Config::new,
             yamux::Config::default,
         )
-        .map_err(|err| NetworkError::Libp2p(err.to_string()))?
+        .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?
         .with_behaviour(|key| {
             build_behaviour(key).map_err(|err| {
                 let boxed: Box<dyn std::error::Error + Send + Sync> = Box::new(err);
                 boxed
             })
         })
-        .map_err(|err| NetworkError::Libp2p(err.to_string()))?
+        .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?
         .with_swarm_config(|cfg| cfg.with_idle_connection_timeout(Duration::from_secs(60)));
 
     Ok(builder.build())
@@ -325,14 +326,14 @@ fn build_behaviour(key: &identity::Keypair) -> Result<JrocBehaviour, NetworkErro
             gossipsub::MessageId::from(hasher.finalize().to_vec())
         })
         .build()
-        .map_err(|err| NetworkError::Libp2p(err.to_string()))?;
+        .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
 
     let mut gossipsub =
         gossipsub::Behaviour::new(MessageAuthenticity::Signed(key.clone()), gossipsub_config)
-            .map_err(|err| NetworkError::Libp2p(err.to_string()))?;
+            .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
     gossipsub
         .subscribe(&TOPIC_ANCHORS)
-        .map_err(|err| NetworkError::Libp2p(err.to_string()))?;
+        .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
 
     let identify_config = identify::Config::new("jrocnet/1.0.0".into(), key.public())
         .with_push_listen_addr_updates(true);
@@ -437,6 +438,9 @@ async fn handle_event(
                     return Ok(());
                 }
                 verify_signature_base64(&envelope.public_key, &payload, &envelope.signature)?;
+                let remote_verifying = decode_public_key_base64(&envelope.public_key)
+                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
+                let remote_key_bytes = remote_verifying.to_bytes();
                 let payload_str = std::str::from_utf8(&payload)
                     .map_err(|err| NetworkError::Codec(err.to_string()))?;
                 let anchor_json = AnchorJson::from_json_str(payload_str)
@@ -451,19 +455,27 @@ async fn handle_event(
                     record_invalid(invalid_counters, propagation_source, metrics);
                     return Ok(());
                 }
-                let remote_ledger = anchor_json.clone().into_ledger()?;
-                let local = load_anchor_from_logs(&cfg.log_dir)?;
-                match crate::reconcile_anchors_with_quorum(
-                    &[local.clone(), remote_ledger.clone()],
-                    cfg.quorum,
-                ) {
+                let remote_anchor = anchor_json.clone().into_ledger()?;
+                let local_anchor = load_anchor_from_logs(&cfg.log_dir)?;
+                let local_key_bytes = cfg.key_material.verifying.to_bytes();
+                let votes = [
+                    AnchorVote {
+                        anchor: &local_anchor,
+                        public_key: &local_key_bytes,
+                    },
+                    AnchorVote {
+                        anchor: &remote_anchor,
+                        public_key: &remote_key_bytes,
+                    },
+                ];
+                match crate::reconcile_anchors_with_quorum(&votes, cfg.quorum) {
                     Ok(()) => {
                         metrics.inc_anchors_verified();
                         metrics.inc_finality_events();
                         println!(
                             "finality reached with peer {} :: entries={}",
                             envelope.node_id,
-                            remote_ledger.entries.len()
+                            remote_anchor.entries.len()
                         );
                     }
                     Err(err) => {
@@ -622,7 +634,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .join(" "),
             final_value,
-            hash
+            crate::transcript_digest_to_hex(&hash)
         );
         fs::write(&log_path, content).unwrap();
 
@@ -685,11 +697,13 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
             })?;
         let computed = transcript_digest(&challenges, &round_sums, final_value);
         if computed != stored_hash {
+            let stored_hex = crate::transcript_digest_to_hex(&stored_hash);
+            let computed_hex = crate::transcript_digest_to_hex(&computed);
             return Err(NetworkError::Anchor(format!(
                 "{} hash mismatch: stored={}, computed={}",
                 file.display(),
-                stored_hash,
-                computed
+                stored_hex,
+                computed_hex
             )));
         }
         entries.push(EntryAnchor {

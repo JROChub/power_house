@@ -1,10 +1,10 @@
 //! Lightweight Fiat–Shamir transcript utilities.
 //!
 //! The [`Transcript`] type provides a minimal interface for recording field
-//! elements and deriving deterministic challenges without introducing any
-//! external hashing dependencies. Challenges are produced by feeding the
-//! accumulated transcript words into the crate's linear-congruential PRNG and
-//! reducing the outputs modulo the ambient field.
+//! elements and deriving deterministic challenges using a domain-separated
+//! BLAKE2b-256 expander.  Challenges are produced by hashing the accumulated
+//! transcript words together with a monotonic counter and reducing the result
+//! modulo the ambient field.
 
 use crate::{prng::derive_many_mod_p, Field};
 
@@ -43,9 +43,9 @@ impl Transcript {
 
     /// Derives the next challenge in `[0, p)` using the Fiat–Shamir transform.
     ///
-    /// Each invocation mixes the current transcript words together with a
-    /// monotonically increasing counter to avoid challenge reuse, absorbs the
-    /// resulting challenge into the transcript, and returns it to the caller.
+    /// Each invocation mixes the current transcript words with a strictly
+    /// increasing counter, absorbs the resulting challenge into the transcript,
+    /// and returns it to the caller.
     pub fn challenge(&mut self, field: &Field) -> u64 {
         self.words.push(self.counter);
         let challenge = derive_many_mod_p(field.modulus(), self.domain_tag, &self.words, 1)[0];

@@ -6,50 +6,68 @@
 //! serving both as a didactic resource and a foundation for future cryptographic research.
 //! Pseudorandom number generator used for challenge derivation.
 //!
-//! This module defines a very small linear-congruential generator (LCG) that
-//! serves as a deterministic source of pseudorandomness.  It can be used to
-//! derive challenges for interactive proof protocols in the absence of
-//! cryptographic hashes.  Although the generator is not cryptographically
-//! secure, it is sufficient for demonstration purposes when running tests
-//! against honest provers.
+//! This module exposes a compact deterministic stream generator backed by
+//! domain-separated BLAKE2b-256 expansions.  The interface mirrors the old
+//! linear-congruential helper but upgrades the security story: every output
+//! chunk is derived from a keyed hash of the seed and an invocation counter,
+//! ensuring forward secrecy and resistance to trivial state reconstruction.
 
-/// A simple linear-congruential pseudorandom number generator.
-///
-/// The generator updates its internal state on each call to
-/// [`next_u64`](Self::next_u64) using the recurrence
-///
-/// ```text
-/// state ← state × A + C (mod 2^64)
-/// ```
-///
-/// where `A` and `C` are fixed constants.  The multiplier constant is
-/// chosen from [Numerical Recipes](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
-/// and has good statistical properties for demonstration purposes.  No
-/// external randomness is used; callers must provide an initial seed.
+use blake2::digest::{consts::U32, Digest};
+
+type Blake2b256 = blake2::Blake2b<U32>;
+
+const PRNG_DOMAIN: &[u8] = b"JROC_PRNG";
+const CHALLENGE_DOMAIN: &[u8] = b"JROC_CHALLENGE";
+
+/// A deterministic stream generator derived from BLAKE2b-256.
 #[derive(Debug, Clone)]
 pub struct SimplePrng {
-    state: u64,
+    seed: [u8; 32],
+    counter: u64,
+    buffer: [u8; 32],
+    offset: usize,
 }
 
 impl SimplePrng {
-    /// Multiplier constant for the LCG.
-    const A: u64 = 6364136223846793005;
-    /// Increment constant for the LCG.
-    const C: u64 = 1;
-
     /// Creates a new PRNG seeded with `seed`.
     pub fn new(seed: u64) -> Self {
-        // Seed of zero is permitted; the first output will be C.
-        Self { state: seed }
+        let mut hasher = Blake2b256::new();
+        hasher.update(PRNG_DOMAIN);
+        hasher.update(seed.to_be_bytes());
+        let mut base = [0u8; 32];
+        base.copy_from_slice(&hasher.finalize());
+        Self::from_seed_bytes(base)
+    }
+
+    /// Creates a PRNG from a raw 32-byte seed.
+    pub fn from_seed_bytes(seed: [u8; 32]) -> Self {
+        Self {
+            seed,
+            counter: 0,
+            buffer: [0u8; 32],
+            offset: 32,
+        }
+    }
+
+    fn refill(&mut self) {
+        let mut hasher = Blake2b256::new();
+        hasher.update(PRNG_DOMAIN);
+        hasher.update(&self.seed);
+        hasher.update(self.counter.to_be_bytes());
+        self.buffer.copy_from_slice(&hasher.finalize());
+        self.counter = self.counter.wrapping_add(1);
+        self.offset = 0;
     }
 
     /// Advances the generator and returns the next 64-bit pseudorandom number.
     pub fn next_u64(&mut self) -> u64 {
-        let state = self.state;
-        // Wrapping multiplication and addition on u64.
-        let new_state = state.wrapping_mul(Self::A).wrapping_add(Self::C);
-        self.state = new_state;
-        new_state
+        if self.offset >= self.buffer.len() {
+            self.refill();
+        }
+        let mut chunk = [0u8; 8];
+        chunk.copy_from_slice(&self.buffer[self.offset..self.offset + 8]);
+        self.offset += 8;
+        u64::from_be_bytes(chunk)
     }
 
     /// Returns a pseudorandom number reduced modulo `modulus`.
@@ -59,7 +77,6 @@ impl SimplePrng {
     /// Panics if `modulus` is zero.
     pub fn gen_mod(&mut self, modulus: u64) -> u64 {
         assert!(modulus != 0, "modulus must be non-zero");
-        // We deliberately take the lower 64 bits as our pseudorandom output.
         self.next_u64() % modulus
     }
 }
@@ -69,28 +86,19 @@ impl SimplePrng {
 /// Given a prime modulus `p`, a domain tag (used to separate different
 /// derivation contexts) and a slice of `u64` words representing the
 /// transcript, this function returns `count` field elements in `[0,p)`.
-///
-/// The derivation is deterministic: it computes a seed as the sum of all
-/// transcript words plus the domain tag bytes interpreted as a `u64` seed
-/// and then runs a small LCG to generate the required pseudorandom values.
 pub fn derive_many_mod_p(p: u64, domain_tag: &[u8], transcript: &[u64], count: usize) -> Vec<u64> {
-    // Compute a simple seed by mixing the transcript words.
-    let mut seed: u64 = 0;
-    for &w in transcript {
-        seed = seed.wrapping_add(w);
+    assert!(p != 0, "modulus must be non-zero");
+    let mut seed_hasher = Blake2b256::new();
+    seed_hasher.update(CHALLENGE_DOMAIN);
+    seed_hasher.update((domain_tag.len() as u64).to_be_bytes());
+    seed_hasher.update(domain_tag);
+    seed_hasher.update((transcript.len() as u64).to_be_bytes());
+    for &word in transcript {
+        seed_hasher.update(word.to_be_bytes());
     }
-    // Incorporate domain tag bytes into the seed to avoid cross-domain reuse.
-    for chunk in domain_tag.chunks(8) {
-        let mut chunk_arr = [0u8; 8];
-        for (i, b) in chunk.iter().enumerate() {
-            chunk_arr[i] = *b;
-        }
-        // Interpret up to 8 bytes as little-endian u64.
-        let part = u64::from_le_bytes(chunk_arr);
-        seed = seed.wrapping_add(part);
-    }
-    // Initialise the PRNG with the derived seed.
-    let mut prng = SimplePrng::new(seed);
+    let mut seed_bytes = [0u8; 32];
+    seed_bytes.copy_from_slice(&seed_hasher.finalize());
+    let mut prng = SimplePrng::from_seed_bytes(seed_bytes);
     let mut out = Vec::with_capacity(count);
     for _ in 0..count {
         out.push(prng.gen_mod(p));

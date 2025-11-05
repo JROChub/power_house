@@ -29,8 +29,7 @@ julian net start \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://&lt;seed&gt;
-
-  --key ed25519://&lt;seed&gt;</pre>
+</pre>
 
 <p style="margin:0.3rem 0;">Optional Prometheus metrics: add <code style="font-size:0.66rem;">--metrics :9100</code> (or another port) when starting a node.</p>
 
@@ -46,11 +45,11 @@ julian net start \
 <p>Run <code style="font-size:0.66rem;">scripts/smoke_net.sh</code> for a local two-node quorum smoke test (ports 7211/7212, 8 s runtime).</p>
 
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Genesis Anchor (Pinned)</h2>
-<p>The A2 testnet ledger is frozen to the following statements and 64-bit digests. Every node should reproduce these values from its local logs:</p>
+<p>The A2 testnet ledger is frozen to the following statements and domain-separated BLAKE2b-256 digests (hex). Every node should reproduce these values from its local logs:</p>
 
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">statement: JULIAN::GENESIS          hash: 17942395924573474124
-statement: Dense polynomial proof   hash: 1560461912026565426
-statement: Hash anchor proof        hash: 17506285175808955616</pre>
+<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">statement: JULIAN::GENESIS          hash: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
+statement: Dense polynomial proof   hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
+statement: Hash anchor proof        hash: 0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b</pre>
 
 <p>Boot nodes run with deterministic seeds (<code style="font-size:0.66rem;">ed25519://boot1-seed</code>, <code style="font-size:0.66rem;">ed25519://boot2-seed</code>) so their libp2p Peer IDs remain constant.</p>
 
@@ -314,7 +313,7 @@ cargo run --example general_sumcheck
 
 The example exercises the Fiat–Shamir transcript helper and the generalized sum-check prover/verifier against a three-variable polynomial.
 
-Transcript outputs include deterministic Fiat–Shamir challenges; when logged via the ledger, each record carries a 64-bit integrity hash for tamper-evident storage.
+Transcript outputs include deterministic Fiat–Shamir challenges; when logged via the ledger, each record carries a domain-separated BLAKE2b-256 integrity hash for tamper-evident storage.
 
 <h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Mega sum-check &amp; chaining demo</h3>
 
@@ -347,7 +346,7 @@ Replays ledger log files, recomputes their integrity hashes, and prints a pass/f
 cargo run --example hash_pipeline
 ```
 
-Streams per-proof hashes into constant-time anchors, aggregates them (mode selectable via `POWER_HOUSE_HASH_MODE=xor|sum`), and reconciles the anchors across multiple ledgers while emitting tamper-evident logs. This example is the reference JULIAN Protocol pipeline: nodes replay transcript logs, exchange `LedgerAnchor` structures, and call `reconcile_anchors_with_quorum` to reach finality.
+Streams per-proof hashes into constant-time anchors, folds them with domain-separated BLAKE2b-256, and reconciles the anchors across multiple ledgers while emitting tamper-evident logs. This example is the reference JULIAN Protocol pipeline: nodes replay transcript logs, exchange `LedgerAnchor` structures, and call `reconcile_anchors_with_quorum` to reach finality.
 
 <h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Whitepaper</h3>
 

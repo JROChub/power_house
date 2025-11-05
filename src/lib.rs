@@ -8,12 +8,12 @@
 //! serving both as a didactic resource and a foundation for future cryptographic research.
 //! # power_house
 //!
-//! **Power-House** is a zero-dependency Rust crate that showcases a set of cryptographic
+//! **Power-House** is a Rust crate that showcases a set of cryptographic
 //! and verification primitives inspired by interactive proof systems, the
 //! sum-check protocol and the ALIEN theorem.  The goal of this crate is to
 //! demonstrate how one can build powerful proof systems and consensus logic
-//! without relying on any external libraries.  All code in this crate uses
-//! only the Rust standard library.
+//! with a minimal dependency surface while still leaning on modern hash
+//! primitives for tamper evidence.
 //!
 //! ## Features
 //!
@@ -23,10 +23,9 @@
 //!   over the Boolean hypercube, build a one-shot claim, and verify it with
 //!   negligible soundness error.
 //! * **Pseudorandom number generator (PRNG)**: the [`prng`](prng/index.html)
-//!   module exposes a very small linear-congruential generator that can be
-//!   used to derive deterministic challenges from a transcript.  This serves
-//!   as a stand-in for a verifiable random function (VRF) in contexts where
-//!   cryptographic hashes are unavailable.
+//!   module exposes a compact BLAKE2b-256 expander that derives deterministic
+//!   Fiat–Shamir challenges from transcripts.  It serves as a stand-in for a
+//!   verifiable random function (VRF) when exploring protocol blueprints.
 //! * **Byzantine-fault-tolerant consensus**: the [`consensus`](consensus/index.html)
 //!   module provides a trivial consensus primitive that takes a set of binary
 //!   votes and returns whether the threshold has been met.  It is intended as
@@ -76,12 +75,15 @@ pub mod net;
 
 pub use alien::{
     julian_genesis_anchor, julian_genesis_hash, reconcile_anchors, reconcile_anchors_with_quorum,
-    EntryAnchor, LedgerAnchor, Proof, ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
+    AnchorVote, EntryAnchor, LedgerAnchor, Proof, ProofKind, ProofLedger, Statement,
+    JULIAN_GENESIS_STATEMENT,
 };
 pub use consensus::consensus;
 pub use data::{
-    compute_digest as transcript_digest, parse_record as parse_transcript_record,
+    compute_digest as transcript_digest, digest_from_hex as transcript_digest_from_hex,
+    digest_to_hex as transcript_digest_to_hex, parse_record as parse_transcript_record,
     verify_record_lines as verify_transcript_lines, write_record as write_transcript_record,
+    TranscriptDigest,
 };
 pub use field::Field;
 pub use io::write_text_series;

@@ -1,6 +1,6 @@
 [package]
 name = "power_house"
-version = "0.1.26"
+version = "0.1.27"
 edition = "2021"
 authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
 
@@ -48,7 +48,7 @@ net = [
 ]
 
 [dependencies]
-# No external dependencies; standard library only.
+blake2 = "0.10"
 base64 = { version = "0.21", optional = true }
 ed25519-dalek = { version = "2", features = ["rand_core"], optional = true }
 futures = { version = "0.3", optional = true }

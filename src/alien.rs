@@ -11,10 +11,9 @@
 //!
 //! * **Transcript hashes**: For every accepted proof we derive a
 //!   deterministic Fiat–Shamir trace `(challenges, round_sums,
-//!   final_evaluation)` and hash it to a `u64` digest using only
-//!   standard-library primitives.  These hashes live in
-//!   [`LedgerEntry::hashes`] and form append-only commitments to the
-//!   verification trace.
+//!   final_evaluation)` and hash it to a domain-separated BLAKE2b-256
+//!   digest. These hashes live in [`LedgerEntry::hashes`] and form
+//!   append-only commitments to the verification trace.
 //! * **Chain validity**: A [`LedgerAnchor`] is the ordered list of
 //!   [`EntryAnchor { statement, hashes }`].  A ledger state is valid iff
 //!   every anchor entry matches a locally recomputed digest.  The helper
@@ -34,14 +33,18 @@
 //! 4. When divergence occurs, fetch the offending log file and run
 //!    `verify_logs` to diagnose tampering.
 //!
-//! The entire pipeline relies solely on the Rust standard library—no external
-//! hashers or cryptographic crates are required.
+//! The pipeline is intentionally compact: aside from the core Rust standard
+//! library, it leans on BLAKE2b-256 to guarantee transcript integrity and
+//! deterministic anchor reconciliation.
 
 use crate::{
     transcript_digest, write_text_series, write_transcript_record, ChainedSumProof, Field,
-    GeneralSumProof, MultilinearPolynomial, StreamingPolynomial, SumClaim,
+    GeneralSumProof, MultilinearPolynomial, StreamingPolynomial, SumClaim, TranscriptDigest,
 };
+use blake2::digest::{consts::U32, Digest};
 use std::{collections::HashMap, path::PathBuf};
+
+const ANCHOR_DOMAIN: &[u8] = b"JROC_ANCHOR";
 
 /// Represents a statement to be proved.  In a full system this would
 /// encapsulate the input and the specification of the language `L`.
@@ -111,7 +114,7 @@ pub struct LedgerEntry {
     /// Optional error captured while attempting to persist transcripts.
     pub log_error: Option<String>,
     /// Deterministic transcript hashes retained in-memory.
-    pub hashes: Vec<u64>,
+    pub hashes: Vec<TranscriptDigest>,
 }
 
 /// A simple proof ledger that stores entries.  In a real system, this
@@ -130,7 +133,7 @@ pub struct EntryAnchor {
     /// Statement associated with the entry.
     pub statement: String,
     /// Hashes of each transcript record.
-    pub hashes: Vec<u64>,
+    pub hashes: Vec<TranscriptDigest>,
 }
 
 /// Anchor aggregation for an entire ledger.
@@ -144,7 +147,7 @@ pub struct LedgerAnchor {
 pub const JULIAN_GENESIS_STATEMENT: &str = "JULIAN::GENESIS";
 
 /// Returns the digest associated with the JULIAN genesis transcript.
-pub fn julian_genesis_hash() -> u64 {
+pub fn julian_genesis_hash() -> TranscriptDigest {
     transcript_digest(&[], &[], 0)
 }
 
@@ -368,6 +371,43 @@ impl ProofLedger {
     }
 }
 
+fn mix_u64(hasher: &mut Blake2b256, value: u64) {
+    hasher.update(value.to_be_bytes());
+}
+
+fn mix_bytes(hasher: &mut Blake2b256, bytes: &[u8]) {
+    mix_u64(hasher, bytes.len() as u64);
+    hasher.update(bytes);
+}
+
+fn mix_hash_list(hasher: &mut Blake2b256, hashes: &[TranscriptDigest]) {
+    mix_u64(hasher, hashes.len() as u64);
+    for digest in hashes {
+        hasher.update(digest);
+    }
+}
+
+fn anchor_digest(anchor: &LedgerAnchor) -> [u8; 32] {
+    let mut hasher = Blake2b256::new();
+    hasher.update(ANCHOR_DOMAIN);
+    mix_u64(&mut hasher, anchor.entries.len() as u64);
+    for entry in &anchor.entries {
+        mix_bytes(&mut hasher, entry.statement.as_bytes());
+        mix_hash_list(&mut hasher, &entry.hashes);
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&hasher.finalize());
+    out
+}
+
+/// Anchor vote supplied to the quorum reconciliation function.
+pub struct AnchorVote<'a> {
+    /// Ledger anchor produced by the peer.
+    pub anchor: &'a LedgerAnchor,
+    /// Public key bytes identifying the peer.
+    pub public_key: &'a [u8],
+}
+
 /// Ensures that a collection of ledger anchors agree on every transcript hash.
 pub fn reconcile_anchors(anchors: &[LedgerAnchor]) -> Result<(), String> {
     if anchors.is_empty() {
@@ -399,27 +439,43 @@ pub fn reconcile_anchors(anchors: &[LedgerAnchor]) -> Result<(), String> {
     Ok(())
 }
 
-/// Ensures that at least `quorum` anchors agree on every transcript hash.
+/// Ensures that at least `quorum` unique identities agree on every transcript hash.
 pub fn reconcile_anchors_with_quorum(
-    anchors: &[LedgerAnchor],
+    votes: &[AnchorVote<'_>],
     quorum: usize,
 ) -> Result<(), String> {
-    if anchors.is_empty() {
+    if votes.is_empty() {
         return Ok(());
     }
-    if quorum == 0 || quorum > anchors.len() {
+    if quorum == 0 || quorum > votes.len() {
         return Err("invalid quorum".to_string());
     }
-    let mut counts: HashMap<&LedgerAnchor, usize> = HashMap::new();
-    for anchor in anchors {
-        *counts.entry(anchor).or_insert(0) += 1;
+    let mut groups: HashMap<[u8; 32], HashMap<Vec<u8>, LedgerAnchor>> = HashMap::new();
+    for vote in votes {
+        if vote.public_key.is_empty() {
+            return Err("vote missing public key bytes".to_string());
+        }
+        let digest = anchor_digest(vote.anchor);
+        let entry = groups.entry(digest).or_insert_with(HashMap::new);
+        entry
+            .entry(vote.public_key.to_vec())
+            .or_insert_with(|| vote.anchor.clone());
     }
-    if let Some((winner, count)) = counts.into_iter().max_by_key(|(_, c)| *c) {
+    let mut best: Option<(HashMap<Vec<u8>, LedgerAnchor>, usize)> = None;
+    for identity_map in groups.into_values() {
+        let count = identity_map.len();
+        if best
+            .as_ref()
+            .map(|(_, best_len)| count > *best_len)
+            .unwrap_or(true)
+        {
+            best = Some((identity_map, count));
+        }
+    }
+    if let Some((identity_map, count)) = best {
         if count >= quorum {
-            // Collect matching anchors and ensure they agree exactly.
-            let matching: Vec<LedgerAnchor> =
-                anchors.iter().filter(|a| *a == winner).cloned().collect();
-            return reconcile_anchors(&matching);
+            let anchors: Vec<LedgerAnchor> = identity_map.into_values().collect();
+            return reconcile_anchors(&anchors);
         }
     }
     Err("no anchor reached required quorum".to_string())
@@ -635,7 +691,7 @@ mod tests {
         // Tamper hashes in ledger B to simulate divergence.
         if let Some(entry) = ledger_b.entries.get_mut(0) {
             if let Some(hash) = entry.hashes.get_mut(0) {
-                *hash = hash.wrapping_add(1);
+                hash[0] ^= 0x01;
             }
         }
         let anchor_a = ledger_a.anchor();
@@ -665,7 +721,21 @@ mod tests {
         ledger_b.submit(statement.clone(), submission.clone());
         ledger_c.submit(statement, submission);
         let anchors = [ledger_a.anchor(), ledger_b.anchor(), ledger_c.anchor()];
-        assert!(reconcile_anchors_with_quorum(&anchors, 2).is_ok());
+        let votes = [
+            AnchorVote {
+                anchor: &anchors[0],
+                public_key: b"A",
+            },
+            AnchorVote {
+                anchor: &anchors[1],
+                public_key: b"B",
+            },
+            AnchorVote {
+                anchor: &anchors[2],
+                public_key: b"C",
+            },
+        ];
+        assert!(reconcile_anchors_with_quorum(&votes, 2).is_ok());
     }
 
     #[test]
@@ -690,10 +760,54 @@ mod tests {
         // Tamper ledger B hash
         if let Some(entry) = ledger_b.entries.get_mut(0) {
             if let Some(hash) = entry.hashes.get_mut(0) {
-                *hash = hash.wrapping_add(42);
+                hash[0] ^= 0x2A;
             }
         }
         let anchors = [ledger_a.anchor(), ledger_b.anchor()];
-        assert!(reconcile_anchors_with_quorum(&anchors, 2).is_err());
+        let votes = [
+            AnchorVote {
+                anchor: &anchors[0],
+                public_key: b"A",
+            },
+            AnchorVote {
+                anchor: &anchors[1],
+                public_key: b"B",
+            },
+        ];
+        assert!(reconcile_anchors_with_quorum(&votes, 2).is_err());
+    }
+
+    #[test]
+    fn test_reconcile_rejects_duplicate_keys() {
+        let field = Field::new(101);
+        let poly = sample_poly(&field);
+        let proof = GeneralSumProof::prove(&poly, &field);
+        let mut ledger_a = ProofLedger::new();
+        let mut ledger_b = ProofLedger::new();
+        let statement = Statement {
+            description: "Duplicate key check".into(),
+        };
+        let submission = Proof {
+            kind: ProofKind::General {
+                polynomial: poly.clone(),
+                proof: proof.clone(),
+            },
+            data: Vec::new(),
+        };
+        ledger_a.submit(statement.clone(), submission.clone());
+        ledger_b.submit(statement, submission);
+        let anchors = [ledger_a.anchor(), ledger_b.anchor()];
+        let votes = [
+            AnchorVote {
+                anchor: &anchors[0],
+                public_key: b"SAME",
+            },
+            AnchorVote {
+                anchor: &anchors[1],
+                public_key: b"SAME",
+            },
+        ];
+        assert!(reconcile_anchors_with_quorum(&votes, 2).is_err());
     }
 }
+type Blake2b256 = blake2::Blake2b<U32>;

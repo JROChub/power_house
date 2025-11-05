@@ -1,6 +1,8 @@
+use blake2::digest::{consts::U32, Digest};
+type Blake2b256 = blake2::Blake2b<U32>;
 use power_house::{
     alien::{reconcile_anchors, Proof, ProofKind, ProofLedger, Statement},
-    Field, GeneralSumProof, StreamingPolynomial,
+    Field, GeneralSumProof, StreamingPolynomial, TranscriptDigest,
 };
 use std::fs;
 
@@ -36,11 +38,15 @@ fn constant_polynomial(field: &Field, num_vars: usize, target_sum: u64) -> Strea
     StreamingPolynomial::new(num_vars, modulus, move |_| constant)
 }
 
-fn aggregate_hashes(hashes: &[u64], modulus: u64, mode: &str) -> u64 {
-    match mode {
-        "sum" => hashes.iter().fold(0u64, |acc, h| (acc + h) % modulus),
-        _ => hashes.iter().fold(0u64, |acc, h| acc ^ h),
+fn aggregate_hashes(hashes: &[TranscriptDigest]) -> TranscriptDigest {
+    let mut hasher = Blake2b256::new();
+    hasher.update(b"JROC_ANCHOR");
+    for digest in hashes {
+        hasher.update(digest);
     }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&hasher.finalize());
+    out
 }
 
 fn prepare_dir(path: &std::path::Path) {
@@ -86,12 +92,14 @@ fn main() {
     );
 
     let base_hashes = ledger_a.entries()[0].hashes.clone();
-    let hash_mode = std::env::var("POWER_HOUSE_HASH_MODE").unwrap_or_else(|_| "xor".into());
-    let aggregated_hash = aggregate_hashes(&base_hashes, field.modulus(), &hash_mode);
+    let aggregated_digest = aggregate_hashes(&base_hashes);
+    let mut head = [0u8; 8];
+    head.copy_from_slice(&aggregated_digest[..8]);
+    let aggregated_hash = u64::from_be_bytes(head) % field.modulus();
     println!(
-        "Aggregated transcript hash (mode={}, records={}): {}",
-        hash_mode,
+        "Aggregated transcript digest (BLAKE2b-256, records={}): {} (field element {})",
         base_hashes.len(),
+        power_house::transcript_digest_to_hex(&aggregated_digest),
         aggregated_hash
     );
 

@@ -1,6 +1,9 @@
 #![cfg(feature = "net")]
 
-use crate::{alien::JULIAN_GENESIS_STATEMENT, EntryAnchor, LedgerAnchor};
+use crate::{
+    alien::JULIAN_GENESIS_STATEMENT, data::digest_from_hex, data::digest_to_hex, EntryAnchor,
+    LedgerAnchor,
+};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt};
 
@@ -19,7 +22,7 @@ pub struct AnchorEntryJson {
     /// Statement string associated with the transcript hashes.
     pub statement: String,
     /// Deterministic transcript hash list for this statement.
-    pub hashes: Vec<u64>,
+    pub hashes: Vec<String>,
 }
 
 /// Machine-readable representation of a JULIAN ledger anchor.
@@ -78,6 +81,13 @@ pub enum AnchorCodecError {
     },
     /// The ledger anchor was missing the JULIAN genesis entry.
     MissingGenesis,
+    /// A transcript hash was malformed.
+    InvalidDigest {
+        /// Index of the entry containing the malformed hash.
+        entry: usize,
+        /// Reason for the failure.
+        reason: String,
+    },
 }
 
 impl fmt::Display for AnchorCodecError {
@@ -90,6 +100,12 @@ impl fmt::Display for AnchorCodecError {
                 write!(f, "invalid network: expected {expected}, found {found}")
             }
             Self::MissingGenesis => write!(f, "ledger anchor missing JULIAN genesis entry"),
+            Self::InvalidDigest { entry, reason } => {
+                write!(
+                    f,
+                    "ledger anchor entry {entry} has invalid digest: {reason}"
+                )
+            }
         }
     }
 }
@@ -115,7 +131,11 @@ impl AnchorJson {
             .iter()
             .map(|entry| AnchorEntryJson {
                 statement: entry.statement.clone(),
-                hashes: entry.hashes.clone(),
+                hashes: entry
+                    .hashes
+                    .iter()
+                    .map(|digest| digest_to_hex(digest))
+                    .collect(),
             })
             .collect();
         Ok(Self {
@@ -146,16 +166,20 @@ impl AnchorJson {
         if self.entries.first().map(|e| e.statement.as_str()) != Some(JULIAN_GENESIS_STATEMENT) {
             return Err(AnchorCodecError::MissingGenesis);
         }
-        Ok(LedgerAnchor {
-            entries: self
-                .entries
-                .into_iter()
-                .map(|entry| EntryAnchor {
-                    statement: entry.statement,
-                    hashes: entry.hashes,
-                })
-                .collect(),
-        })
+        let mut entries = Vec::with_capacity(self.entries.len());
+        for (idx, entry) in self.entries.into_iter().enumerate() {
+            let mut hashes = Vec::with_capacity(entry.hashes.len());
+            for hash_str in entry.hashes {
+                let digest = digest_from_hex(&hash_str)
+                    .map_err(|reason| AnchorCodecError::InvalidDigest { entry: idx, reason })?;
+                hashes.push(digest);
+            }
+            entries.push(EntryAnchor {
+                statement: entry.statement,
+                hashes,
+            });
+        }
+        Ok(LedgerAnchor { entries })
     }
 
     /// Serialises the anchor to JSON text.
