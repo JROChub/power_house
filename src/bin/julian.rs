@@ -34,7 +34,6 @@ use serde_json;
 
 const NETWORK_ID: &str = "JROC-NET";
 
-#[cfg(feature = "net")]
 fn fatal(message: &str) -> ! {
     eprintln!("{message}");
     std::process::exit(1);
@@ -666,26 +665,23 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
         }
         let segments: Vec<&str> = trimmed.split('|').collect();
         let (statement, hashes_str, root_part) = match segments.as_slice() {
-            [network, statement, hashes, root] => {
-                if *network != NETWORK_ID {
-                    return Err(format!(
-                        "anchor network mismatch: expected {NETWORK_ID}, found {network}"
-                    ));
-                }
+            [network, statement, hashes, root] if *network == NETWORK_ID => {
                 (*statement, *hashes, Some(*root))
             }
-            [network, statement, hashes] => {
-                if *network != NETWORK_ID {
-                    return Err(format!(
-                        "anchor network mismatch: expected {NETWORK_ID}, found {network}"
-                    ));
-                }
-                (*statement, *hashes, None)
-            }
+            [network, statement, hashes] if *network == NETWORK_ID => (*statement, *hashes, None),
             [statement, hashes, root] => (*statement, *hashes, Some(*root)),
             [statement, hashes] => (*statement, *hashes, None),
             _ => return Err(format!("invalid anchor line: {trimmed}")),
         };
+        if segments.len() >= 3 && segments[0] != NETWORK_ID {
+            // Ensure lines with an unexpected network identifier are rejected explicitly.
+            if segments.len() == 4 {
+                return Err(format!(
+                    "anchor network mismatch: expected {NETWORK_ID}, found {}",
+                    segments[0]
+                ));
+            }
+        }
         let mut hashes = Vec::new();
         if !hashes_str.is_empty() {
             for part in hashes_str.split(',') {
