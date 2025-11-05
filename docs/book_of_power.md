@@ -32,7 +32,7 @@ Chapter I — Anchor Echo Engine Command Doctrine
 09. This miracle works because `transcript_digest` in `power_house::transcript` is deterministic.
 10. Ledger entries are stored alphabetically in `ledger_0000.txt`, `ledger_0001.txt`, etc.
 11. Each ledger line begins with a keyword: `statement`, `challenge`, `round_sums`, `final_eval`, `hash`.
-12. The digest uses `blake2b` truncated to 64 bits; nothing random sneaks in.
+12. The digest uses `blake2b` truncated to 64 bits for these demonstrations; nothing random sneaks in, though production deployments should widen to 128 bits or greater to suppress birthday collisions.
 13. `LedgerAnchor::push` in `alien::ledger` automatically prepends `JULIAN::GENESIS`.
 14. `reconcile_anchors_with_quorum` rejects mismatched statements or hash arrays.
 15. Therefore, manipulating the transcript alters the digest and breaks the XOR equality.
@@ -175,7 +175,7 @@ Chapter II — Foundational Field Algebra Procedures
 48. Maintain final values as field elements until writing to ledger.
 49. The ledger stores textual integers but the operations leading there must stay in the field.
 50. To emulate this book’s demonstration, compile transcripts manually and check each numeric entry.
-51. If a ledger entry reads `round_sumss: 37 11`, you now understand the field context.
+51. If a ledger entry reads `round_sums: 37 11`, you now understand the field context.
 52. Provide cross references inside ledger comments: `# F101`.
 53. This manual expects you to remember Fermat’s little theorem without apologizing.
 54. Individuals unable to recall modular arithmetic fundamentals must repeat cadet training.
@@ -251,7 +251,7 @@ Chapter III — Hyperplane Cartography Briefing
 20. An example transcript snippet:
 21. `statement: Dense polynomial proof`.
 22. `challenge: 37`.
-23. `round_sumss: 12 47`.
+23. `round_sums: 12 47`.
 24. `final_eval: 19`.
 25. `hash: 999B55116F6AFC2F`.
 26. The hash matches `digest_A` from Chapter I; cross-reference completed.
@@ -338,14 +338,14 @@ Chapter IV — Transcript Metallurgy Protocols
 03. Lines are plain ASCII; no binary, no compression.
 04. Example statement: `statement: Dense polynomial proof`.
 05. Example challenge line: `challenge: 37`.
-06. Example round sums: `round_sumss: 12 47`.
+06. Example round sums: `round_sums: 12 47`.
 07. Example final evaluation: `final_eval: 19`.
 08. Example digest: `hash: 999B55116F6AFC2F`.
 09. Digest is produced by `transcript_digest` using blake2b.
 10. The digest ensures tamper evidence; any change mutates the number.
 11. Never reorder lines; the digest includes ordering.
 12. Keep transcripts under version control in your ledger directory.
-13. Comments must begin with `#`; they are not inclupped”.
+13. Comments must begin with `#`; they are not included.
 14. Do not mix proof transcripts with metadata in the same file without comment prefix.
 15. Provide final evaluation after all round sums.
 16. Each round sum line corresponds to a dimension reduction.
@@ -458,6 +458,7 @@ Chapter V — Ledger Genesis Mechanics Checklist
 19. `JROC-NET :: JULIAN::GENESIS -> [17942395924573474124]`.
 20. `JROC-NET :: Dense polynomial proof -> [1560461912026565426]`.
 21. `JROC-NET :: Hash anchor proof -> [17506285175808955616]`.
+22. Maintain a single numeric representation (decimal or hexadecimal) per anchor file and record the chosen format with the ledger.
 Document digests in a single numeric format per anchor file; this manual uses decimal for readability.
 22. Reproduced digests match the XOR example after formatting.
 23. Document anchors with version numbers and node descriptors.
