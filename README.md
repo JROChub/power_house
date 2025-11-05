@@ -5,6 +5,8 @@
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.6;letter-spacing:0.03em;">
 <h1 style="font-size:0.9rem;margin:1.4rem 0 0.6rem;">Power-House</h1>
 
+<p style="margin:0.9rem 0 0.6rem;">power_house is the lab notebook of a sleep-deprived alien mathematician: a zero-dependency Rust rig for multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledgers that pin every transcript to the wall until it confesses.</p>
+
 <p style="margin:0.4rem 0;">
   <a href="https://crates.io/crates/power_house"><img src="https://img.shields.io/crates/v/power_house.svg" alt="Crates.io badge" style="height:0.9rem;vertical-align:middle;"></a>
   <a href="https://docs.rs/power_house"><img src="https://docs.rs/power_house/badge.svg" alt="docs.rs badge" style="height:0.9rem;vertical-align:middle;margin-left:0.4rem;"></a>
@@ -77,10 +79,8 @@ julian node reconcile ./logs/boot2 boot1.anchor.txt 2</pre>
 </ul>
 <p>See <a href="./LICENSE">LICENSE</a> for the full legal text.</p>
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Power-House Overview</h2>
+<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">power_house overview</h2>
 <p><strong style="font-weight:600;">power_house</strong> is a paradigmatic exploration of interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness—all implemented in pure Rust with zero external dependencies. It emulates the <em>sum-check protocol</em>, demonstrates a quorum finality primitive, and now backs the JULIAN Protocol ledger.</p>
-
-**Power-House** is a paradigmatic exploration of interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness—all implemented in pure Rust without external dependencies. It offers a microcosm of proof verification processes inspired by seminal work in probabilistically checkable proofs (PCPs) and modern zero-knowledge architectures.
 
 <h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Motivation</h3>
 

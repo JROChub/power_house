@@ -1,6 +1,6 @@
 [package]
 name = "power_house"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
 
@@ -13,7 +13,7 @@ license-file = "LICENSE"
  
 documentation = "https://docs.rs/power_house"
 
-description = "Power-House: a zero-dependency Rust crate for sum-check proofs, finite-field arithmetic, deterministic PRNG, and a simple consensus primitive inspired by ALIEN."
+description = "power_house: irritable-alien grade sum-check proofs, finite-field arithmetic, deterministic PRNG wiring, and quorum ledger anchors — all in zero-dependency Rust."
 keywords = ["cryptography", "proofs", "sum-check", "ledger", "education"]
 categories = ["cryptography", "algorithms", "mathematics"]
 
