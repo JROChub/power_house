@@ -458,9 +458,7 @@ Chapter V — Ledger Genesis Mechanics Checklist
 19. `JROC-NET :: JULIAN::GENESIS -> [17942395924573474124]`.
 20. `JROC-NET :: Dense polynomial proof -> [1560461912026565426]`.
 21. `JROC-NET :: Hash anchor proof -> [17506285175808955616]`.
-22. Maintain a single numeric representation (decimal or hexadecimal) per anchor file and record the chosen format with the ledger.
-Document digests in a single numeric format per anchor file; this manual uses decimal for readability.
-22. Reproduced digests match the XOR example after formatting.
+22. Maintain a single numeric representation (decimal or hexadecimal) per anchor file and record the chosen format with the ledger. This manual uses decimal for readability, and reproduced digests match the XOR example after formatting.
 23. Document anchors with version numbers and node descriptors.
 24. Store anchor files in node-specific directories: `./logs/nodeA`, `./logs/nodeB`.
 25. After generating anchors, run `julian node reconcile ./logs/nodeA nodeB.anchor 2`.
