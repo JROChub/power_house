@@ -1,7 +1,7 @@
 Title Page
 ===========
 Book of Power — Condensed Graviton Edition
-Author: power_house maintainers
+Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Repository Source: crate checkout `power_house`
