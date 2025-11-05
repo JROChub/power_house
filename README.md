@@ -33,6 +33,8 @@ julian net start \
 
 <p style="margin:0.3rem 0;">Optional Prometheus metrics: add <code style="font-size:0.66rem;">--metrics :9100</code> (or another port) when starting a node.</p>
 
+<p style="margin:0.3rem 0;">Harden identities with <code style="font-size:0.66rem;">--policy-allowlist allow.json</code> (JSON file containing base64 ed25519 public keys) so only approved peers count toward quorum. Persist signed snapshots by adding <code style="font-size:0.66rem;">--checkpoint-interval 100</code> (for example) to emit checkpoints every <em>100</em> broadcasts under <code>./logs/&lt;node&gt;/checkpoints</code>.</p>
+
 <p>To load an encrypted identity instead of <code style="font-size:0.66rem;">--key</code>, create a file containing the base64 result of XORing your 32-byte secret key with the first 32 bytes of <code style="font-size:0.66rem;">SHA-512(passphrase)</code>, then run <code style="font-size:0.66rem;">julian net start --identity /path/to/file</code>. You’ll be prompted for the passphrase at startup.</p>
 
 <ul style="margin:0.3rem 0 0.8rem 1.1rem;">
@@ -132,6 +134,8 @@ These commands are always available and require only the standard library:
 - `julian node run <node_id> <log_dir> <output>` – recomputes transcript hashes from `<log_dir>`, prepends the JULIAN genesis anchor, and writes a machine-readable anchor file.
 - `julian node anchor <log_dir>` – prints a formatted ledger anchor derived from the logs.
 - `julian node reconcile <log_dir> <peer_anchor> <quorum>` – recomputes the local anchor, loads a peer’s anchor file, and checks quorum finality.
+- `julian node prove <log_dir> <entry_index> <leaf_index> [output.json]` – emits a Merkle proof for a specific transcript digest.
+- `julian node verify-proof <anchor_file> <proof_file>` – checks a proof against a stored anchor and exits non-zero on failure.
 
 End-to-end anchor example (after running `cargo run --example hash_pipeline`):
 
@@ -163,6 +167,8 @@ Supported commands:
   * `--key` accepts `ed25519://deterministic-seed`, or a path to raw/hex/base64 secret key bytes; omitted ⇒ fresh key.
   * `--identity` loads an encrypted identity file (XOR of the secret key with `SHA-512(passphrase)`); the CLI prompts for the passphrase.
   * `--metrics [:port]` exposes Prometheus metrics (defaults to `0.0.0.0:<port>` when prefixed with a colon).
+  * `--policy-allowlist allow.json` restricts quorum counting to the listed ed25519 keys.
+  * `--checkpoint-interval N` writes signed anchor checkpoints every <code>N</code> broadcasts.
 - `julian net anchor --log-dir <path> [--node-id <id>] [--quorum <q>]` emits a machine-readable JSON anchor.
 - `julian net verify-envelope --file <path> --log-dir <path> [--quorum <q>]` validates a signed envelope, decodes the anchor payload, and performs the quorum check against local logs.
 

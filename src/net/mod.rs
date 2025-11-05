@@ -7,6 +7,10 @@
 
 #![cfg(feature = "net")]
 
+/// Anchor checkpoint helpers for fast sync.
+pub mod checkpoint;
+/// Identity admission policy helpers.
+pub mod policy;
 /// Machine-readable schema types shared across the network CLI and swarm.
 pub mod schema;
 /// Deterministic key derivation and ed25519 signing helpers.
@@ -14,6 +18,11 @@ pub mod sign;
 /// Libp2p orchestration layer and networking runtime.
 pub mod swarm;
 
+pub use checkpoint::{
+    anchor_hasher, latest_log_cutoff, load_latest_checkpoint, write_checkpoint, AnchorCheckpoint,
+    CheckpointError, CheckpointSignature,
+};
+pub use policy::{IdentityPolicy, PolicyError};
 pub use schema::{AnchorEnvelope, AnchorJson};
 pub use sign::{
     decode_public_key_base64, decode_signature_base64, encode_public_key_base64,

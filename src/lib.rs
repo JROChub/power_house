@@ -64,6 +64,7 @@ pub mod consensus;
 mod data;
 mod field;
 mod io;
+mod merkle;
 mod multilinear;
 mod prng;
 mod streaming;
@@ -87,6 +88,10 @@ pub use data::{
 };
 pub use field::Field;
 pub use io::write_text_series;
+pub use merkle::{
+    build_proof as build_merkle_proof, merkle_root, verify_proof as verify_merkle_proof,
+    MerkleProof, MerkleProofNode,
+};
 pub use multilinear::MultilinearPolynomial;
 pub use prng::SimplePrng;
 pub use streaming::StreamingPolynomial;

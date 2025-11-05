@@ -7,7 +7,8 @@
 #[cfg(feature = "net")]
 use power_house::net::{
     decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
-    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, NetConfig,
+    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, IdentityPolicy,
+    NetConfig,
 };
 use power_house::{
     julian_genesis_anchor, reconcile_anchors_with_quorum, transcript_digest,
@@ -29,7 +30,6 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use libp2p::Multiaddr;
 #[cfg(feature = "net")]
 use rpassword::prompt_password;
-#[cfg(feature = "net")]
 use serde_json;
 
 const NETWORK_ID: &str = "JROC-NET";
@@ -71,6 +71,8 @@ fn handle_node(sub: &str, tail: Vec<String>) {
         "run" => cmd_node_run(tail),
         "anchor" => cmd_node_anchor(tail),
         "reconcile" => cmd_node_reconcile(tail),
+        "prove" => cmd_node_prove(tail),
+        "verify-proof" => cmd_node_verify_proof(tail),
         _ => {
             eprintln!("Unknown subcommand: {}", sub);
             std::process::exit(1);
@@ -183,6 +185,97 @@ fn cmd_node_reconcile(args: Vec<String>) {
     }
 }
 
+fn cmd_node_prove(args: Vec<String>) {
+    if args.len() < 3 {
+        eprintln!("Usage: julian node prove <log_dir> <entry_index> <leaf_index> [output.json]");
+        std::process::exit(1);
+    }
+    let log_dir = Path::new(&args[0]);
+    let entry_index: usize = args[1]
+        .parse()
+        .unwrap_or_else(|_| fatal("invalid entry index"));
+    let leaf_index: usize = args[2]
+        .parse()
+        .unwrap_or_else(|_| fatal("invalid leaf index"));
+    let anchor = load_anchor_from_logs(log_dir).unwrap_or_else(|err| fatal(&format!("{err}")));
+    let entry = anchor
+        .entries
+        .get(entry_index)
+        .unwrap_or_else(|| fatal("entry index out of bounds"));
+    if leaf_index >= entry.hashes.len() {
+        fatal("leaf index out of bounds");
+    }
+    let proof = power_house::build_merkle_proof(&entry.hashes, leaf_index)
+        .ok_or_else(|| "unable to build proof".to_string())
+        .unwrap_or_else(|err| fatal(&err));
+    if proof.root != entry.merkle_root {
+        fatal("computed proof root does not match entry merkle root");
+    }
+    let proof_json: serde_json::Value = serde_json::from_str(&proof.to_json_string()).unwrap();
+    let document = serde_json::json!({
+        "entry_index": entry_index,
+        "statement": entry.statement,
+        "leaf_index": leaf_index,
+        "leaf": power_house::transcript_digest_to_hex(&entry.hashes[leaf_index]),
+        "merkle_root": power_house::transcript_digest_to_hex(&entry.merkle_root),
+        "proof": proof_json
+    });
+    if let Some(path) = args.get(3) {
+        if let Err(err) = fs::write(path, serde_json::to_string_pretty(&document).unwrap()) {
+            fatal(&format!("failed to write proof: {err}"));
+        }
+    } else {
+        println!("{}", serde_json::to_string_pretty(&document).unwrap());
+    }
+}
+
+fn cmd_node_verify_proof(args: Vec<String>) {
+    if args.len() != 2 {
+        eprintln!("Usage: julian node verify-proof <anchor_file> <proof_file>");
+        std::process::exit(1);
+    }
+    let anchor = read_anchor(Path::new(&args[0]))
+        .unwrap_or_else(|err| fatal(&format!("failed to read anchor: {err}")));
+    let proof_text = fs::read_to_string(&args[1])
+        .unwrap_or_else(|err| fatal(&format!("failed to read proof file: {err}")));
+    let document: serde_json::Value = serde_json::from_str(&proof_text)
+        .unwrap_or_else(|err| fatal(&format!("invalid proof JSON: {err}")));
+    let entry_index = document
+        .get("entry_index")
+        .and_then(|v| v.as_u64())
+        .unwrap_or_else(|| fatal("proof missing entry_index")) as usize;
+    let leaf_index = document
+        .get("leaf_index")
+        .and_then(|v| v.as_u64())
+        .unwrap_or_else(|| fatal("proof missing leaf_index")) as usize;
+    let proof_value = document
+        .get("proof")
+        .unwrap_or_else(|| fatal("proof missing inner proof object"));
+    let proof_json = serde_json::to_string(proof_value).unwrap();
+    let proof = power_house::MerkleProof::from_json_str(&proof_json)
+        .unwrap_or_else(|err| fatal(&format!("invalid proof: {err}")));
+    if entry_index >= anchor.entries.len() {
+        fatal("entry index out of bounds");
+    }
+    let entry = &anchor.entries[entry_index];
+    if leaf_index >= entry.hashes.len() {
+        fatal("leaf index out of bounds");
+    }
+    if proof.root != entry.merkle_root {
+        fatal("proof root does not match anchor merkle root");
+    }
+    if proof.leaf != entry.hashes[leaf_index] {
+        fatal("proof leaf does not match anchor digest");
+    }
+    if !power_house::verify_merkle_proof(&proof) {
+        fatal("invalid Merkle proof");
+    }
+    println!(
+        "Proof verified for statement '{}' (entry {}, leaf {}).",
+        entry.statement, entry_index, leaf_index
+    );
+}
+
 #[cfg(feature = "net")]
 fn cmd_net_start(args: Vec<String>) {
     let mut node_id = None;
@@ -194,6 +287,8 @@ fn cmd_net_start(args: Vec<String>) {
     let mut key_spec: Option<String> = None;
     let mut identity_path: Option<String> = None;
     let mut metrics_addr_spec: Option<String> = None;
+    let mut policy_allowlist_spec: Option<String> = None;
+    let mut checkpoint_interval_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -260,6 +355,18 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--metrics expects a value")),
                 );
             }
+            "--policy-allowlist" => {
+                policy_allowlist_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--policy-allowlist expects a value")),
+                );
+            }
+            "--checkpoint-interval" => {
+                checkpoint_interval_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--checkpoint-interval expects a value")),
+                );
+            }
             other => fatal(&format!("unknown argument: {other}")),
         }
     }
@@ -290,6 +397,18 @@ fn cmd_net_start(args: Vec<String>) {
         .as_deref()
         .map(parse_metrics_addr)
         .unwrap_or(None);
+    let identity_policy = match policy_allowlist_spec {
+        Some(path) => match IdentityPolicy::from_allowlist_path(Path::new(&path)) {
+            Ok(policy) => policy,
+            Err(err) => fatal(&format!("failed to load policy: {err}")),
+        },
+        None => IdentityPolicy::allow_all(),
+    };
+    let checkpoint_interval = checkpoint_interval_spec.map(|value| {
+        value
+            .parse()
+            .unwrap_or_else(|_| fatal("invalid --checkpoint-interval"))
+    });
 
     let config = NetConfig::new(
         node_id,
@@ -300,6 +419,8 @@ fn cmd_net_start(args: Vec<String>) {
         Duration::from_millis(broadcast_ms),
         key_material,
         metrics_addr,
+        identity_policy,
+        checkpoint_interval,
     );
 
     let runtime = tokio::runtime::Runtime::new()
@@ -424,7 +545,27 @@ fn cmd_net_verify_envelope(args: Vec<String>) {
 }
 
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
-    let mut entries = julian_genesis_anchor().entries;
+    let mut cutoff: Option<String> = None;
+    let mut entries = {
+        #[cfg(feature = "net")]
+        {
+            match power_house::net::load_latest_checkpoint(path) {
+                Ok(Some(checkpoint)) => match checkpoint.into_ledger() {
+                    Ok((anchor, cp_cutoff)) => {
+                        cutoff = cp_cutoff;
+                        anchor.entries
+                    }
+                    Err(err) => return Err(format!("checkpoint error: {err}")),
+                },
+                Ok(None) => julian_genesis_anchor().entries,
+                Err(err) => return Err(format!("checkpoint error: {err}")),
+            }
+        }
+        #[cfg(not(feature = "net"))]
+        {
+            julian_genesis_anchor().entries
+        }
+    };
     let mut files: Vec<PathBuf> = fs::read_dir(path)
         .map_err(|err| format!("failed to read directory {}: {err}", path.display()))?
         .filter_map(|entry| entry.ok().map(|e| e.path()))
@@ -432,6 +573,13 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
         .collect();
     files.sort();
     for file in files {
+        if let Some(ref cutoff_name) = cutoff {
+            if let Some(name) = file.file_name().and_then(|n| n.to_str()) {
+                if name <= cutoff_name.as_str() {
+                    continue;
+                }
+            }
+        }
         let mut contents = String::new();
         fs::File::open(&file)
             .map_err(|err| format!("failed to open {}: {err}", file.display()))?
@@ -466,9 +614,11 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
                 computed_hex
             ));
         }
+        let entry_hashes = vec![computed];
         entries.push(EntryAnchor {
             statement,
-            hashes: vec![computed],
+            merkle_root: power_house::merkle_root(&entry_hashes),
+            hashes: entry_hashes,
         });
     }
     Ok(LedgerAnchor { entries })
@@ -496,7 +646,13 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
             .map(|h| power_house::transcript_digest_to_hex(h))
             .collect::<Vec<_>>()
             .join(",");
-        lines.push(format!("{}|{}|{}", NETWORK_ID, entry.statement, hash_list));
+        lines.push(format!(
+            "{}|{}|{}|root={}",
+            NETWORK_ID,
+            entry.statement,
+            hash_list,
+            power_house::transcript_digest_to_hex(&entry.merkle_root)
+        ));
     }
     lines.join("\n")
 }
@@ -509,16 +665,25 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
             continue;
         }
         let segments: Vec<&str> = trimmed.split('|').collect();
-        let (statement, hashes_str) = match segments.as_slice() {
+        let (statement, hashes_str, root_part) = match segments.as_slice() {
+            [network, statement, hashes, root] => {
+                if *network != NETWORK_ID {
+                    return Err(format!(
+                        "anchor network mismatch: expected {NETWORK_ID}, found {network}"
+                    ));
+                }
+                (*statement, *hashes, Some(*root))
+            }
             [network, statement, hashes] => {
                 if *network != NETWORK_ID {
                     return Err(format!(
                         "anchor network mismatch: expected {NETWORK_ID}, found {network}"
                     ));
                 }
-                (*statement, *hashes)
+                (*statement, *hashes, None)
             }
-            [statement, hashes] => (*statement, *hashes),
+            [statement, hashes, root] => (*statement, *hashes, Some(*root)),
+            [statement, hashes] => (*statement, *hashes, None),
             _ => return Err(format!("invalid anchor line: {trimmed}")),
         };
         let mut hashes = Vec::new();
@@ -533,9 +698,19 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
                 hashes.push(value);
             }
         }
+        let merkle_root = if let Some(root_field) = root_part {
+            let value = root_field
+                .strip_prefix("root=")
+                .ok_or_else(|| format!("invalid root field: {root_field}"))?;
+            power_house::transcript_digest_from_hex(value)
+                .map_err(|err| format!("invalid root digest: {err}"))?
+        } else {
+            power_house::merkle_root(&hashes)
+        };
         entries.push(EntryAnchor {
             statement: statement.to_string(),
             hashes,
+            merkle_root,
         });
     }
     if entries.is_empty() {
@@ -554,8 +729,10 @@ fn format_anchor(anchor: &LedgerAnchor) -> String {
             .collect::<Vec<_>>()
             .join(", ");
         lines.push(format!(
-            "{NETWORK_ID} :: {} -> [{}]",
-            entry.statement, hashes
+            "{NETWORK_ID} :: {} -> [{}] :: root={}",
+            entry.statement,
+            hashes,
+            power_house::transcript_digest_to_hex(&entry.merkle_root)
         ));
     }
     lines.join("\n")

@@ -35,8 +35,8 @@ The JULIAN Protocol is implemented in the `power_house` crate. The key architect
 |-----------|----------------|-----------|
 | `StreamingPolynomial` | On-demand evaluation of multilinear polynomials without allocating the entire hypercube | `src/streaming.rs` |
 | `GeneralSumProof` | Non-interactive sum-check prover/verifier with deterministic Fiat–Shamir transcripts | `src/sumcheck.rs` |
-| `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, and audit logs | `src/alien.rs` |
-| Ledger Anchors | `EntryAnchor` and `LedgerAnchor` aggregate statements with transcript hashes | `src/alien.rs` |
+| `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/alien.rs` |
+| Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/alien.rs` |
 | Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/alien.rs` |
 | Tooling | Examples for benchmarking (`scale_sumcheck`), chaining (`mega_sumcheck`), hashing (`hash_pipeline`), and log verification (`verify_logs`) | `examples/*.rs` |
 
@@ -82,11 +82,15 @@ This approach has three properties:
 The BLAKE2b-256 domain tag `JROC_TRANSCRIPT` ensures transcripts, anchor folds, and challenge
 derivations remain distinct contexts while sharing the same primitive.
 
+Every ledger entry also stores a Merkle root computed over its transcript digests. The root is
+exposed alongside the hash list, enabling compact inclusion proofs (`julian node prove` and
+`julian node verify-proof`) and keeping anchors stable even when new transcript formats appear.
+
 ## 4. Ledger Anchors and Finality
 
 A **ledger anchor** is formalised in `src/alien.rs` as:
 
-- `EntryAnchor { statement: String, hashes: Vec<TranscriptDigest> }`
+- `EntryAnchor { statement: String, hashes: Vec<TranscriptDigest>, merkle_root: TranscriptDigest }`
 - `LedgerAnchor { entries: Vec<EntryAnchor> }`
 
 The **validity predicate** `Valid(ledger_anchor)` holds when every hash equals the digest
@@ -123,6 +127,14 @@ library, the protocol remains lightweight and deterministic across platforms.
 - **Ledger** (`src/alien.rs`): accepts `ProofKind::General` and `ProofKind::StreamingGeneral`, emits logs,
   maintains in-memory hashes, and exposes `LedgerAnchor` structures.
 - **Logging** (`src/data.rs`, `src/io.rs`): ASCII output with transcript, sums, final value, and hash.
+- **Merkle accumulation** (`src/merkle.rs`): every entry records a BLAKE2b-256 Merkle root, allowing
+  inclusion proofs without shipping the full transcript list; the CLI exposes `julian node prove`
+  and `julian node verify-proof` for auditors.
+- **Identity policy** (`src/net/policy.rs`): an optional allowlist (`--policy-allowlist`) restricts
+  quorum voting to authorised ed25519 public keys.
+- **Checkpoints** (`src/net/checkpoint.rs`): nodes may emit signed anchor checkpoints every
+  <code>N</code> broadcasts (`--checkpoint-interval N`), enabling fast bootstrap by replaying only
+  logs newer than the last checkpoint.
 - **Examples**:
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
@@ -157,6 +169,10 @@ per-round timings for each link in the chain.
   distinct identities (ed25519 public keys) per anchor. Honest deployments must ensure each node
   signs its envelope once per broadcast; offline reconciliation can supply placeholder identities
   when signatures are unavailable.
+- **Admission control** – Supply `--policy-allowlist` so only pre-approved ed25519 keys count toward
+  quorum; keys not in the allowlist are ignored during reconciliation.
+- **Checkpoints** – Periodic signed checkpoints reduce replay cost for new nodes. Ensure checkpoint
+  files are stored securely (they contain anchor snapshots plus signatures).
 - **Streaming closure trust** – Nodes supplying streaming evaluators must ensure identical logic;
   cross-node reconciliation is necessary to catch inconsistencies.
 
@@ -185,6 +201,8 @@ To support distributed reconciliation, the crate now ships an optional networkin
   quorum reconciliation upon receipt. Envelope handling now enforces schema/network identifiers,
   caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and fumes
   invalid senders after repeated mistakes.
+- `net::policy` – static allowlist enforcement for quorum identities (`--policy-allowlist`).
+- `net::checkpoint` – periodic signed checkpoints (`--checkpoint-interval`) for fast ledger bootstrap.
 
 The `julian net` CLI subcommands—`start`, `anchor`, and `verify-envelope`—exercise this layer. They
 remain opt-in so the base library stays dependency-free by default.

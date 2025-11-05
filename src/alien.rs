@@ -38,8 +38,8 @@
 //! deterministic anchor reconciliation.
 
 use crate::{
-    transcript_digest, write_text_series, write_transcript_record, ChainedSumProof, Field,
-    GeneralSumProof, MultilinearPolynomial, StreamingPolynomial, SumClaim, TranscriptDigest,
+    merkle_root, transcript_digest, write_text_series, write_transcript_record, ChainedSumProof,
+    Field, GeneralSumProof, MultilinearPolynomial, StreamingPolynomial, SumClaim, TranscriptDigest,
 };
 use blake2::digest::{consts::U32, Digest};
 use std::{collections::HashMap, path::PathBuf};
@@ -115,6 +115,8 @@ pub struct LedgerEntry {
     pub log_error: Option<String>,
     /// Deterministic transcript hashes retained in-memory.
     pub hashes: Vec<TranscriptDigest>,
+    /// Merkle root over the transcript hashes.
+    pub merkle_root: TranscriptDigest,
 }
 
 /// A simple proof ledger that stores entries.  In a real system, this
@@ -134,6 +136,8 @@ pub struct EntryAnchor {
     pub statement: String,
     /// Hashes of each transcript record.
     pub hashes: Vec<TranscriptDigest>,
+    /// Merkle root for the transcript hashes.
+    pub merkle_root: TranscriptDigest,
 }
 
 /// Anchor aggregation for an entire ledger.
@@ -157,6 +161,7 @@ pub fn julian_genesis_anchor() -> LedgerAnchor {
         entries: vec![EntryAnchor {
             statement: JULIAN_GENESIS_STATEMENT.to_string(),
             hashes: vec![julian_genesis_hash()],
+            merkle_root: merkle_root(&[julian_genesis_hash()]),
         }],
     }
 }
@@ -267,6 +272,8 @@ impl ProofLedger {
         };
 
         let mut entry = if matches!(proof.kind, ProofKind::Genesis) {
+            let hashes = vec![julian_genesis_hash()];
+            let merkle = merkle_root(&hashes);
             LedgerEntry {
                 statement,
                 proof,
@@ -276,9 +283,11 @@ impl ProofLedger {
                 final_values: vec![0],
                 log_paths: Vec::new(),
                 log_error: None,
-                hashes: vec![julian_genesis_hash()],
+                hashes,
+                merkle_root: merkle,
             }
         } else {
+            let merkle = merkle_root(&hashes);
             LedgerEntry {
                 statement,
                 proof,
@@ -289,6 +298,7 @@ impl ProofLedger {
                 log_paths,
                 log_error,
                 hashes,
+                merkle_root: merkle,
             }
         };
 
@@ -339,6 +349,7 @@ impl ProofLedger {
             .map(|entry| EntryAnchor {
                 statement: entry.statement.description.clone(),
                 hashes: entry.hashes.clone(),
+                merkle_root: entry.merkle_root,
             })
             .collect();
         LedgerAnchor { entries }
@@ -365,6 +376,7 @@ impl ProofLedger {
                 log_paths: Vec::new(),
                 log_error: None,
                 hashes: vec![julian_genesis_hash()],
+                merkle_root: merkle_root(&[julian_genesis_hash()]),
             };
             self.entries.insert(0, genesis_entry);
         }

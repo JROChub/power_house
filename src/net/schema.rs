@@ -23,6 +23,9 @@ pub struct AnchorEntryJson {
     pub statement: String,
     /// Deterministic transcript hash list for this statement.
     pub hashes: Vec<String>,
+    /// Optional Merkle root over the hashes (hex encoded).
+    #[serde(default)]
+    pub merkle_root: Option<String>,
 }
 
 /// Machine-readable representation of a JULIAN ledger anchor.
@@ -136,6 +139,7 @@ impl AnchorJson {
                     .iter()
                     .map(|digest| digest_to_hex(digest))
                     .collect(),
+                merkle_root: Some(digest_to_hex(&entry.merkle_root)),
             })
             .collect();
         Ok(Self {
@@ -174,9 +178,16 @@ impl AnchorJson {
                     .map_err(|reason| AnchorCodecError::InvalidDigest { entry: idx, reason })?;
                 hashes.push(digest);
             }
+            let merkle_root = if let Some(root_hex) = entry.merkle_root {
+                digest_from_hex(&root_hex)
+                    .map_err(|reason| AnchorCodecError::InvalidDigest { entry: idx, reason })?
+            } else {
+                crate::merkle_root(&hashes)
+            };
             entries.push(EntryAnchor {
                 statement: entry.statement,
                 hashes,
+                merkle_root,
             });
         }
         Ok(LedgerAnchor { entries })

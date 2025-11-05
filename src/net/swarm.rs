@@ -1,16 +1,23 @@
 #![cfg(feature = "net")]
 
-use crate::net::schema::{
-    AnchorCodecError, AnchorEnvelope, AnchorJson, ENVELOPE_SCHEMA_VERSION, NETWORK_ID,
-    SCHEMA_ENVELOPE,
-};
 use crate::net::sign::{
     decode_public_key_base64, encode_public_key_base64, encode_signature_base64, sign_payload,
     verify_signature_base64, KeyError, KeyMaterial,
 };
+use crate::net::{
+    checkpoint::{
+        latest_log_cutoff, load_latest_checkpoint, write_checkpoint, AnchorCheckpoint,
+        CheckpointSignature,
+    },
+    policy::IdentityPolicy,
+    schema::{
+        AnchorCodecError, AnchorEnvelope, AnchorJson, ENVELOPE_SCHEMA_VERSION, NETWORK_ID,
+        SCHEMA_ENVELOPE,
+    },
+};
 use crate::{
-    julian_genesis_anchor, transcript_digest, verify_transcript_lines, AnchorVote, EntryAnchor,
-    LedgerAnchor,
+    julian_genesis_anchor, merkle_root, transcript_digest, verify_transcript_lines, AnchorVote,
+    EntryAnchor, LedgerAnchor,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use futures::StreamExt;
@@ -59,6 +66,10 @@ pub struct NetConfig {
     pub broadcast_interval: Duration,
     /// Signing and libp2p keys backing the node identity.
     pub key_material: KeyMaterial,
+    /// Identity admission policy.
+    pub identity_policy: IdentityPolicy,
+    /// Optional checkpoint interval (in broadcasts).
+    pub checkpoint_interval: Option<u64>,
     metrics: Arc<Metrics>,
     metrics_addr: Option<SocketAddr>,
 }
@@ -75,6 +86,8 @@ impl NetConfig {
         broadcast_interval: Duration,
         key_material: KeyMaterial,
         metrics_addr: Option<SocketAddr>,
+        identity_policy: IdentityPolicy,
+        checkpoint_interval: Option<u64>,
     ) -> Self {
         Self {
             node_id,
@@ -86,6 +99,8 @@ impl NetConfig {
             key_material,
             metrics: Arc::new(Metrics::default()),
             metrics_addr,
+            identity_policy,
+            checkpoint_interval,
         }
     }
 }
@@ -236,6 +251,12 @@ struct JrocBehaviour {
 /// for every new anchor. Incoming envelopes are verified and reconciled with
 /// the local ledger according to `cfg.quorum`.
 pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
+    let local_key_bytes = cfg.key_material.verifying.to_bytes();
+    if !cfg.identity_policy.permits(&local_key_bytes) {
+        return Err(NetworkError::Key(
+            "local key not permitted by identity policy".to_string(),
+        ));
+    }
     let mut swarm = build_swarm(&cfg)?;
     Swarm::listen_on(&mut swarm, cfg.listen_addr.clone())
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
@@ -263,6 +284,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut invalid_counters: HashMap<libp2p::PeerId, usize> = HashMap::new();
     let mut last_payload = Vec::new();
     let mut last_publish: Option<Instant> = None;
+    let mut broadcast_counter: u64 = 0;
 
     let local_peer = cfg.key_material.libp2p.public().to_peer_id();
 
@@ -274,7 +296,16 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     loop {
         select! {
             _ = ticker.tick() => {
-                if let Err(err) = broadcast_local_anchor(&mut swarm, &cfg, &mut last_payload, &mut last_publish, &metrics).await {
+                if let Err(err) = broadcast_local_anchor(
+                    &mut swarm,
+                    &cfg,
+                    &mut last_payload,
+                    &mut last_publish,
+                    &mut broadcast_counter,
+                    &metrics,
+                )
+                .await
+                {
                     metrics.inc_gossipsub_rejects();
                     eprintln!("broadcast error: {err}");
                 }
@@ -354,8 +385,17 @@ async fn broadcast_local_anchor(
     cfg: &NetConfig,
     last_payload: &mut Vec<u8>,
     last_publish: &mut Option<Instant>,
+    broadcast_counter: &mut u64,
     metrics: &Arc<Metrics>,
 ) -> Result<(), NetworkError> {
+    if !cfg
+        .identity_policy
+        .permits(&cfg.key_material.verifying.to_bytes())
+    {
+        return Err(NetworkError::Key(
+            "local key not permitted by identity policy".to_string(),
+        ));
+    }
     let ledger = load_anchor_from_logs(&cfg.log_dir)?;
     let timestamp_ms = now_millis();
     let anchor_json =
@@ -371,13 +411,14 @@ async fn broadcast_local_anchor(
         }
     }
     let signature = sign_payload(&cfg.key_material.signing, &payload);
+    let signature_b64 = encode_signature_base64(&signature);
     let envelope = AnchorEnvelope {
         schema: SCHEMA_ENVELOPE.to_string(),
         schema_version: ENVELOPE_SCHEMA_VERSION,
         public_key: encode_public_key_base64(&cfg.key_material.verifying),
         node_id: cfg.node_id.clone(),
         payload: BASE64.encode(&payload),
-        signature: encode_signature_base64(&signature),
+        signature: signature_b64.clone(),
     };
     let message =
         serde_json::to_vec(&envelope).map_err(|err| NetworkError::Codec(err.to_string()))?;
@@ -395,6 +436,32 @@ async fn broadcast_local_anchor(
         "broadcasted local anchor ({} entries)",
         ledger.entries.len()
     );
+    if let Some(interval) = cfg.checkpoint_interval {
+        if interval > 0 {
+            *broadcast_counter = broadcast_counter.saturating_add(1);
+            if *broadcast_counter % interval == 0 {
+                let checkpoint = AnchorCheckpoint::new(
+                    *broadcast_counter,
+                    anchor_json.clone(),
+                    vec![CheckpointSignature {
+                        node_id: cfg.node_id.clone(),
+                        public_key: encode_public_key_base64(&cfg.key_material.verifying),
+                        signature: signature_b64,
+                    }],
+                    latest_log_cutoff(&cfg.log_dir),
+                );
+                if let Err(err) = write_checkpoint(&cfg.log_dir.join("checkpoints"), &checkpoint) {
+                    eprintln!("checkpoint write failed: {err}");
+                } else {
+                    println!(
+                        "checkpoint {} recorded (entries={})",
+                        checkpoint.epoch,
+                        ledger.entries.len()
+                    );
+                }
+            }
+        }
+    }
     Ok(())
 }
 
@@ -441,6 +508,15 @@ async fn handle_event(
                 let remote_verifying = decode_public_key_base64(&envelope.public_key)
                     .map_err(|err| NetworkError::Codec(err.to_string()))?;
                 let remote_key_bytes = remote_verifying.to_bytes();
+                if !cfg.identity_policy.permits(&remote_key_bytes) {
+                    metrics.inc_gossipsub_rejects();
+                    record_invalid(invalid_counters, propagation_source, metrics);
+                    println!(
+                        "rejecting peer {}: identity not permitted by policy",
+                        envelope.node_id
+                    );
+                    return Ok(());
+                }
                 let payload_str = std::str::from_utf8(&payload)
                     .map_err(|err| NetworkError::Codec(err.to_string()))?;
                 let anchor_json = AnchorJson::from_json_str(payload_str)
@@ -659,7 +735,19 @@ mod tests {
 }
 
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
-    let mut entries = julian_genesis_anchor().entries;
+    let mut cutoff: Option<String> = None;
+    let mut entries = match load_latest_checkpoint(path) {
+        Ok(Some(checkpoint)) => {
+            let (anchor, cp_cutoff) = checkpoint
+                .clone()
+                .into_ledger()
+                .map_err(|err| NetworkError::Anchor(err.to_string()))?;
+            cutoff = cp_cutoff;
+            anchor.entries
+        }
+        Ok(None) => julian_genesis_anchor().entries,
+        Err(err) => return Err(NetworkError::Anchor(err.to_string())),
+    };
     let mut files: Vec<PathBuf> = std::fs::read_dir(path)
         .map_err(|err| NetworkError::Io(format!("failed to read {}: {err}", path.display())))?
         .filter_map(|entry| entry.ok().map(|e| e.path()))
@@ -667,6 +755,13 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
         .collect();
     files.sort();
     for file in files {
+        if let Some(ref cutoff_name) = cutoff {
+            if let Some(name) = file.file_name().and_then(|n| n.to_str()) {
+                if name <= cutoff_name.as_str() {
+                    continue;
+                }
+            }
+        }
         let mut contents = String::new();
         std::fs::File::open(&file)
             .map_err(|err| NetworkError::Io(format!("failed to open {}: {err}", file.display())))?
@@ -706,9 +801,11 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
                 computed_hex
             )));
         }
+        let entry_hashes = vec![computed];
         entries.push(EntryAnchor {
             statement,
-            hashes: vec![computed],
+            merkle_root: merkle_root(&entry_hashes),
+            hashes: entry_hashes,
         });
     }
     Ok(LedgerAnchor { entries })
