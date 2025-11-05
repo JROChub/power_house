@@ -31,7 +31,7 @@ Chapter I — Anchor Echo Engine Command Doctrine
 08. That payload is the synthesized anchor committed by an observer node.
 09. This miracle works because `transcript_digest` in `power_house::transcript` is deterministic.
 10. Ledger entries are stored alphabetically in `ledger_0000.txt`, `ledger_0001.txt`, etc.
-11. Each ledger line begins with a keyword: `statement`, `challenge`, `round_sum`, `final_eval`, `hash`.
+11. Each ledger line begins with a keyword: `statement`, `challenge`, `round_sums`, `final_eval`, `hash`.
 12. The digest uses `blake2b` truncated to 64 bits; nothing random sneaks in.
 13. `LedgerAnchor::push` in `alien::ledger` automatically prepends `JULIAN::GENESIS`.
 14. `reconcile_anchors_with_quorum` rejects mismatched statements or hash arrays.
@@ -94,7 +94,7 @@ Chapter I — Anchor Echo Engine Command Doctrine
 71. Ensure your abacus has enough beads; 64-bit calculations require structured approach.
 72. For analog verification, binary toggle boards can replicate the XOR step-by-step.
 73. Keep the result `ANCHOR!!` etched on the cover of your field notebook.
-74. The demonstration has been tested across hardware architectures; endianness does not alter the final ASCII.
+74. The demonstration has been tested across hardware architectures; interpret the XOR output in big-endian byte order before ASCII translation.
 75. Should you encounter corrupted ledger file, recompute digests to confirm failure occurs as expected.
 76. Re-training schedule: once per quarter, the entire team performs the XOR ritual together.
 77. This ensures institutional memory remains strong even as staff rotates.
@@ -175,7 +175,7 @@ Chapter II — Foundational Field Algebra Procedures
 48. Maintain final values as field elements until writing to ledger.
 49. The ledger stores textual integers but the operations leading there must stay in the field.
 50. To emulate this book’s demonstration, compile transcripts manually and check each numeric entry.
-51. If a ledger entry reads `round_sums: 37 11`, you now understand the field context.
+51. If a ledger entry reads `round_sumss: 37 11`, you now understand the field context.
 52. Provide cross references inside ledger comments: `# F101`.
 53. This manual expects you to remember Fermat’s little theorem without apologizing.
 54. Individuals unable to recall modular arithmetic fundamentals must repeat cadet training.
@@ -242,7 +242,7 @@ Chapter III — Hyperplane Cartography Briefing
 11. `transcript_digest` ensures coefficients align with commitments.
 12. The manual expects you to read `src/sumcheck.rs` while consuming this chapter.
 13. When verifying transcripts, check each round sum line first.
-14. If you see `round_sum: 37 11`, confirm that `37 + 11` equals previous accumulator.
+14. If you see `round_sums: 37 11`, confirm that `37 + 11` equals previous accumulator.
 15. Document every challenge `r_i` to maintain traceability.
 16. Challenge values come from deterministic PRNG seeded with transcript context.
 17. This ensures identical transcripts produce identical digests across nodes.
@@ -251,7 +251,7 @@ Chapter III — Hyperplane Cartography Briefing
 20. An example transcript snippet:
 21. `statement: Dense polynomial proof`.
 22. `challenge: 37`.
-23. `round_sums: 12 47`.
+23. `round_sumss: 12 47`.
 24. `final_eval: 19`.
 25. `hash: 999B55116F6AFC2F`.
 26. The hash matches `digest_A` from Chapter I; cross-reference completed.
@@ -338,7 +338,7 @@ Chapter IV — Transcript Metallurgy Protocols
 03. Lines are plain ASCII; no binary, no compression.
 04. Example statement: `statement: Dense polynomial proof`.
 05. Example challenge line: `challenge: 37`.
-06. Example round sums: `round_sums: 12 47`.
+06. Example round sums: `round_sumss: 12 47`.
 07. Example final evaluation: `final_eval: 19`.
 08. Example digest: `hash: 999B55116F6AFC2F`.
 09. Digest is produced by `transcript_digest` using blake2b.
@@ -454,10 +454,11 @@ Chapter V — Ledger Genesis Mechanics Checklist
 15. Output file lists anchor statements and hash numbers.
 16. Validate anchor by comparing to manual XOR demonstration.
 17. Boot nodes produce identical anchors when reading identical transcripts.
-18. Example summary in anchor file:
+18. Example summary in anchor file (decimal digests):
 19. `JROC-NET :: JULIAN::GENESIS -> [17942395924573474124]`.
 20. `JROC-NET :: Dense polynomial proof -> [1560461912026565426]`.
 21. `JROC-NET :: Hash anchor proof -> [17506285175808955616]`.
+Document digests in a single numeric format per anchor file; this manual uses decimal for readability.
 22. Reproduced digests match the XOR example after formatting.
 23. Document anchors with version numbers and node descriptors.
 24. Store anchor files in node-specific directories: `./logs/nodeA`, `./logs/nodeB`.
@@ -660,7 +661,7 @@ Chapter VII — Consensus Theater Operations
 13. `  --metrics :9100 \`
 14. `  --key ed25519://boot1-seed`.
 15. Boot node prints metrics server location and peer ID.
-16. Boot strap second node:
+16. Bootstrap second node:
 17. `julian net start \`
 18. `  --node-id boot2 \`
 19. `  --log-dir ./logs/boot2 \`
