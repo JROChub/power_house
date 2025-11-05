@@ -82,7 +82,7 @@ julian node reconcile ./logs/boot2 boot1.anchor.txt 2</pre>
 <p>See <a href="./LICENSE">LICENSE</a> for the full legal text.</p>
 
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">power_house overview</h2>
-<p><strong style="font-weight:600;">power_house</strong> is a paradigmatic exploration of interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness—all implemented in pure Rust with zero external dependencies. It emulates the <em>sum-check protocol</em>, demonstrates a quorum finality primitive, and now backs the JULIAN Protocol ledger.</p>
+<p><strong style="font-weight:600;">power_house</strong> is a paradigmatic exploration of interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness—all implemented in pure Rust with a focus on reproducibility. It emulates the <em>sum-check protocol</em>, demonstrates a quorum finality primitive, and now backs the JULIAN Protocol ledger.</p>
 
 <h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Motivation</h3>
 
