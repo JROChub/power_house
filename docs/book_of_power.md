@@ -1,8 +1,8 @@
 Title Page
 ===========
 Book of Power — Condensed Graviton Edition
-Author: Irritated Ledger Archivist
-Crate Under Review: `power_house` (zero-dependency)
+Author: power_house maintainers
+Crate Under Review: `power_house`
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Repository Source: crate checkout `power_house`
 This User Guide Lives Inside the Crate: `docs/book_of_power.md`
