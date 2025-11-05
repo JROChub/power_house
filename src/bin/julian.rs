@@ -544,7 +544,10 @@ fn cmd_net_verify_envelope(args: Vec<String>) {
 }
 
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
+    #[cfg(feature = "net")]
     let mut cutoff: Option<String> = None;
+    #[cfg(not(feature = "net"))]
+    let cutoff: Option<String> = None;
     let mut entries = {
         #[cfg(feature = "net")]
         {
