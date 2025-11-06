@@ -216,6 +216,7 @@ Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the
 <ul style="margin:0.3rem 0 0.6rem 1.1rem;font-size:0.66rem;line-height:1.6;">
   <li><code>static</code> &mdash; inline allowlist via <code>allowlist: [&quot;base64&quot;,...]</code>.</li>
   <li><code>static-file</code> &mdash; pointer to a legacy allowlist JSON (<code>{"allowed":[...]}</code>).</li>
+  <li><code>stake</code> &mdash; bond-backed membership loaded from a staking state file.</li>
   <li><code>multisig</code> &mdash; pointer to a state file tracking K-of-N signers and active members.</li>
 </ul>
 <p style="margin:0.3rem 0;">Example multisig state file:</p>
@@ -231,13 +232,27 @@ Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the
     "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
   ]
 }</pre>
-<p style="margin:0.3rem 0;">To rotate membership, craft a <code style="font-size:0.66rem;">GovernanceUpdate</code> JSON (new member list plus metadata), collect the required signatures offline, and feed it to your operational tooling before replacing the state file.</p>
+<p style="margin:0.3rem 0;">Stake-backed state files embed bonds and slash flags:</p>
+<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+  "threshold": 2,
+  "bond_threshold": 100,
+  "signers": [
+    "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
+    "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
+  ],
+  "entries": [
+    {"public_key": "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=", "bond": 150, "slashed": false},
+    {"public_key": "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I=", "bond": 120, "slashed": false}
+  ]
+}</pre>
+<p style="margin:0.3rem 0;">To rotate membership, craft a <code style="font-size:0.66rem;">GovernanceUpdate</code> JSON (new member list plus metadata), collect the required signatures offline, and feed it to your operational tooling before replacing the state file. The staking backend automatically marks keys as slashed when they broadcast conflicting anchors—review and commit those changes to the registry after each incident.</p>
 
 <h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Membership rotation checklist</h4>
 <ul style="margin:0.3rem 0 0.8rem 1.1rem;font-size:0.66rem;line-height:1.6;">
   <li>Fetch the current descriptor (e.g., <code>scp root@boot1:/etc/jrocnet/governance.json ./</code>).</li>
   <li>Edit the descriptor or state file offline, ensuring the new membership list is correct.</li>
   <li>For multisig mode, prepare a <code>GovernanceUpdate</code> document with the new members and collect at least <code>threshold</code> ed25519 signatures.</li>
+  <li>For stake mode, embed bond deposits and explicit slashes in the update metadata; conflicting anchors are auto-slashed at runtime, so review and re-affirm the registry after incidents.</li>
   <li>Drop the signed update plus refreshed state file onto each boot node (keeping the previous version archived in <code>logs/policy/</code>).</li>
   <li>Restart the node with the same <code>--policy</code> argument; <code>julian net start</code> loads the updated membership immediately.</li>
 </ul>

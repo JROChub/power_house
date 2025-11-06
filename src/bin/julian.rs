@@ -8,7 +8,7 @@
 use power_house::net::{
     decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
     verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy,
-    MultisigPolicy, NetConfig, StaticPolicy,
+    MultisigPolicy, NetConfig, StakePolicy, StaticPolicy,
 };
 use power_house::{
     julian_genesis_anchor, reconcile_anchors_with_quorum, transcript_digest,
@@ -778,6 +778,7 @@ enum GovernanceDescriptor {
     Static { allowlist: Vec<String> },
     StaticFile { path: String },
     Multisig { state_path: String },
+    Stake { state_path: String },
 }
 
 #[cfg(feature = "net")]
@@ -807,6 +808,9 @@ fn load_membership_policy(
                     .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
                     .unwrap_or_else(|err| fatal(&format!("failed to load multisig policy: {err}")))
             }
+            GovernanceDescriptor::Stake { state_path } => StakePolicy::load(Path::new(&state_path))
+                .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
+                .unwrap_or_else(|err| fatal(&format!("failed to load stake policy: {err}"))),
         }
     } else if let Some(path) = allowlist_spec {
         StaticPolicy::from_allowlist(Path::new(path))

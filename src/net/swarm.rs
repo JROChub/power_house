@@ -565,6 +565,19 @@ async fn handle_event(
                     }
                     Err(err) => {
                         println!("anchor divergence with peer {}: {}", envelope.node_id, err);
+                        if let Err(slash_err) =
+                            cfg.membership_policy.record_slash(&remote_verifying)
+                        {
+                            eprintln!(
+                                "failed to record slash for {}: {}",
+                                envelope.node_id, slash_err
+                            );
+                        } else {
+                            println!(
+                                "peer {} marked as slashed due to conflicting anchor",
+                                envelope.node_id
+                            );
+                        }
                     }
                 }
             }

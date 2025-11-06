@@ -4,9 +4,12 @@ use crate::net::sign::encode_public_key_base64;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ed25519_dalek::{Signature, VerifyingKey, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 use thiserror::Error;
 
 /// Abstract governance backend that decides which peer keys are currently eligible.
@@ -22,6 +25,11 @@ pub trait MembershipPolicy: Send + Sync {
 
     /// Human-friendly label for metrics/logging.
     fn name(&self) -> &'static str;
+
+    /// Records a slash event for the supplied identity. Default: no-op.
+    fn record_slash(&self, _key: &VerifyingKey) -> Result<(), PolicyUpdateError> {
+        Ok(())
+    }
 }
 
 /// Raw governance update payload used to evolve membership.
@@ -270,6 +278,247 @@ impl MembershipPolicy for MultisigPolicy {
 }
 
 // ---------------------------------------------------------------------
+// Stake-backed policy
+// ---------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct StakeEntry {
+    public_key: String,
+    bond: u64,
+    slashed: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct StakeState {
+    threshold: usize,
+    bond_threshold: u64,
+    signers: Vec<String>,
+    entries: Vec<StakeEntry>,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct StakeUpdateMetadata {
+    #[serde(default)]
+    deposits: Vec<StakeDeposit>,
+    #[serde(default)]
+    slashes: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct StakeDeposit {
+    public_key: String,
+    bond: u64,
+}
+
+#[derive(Clone)]
+struct StakeAccount {
+    key: VerifyingKey,
+    bond: u64,
+    slashed: bool,
+}
+
+/// Bond-backed membership policy derived from a staking registry.
+pub struct StakePolicy {
+    state_path: PathBuf,
+    threshold: usize,
+    bond_threshold: u64,
+    signers: HashSet<VerifyingKey>,
+    state: Mutex<HashMap<Vec<u8>, StakeAccount>>,
+}
+
+impl StakePolicy {
+    /// Restores staking state from a JSON registry.
+    pub fn load(path: &Path) -> Result<Self, PolicyUpdateError> {
+        let contents =
+            fs::read_to_string(path).map_err(|err| PolicyUpdateError::Io(err.to_string()))?;
+        let state: StakeState = serde_json::from_str(&contents)
+            .map_err(|err| PolicyUpdateError::Decode(err.to_string()))?;
+        let threshold = state.threshold;
+        let bond_threshold = state.bond_threshold;
+        let signers = state
+            .signers
+            .iter()
+            .map(|b64| decode_public_key(b64))
+            .collect::<Result<HashSet<_>, _>>()?;
+
+        let mut registry = HashMap::new();
+        for entry in state.entries {
+            let vk = decode_public_key(&entry.public_key)?;
+            registry.insert(
+                vk.to_bytes().to_vec(),
+                StakeAccount {
+                    key: vk,
+                    bond: entry.bond,
+                    slashed: entry.slashed,
+                },
+            );
+        }
+
+        Ok(Self {
+            state_path: path.to_path_buf(),
+            threshold,
+            bond_threshold,
+            signers,
+            state: Mutex::new(registry),
+        })
+    }
+
+    fn persist(&self, locked: &HashMap<Vec<u8>, StakeAccount>) -> Result<(), PolicyUpdateError> {
+        let entries = locked
+            .values()
+            .map(|account| StakeEntry {
+                public_key: encode_public_key_base64(&account.key),
+                bond: account.bond,
+                slashed: account.slashed,
+            })
+            .collect::<Vec<_>>();
+        let state = StakeState {
+            threshold: self.threshold,
+            bond_threshold: self.bond_threshold,
+            signers: self
+                .signers
+                .iter()
+                .map(|vk| encode_public_key_base64(vk))
+                .collect(),
+            entries,
+        };
+        let pretty = serde_json::to_string_pretty(&state)
+            .map_err(|err| PolicyUpdateError::Decode(err.to_string()))?;
+        fs::write(&self.state_path, pretty).map_err(|err| PolicyUpdateError::Io(err.to_string()))
+    }
+
+    fn parse_metadata(
+        &self,
+        update: &GovernanceUpdate,
+    ) -> Result<StakeUpdateMetadata, PolicyUpdateError> {
+        update
+            .metadata
+            .as_ref()
+            .ok_or_else(|| PolicyUpdateError::Decode("stake update requires metadata".into()))
+            .and_then(|meta| {
+                serde_json::from_value(meta.clone())
+                    .map_err(|err| PolicyUpdateError::Decode(err.to_string()))
+            })
+    }
+
+    fn verify_update_with_metadata(
+        &self,
+        update: &GovernanceUpdate,
+    ) -> Result<StakeUpdateMetadata, PolicyUpdateError> {
+        if update.signatures.is_empty() {
+            return Err(PolicyUpdateError::Threshold {
+                required: self.threshold,
+                actual: 0,
+            });
+        }
+        let metadata = self.parse_metadata(update)?;
+        let canonical = canonical_stake_payload(&metadata)?;
+
+        let mut approvals = 0usize;
+        let mut seen: HashSet<[u8; PUBLIC_KEY_LENGTH]> = HashSet::new();
+        for approval in &update.signatures {
+            let signer = decode_public_key(&approval.signer)?;
+            if !self.signers.contains(&signer) {
+                return Err(PolicyUpdateError::Unauthorized);
+            }
+            if !seen.insert(signer.to_bytes()) {
+                continue;
+            }
+            let signature_bytes = BASE64
+                .decode(&approval.signature)
+                .map_err(|err| PolicyUpdateError::Decode(err.to_string()))?;
+            if signature_bytes.len() != SIGNATURE_LENGTH {
+                return Err(PolicyUpdateError::Decode("invalid signature length".into()));
+            }
+            let sig_array: [u8; SIGNATURE_LENGTH] = signature_bytes
+                .as_slice()
+                .try_into()
+                .expect("signature length checked");
+            let signature = Signature::from_bytes(&sig_array);
+            signer
+                .verify_strict(&canonical, &signature)
+                .map_err(|_| PolicyUpdateError::BadSignature)?;
+            approvals += 1;
+        }
+        if approvals < self.threshold {
+            return Err(PolicyUpdateError::Threshold {
+                required: self.threshold,
+                actual: approvals,
+            });
+        }
+        for deposit in &metadata.deposits {
+            if deposit.bond < self.bond_threshold {
+                return Err(PolicyUpdateError::Decode(format!(
+                    "deposit for {} below bond threshold",
+                    deposit.public_key
+                )));
+            }
+        }
+        Ok(metadata)
+    }
+}
+
+impl MembershipPolicy for StakePolicy {
+    fn current_members(&self) -> Vec<VerifyingKey> {
+        let guard = self.state.lock().expect("stake state poisoned");
+        guard
+            .values()
+            .filter(|account| account.bond >= self.bond_threshold && !account.slashed)
+            .map(|account| account.key.clone())
+            .collect()
+    }
+
+    fn verify_update(&self, update: &GovernanceUpdate) -> Result<(), PolicyUpdateError> {
+        self.verify_update_with_metadata(update).map(|_| ())
+    }
+
+    fn apply_update(&mut self, update: &GovernanceUpdate) -> Result<(), PolicyUpdateError> {
+        let metadata = self.verify_update_with_metadata(update)?;
+        let mut guard = self.state.lock().expect("stake state poisoned");
+
+        for deposit in metadata.deposits {
+            let vk = decode_public_key(&deposit.public_key)?;
+            guard.insert(
+                vk.to_bytes().to_vec(),
+                StakeAccount {
+                    key: vk,
+                    bond: deposit.bond,
+                    slashed: false,
+                },
+            );
+        }
+        for slash in metadata.slashes {
+            let vk = decode_public_key(&slash)?;
+            guard.entry(vk.to_bytes().to_vec()).and_modify(|account| {
+                account.slashed = true;
+                account.bond = 0;
+            });
+        }
+        self.persist(&guard)
+    }
+
+    fn name(&self) -> &'static str {
+        "stake"
+    }
+
+    fn record_slash(&self, key: &VerifyingKey) -> Result<(), PolicyUpdateError> {
+        let mut guard = self.state.lock().expect("stake state poisoned");
+        guard
+            .entry(key.to_bytes().to_vec())
+            .and_modify(|account| {
+                account.slashed = true;
+                account.bond = 0;
+            })
+            .or_insert(StakeAccount {
+                key: key.clone(),
+                bond: 0,
+                slashed: true,
+            });
+        self.persist(&guard)
+    }
+}
+
+// ---------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------
 
@@ -297,4 +546,8 @@ fn canonical_update_payload(update: &GovernanceUpdate) -> Result<Vec<u8>, Policy
         metadata: &update.metadata,
     })
     .map_err(|err| PolicyUpdateError::Decode(err.to_string()))
+}
+
+fn canonical_stake_payload(meta: &StakeUpdateMetadata) -> Result<Vec<u8>, PolicyUpdateError> {
+    serde_json::to_vec(meta).map_err(|err| PolicyUpdateError::Decode(err.to_string()))
 }

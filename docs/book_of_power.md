@@ -671,13 +671,15 @@ Chapter VII — Consensus Theater Operations
 47. Multisig deployments must guard the state file: document the threshold, authorised signer keys, and the ritual for collecting signatures.
 48. Only rotate membership after verifying at least `threshold` signatures on the `GovernanceUpdate` payload; archive every rotation in `logs/policy/`.
 49. Legacy clusters can still pass `--policy-allowlist allow.json`, but note that it is read-only and unsuitable for automated rotation.
-50. Provide step-by-step onboarding instructions for new nodes, including where to fetch the current policy descriptor.
+50. Stake-backed deployments require bond postings recorded in the staking registry; no bond, no quorum rights.
+51. Conflicting anchors automatically trigger slashing—investigate the incident, keep the evidence, and reissue the staking registry with the slashed flag preserved.
+52. Provide step-by-step onboarding instructions for new nodes, including where to fetch the current policy descriptor.
 51. Example: copy ledger logs to new node directory, place the current `governance.json`, run `julian net start` with bootstrap peers.
-52. Ensure firewall rules allow incoming connections on chosen ports.
-53. Document firewall configuration in operational manual.
-54. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
-55. Keep DNS records up to date; stale addresses break bootstrap.
-56. Use deterministic seeds so restarting nodes retains same Peer IDs.
+53. Ensure firewall rules allow incoming connections on chosen ports.
+54. Document firewall configuration in operational manual.
+55. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
+56. Keep DNS records up to date; stale addresses break bootstrap.
+57. Use deterministic seeds so restarting nodes retains same Peer IDs.
 57. Include metrics snapshots in compliance reports.
 58. Provide script to export metrics to CSV for analysis.
 59. Example script `curl http://127.0.0.1:9100/metrics`.

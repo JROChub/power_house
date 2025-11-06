@@ -25,7 +25,8 @@ pub use checkpoint::{
     CheckpointError, CheckpointSignature,
 };
 pub use governance::{
-    GovernanceUpdate, MembershipPolicy, MultisigPolicy, PolicyUpdateError, StaticPolicy,
+    GovernanceUpdate, MembershipPolicy, MultisigPolicy, PolicyUpdateError, StakePolicy,
+    StaticPolicy,
 };
 pub use policy::{IdentityPolicy, PolicyError};
 pub use schema::{AnchorEnvelope, AnchorJson};
