@@ -130,8 +130,9 @@ library, the protocol remains lightweight and deterministic across platforms.
 - **Merkle accumulation** (`src/merkle.rs`): every entry records a BLAKE2b-256 Merkle root, allowing
   inclusion proofs without shipping the full transcript list; the CLI exposes `julian node prove`
   and `julian node verify-proof` for auditors.
-- **Identity policy** (`src/net/policy.rs`): an optional allowlist (`--policy-allowlist`) restricts
-  quorum voting to authorised ed25519 public keys.
+- **Governance policies** (`src/net/governance.rs`): the networking layer now loads membership
+  backends via `--policy` descriptors (static inline lists, referenced allowlist files, or multisig
+  state machines). Legacy deployments may still pass `--policy-allowlist` for a simple read-only set.
 - **Checkpoints** (`src/net/checkpoint.rs`): nodes may emit signed anchor checkpoints every
   <code>N</code> broadcasts (`--checkpoint-interval N`), enabling fast bootstrap by replaying only
   logs newer than the last checkpoint.
@@ -169,8 +170,9 @@ per-round timings for each link in the chain.
   distinct identities (ed25519 public keys) per anchor. Honest deployments must ensure each node
   signs its envelope once per broadcast; offline reconciliation can supply placeholder identities
   when signatures are unavailable.
-- **Admission control** – Supply `--policy-allowlist` so only pre-approved ed25519 keys count toward
-  quorum; keys not in the allowlist are ignored during reconciliation.
+- **Admission control** – Supply a governance descriptor with `--policy` (or a legacy allowlist with
+  `--policy-allowlist`) so only authorised ed25519 keys count toward quorum; unauthorised keys are
+  ignored during reconciliation and signature checks.
 - **Checkpoints** – Periodic signed checkpoints reduce replay cost for new nodes. Ensure checkpoint
   files are stored securely (they contain anchor snapshots plus signatures).
 - **Streaming closure trust** – Nodes supplying streaming evaluators must ensure identical logic;
@@ -201,7 +203,9 @@ To support distributed reconciliation, the crate now ships an optional networkin
   quorum reconciliation upon receipt. Envelope handling now enforces schema/network identifiers,
   caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and fumes
   invalid senders after repeated mistakes.
-- `net::policy` – static allowlist enforcement for quorum identities (`--policy-allowlist`).
+- `net::governance` – membership policy trait, static allowlists, and multisig governance
+  implementations (`--policy`).
+- `net::policy` – legacy allowlist helper retained for read-only deployments (`--policy-allowlist`).
 - `net::checkpoint` – periodic signed checkpoints (`--checkpoint-interval`) for fast ledger bootstrap.
 
 The `julian net` CLI subcommands—`start`, `anchor`, and `verify-envelope`—exercise this layer. They

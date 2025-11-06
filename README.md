@@ -33,7 +33,17 @@ julian net start \
 
 <p style="margin:0.3rem 0;">Optional Prometheus metrics: add <code style="font-size:0.66rem;">--metrics :9100</code> (or another port) when starting a node.</p>
 
-<p style="margin:0.3rem 0;">Harden identities with <code style="font-size:0.66rem;">--policy-allowlist allow.json</code> (JSON file containing base64 ed25519 public keys) so only approved peers count toward quorum. Persist signed snapshots by adding <code style="font-size:0.66rem;">--checkpoint-interval 100</code> (for example) to emit checkpoints every <em>100</em> broadcasts under <code>./logs/&lt;node&gt;/checkpoints</code>.</p>
+<p style="margin:0.3rem 0;">Identity governance now supports descriptor-driven policies. Supply <code style="font-size:0.66rem;">--policy governance.json</code> to load either a static allowlist, a referenced allowlist file, or a multisig-governed membership set. Legacy deployments can keep using <code style="font-size:0.66rem;">--policy-allowlist allow.json</code> with base64 ed25519 keys. Persist signed snapshots by adding <code style="font-size:0.66rem;">--checkpoint-interval 100</code> (for example) to emit checkpoints every <em>100</em> broadcasts under <code>./logs/&lt;node&gt;/checkpoints</code>.</p>
+
+<p style="margin:0.3rem 0;">Sample descriptor (<code style="font-size:0.66rem;">--policy</code>):</p>
+<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+  "backend": "static",
+  "allowlist": [
+    "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
+    "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
+  ]
+}</pre>
+<p style="margin:0.3rem 0;">Multisig descriptors point to a state file containing <code style="font-size:0.66rem;">{"threshold":2,"signers":[...],"members":[...]}</code>; the helper verifies that at least <code>K</code> authorised signers approve a membership rotation before writing it back to disk.</p>
 
 <p>To load an encrypted identity instead of <code style="font-size:0.66rem;">--key</code>, create a file containing the base64 result of XORing your 32-byte secret key with the first 32 bytes of <code style="font-size:0.66rem;">SHA-512(passphrase)</code>, then run <code style="font-size:0.66rem;">julian net start --identity /path/to/file</code>. You’ll be prompted for the passphrase at startup.</p>
 
@@ -167,6 +177,7 @@ Supported commands:
   * `--key` accepts `ed25519://deterministic-seed`, or a path to raw/hex/base64 secret key bytes; omitted ⇒ fresh key.
   * `--identity` loads an encrypted identity file (XOR of the secret key with `SHA-512(passphrase)`); the CLI prompts for the passphrase.
   * `--metrics [:port]` exposes Prometheus metrics (defaults to `0.0.0.0:<port>` when prefixed with a colon).
+  * `--policy governance.json` loads a governance descriptor (`backend: static | static-file | multisig`) and enforces the returned membership set.
   * `--policy-allowlist allow.json` restricts quorum counting to the listed ed25519 keys.
   * `--checkpoint-interval N` writes signed anchor checkpoints every <code>N</code> broadcasts.
 - `julian net anchor --log-dir <path> [--node-id <id>] [--quorum <q>]` emits a machine-readable JSON anchor.
@@ -198,6 +209,28 @@ cargo run --features net --bin julian -- net start \
 Each node recomputes anchors from its log directory, signs them, broadcasts envelopes over Gossipsub, and logs finality events once the quorum predicate succeeds.
 
 Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the script boots nodes on ports 7211/7212, waits for signed anchor broadcasts, confirms finality, and exits non-zero on failure.
+
+<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Governance descriptor reference</h4>
+<p style="margin:0.3rem 0;">The <code style="font-size:0.66rem;">--policy</code> flag accepts a JSON descriptor with a <code style="font-size:0.66rem;">backend</code> key:</p>
+<ul style="margin:0.3rem 0 0.6rem 1.1rem;font-size:0.66rem;line-height:1.6;">
+  <li><code>static</code> &mdash; inline allowlist via <code>allowlist: [&quot;base64&quot;,...]</code>.</li>
+  <li><code>static-file</code> &mdash; pointer to a legacy allowlist JSON (<code>{"allowed":[...]}</code>).</li>
+  <li><code>multisig</code> &mdash; pointer to a state file tracking K-of-N signers and active members.</li>
+</ul>
+<p style="margin:0.3rem 0;">Example multisig state file:</p>
+<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+  "threshold": 2,
+  "signers": [
+    "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
+    "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I=",
+    "pslM5tF63E6Zb9P4uM7V6ZJZr/E4YjX8pB7k5wBfF7A="
+  ],
+  "members": [
+    "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
+    "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
+  ]
+}</pre>
+<p style="margin:0.3rem 0;">To rotate membership, craft a <code style="font-size:0.66rem;">GovernanceUpdate</code> JSON (new member list plus metadata), collect the required signatures offline, and feed it to your operational tooling before replacing the state file.</p>
 
 <h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Anchor JSON schema</h4>
 

@@ -7,8 +7,8 @@
 #[cfg(feature = "net")]
 use power_house::net::{
     decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
-    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, IdentityPolicy,
-    NetConfig,
+    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy,
+    MultisigPolicy, NetConfig, StaticPolicy,
 };
 use power_house::{
     julian_genesis_anchor, reconcile_anchors_with_quorum, transcript_digest,
@@ -16,6 +16,8 @@ use power_house::{
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
+#[cfg(feature = "net")]
+use std::sync::Arc;
 #[cfg(feature = "net")]
 use std::time::Duration;
 use std::{
@@ -30,6 +32,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use libp2p::Multiaddr;
 #[cfg(feature = "net")]
 use rpassword::prompt_password;
+use serde::Deserialize;
 use serde_json;
 
 const NETWORK_ID: &str = "JROC-NET";
@@ -287,6 +290,7 @@ fn cmd_net_start(args: Vec<String>) {
     let mut identity_path: Option<String> = None;
     let mut metrics_addr_spec: Option<String> = None;
     let mut policy_allowlist_spec: Option<String> = None;
+    let mut policy_spec: Option<String> = None;
     let mut checkpoint_interval_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
@@ -360,6 +364,12 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--policy-allowlist expects a value")),
                 );
             }
+            "--policy" => {
+                policy_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--policy expects a value")),
+                );
+            }
             "--checkpoint-interval" => {
                 checkpoint_interval_spec = Some(
                     iter.next()
@@ -396,13 +406,8 @@ fn cmd_net_start(args: Vec<String>) {
         .as_deref()
         .map(parse_metrics_addr)
         .unwrap_or(None);
-    let identity_policy = match policy_allowlist_spec {
-        Some(path) => match IdentityPolicy::from_allowlist_path(Path::new(&path)) {
-            Ok(policy) => policy,
-            Err(err) => fatal(&format!("failed to load policy: {err}")),
-        },
-        None => IdentityPolicy::allow_all(),
-    };
+    let membership_policy =
+        load_membership_policy(policy_spec.as_deref(), policy_allowlist_spec.as_deref());
     let checkpoint_interval = checkpoint_interval_spec.map(|value| {
         value
             .parse()
@@ -418,7 +423,7 @@ fn cmd_net_start(args: Vec<String>) {
         Duration::from_millis(broadcast_ms),
         key_material,
         metrics_addr,
-        identity_policy,
+        membership_policy.clone(),
         checkpoint_interval,
     );
 
@@ -762,5 +767,51 @@ fn parse_metrics_addr(spec: &str) -> Option<SocketAddr> {
     match normalized.parse::<SocketAddr>() {
         Ok(addr) => Some(addr),
         Err(_) => fatal("invalid --metrics address"),
+    }
+}
+
+#[cfg(feature = "net")]
+#[derive(Debug, Deserialize)]
+#[serde(tag = "backend", rename_all = "kebab-case")]
+enum GovernanceDescriptor {
+    Static { allowlist: Vec<String> },
+    StaticFile { path: String },
+    Multisig { state_path: String },
+}
+
+#[cfg(feature = "net")]
+fn load_membership_policy(
+    policy_spec: Option<&str>,
+    allowlist_spec: Option<&str>,
+) -> Arc<dyn MembershipPolicy> {
+    if let Some(spec_path) = policy_spec {
+        let path = Path::new(spec_path);
+        let contents = fs::read_to_string(path)
+            .unwrap_or_else(|err| fatal(&format!("failed to read policy {spec_path}: {err}")));
+        let descriptor: GovernanceDescriptor = serde_json::from_str(&contents)
+            .unwrap_or_else(|err| fatal(&format!("invalid policy descriptor {spec_path}: {err}")));
+        match descriptor {
+            GovernanceDescriptor::Static { allowlist } => {
+                StaticPolicy::from_base64_strings(&allowlist)
+                    .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
+                    .unwrap_or_else(|err| fatal(&format!("failed to load static policy: {err}")))
+            }
+            GovernanceDescriptor::StaticFile { path } => {
+                StaticPolicy::from_allowlist(Path::new(&path))
+                    .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
+                    .unwrap_or_else(|err| fatal(&format!("failed to load allowlist policy: {err}")))
+            }
+            GovernanceDescriptor::Multisig { state_path } => {
+                MultisigPolicy::load(Path::new(&state_path))
+                    .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
+                    .unwrap_or_else(|err| fatal(&format!("failed to load multisig policy: {err}")))
+            }
+        }
+    } else if let Some(path) = allowlist_spec {
+        StaticPolicy::from_allowlist(Path::new(path))
+            .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
+            .unwrap_or_else(|err| fatal(&format!("failed to load allowlist policy: {err}")))
+    } else {
+        Arc::new(StaticPolicy::allow_all())
     }
 }

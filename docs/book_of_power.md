@@ -666,18 +666,18 @@ Chapter VII — Consensus Theater Operations
 42. Log output includes `Finality reached with quorum 2.`
 43. Should mismatch occur, log prints error detailing divergence.
 44. Use manual anchors from Chapter V to double-check network results.
-45. Keep network configuration documented: boot nodes, ports, seeds, metrics addresses.
-46. Provide step-by-step onboarding instructions for new nodes.
-47. Example: copy ledger logs to new node directory, run `julian net start` with bootstrap peers.
-48. Ensure firewall rules allow incoming connections on chosen ports.
-49. Document firewall configuration in operational manual.
-50. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
-51. Keep DNS records up to date; stale addresses break bootstrap.
-52. Use deterministic seeds so restarting nodes retains same Peer IDs.
-53. Archive node configuration for audits.
-54. Provide offline anchor verification instructions in case the network is down.
-55. Encourage team to run the Chapter I hex verification ritual regularly to maintain readiness.
-56. For compliance, capture logs showing finality events with timestamps.
+45. Record the governance descriptor path (`--policy governance.json`) alongside boot credentials.
+46. Static deployments may keep a simple allowlist JSON, but publish it so auditors can diff the membership set.
+47. Multisig deployments must guard the state file: document the threshold, authorised signer keys, and the ritual for collecting signatures.
+48. Only rotate membership after verifying at least `threshold` signatures on the `GovernanceUpdate` payload; archive every rotation in `logs/policy/`.
+49. Legacy clusters can still pass `--policy-allowlist allow.json`, but note that it is read-only and unsuitable for automated rotation.
+50. Provide step-by-step onboarding instructions for new nodes, including where to fetch the current policy descriptor.
+51. Example: copy ledger logs to new node directory, place the current `governance.json`, run `julian net start` with bootstrap peers.
+52. Ensure firewall rules allow incoming connections on chosen ports.
+53. Document firewall configuration in operational manual.
+54. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
+55. Keep DNS records up to date; stale addresses break bootstrap.
+56. Use deterministic seeds so restarting nodes retains same Peer IDs.
 57. Include metrics snapshots in compliance reports.
 58. Provide script to export metrics to CSV for analysis.
 59. Example script `curl http://127.0.0.1:9100/metrics`.

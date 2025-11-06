@@ -9,7 +9,7 @@ use crate::net::{
         latest_log_cutoff, load_latest_checkpoint, write_checkpoint, AnchorCheckpoint,
         CheckpointSignature,
     },
-    policy::IdentityPolicy,
+    governance::MembershipPolicy,
     schema::{
         AnchorCodecError, AnchorEnvelope, AnchorJson, ENVELOPE_SCHEMA_VERSION, NETWORK_ID,
         SCHEMA_ENVELOPE,
@@ -50,6 +50,15 @@ const MAX_ANCHOR_ENTRIES: usize = 10_000;
 const SEEN_CACHE_LIMIT: usize = 2048;
 const INVALID_THRESHOLD: usize = 5;
 
+fn policy_permits(policy: &dyn MembershipPolicy, key: &[u8]) -> bool {
+    let members = policy.current_members();
+    if members.is_empty() {
+        // Empty list means everyone allowed (bootstrap mode)
+        return true;
+    }
+    members.iter().any(|vk| vk.to_bytes().as_slice() == key)
+}
+
 /// Configuration and runtime context for the JULIAN network node.
 pub struct NetConfig {
     /// Human-readable node identifier used in logs and envelopes.
@@ -66,8 +75,8 @@ pub struct NetConfig {
     pub broadcast_interval: Duration,
     /// Signing and libp2p keys backing the node identity.
     pub key_material: KeyMaterial,
-    /// Identity admission policy.
-    pub identity_policy: IdentityPolicy,
+    /// Membership governance policy.
+    pub membership_policy: Arc<dyn MembershipPolicy>,
     /// Optional checkpoint interval (in broadcasts).
     pub checkpoint_interval: Option<u64>,
     metrics: Arc<Metrics>,
@@ -86,7 +95,7 @@ impl NetConfig {
         broadcast_interval: Duration,
         key_material: KeyMaterial,
         metrics_addr: Option<SocketAddr>,
-        identity_policy: IdentityPolicy,
+        membership_policy: Arc<dyn MembershipPolicy>,
         checkpoint_interval: Option<u64>,
     ) -> Self {
         Self {
@@ -99,7 +108,7 @@ impl NetConfig {
             key_material,
             metrics: Arc::new(Metrics::default()),
             metrics_addr,
-            identity_policy,
+            membership_policy,
             checkpoint_interval,
         }
     }
@@ -252,7 +261,7 @@ struct JrocBehaviour {
 /// the local ledger according to `cfg.quorum`.
 pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let local_key_bytes = cfg.key_material.verifying.to_bytes();
-    if !cfg.identity_policy.permits(&local_key_bytes) {
+    if !policy_permits(cfg.membership_policy.as_ref(), &local_key_bytes) {
         return Err(NetworkError::Key(
             "local key not permitted by identity policy".to_string(),
         ));
@@ -388,10 +397,10 @@ async fn broadcast_local_anchor(
     broadcast_counter: &mut u64,
     metrics: &Arc<Metrics>,
 ) -> Result<(), NetworkError> {
-    if !cfg
-        .identity_policy
-        .permits(&cfg.key_material.verifying.to_bytes())
-    {
+    if !policy_permits(
+        cfg.membership_policy.as_ref(),
+        &cfg.key_material.verifying.to_bytes(),
+    ) {
         return Err(NetworkError::Key(
             "local key not permitted by identity policy".to_string(),
         ));
@@ -508,7 +517,7 @@ async fn handle_event(
                 let remote_verifying = decode_public_key_base64(&envelope.public_key)
                     .map_err(|err| NetworkError::Codec(err.to_string()))?;
                 let remote_key_bytes = remote_verifying.to_bytes();
-                if !cfg.identity_policy.permits(&remote_key_bytes) {
+                if !policy_permits(cfg.membership_policy.as_ref(), &remote_key_bytes) {
                     metrics.inc_gossipsub_rejects();
                     record_invalid(invalid_counters, propagation_source, metrics);
                     println!(

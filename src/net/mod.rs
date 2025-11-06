@@ -9,6 +9,8 @@
 
 /// Anchor checkpoint helpers for fast sync.
 pub mod checkpoint;
+/// Governance policy implementations for membership rotation.
+pub mod governance;
 /// Identity admission policy helpers.
 pub mod policy;
 /// Machine-readable schema types shared across the network CLI and swarm.
@@ -21,6 +23,9 @@ pub mod swarm;
 pub use checkpoint::{
     anchor_hasher, latest_log_cutoff, load_latest_checkpoint, write_checkpoint, AnchorCheckpoint,
     CheckpointError, CheckpointSignature,
+};
+pub use governance::{
+    GovernanceUpdate, MembershipPolicy, MultisigPolicy, PolicyUpdateError, StaticPolicy,
 };
 pub use policy::{IdentityPolicy, PolicyError};
 pub use schema::{AnchorEnvelope, AnchorJson};
