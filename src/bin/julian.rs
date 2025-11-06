@@ -32,6 +32,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use libp2p::Multiaddr;
 #[cfg(feature = "net")]
 use rpassword::prompt_password;
+#[cfg(feature = "net")]
 use serde::Deserialize;
 use serde_json;
 
