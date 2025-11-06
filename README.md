@@ -28,6 +28,7 @@ julian net start \
   --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
+  --policy governance.json \
   --key ed25519://&lt;seed&gt;
 </pre>
 
@@ -231,6 +232,15 @@ Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the
   ]
 }</pre>
 <p style="margin:0.3rem 0;">To rotate membership, craft a <code style="font-size:0.66rem;">GovernanceUpdate</code> JSON (new member list plus metadata), collect the required signatures offline, and feed it to your operational tooling before replacing the state file.</p>
+
+<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Membership rotation checklist</h4>
+<ul style="margin:0.3rem 0 0.8rem 1.1rem;font-size:0.66rem;line-height:1.6;">
+  <li>Fetch the current descriptor (e.g., <code>scp root@boot1:/etc/jrocnet/governance.json ./</code>).</li>
+  <li>Edit the descriptor or state file offline, ensuring the new membership list is correct.</li>
+  <li>For multisig mode, prepare a <code>GovernanceUpdate</code> document with the new members and collect at least <code>threshold</code> ed25519 signatures.</li>
+  <li>Drop the signed update plus refreshed state file onto each boot node (keeping the previous version archived in <code>logs/policy/</code>).</li>
+  <li>Restart the node with the same <code>--policy</code> argument; <code>julian net start</code> loads the updated membership immediately.</li>
+</ul>
 
 <h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Anchor JSON schema</h4>
 
