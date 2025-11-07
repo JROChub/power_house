@@ -15,7 +15,7 @@
 
 <p style="margin:0.3rem 0;">Author: <strong style="font-weight:600;">lexluger</strong> &nbsp;|&nbsp; Email: <a href="mailto:lexluger.dev@proton.me">lexluger.dev@proton.me</a> &nbsp;|&nbsp; Site: <a href="https://jrocnet.com">jrocnet.com</a> &nbsp;|&nbsp; Last update: 2025‑10‑16</p>
 
-<p style="margin:0.6rem 0;font-size:0.7rem;">Need the full operations guide? Read the <a href="./docs/book_of_power.md">Book of Power — Condensed Graviton Edition</a> for the alien-grade user manual bundled with this crate.</p>
+<p style="margin:0.6rem 0;font-size:0.7rem;">Need the full operations guide? Read the <a href="./docs/book_of_power.md">Book of Power — Condensed Graviton Edition</a> for the alien-grade user manual bundled with this crate, and consult <a href="./docs/ops.md">docs/ops.md</a> for the streamlined VPS/network runbook.</p>
 
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Quick Join (Public Testnet A2)</h2>
 <pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">cargo install power_house --features net
@@ -56,6 +56,18 @@ julian net start \
 <p><code style="font-size:0.66rem;">boot1.jrocnet.com</code> and <code style="font-size:0.66rem;">boot2.jrocnet.com</code> resolve to the current public ingress addresses. Update DNS—not this README—if underlying IPs move.</p>
 
 <p>Run <code style="font-size:0.66rem;">scripts/smoke_net.sh</code> for a local two-node quorum smoke test (ports 7211/7212, 8 s runtime).</p>
+
+<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Operations Toolkit</h3>
+<p>The brittle <code style="font-size:0.66rem;">boot_*.sh</code> helpers have been replaced with <code style="font-size:0.66rem;">scripts/netctl.py</code>—a Python CLI that builds, deploys, restarts, and inspects JULIAN bootstrap nodes from a single entry point.</p>
+<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;"># inspect configured hosts (from infra/ops_hosts.toml or $POWERHOUSE_HOSTS_FILE)
+python3 scripts/netctl.py list-hosts
+
+# rebuild + copy binaries/configs, then restart services on both boot nodes
+python3 scripts/netctl.py deploy --hosts boot1 boot2
+
+# stream the latest anchors/log output
+python3 scripts/netctl.py logs --lines 200 --hosts boot1</pre>
+<p>Configuration lives in <code style="font-size:0.66rem;">infra/ops_hosts.toml</code> (copy the bundled <code>ops_hosts.example.toml</code> to get started). The full runbook—including a systemd template and step-by-step VPS checklist—resides in <a href="./docs/ops.md">docs/ops.md</a>. Pass <code style="font-size:0.66rem;">--dry-run</code> to preview actions, or set <code style="font-size:0.66rem;">restart_command</code> per host if you are not using systemd.</p>
 
 <h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Genesis Anchor (Pinned)</h2>
 <p>The A2 testnet ledger is frozen to the following statements and domain-separated BLAKE2b-256 digests (hex). Every node should reproduce these values from its local logs:</p>
@@ -210,6 +222,22 @@ cargo run --features net --bin julian -- net start \
 Each node recomputes anchors from its log directory, signs them, broadcasts envelopes over Gossipsub, and logs finality events once the quorum predicate succeeds.
 
 Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the script boots nodes on ports 7211/7212, waits for signed anchor broadcasts, confirms finality, and exits non-zero on failure.
+
+<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Boot node operations (systemd)</h3>
+<p style="margin:0.3rem 0;font-size:0.66rem;line-height:1.6;">
+Public ingress nodes should be managed like any other long-lived systemd service. Treat the binary as an artifact, keep service files outside this repo, and rely on IP multiaddrs when DNS is slow to update.
+</p>
+<ol style="margin:0.3rem 0 0.8rem 1.1rem;font-size:0.66rem;line-height:1.6;">
+  <li><strong>Build locally</strong> – <code>cargo build --release --features net --bin julian</code>.</li>
+  <li><strong>Ship the binary</strong> – <code>scp target/release/julian root@host:/root/julian.new</code> followed by <code>install -m 0755 /root/julian.new /usr/local/bin/julian</code>.</li>
+  <li><strong>Install a systemd unit per node</strong> – copy the template in <code>docs/ops.md</code>, set unique <code>--node-id</code>/<code>--log-dir</code>, and point <code>--bootstrap</code> at explicit <code>/ip4/&lt;peer-ip&gt;/tcp/&lt;port&gt;/p2p/&lt;peer-id&gt;</code> multiaddrs so the service dials the correct ingress even if DNS lags.</li>
+  <li><strong>Reload and start</strong> – <code>systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service</code>.</li>
+  <li><strong>Verify health</strong> – <code>journalctl -u powerhouse-bootN.service -n 40 -f</code> should show “waiting for gossip peers…” once, then alternating <code>broadcasted local anchor</code> and <code>finality reached</code> lines.</li>
+  <li><strong>Confirm reachability</strong> – from each host run <code>nc -vz &lt;other-ip&gt; 7001</code>/<code>7002</code>; failures mean firewall or routing issues, not libp2p.</li>
+</ol>
+<p style="margin:0.3rem 0;font-size:0.66rem;line-height:1.6;">
+Keep the customised unit files and deterministic seeds in your infra repo or secrets manager—never commit live service definitions to the public tree.
+</p>
 
 <h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Governance descriptor reference</h4>
 <p style="margin:0.3rem 0;">The <code style="font-size:0.66rem;">--policy</code> flag accepts a JSON descriptor with a <code style="font-size:0.66rem;">backend</code> key:</p>

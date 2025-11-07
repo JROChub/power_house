@@ -22,7 +22,7 @@ use crate::{
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use futures::StreamExt;
 use libp2p::{
-    gossipsub::{self, IdentTopic, MessageAuthenticity, ValidationMode},
+    gossipsub::{self, IdentTopic, MessageAuthenticity, PublishError, ValidationMode},
     identify, identity,
     kad::{self, store::MemoryStore},
     noise,
@@ -37,7 +37,10 @@ use std::{
     collections::{HashMap, HashSet, VecDeque},
     io::{self, Read},
     path::{Path, PathBuf},
-    sync::{atomic::AtomicU64, atomic::Ordering, Arc},
+    sync::{
+        atomic::{AtomicBool, AtomicU64, Ordering},
+        Arc,
+    },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -45,6 +48,7 @@ use tokio::net::TcpListener;
 use tokio::{select, signal, time};
 
 static TOPIC_ANCHORS: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/anchors/v1"));
+static NO_GOSSIP_PEERS_LOGGED: AtomicBool = AtomicBool::new(false);
 const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
 const SEEN_CACHE_LIMIT: usize = 2048;
@@ -431,13 +435,24 @@ async fn broadcast_local_anchor(
     };
     let message =
         serde_json::to_vec(&envelope).map_err(|err| NetworkError::Codec(err.to_string()))?;
-    if let Err(err) = swarm
+    match swarm
         .behaviour_mut()
         .gossipsub
         .publish(TOPIC_ANCHORS.clone(), message)
     {
-        metrics.inc_gossipsub_rejects();
-        return Err(NetworkError::Libp2p(err.to_string()));
+        Ok(_) => {
+            NO_GOSSIP_PEERS_LOGGED.store(false, Ordering::Relaxed);
+        }
+        Err(PublishError::InsufficientPeers) => {
+            if !NO_GOSSIP_PEERS_LOGGED.swap(true, Ordering::Relaxed) {
+                println!("waiting for gossip peers before broadcasting anchor");
+            }
+            return Ok(());
+        }
+        Err(err) => {
+            metrics.inc_gossipsub_rejects();
+            return Err(NetworkError::Libp2p(err.to_string()));
+        }
     }
     *last_payload = payload;
     *last_publish = Some(Instant::now());

@@ -29,7 +29,7 @@ run_node() {
   local port=$2
   local log_dir=$3
   local out_file=$4
-  "$CARGO_BIN" run --features net --bin julian --quiet -- net start \
+  stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start \
     --node-id "$node_id" \
     --log-dir "$log_dir" \
     --listen "/ip4/127.0.0.1/tcp/$port" \
@@ -46,7 +46,7 @@ TMP_B="$(mktemp)"
 PID_A=$(run_node nodeA "$PORT_A" "$LOG_DIR_A" "$TMP_A")
 sleep 2
 
-"$CARGO_BIN" run --features net --bin julian --quiet -- net start \
+stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start \
   --node-id nodeB \
   --log-dir "$LOG_DIR_B" \
   --listen "/ip4/127.0.0.1/tcp/$PORT_B" \
