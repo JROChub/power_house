@@ -5,7 +5,7 @@
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.6;letter-spacing:0.03em;">
 <h1 style="font-size:0.9rem;margin:1.4rem 0 0.6rem;">Power-House</h1>
 
-<p style="margin:0.9rem 0 0.6rem;">power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—all authored in pure Rust.</p>
+<p style="margin:0.9rem 0 0.6rem;">power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—implemented end-to-end in Rust.</p>
 
 <p style="margin:0.4rem 0;">
   <a href="https://crates.io/crates/power_house"><img src="https://img.shields.io/crates/v/power_house.svg" alt="Crates.io badge" style="height:0.9rem;vertical-align:middle;"></a>
