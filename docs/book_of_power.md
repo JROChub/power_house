@@ -7,6 +7,7 @@ Book Edition: **v0.1.37**
 Crate Version Required: **v0.1.37**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
+Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
 Repository Source: crate checkout `power_house`
 This User Guide Lives Inside the Crate: `docs/book_of_power.md`
 
@@ -43,9 +44,9 @@ Note: Windows or hardened hosts lacking `/tmp` must set `POWER_HOUSE_TMP=/path/t
 16. Verify that the genesis line prints the digest from step 02 without error.
 17. The fold digest from step 05 appears in terminal output; immediately copy it into `fold_digest.txt` beside your ledger before you proceed so auditors never depend on scrollback.
 18. When exporting anchors, append a comment `# fold_digest: <hex>` or store it in `anchor_meta.json`; the quorum hinge must live with the artefacts you check in.
-18. `LedgerAnchor::anchor()` automatically prepends the JULIAN genesis entry with the new digest.
-19. Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat-Shamir challenge derivation.
-20. Do not mix domains--if you re-tag transcripts with the anchor label, you will deserve the audit citation.
+19. `LedgerAnchor::anchor()` automatically prepends the JULIAN genesis entry with the new digest.
+20. Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat-Shamir challenge derivation.
+21. Do not mix domains--if you re-tag transcripts with the anchor label, you will deserve the audit citation.
 Hash framing specification (tagged stream; not a sponge):
 ```
 hasher = BLAKE2b-256()
@@ -66,21 +67,21 @@ Hex digests      : 64 lowercase `[0-9a-f]` chars, no spaces.
 Line endings     : LF only; tabs forbidden.
 ```
 Hash the big-endian bytes, never the ASCII digits; auditors treat deviations as tampering.
-21. `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
-22. The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
-23. To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
-24. The aggregated digest reduces to field element `21`. Say it. Write it. Remember it.
+22. `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
+23. The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
+24. To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
+25. The aggregated digest reduces to field element `21`. Say it. Write it. Remember it.
 Note: Digest-to-field procedure: interpret the first eight bytes of the 32-byte digest as a big-endian u64, then compute `value mod p` (e.g., `0xa5a1b9528dd9b4e8 -> 0xA5A1B9528DD9B4E8 -> 11916436223453507944 -> 21 (mod 257)`).
-25. When the reduction changes, the field or transcript changed--file an incident report.
-26. `simple_prng` is dead; the challenge stream is now BLAKE2b-256 seeded by the transcript plus domain tag.
-27. Never allow anyone to talk wistfully about linear-congruential generators again.
+26. When the reduction changes, the field or transcript changed--file an incident report.
+27. `simple_prng` is dead; the challenge stream is now BLAKE2b-256 seeded by the transcript plus domain tag.
+28. Never allow anyone to talk wistfully about linear-congruential generators again.
 Note: Bias note: current derivation uses `next_u64() % p`; keep `p` close to 2^64 (e.g., 64-bit primes) or switch to the documented rejection sampler in Chapter VI when you extend the code.
-28. The `scripts/smoke_net.sh` ritual depends on stable keys; if the metrics server refuses to bind, document the environment block.
-29. Finality relies on unique public keys; the network now laughs at duplicate voters.
-30. When reconciling offline, use placeholder identities like `LOCAL_OFFLINE` and `PEER_FILE`, but never reuse placeholders for different peers in the same quorum call.
-31. Keep a laminated cheat sheet with the three transcript digests and the fold digest.
-32. Add a second sheet listing the domain tags; auditors adore label discipline.
-33. Print the digests with caret markers every four bytes: `139f_1985_df5b_36da_...`.
+29. The `scripts/smoke_net.sh` ritual depends on stable keys; if the metrics server refuses to bind, document the environment block.
+30. Finality relies on unique public keys; the network now laughs at duplicate voters.
+31. When reconciling offline, use placeholder identities like `LOCAL_OFFLINE` and `PEER_FILE`, but never reuse placeholders for different peers in the same quorum call.
+32. Keep a laminated cheat sheet with the three transcript digests and the fold digest.
+33. Add a second sheet listing the domain tags; auditors adore label discipline.
+34. Print the digests with caret markers every four bytes: `139f_1985_df5b_36da_...`.
 ```
 HEX SIGIL :: ANCHOR CORE
   GENESIS     139f 1985 df5b 36da e23f a509 fb53
@@ -89,68 +90,68 @@ HEX SIGIL :: ANCHOR CORE
   FOLD DIGEST a5a1 b952 8dd9 b4e8 11e8 9fb4 9297
   FIELD REDUCE -> 21 (anchor hinge)
 ```
-34. The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
-35. If you must annotate, prefix with `#` outside the transcript block.
-36. `hash_pipeline` reduces to the canonical demo; treat its output as the lab reference.
-37. Use `power_house::transcript_digest_to_hex` in your scripts; do not reinvent hex formatting.
-38. If someone doubts determinism, rerun the example and shove the matching hashes under their nose.
-39. When a cadet forgets a digit, force them to rewrite the digest 32 times--one per byte.
-40. Disaster recovery scenario: power outage; print the digests from this book, run manual comparisons, reestablish finality.
-41. Regulatory drill: produce log file, book excerpt, and CLI output; they must match byte-for-byte.
-42. Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
-43. The anchor fold digest is the workshop handshake. Recite it at the start of every session.
-44. Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-45. Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.26`.
-46. If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
-47. Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
-48. Do not compress the `/tmp` logs before verifying them; compression hides tampering.
-49. On offline machines, copy the example output into air-gapped storage, then verify with `julian node anchor`.
-50. If the fold digest ever changes unexpectedly, halt deployments and investigate.
-51. Store the printed digests in fireproof cabinets; yes, we still do that.
-52. Confirm that `reconcile_anchors_with_quorum` now requires distinct keys by running unit test `test_reconcile_rejects_duplicate_keys`.
-53. If that test fails, fix it before touching production.
-54. Teach cadets that every hex pair represents eight bits of inevitability; there is no shortcut.
-55. Binary toggles no longer amuse me, but you may use them to dramatize a single byte flip.
-56. When presenting to executives, describe this chapter as "hexadecimal finality discipline."
-57. When presenting to mathematicians, describe it as "BLAKE2b commitments over deterministic transcripts."
-58. When presenting to auditors, describe it as "evidence that nothing is hidden."
-59. The genesis digest anchors the entire JULIAN network; treat it as sacred text.
-60. If someone requests the old 64-bit values, hand them a shredder.
-61. Update the compliance wiki with screenshots of `hash_pipeline` output; redacting nothing.
-62. Keep a QR code linking to this manual near every boot node console.
-63. Logbooks must note the UTC timestamp when the digests were last verified.
-64. When rewriting this manual, never shorten the digests; printing only the prefix is grounds for termination.
-65. Append the fold digest to any offsite backup manifest.
-66. The anchor echo ritual is human-first; no automation may replace your eyeballs.
-67. Maintain a rotation schedule for verification duty so every engineer memorizes the hex.
-68. If an engineer cannot recall the first eight characters of the genesis digest, revoke their deploy privileges.
-69. Celebrate new hires by making them transcribe the dense proof digest by hand.
-70. This chapter is the onboarding gauntlet: memorize, verify, sign.
-71. The log directory `./logs/boot1-ledger` must be backed up with the manual.
-72. When shipping new firmware, include a printout of the three digests for the QA binder.
-73. Add the fold digest to your monitoring dashboards as a constant string; alarms should fire if it ever mutates.
-74. For interactive drills, invert one byte in the log and observe how the digest transforms; document the delta.
-75. Re-run `hash_pipeline` after any change to transcript formatting; whitespace is deadly.
-76. When the ledger evolves, update the book first, THEN announce the change.
-77. Keep the aggregated digest visible on the boot node status page; stake your bragging rights on it.
-78. If you hear "why not shorter digests," answer with threat of expulsion.
-79. Always store transcripts and digests together; context is armor.
-80. Replicate this manual in triplicate: on paper, in git, and in cold storage.
-81. Tattoo the domain tags on your forearm if that helps.
-82. Run `cargo test --features net` after every patch; the tests confirm our identity counting and digest logic.
-83. If a colleague tries to skip the tests, this book authorizes you to snatch their keyboard.
-84. The aggregated digest converts to field element 21; include that value in any whiteboard explanation.
-85. Draw the folding pipeline as: transcripts -> BLAKE2b digest -> anchor fold -> quorum.
-86. Each step must be reproducible from logs plus this manual--no hidden state.
-87. Record the BLAKE2b command used by external auditors if they verify independently.
-88. When this book says memorize, you memorize; complacency breeds forks.
-89. The anchor echo engine is still the handshake ritual--now with heavier hex.
-90. Sign the compliance sheet confirming you verified all four digests (three transcripts plus the fold) before leaving the room.
-91. File the signed sheet next to the ledger backups.
-92. Only after these steps may you advance to Chapter II.
-98. You are expected to re-teach this chapter whenever onboarding new team members.
-99. The combination of deterministic transcripts and simple arithmetic is the ultimate trust anchor.
-100. Finish this chapter by writing `ANCHOR!!` in your own handwriting across the margin as proof you completed the ritual.
+35. The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
+36. If you must annotate, prefix with `#` outside the transcript block.
+37. `hash_pipeline` reduces to the canonical demo; treat its output as the lab reference.
+38. Use `power_house::transcript_digest_to_hex` in your scripts; do not reinvent hex formatting.
+39. If someone doubts determinism, rerun the example and shove the matching hashes under their nose.
+40. When a cadet forgets a digit, force them to rewrite the digest 32 times--one per byte.
+41. Disaster recovery scenario: power outage; print the digests from this book, run manual comparisons, reestablish finality.
+42. Regulatory drill: produce log file, book excerpt, and CLI output; they must match byte-for-byte.
+43. Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
+44. The anchor fold digest is the workshop handshake. Recite it at the start of every session.
+45. Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
+46. Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.26`.
+47. If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
+48. Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
+49. Do not compress the `/tmp` logs before verifying them; compression hides tampering.
+50. On offline machines, copy the example output into air-gapped storage, then verify with `julian node anchor`.
+51. If the fold digest ever changes unexpectedly, halt deployments and investigate.
+52. Store the printed digests in fireproof cabinets; yes, we still do that.
+53. Confirm that `reconcile_anchors_with_quorum` now requires distinct keys by running unit test `test_reconcile_rejects_duplicate_keys`.
+54. If that test fails, fix it before touching production.
+55. Teach cadets that every hex pair represents eight bits of inevitability; there is no shortcut.
+56. Binary toggles no longer amuse me, but you may use them to dramatize a single byte flip.
+57. When presenting to executives, describe this chapter as "hexadecimal finality discipline."
+58. When presenting to mathematicians, describe it as "BLAKE2b commitments over deterministic transcripts."
+59. When presenting to auditors, describe it as "evidence that nothing is hidden."
+60. The genesis digest anchors the entire JULIAN network; treat it as sacred text.
+61. If someone requests the old 64-bit values, hand them a shredder.
+62. Update the compliance wiki with screenshots of `hash_pipeline` output; redacting nothing.
+63. Keep a QR code linking to this manual near every boot node console.
+64. Logbooks must note the UTC timestamp when the digests were last verified.
+65. When rewriting this manual, never shorten the digests; printing only the prefix is grounds for termination.
+66. Append the fold digest to any offsite backup manifest.
+67. The anchor echo ritual is human-first; no automation may replace your eyeballs.
+68. Maintain a rotation schedule for verification duty so every engineer memorizes the hex.
+69. If an engineer cannot recall the first eight characters of the genesis digest, revoke their deploy privileges.
+70. Celebrate new hires by making them transcribe the dense proof digest by hand.
+71. This chapter is the onboarding gauntlet: memorize, verify, sign.
+72. The log directory `./logs/boot1-ledger` must be backed up with the manual.
+73. When shipping new firmware, include a printout of the three digests for the QA binder.
+74. Add the fold digest to your monitoring dashboards as a constant string; alarms should fire if it ever mutates.
+75. For interactive drills, invert one byte in the log and observe how the digest transforms; document the delta.
+76. Re-run `hash_pipeline` after any change to transcript formatting; whitespace is deadly.
+77. When the ledger evolves, update the book first, THEN announce the change.
+78. Keep the aggregated digest visible on the boot node status page; stake your bragging rights on it.
+79. If you hear "why not shorter digests," answer with threat of expulsion.
+80. Always store transcripts and digests together; context is armor.
+81. Replicate this manual in triplicate: on paper, in git, and in cold storage.
+82. Tattoo the domain tags on your forearm if that helps.
+83. Run `cargo test --features net` after every patch; the tests confirm our identity counting and digest logic.
+84. If a colleague tries to skip the tests, this book authorizes you to snatch their keyboard.
+85. The aggregated digest converts to field element 21; include that value in any whiteboard explanation.
+86. Draw the folding pipeline as: transcripts -> BLAKE2b digest -> anchor fold -> quorum.
+87. Each step must be reproducible from logs plus this manual--no hidden state.
+88. Record the BLAKE2b command used by external auditors if they verify independently.
+89. When this book says memorize, you memorize; complacency breeds forks.
+90. The anchor echo engine is still the handshake ritual--now with heavier hex.
+91. Sign the compliance sheet confirming you verified all four digests (three transcripts plus the fold) before leaving the room.
+92. File the signed sheet next to the ledger backups.
+93. Only after these steps may you advance to Chapter II.
+94. You are expected to re-teach this chapter whenever onboarding new team members.
+95. The combination of deterministic transcripts and simple arithmetic is the ultimate trust anchor.
+96. Finish this chapter by writing `ANCHOR!!` in your own handwriting across the margin as proof you completed the ritual.
 
 
 Chapter II -- Foundational Field Algebra Procedures
@@ -300,81 +301,81 @@ Hypercube Holo-map (dim=3 reference):
 24. `round_sums: 12 47`.
 25. `final_eval: 19`.
 26. `hash: 999B55116F6AFC2F`.
-26. The hash matches `digest_A` from Chapter I; cross-reference completed.
-27. Each round multiplies dimension by the challenge; watch arithmetic carefully.
-28. If you miscompute, fix the code before writing ledger lines.
-29. Institutional policy: transcripts must be generated by code, never typed manually; but you must understand them manually.
-30. Inspect the ledger log to confirm there are no extraneous blanks.
-31. When verifying transcripts without code, check the invariants sequentially.
-32. Should something fail, the digest mismatch reveals the culprit.
-33. Document failure cases; they make excellent case studies for new recruits.
-34. When verifying aggregated proofs, expect longer ledger entries with multiple statements.
-35. Each aggregated proof includes multiple hashes; `LedgerAnchor` stores them as vectors.
-36. The manual demands you know how to interpret anchor entries with multiple hashes.
-37. For each additional proof, expect transcripts to list statements sequentially.
-38. Maintain ledger logs sorted lexically; deterministic iteration is easier that way.
-39. `AnchorJson` ensures the sequence of statements and hashes is preserved in JSON.
-40. When exporting anchors, confirm the JSON matches the ledger log order.
-41. If you modify transcript formatting, update this book accordingly.
-42. The hyperplane cartography chapter is your blueprint for reading raw transcripts.
-43. Example: verifying dimension 10 proofs; expect 10 challenge lines and 10 round sum lines.
-44. The final evaluation line ties everything together; it equals the polynomial evaluated at random point determined by challenges.
-45. The ledger digest ensures no one can swap final evaluation without detection.
-46. For high dimension proofs, consider memory-friendly streaming proofs (Chapter VI).
-47. Always cross-reference transcripts with field modulus selection recorded in Chapter II.
-48. Document any mixture of dims within a proof bundle.
-49. Keep transcripts in chronological order by proof generation date.
-50. If transcripts from multiple proofs share ledger file, ensure they remain separated by blank lines.
-51. The crate uses ASCII text precisely so you can audit in plain editors.
-52. Resist any request to encode transcripts in binary without justification.
-53. Provide training on reading transcripts to all on-call engineers.
-54. Without comprehension, verifying anchors becomes guesswork.
-55. Guesswork is unacceptable.
-56. The hypercube is unforgiving; errors multiply quickly.
-57. Keep polynomial evaluation functions documented in your lab notes.
-58. The manual expects you to reconstruct at least one proof by hand.
-59. Provide annotated transcripts in training material to reduce onboarding friction.
-60. Explain to management that deterministic transcripts are the reason `ANCHOR!!` is reliable.
-61. Use this chapter as a cross-check list when debugging failing proofs.
-62. If the digest does not match, inspect challenge order first, round sums second, final evaluation third.
-63. Most errors arise from misordered lines or incorrectly reduced field arithmetic.
-64. Document the fix in your change log.
-65. For aggregated proofs, ensure each statement has matching digest entry in anchor.
-66. When verifying aggregated anchor, treat each hash individually, then compare entire sequence.
-67. That is what `reconcile_anchors_with_quorum` does internally.
-68. Maintain strict naming conventions for statements to keep ledger tidy.
-69. For example: `Dense polynomial proof`, `Scaling benchmark`, `Hash anchor proof`.
-70. Resist newlines inside statements; the parser expects single-line entries.
-71. If you must use multi-line descriptions, embed them in additional metadata fields, not statement line.
-72. Keep transcript formats consistent across versions of the crate.
-73. Document version updates in ledger file header.
-74. Provide `.md` or `.txt` explanation for each log to accompany the ledger.
-75. Archive ledger logs after every major proof run.
-76. Build a habit: after verifying a proof, compute the digest manually and compare to ledger.
-77. Use `cargo run --example verify_logs` to cross-check your manual calculations later.
-78. The CLI example is descriptive, but this manual expects you to operate on paper first.
-79. Provide a copy of this chapter to auditors ahead of their visit.
-80. They will appreciate clear instructions.
-81. Remember: transcripts are immutable once logged; append new entries instead.
-82. Deleting old transcripts is a firing offense.
-83. The crate ensures logs sit in their own directory; keep the directory read-only after generation.
-84. For offline review sessions, print transcripts and highlight round sums.
-85. Use colored pens to differentiate challenge values, sums, and final evaluation.
-86. Encourage cadets to verify calculations using both mental arithmetic and calculators.
-87. Cross-check calculators for deterministic behavior; some add rounding artifacts.
-88. Use plain integer calculators or spreadsheets set to integer mode.
-89. Document each manual verification session; compliance loves logs.
-90. Provide transcripts to external reviewers in zipped packages with checksums.
-91. Example: `hash_pipeline` example writes to `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
-92. After running, copy files from `/tmp` into your node directories for anchor generation.
-93. Then run `julian node run nodeA ./logs/nodeA nodeA.anchor` to produce human-readable anchor.
-94. Compare `nodeA.anchor` to the Chapter I hex digests; they must align byte-for-byte.
-95. If they do not, your ledger logs may be outdated; rerun `hash_pipeline`.
-96. Keep version numbers in anchor files for traceability.
-97. Admission to advanced training requires presenting a hand-written transcript analysis.
-98. You now understand why the hypercube matters for consensus.
-99. Sign the ledger: ____________________.
-100. Today's date: ____________________.
+27. The hash matches `digest_A` from Chapter I; cross-reference completed.
+28. Each round multiplies dimension by the challenge; watch arithmetic carefully.
+29. If you miscompute, fix the code before writing ledger lines.
+30. Institutional policy: transcripts must be generated by code, never typed manually; but you must understand them manually.
+31. Inspect the ledger log to confirm there are no extraneous blanks.
+32. When verifying transcripts without code, check the invariants sequentially.
+33. Should something fail, the digest mismatch reveals the culprit.
+34. Document failure cases; they make excellent case studies for new recruits.
+35. When verifying aggregated proofs, expect longer ledger entries with multiple statements.
+36. Each aggregated proof includes multiple hashes; `LedgerAnchor` stores them as vectors.
+37. The manual demands you know how to interpret anchor entries with multiple hashes.
+38. For each additional proof, expect transcripts to list statements sequentially.
+39. Maintain ledger logs sorted lexically; deterministic iteration is easier that way.
+40. `AnchorJson` ensures the sequence of statements and hashes is preserved in JSON.
+41. When exporting anchors, confirm the JSON matches the ledger log order.
+42. If you modify transcript formatting, update this book accordingly.
+43. The hyperplane cartography chapter is your blueprint for reading raw transcripts.
+44. Example: verifying dimension 10 proofs; expect 10 challenge lines and 10 round sum lines.
+45. The final evaluation line ties everything together; it equals the polynomial evaluated at random point determined by challenges.
+46. The ledger digest ensures no one can swap final evaluation without detection.
+47. For high dimension proofs, consider memory-friendly streaming proofs (Chapter VI).
+48. Always cross-reference transcripts with field modulus selection recorded in Chapter II.
+49. Document any mixture of dims within a proof bundle.
+50. Keep transcripts in chronological order by proof generation date.
+51. If transcripts from multiple proofs share ledger file, ensure they remain separated by blank lines.
+52. The crate uses ASCII text precisely so you can audit in plain editors.
+53. Resist any request to encode transcripts in binary without justification.
+54. Provide training on reading transcripts to all on-call engineers.
+55. Without comprehension, verifying anchors becomes guesswork.
+56. Guesswork is unacceptable.
+57. The hypercube is unforgiving; errors multiply quickly.
+58. Keep polynomial evaluation functions documented in your lab notes.
+59. The manual expects you to reconstruct at least one proof by hand.
+60. Provide annotated transcripts in training material to reduce onboarding friction.
+61. Explain to management that deterministic transcripts are the reason `ANCHOR!!` is reliable.
+62. Use this chapter as a cross-check list when debugging failing proofs.
+63. If the digest does not match, inspect challenge order first, round sums second, final evaluation third.
+64. Most errors arise from misordered lines or incorrectly reduced field arithmetic.
+65. Document the fix in your change log.
+66. For aggregated proofs, ensure each statement has matching digest entry in anchor.
+67. When verifying aggregated anchor, treat each hash individually, then compare entire sequence.
+68. That is what `reconcile_anchors_with_quorum` does internally.
+69. Maintain strict naming conventions for statements to keep ledger tidy.
+70. For example: `Dense polynomial proof`, `Scaling benchmark`, `Hash anchor proof`.
+71. Resist newlines inside statements; the parser expects single-line entries.
+72. If you must use multi-line descriptions, embed them in additional metadata fields, not statement line.
+73. Keep transcript formats consistent across versions of the crate.
+74. Document version updates in ledger file header.
+75. Provide `.md` or `.txt` explanation for each log to accompany the ledger.
+76. Archive ledger logs after every major proof run.
+77. Build a habit: after verifying a proof, compute the digest manually and compare to ledger.
+78. Use `cargo run --example verify_logs` to cross-check your manual calculations later.
+79. The CLI example is descriptive, but this manual expects you to operate on paper first.
+80. Provide a copy of this chapter to auditors ahead of their visit.
+81. They will appreciate clear instructions.
+82. Remember: transcripts are immutable once logged; append new entries instead.
+83. Deleting old transcripts is a firing offense.
+84. The crate ensures logs sit in their own directory; keep the directory read-only after generation.
+85. For offline review sessions, print transcripts and highlight round sums.
+86. Use colored pens to differentiate challenge values, sums, and final evaluation.
+87. Encourage cadets to verify calculations using both mental arithmetic and calculators.
+88. Cross-check calculators for deterministic behavior; some add rounding artifacts.
+89. Use plain integer calculators or spreadsheets set to integer mode.
+90. Document each manual verification session; compliance loves logs.
+91. Provide transcripts to external reviewers in zipped packages with checksums.
+92. Example: `hash_pipeline` example writes to `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
+93. After running, copy files from `/tmp` into your node directories for anchor generation.
+94. Then run `julian node run nodeA ./logs/nodeA nodeA.anchor` to produce human-readable anchor.
+95. Compare `nodeA.anchor` to the Chapter I hex digests; they must align byte-for-byte.
+96. If they do not, your ledger logs may be outdated; rerun `hash_pipeline`.
+97. Keep version numbers in anchor files for traceability.
+98. Admission to advanced training requires presenting a hand-written transcript analysis.
+99. You now understand why the hypercube matters for consensus.
+100. Sign the ledger: ____________________.
+101. Today's date: ____________________.
 
 
 Chapter IV -- Transcript Metallurgy Protocols
@@ -765,44 +766,44 @@ counter 5 -- digest[5c00...4b66] --> challenge 92
 42. Confirm they understand why the counter is reabsorbed into the transcript after emission.
 43. Document instructions for customizing challenge derivation if protocol extensions demand it, and update transcripts accordingly.
 44. Distinguish between the base deterministic hash generator and any optional enhancements layered on top.
-63. For now, base generator serves all official operations.
-64. Provide mental model: LCG acts as crank; each transcript line turns the crank once.
-65. The crank's clicking ensures no hidden state.
-66. Every node manipulates identical crank and obtains identical output.
-67. Document unstoppable nature of this process.
-68. Should LCG constants change, recompute transcripts and anchors.
-69. Update this manual's Chapter I digests after crate upgrade.
-70. Provide guidance on migrating anchored logs when constants change.
-71. Keep old transcripts archived with documentation describing old constants.
-72. For new deployments, record generator constants in configuration baseline.
-73. Ensure admin consoles highlight deterministic randomness as key feature.
-74. Do not let marketing rename this concept to "AI spontaneity."
-75. This is not random; it is deliberate reproducibility.
-76. Provide simple pseudocode in training manuals for clarity.
-77. Example:
-78. ```
-79. state = seed
-80. for round in rounds:
-81.     state = (state * A + C) mod modulus
-82.     emit state
-83. ```
-84. Document modulus as field modulus or selected range.
-85. Encourage trainees to simulate generator using spreadsheets.
-86. Provide columns for state, challenge, next state.
-87. Check results against transcripts.
-88. The exercise builds internal trust in the deterministic design.
-89. After training, evaluate trainees with challenge reconstruction quiz.
-90. Pass or fail; no partial credit.
-91. If they cannot reproduce challenge sequence, they cannot audit transcripts.
-92. Without auditors, consensus decays; we cannot allow that.
-93. Therefore, deterministic randomness discipline remains mandatory reading.
-94. Keep personal stash of seeds for quick reference.
-95. If you do not know the current seed, you lost control of the ledger.
-96. Document the moment you regained control.
-97. Have each cadet sign off that they understand this chapter.
-98. signature: ____________________.
-99. date: ____________________.
-100. Only now may you proceed to network operations.
+45. For now, base generator serves all official operations.
+46. Provide mental model: LCG acts as crank; each transcript line turns the crank once.
+47. The crank's clicking ensures no hidden state.
+48. Every node manipulates identical crank and obtains identical output.
+49. Document unstoppable nature of this process.
+50. Should LCG constants change, recompute transcripts and anchors.
+51. Update this manual's Chapter I digests after crate upgrade.
+52. Provide guidance on migrating anchored logs when constants change.
+53. Keep old transcripts archived with documentation describing old constants.
+54. For new deployments, record generator constants in configuration baseline.
+55. Ensure admin consoles highlight deterministic randomness as key feature.
+56. Do not let marketing rename this concept to "AI spontaneity."
+57. This is not random; it is deliberate reproducibility.
+58. Provide simple pseudocode in training manuals for clarity.
+59. Example:
+60. ```
+61. state = seed
+62. for round in rounds:
+63.     state = (state * A + C) mod modulus
+64.     emit state
+65. ```
+66. Document modulus as field modulus or selected range.
+67. Encourage trainees to simulate generator using spreadsheets.
+68. Provide columns for state, challenge, next state.
+69. Check results against transcripts.
+70. The exercise builds internal trust in the deterministic design.
+71. After training, evaluate trainees with challenge reconstruction quiz.
+72. Pass or fail; no partial credit.
+73. If they cannot reproduce challenge sequence, they cannot audit transcripts.
+74. Without auditors, consensus decays; we cannot allow that.
+75. Therefore, deterministic randomness discipline remains mandatory reading.
+76. Keep personal stash of seeds for quick reference.
+77. If you do not know the current seed, you lost control of the ledger.
+78. Document the moment you regained control.
+79. Have each cadet sign off that they understand this chapter.
+80. signature: ____________________.
+81. date: ____________________.
+82. Only now may you proceed to network operations.
 
 
 Chapter VII -- Consensus Theater Operations
@@ -868,56 +869,56 @@ invalid_envelopes_total   Counter, increments when signature or digest fails.
 50. Stake-backed deployments require bond postings recorded in the staking registry; no bond, no quorum rights.
 51. Conflicting anchors automatically trigger slashing--investigate the incident, keep the evidence, and reissue the staking registry with the slashed flag preserved.
 52. Provide step-by-step onboarding instructions for new nodes, including where to fetch the current policy descriptor.
-51. Example: copy ledger logs to new node directory, place the current `governance.json`, run `julian net start` with bootstrap peers.
-53. Ensure firewall rules allow incoming connections on chosen ports.
-54. Document firewall configuration in operational manual.
-55. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
-56. Keep DNS records up to date; stale addresses break bootstrap.
-57. Use deterministic seeds so restarting nodes retains same Peer IDs.
-57. Include metrics snapshots in compliance reports.
-58. Provide script to export metrics to CSV for analysis.
-59. Example script `curl http://127.0.0.1:9100/metrics`.
-60. When network load increases, consider adjusting broadcast interval or quorum threshold.
-61. Document any changes to configuration.
-62. Encourage running `./scripts/smoke_net.sh` for local two-node test.
-63. Script creates temporary logs, spins two nodes, confirms finality.
-64. Script output `smoke_net: PASS` indicates success.
-65. Keep script updated if CLI changes.
-66. For grid deployments, replicate playbook across nodes.
-67. Provide operations manual referencing this chapter.
-68. When issues occur, inspect logs for `broadcast error: libp2p error`.
-69. Confirm log directories exist and contain transcripts; missing logs cause errors.
-70. `hash_pipeline` example generates sample logs; copy them to node directories.
-71. After copying, rerun nodes to eliminate `InsufficientPeers` warnings.
-72. If nodes fail due to firewall, update firewall and restart process.
-73. Provide runbook entries for diagnosing `invalid anchor line` errors (usually due to text anchors).
-74. When verifying anchors from peers, ensure format matches expected JSON, not textual summary.
-75. Document procedure for converting textual anchors to machine-readable format if necessary.
-76. For long-running networks, rotate logs and archive older ones.
-77. Provide summary reports to stakeholders including finality counts and anchor updates.
-78. Keep config files under version control with limited access.
-79. Train operators on safe shutdown procedures: `Ctrl+C` once, wait for `node shutting down`.
-80. After shutdown, check logs for final summary lines of anchors.
-81. Restart nodes carefully; use same seeds to maintain continuity.
-82. Provide timeline for network maintenance windows.
-83. Document backup plan for ledger logs before performing maintenance.
-84. Use manual anchor verification post-maintenance to confirm consistency.
-85. Provide contact list for network emergencies.
-86. For compliance, print this chapter and keep it on control-room clipboard.
-87. The manual expects you to internalize every command.
-88. Mistakes happen when people treat network operations lightly.
-89. This manual will not tolerate casual attitudes.
-90. Always cross-reference network results with ledger anchors and transcripts.
-91. The combination of deterministic transcripts, anchors, and network metrics provides full observability.
-92. When ready for advanced deployments, introduce additional nodes following same pattern.
-93. Extend metrics dashboards in Grafana or equivalent using provided dashboards.
-94. Always keep the Chapter I hex demonstration ready to reassure stakeholders.
-95. Sign off that you completed network drills: ____________________.
-96. Update the operations ledger with date and node IDs tested.
-97. Document any anomalies encountered during drills.
-98. Submit after-action report to compliance office.
-99. File metrics snapshots in audit repository.
-100. Proceed to closing chapter once operations ledger updated.
+53. Example: copy ledger logs to new node directory, place the current `governance.json`, run `julian net start` with bootstrap peers.
+54. Ensure firewall rules allow incoming connections on chosen ports.
+55. Document firewall configuration in operational manual.
+56. Provide DNS entries like `boot1.jrocnet.com`, `boot2.jrocnet.com`.
+57. Keep DNS records up to date; stale addresses break bootstrap.
+58. Use deterministic seeds so restarting nodes retains same Peer IDs.
+59. Include metrics snapshots in compliance reports.
+60. Provide script to export metrics to CSV for analysis.
+61. Example script `curl http://127.0.0.1:9100/metrics`.
+62. When network load increases, consider adjusting broadcast interval or quorum threshold.
+63. Document any changes to configuration.
+64. Encourage running `./scripts/smoke_net.sh` for local two-node test.
+65. Script creates temporary logs, spins two nodes, confirms finality.
+66. Script output `smoke_net: PASS` indicates success.
+67. Keep script updated if CLI changes.
+68. For grid deployments, replicate playbook across nodes.
+69. Provide operations manual referencing this chapter.
+70. When issues occur, inspect logs for `broadcast error: libp2p error`.
+71. Confirm log directories exist and contain transcripts; missing logs cause errors.
+72. `hash_pipeline` example generates sample logs; copy them to node directories.
+73. After copying, rerun nodes to eliminate `InsufficientPeers` warnings.
+74. If nodes fail due to firewall, update firewall and restart process.
+75. Provide runbook entries for diagnosing `invalid anchor line` errors (usually due to text anchors).
+76. When verifying anchors from peers, ensure format matches expected JSON, not textual summary.
+77. Document procedure for converting textual anchors to machine-readable format if necessary.
+78. For long-running networks, rotate logs and archive older ones.
+79. Provide summary reports to stakeholders including finality counts and anchor updates.
+80. Keep config files under version control with limited access.
+81. Train operators on safe shutdown procedures: `Ctrl+C` once, wait for `node shutting down`.
+82. After shutdown, check logs for final summary lines of anchors.
+83. Restart nodes carefully; use same seeds to maintain continuity.
+84. Provide timeline for network maintenance windows.
+85. Document backup plan for ledger logs before performing maintenance.
+86. Use manual anchor verification post-maintenance to confirm consistency.
+87. Provide contact list for network emergencies.
+88. For compliance, print this chapter and keep it on control-room clipboard.
+89. The manual expects you to internalize every command.
+90. Mistakes happen when people treat network operations lightly.
+91. This manual will not tolerate casual attitudes.
+92. Always cross-reference network results with ledger anchors and transcripts.
+93. The combination of deterministic transcripts, anchors, and network metrics provides full observability.
+94. When ready for advanced deployments, introduce additional nodes following same pattern.
+95. Extend metrics dashboards in Grafana or equivalent using provided dashboards.
+96. Always keep the Chapter I hex demonstration ready to reassure stakeholders.
+97. Sign off that you completed network drills: ____________________.
+98. Update the operations ledger with date and node IDs tested.
+99. Document any anomalies encountered during drills.
+100. Submit after-action report to compliance office.
+101. File metrics snapshots in audit repository.
+102. Proceed to closing chapter once operations ledger updated.
 
 
 Chapter VIII -- Closing Benediction and Compliance Oath
