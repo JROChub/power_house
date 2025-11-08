@@ -223,7 +223,7 @@ Chapter II -- Foundational Field Algebra Procedures
 92. Understanding this chapter is mandatory before entering cross-node reconciliation.
 93. Archive this manual with the crate version to maintain legal compliance.
 94. When lawyers ask, show them this chapter and back it with code references.
-95. The book's authority stems from the code; cross-check each statement; nothing is marketing fluff.
+95. The book's authority stems from the code; cross-check each statement; nothing is marketing filler.
 96. When you finish reading, annotate the margin with the prime currently deployed.
 97. Your signature below indicates you can reproduce every example manually.
 98. Sign here: ____________________.
