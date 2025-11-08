@@ -27,27 +27,43 @@ Chapter I -- Anchor Echo Engine Command Doctrine
 04. Memorize the hash anchor proof digest `0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b`.
 05. Memorize the anchor-fold digest emitted by `hash_pipeline`: `a5a1b9528dd9b4e811e89fb492977c2010322d09d2318530b0f01b5b238399b3`.
 06. Write them on the wall; anyone who shrugs at 64 hex bytes should be reassigned to kitchen duty.
-07. `transcript_digest` now feeds every `u64` transcript value into a BLAKE2b-256 sponge tagged with `JROC_TRANSCRIPT`.
+07. `transcript_digest` now feeds every `u64` transcript value into a BLAKE2b-256 tagged hash stream tagged with `JROC_TRANSCRIPT`.
 08. No XOR tricks, no decimal fallbacks--pure hex, 32 bytes, immutable.
 09. Ledger files still appear as `ledger_0000.txt`, `ledger_0001.txt`, etc., but every `hash:` line is now lowercase hex.
 10. Run `cargo run --example hash_pipeline` weekly; the output must include the fold digest above and the reduced field value `21`.
 11. The program stages two ledgers under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
+11a. Windows or hardened hosts lacking `/tmp` must pass `POWER_HOUSE_TMP=/path/to/workdir`; never assume a Unix tmpfs is writable in prod.
 12. Open `ledger_0000.txt`; the hash must match `ded75c45...6e8c`.
 13. Open `ledger_0001.txt`; the hash must match `0f50904f...08f9b`.
 14. If either hash deviates, the log is corrupt or you miscopied the hex--both offences carry penalties.
 15. `julian node anchor /tmp/power_house_anchor_a` should print three lines headed by `JROC-NET`.
 16. Verify that the genesis line prints the digest from step 02 without error.
-17. The fold digest from step 05 appears only in terminal output; treat it as the quorum hinge.
+17. The fold digest from step 05 appears in terminal output; immediately copy it into `fold_digest.txt` beside your ledger before you proceed so auditors never depend on scrollback.
+18. When exporting anchors, append a comment `# fold_digest: <hex>` or store it in `anchor_meta.json`; the quorum hinge must live with the artefacts you check in.
 18. `LedgerAnchor::anchor()` automatically prepends the JULIAN genesis entry with the new digest.
 19. Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat-Shamir challenge derivation.
 20. Do not mix domains--if you re-tag transcripts with the anchor label, you will deserve the audit citation.
+Hash framing specification (tagged stream; not a sponge):
+```
+hasher = BLAKE2b-256()
+hasher.update(DOMAIN_TAG)                     # e.g., JROC_TRANSCRIPT
+hasher.update(len(section) as u64 big-endian) # applied to each section
+hasher.update(section bytes)                  # transcripts, round_sums, etc.
+hasher.update(final_value.to_be_bytes())
+digest = hasher.finalize()
+```
+- All transcript numbers are encoded as u64 big-endian before hashing.
+- No personalization/salt is used; the explicit domain tag enforces separation.
+- ASCII hex with spaces or carets is cosmetic; the canonical digest is 32 raw bytes rendered as contiguous lowercase `[0-9a-f]` characters.
 21. `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
 22. The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
 23. To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
 24. The aggregated digest reduces to field element `21`. Say it. Write it. Remember it.
+24a. Digest-to-field procedure: interpret the first eight bytes of the 32-byte digest as a big-endian u64, then compute `value mod p` (e.g., `0xa5a1b9528dd9b4e8 -> 0xA5A1B9528DD9B4E8 -> 11916436223453507944 -> 21 (mod 257)`).
 25. When the reduction changes, the field or transcript changed--file an incident report.
 26. `simple_prng` is dead; the challenge stream is now BLAKE2b-256 seeded by the transcript plus domain tag.
 27. Never allow anyone to talk wistfully about linear-congruential generators again.
+27a. Bias note: current derivation uses `next_u64() % p`; keep `p` close to 2^64 (e.g., 64-bit primes) or switch to the documented rejection sampler in Chapter VI when you extend the code.
 28. The `scripts/smoke_net.sh` ritual depends on stable keys; if the metrics server refuses to bind, document the environment block.
 29. Finality relies on unique public keys; the network now laughs at duplicate voters.
 30. When reconciling offline, use placeholder identities like `LOCAL_OFFLINE` and `PEER_FILE`, but never reuse placeholders for different peers in the same quorum call.
@@ -355,6 +371,24 @@ Chapter IV -- Transcript Metallurgy Protocols
 01. Transcript metallurgy is my term for shaping ledger entries with surgical precision.
 02. Each transcript is a composite of lines: statements, challenges, round sums, final evaluation, hash.
 03. Lines are plain ASCII; no binary, no compression.
+Transcript grammar (ABNF; ASCII 0x20-0x7E only):
+```
+record      = statement LF transcript LF round-sums LF final LF hash LF
+statement   = "statement:" text
+transcript  = "transcript:" numbers
+round-sums  = "round_sums:" numbers
+final       = "final:" number
+hash        = "hash:" hexdigits
+text        = 1*(%x20-7E)
+numbers     = *(SP number)
+number      = 1*DIGIT
+hexdigits   = 64*(%x30-39 / %x61-66) ; lowercase only
+```
+Canonicalization checklist:
+- Encode every integer in base-10 ASCII with no separators.
+- Emit lowercase hex, exactly two chars per byte, no spacing.
+- Enforce LF line endings and append a terminal newline.
+- Reject tab characters; comments must be standalone `#` lines outside the hashed block.
 04. Example statement: `statement: Dense polynomial proof`.
 05. Example challenge line: `challenge: 37`.
 06. Example round sums: `round_sums: 12 47`.
@@ -375,6 +409,7 @@ Chapter IV -- Transcript Metallurgy Protocols
 21. Document field modulus in comments: `# field: 101`.
 22. Preserve chronological order of transcripts.
 23. Time-stamp files if needed, but keep stamps outside hashed content.
+23a. When you log a timestamp, prefer ISO 8601 `YYYY-MM-DDThh:mm:ssZ`; if the clock is suspect, add a monotonic counter (`counter=42`) alongside the UTC stamp.
 24. Provide absolute path to ledger files in your audit log.
 25. Use `verify_logs` example to cross-check transcript digest; treat it as after-action audit.
 26. For aggregated transcripts, label each segment with comment headers.
@@ -392,6 +427,12 @@ Chapter IV -- Transcript Metallurgy Protocols
 38. When verifying transcripts manually, check each line for formatting errors.
 39. Example: double-check there are no tab characters.
 40. Use a script to detect trailing spaces; remove them before digest generation.
+40a. Recommended helper:
+```
+julian tools canonicalize-transcript ledger_0000.txt > ledger_0000.clean
+julian tools digest-transcript ledger_0000.clean --domain JROC_TRANSCRIPT
+```
+Even if you implement these helpers as shell scripts today, bake them into CI tomorrow.
 41. Understand that transcripts are not logs--they are proof artifacts.
 42. Do not mix general logging messages within transcript files.
 43. Use separate log for CLI output.
@@ -402,6 +443,7 @@ Chapter IV -- Transcript Metallurgy Protocols
 48. Example command: `julian node anchor ./logs/nodeA`.
 49. The JSON includes statement array and hash array.
 50. Serialize anchor output to share with remote nodes in offline settings.
+50a. Rule of thumb: transcripts stay US-ASCII forever; anchors/JSON use UTF-8, and any non-ASCII glyph must be escaped JSON-style.
 51. Do not share raw transcript files without encryption; treat them as sensitive.
 52. When archived, transcripts serve as legal evidence of proof execution.
 53. Document the chain-of-custody for ledger directories.
@@ -471,6 +513,21 @@ Anchor Cross-Section (ledger strata):
 01. Ledger anchors are the commitments stored across sessions.
 02. `julian_genesis_anchor()` returns baseline anchor containing `JULIAN::GENESIS`.
 03. `LedgerAnchor` struct has `entries: Vec<EntryAnchor>`.
+Merkle capsule specification:
+```
+leaf(i)   = BLAKE2b-256("LEAF" || i.to_be_bytes() || transcript_hash_i)
+node(a,b) = BLAKE2b-256("NODE" || a || b) ; left/right preserved
+root      = fold(node, leaves) duplicating the last leaf if count is odd
+```
+- Leaves consume the 32-byte transcript digests; no additional domain tag is needed.
+- Internal nodes always hash `(left || right)`; never sort or swap siblings.
+- Render the resulting root as lowercase hex and store alongside the statement.
+Worked example (2 leaves):
+```
+leaf0 = hash("LEAF" || 0 || ded7...6e8c)
+leaf1 = hash("LEAF" || 1 || 0f50...08f9b)
+root  = hash("NODE" || leaf0 || leaf1) = 80e7...44f4
+```
 04. `EntryAnchor` holds `statement` and `hashes`.
 05. Anchor entries remain append-only.
 06. `LedgerAnchor::push` appends new statement and hash; duplicates rejected.
@@ -480,6 +537,22 @@ Anchor Cross-Section (ledger strata):
 10. Quorum is typically 2 for simple demonstrations.
 11. Mismatch yields errors describing diverging statements or hash values.
 12. Anchor JSON representation includes `schema`, `network`, `node_id`, `entries`.
+JSON schema sketch (`jrocnet.anchor.v1`):
+```
+{
+  "schema": "jrocnet.anchor.v1",
+  "network": "JROC-NET",
+  "node_id": "nodeA",
+  "fold_digest": "a5a1...99b3",   // optional but recommended
+  "entries": [
+     {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
+     {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
+  ],
+  "crate_version": "0.1.36"
+}
+```
+- Strings are UTF-8; digests remain lowercase hex strings.
+- `fold_digest` joins the anchor so remote auditors see the quorum hinge without reading stdout.
 13. Node anchor generation command: `julian node run <node_id> <log_dir> <output_file>`.
 14. Example: `julian node run nodeA ./logs/nodeA nodeA.anchor`.
 15. Output file lists anchor statements and hash numbers.
@@ -489,7 +562,28 @@ Anchor Cross-Section (ledger strata):
 19. `JROC-NET :: JULIAN::GENESIS -> [139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a]`.
 20. `JROC-NET :: Dense polynomial proof -> [ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c]`.
 21. `JROC-NET :: Hash anchor proof -> [0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b]`.
+Golden test vector (book edition `v0.1.37`, field 257):
+```
+ledger_0000.txt
+statement:Dense polynomial proof
+transcript:247 246 144 68 105 92 243 202 72 124
+round_sums:209 235 57 13 205 8 245 122 72 159
+final:9
+hash:ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
+
+ledger_0001.txt
+statement:Hash anchor proof
+transcript:17 230 192 174 226 171
+round_sums:21 139 198 99 178 89
+final:173
+hash:0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b
+
+fold_digest:a5a1b9528dd9b4e811e89fb492977c2010322d09d2318530b0f01b5b238399b3
+anchor_root:80e7cb9d1721ce47f6f908f9ac01098d9c035f1225fff84083a6e1d0828144f4
+```
 22. Maintain a single numeric representation (hex in this manual); record the chosen format with the ledger and ensure every anchor reproduces the Chapter I digests.
+22a. CI guardrail: `cargo run --example hash_pipeline` must emit the golden digests above; fail the build if the field reduction or fold digest drifts.
+22b. CI also checks that `Cargo.toml`'s `version` equals the version string printed in this book's title page; no silent mismatches.
 23. Document anchors with version numbers and node descriptors.
 24. Store anchor files in node-specific directories: `./logs/nodeA`, `./logs/nodeB`.
 25. After generating anchors, run `julian node reconcile ./logs/nodeA nodeB.anchor 2`.
@@ -580,6 +674,26 @@ Chapter VI -- Deterministic Randomness Discipline Orders
 06. The seed material is the transcript itself; identical transcripts yield identical challenge streams.
 07. The crate avoids ambient randomness so auditors can replay transcripts without external state.
 08. When verifying transcripts, recompute challenges using the same hashing steps presented in `prng.rs`.
+Challenge derivation pseudocode (current implementation):
+```
+seed = BLAKE2b-256("JROC_CHALLENGE" || len(tag) || tag || len(transcript) || transcript_words)
+prng = SimplePrng::from_seed_bytes(seed)
+for i in 0..k {
+    r = prng.next_u64()
+    challenge_i = r mod p        # biased if p << 2^64
+}
+```
+Bias-mitigated variant (recommended for larger fields):
+```
+threshold = 2^64 - ((2^64) mod p)
+loop {
+    r = prng.next_u64()
+    if r < threshold {
+        return r mod p
+    }
+}
+```
+Declare in your transcript metadata which variant you used so verifiers can reproduce the same stream.
 Challenge Waterfall (Fiat-Shamir stream):
 ```
 counter 0 -- digest[f7bc...0d4d] --> challenge 247
@@ -699,8 +813,17 @@ Chapter VII -- Consensus Theater Operations
 25. `  --key ed25519://boot2-seed`.
 26. Node logs show finality events and anchor broadcasts.
 27. Use deterministic seeds so Peer IDs remain stable.
+27a. Deterministic `ed25519://` seeds are for demos only; production nodes must source keys from HSMs or encrypted keyfiles and document the derivation/rotation ritual.
 28. Prometheus metrics accessible at `http://127.0.0.1:9100/metrics`.
 29. Metrics include `anchors_verified_total`, `finality_events_total`, `anchors_received_total`, `invalid_envelopes_total`.
+Metrics crib sheet:
+```
+anchors_verified_total    Counter, monotonic, increments per matching anchor from peers.
+anchors_received_total    Counter, counts every envelope before validation.
+finality_events_total     Counter, increments when quorum satisfied.
+invalid_envelopes_total   Counter, increments when signature or digest fails.
+```
+- All counters are unit-less but monotonic; alert if they reset outside planned restarts.
 30. Monitor metrics to confirm network health.
 31. Anchor broadcast happens at set interval or when anchor changes.
 32. Node anchor generation uses same transcripts described earlier.
@@ -837,3 +960,10 @@ Compliance Seal (sign before dismissal):
 48. May your challenges be deterministic.
 49. May your regulators be impressed.
 50. Dismissed.
+
+Glossary (pin it inside your binder):
+- Anchor: ordered list of statements plus transcript digests, optionally with fold digest metadata.
+- Transcript: ASCII record of statement/challenges/round sums/final value/hash for a single proof.
+- Fold digest: BLAKE2b-256 hash across transcript digests, used as quorum hinge.
+- Domain tag: ASCII label (e.g., `JROC_TRANSCRIPT`) spliced into the hash input to prevent cross-protocol collisions.
+- Quorum: minimum count of matching anchors needed for finality (`reconcile_anchors_with_quorum` enforces it).

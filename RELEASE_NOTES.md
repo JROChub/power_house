@@ -1,5 +1,16 @@
 # Release Notes
 
+## v0.1.37 — 2025-11-07
+
+### Added
+- Transcript ABNF, hash framing pseudocode, challenge derivation notes, Merkle capsule spec, JSON schema sketch, metrics crib sheet, and glossary inside `docs/book_of_power.md`.
+- Golden test vectors (ledgers, fold digest, anchor root) plus new Spec Compliance checklist in `docs/training_binder.md`.
+
+### Changed
+- Clarified fold digest persistence, field reduction endianness, temp-path overrides, key-handling cautions, and CI guardrails.
+- Regenerated `docs/book_of_power.pdf` with the updated content.
+
+
 
 ## v0.1.36 — 2025-11-07
 

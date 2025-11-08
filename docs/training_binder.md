@@ -81,3 +81,12 @@ Instructions: highlight challenge lines, check that each `round_sums` pair colla
    - Signature: ______________________
 
 Store completed sheets in the compliance ledger alongside the latest anchor files. Attach any calculator printouts or spreadsheets used during the drills for future audits.
+
+## 5. Spec Compliance *(Book refs: Chapter I §§17–24a, Chapter IV §§01–23a, Chapter V §§12–22a)*
+
+| Item | Action | Initials |
+| --- | --- | --- |
+| Fold digest persistence | Captured `fold_digest:a5a1…99b3` beside every ledger before reconciling. | |
+| Transcript grammar | Validated that `ledger_0000.txt` satisfies the ABNF (ASCII, LF endings, 64-char lowercase hash). | |
+| JSON schema | Produced `anchor_meta.json` with `fold_digest`, `crate_version`, and verified UTF-8 encoding. | |
+| CI guardrail notes | Logged `hash_pipeline` output SHA256 and Cargo version to satisfy CI rules. | |
