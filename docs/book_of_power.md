@@ -375,7 +375,7 @@ Hypercube Holo-map (dim=3 reference):
 98. Admission to advanced training requires presenting a hand-written transcript analysis.
 99. You now understand why the hypercube matters for consensus.
 100. Sign the ledger: ____________________.
-101. Today's date: ____________________.
+Today's date: ____________________.
 
 
 Chapter IV -- Transcript Metallurgy Protocols
@@ -917,8 +917,8 @@ invalid_envelopes_total   Counter, increments when signature or digest fails.
 98. Update the operations ledger with date and node IDs tested.
 99. Document any anomalies encountered during drills.
 100. Submit after-action report to compliance office.
-101. File metrics snapshots in audit repository.
-102. Proceed to closing chapter once operations ledger updated.
+File metrics snapshots in audit repository.
+Proceed to closing chapter once operations ledger updated.
 
 
 Chapter VIII -- Closing Benediction and Compliance Oath
