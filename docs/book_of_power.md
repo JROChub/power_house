@@ -1,6 +1,6 @@
 Title Page
 ===========
-Book of Power — Condensed Graviton Edition
+Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
@@ -9,17 +9,17 @@ This User Guide Lives Inside the Crate: `docs/book_of_power.md`
 
 Table of Contents
 ==================
-Chapter I — Anchor Echo Engine Command Doctrine
-Chapter II — Foundational Field Algebra Procedures
-Chapter III — Hyperplane Cartography Briefing
-Chapter IV — Transcript Metallurgy Protocols
-Chapter V — Ledger Genesis Mechanics Checklist
-Chapter VI — Deterministic Randomness Discipline Orders
-Chapter VII — Consensus Theater Operations
-Chapter VIII — Closing Benediction and Compliance Oath
+Chapter I -- Anchor Echo Engine Command Doctrine
+Chapter II -- Foundational Field Algebra Procedures
+Chapter III -- Hyperplane Cartography Briefing
+Chapter IV -- Transcript Metallurgy Protocols
+Chapter V -- Ledger Genesis Mechanics Checklist
+Chapter VI -- Deterministic Randomness Discipline Orders
+Chapter VII -- Consensus Theater Operations
+Chapter VIII -- Closing Benediction and Compliance Oath
 
 
-Chapter I — Anchor Echo Engine Command Doctrine
+Chapter I -- Anchor Echo Engine Command Doctrine
 ================================================================================
 01. I remain your irritable cosmic supervisor; this page is the manual for the 256-bit Anchor Echo Engine.
 02. Memorize the genesis digest `139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a`.
@@ -28,24 +28,24 @@ Chapter I — Anchor Echo Engine Command Doctrine
 05. Memorize the anchor-fold digest emitted by `hash_pipeline`: `a5a1b9528dd9b4e811e89fb492977c2010322d09d2318530b0f01b5b238399b3`.
 06. Write them on the wall; anyone who shrugs at 64 hex bytes should be reassigned to kitchen duty.
 07. `transcript_digest` now feeds every `u64` transcript value into a BLAKE2b-256 sponge tagged with `JROC_TRANSCRIPT`.
-08. No XOR tricks, no decimal fallbacks—pure hex, 32 bytes, immutable.
+08. No XOR tricks, no decimal fallbacks--pure hex, 32 bytes, immutable.
 09. Ledger files still appear as `ledger_0000.txt`, `ledger_0001.txt`, etc., but every `hash:` line is now lowercase hex.
 10. Run `cargo run --example hash_pipeline` weekly; the output must include the fold digest above and the reduced field value `21`.
 11. The program stages two ledgers under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
-12. Open `ledger_0000.txt`; the hash must match `ded75c45…6e8c`.
-13. Open `ledger_0001.txt`; the hash must match `0f50904f…08f9b`.
-14. If either hash deviates, the log is corrupt or you miscopied the hex—both offences carry penalties.
+12. Open `ledger_0000.txt`; the hash must match `ded75c45...6e8c`.
+13. Open `ledger_0001.txt`; the hash must match `0f50904f...08f9b`.
+14. If either hash deviates, the log is corrupt or you miscopied the hex--both offences carry penalties.
 15. `julian node anchor /tmp/power_house_anchor_a` should print three lines headed by `JROC-NET`.
 16. Verify that the genesis line prints the digest from step 02 without error.
 17. The fold digest from step 05 appears only in terminal output; treat it as the quorum hinge.
 18. `LedgerAnchor::anchor()` automatically prepends the JULIAN genesis entry with the new digest.
-19. Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat–Shamir challenge derivation.
-20. Do not mix domains—if you re-tag transcripts with the anchor label, you will deserve the audit citation.
+19. Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat-Shamir challenge derivation.
+20. Do not mix domains--if you re-tag transcripts with the anchor label, you will deserve the audit citation.
 21. `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
 22. The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
 23. To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
 24. The aggregated digest reduces to field element `21`. Say it. Write it. Remember it.
-25. When the reduction changes, the field or transcript changed—file an incident report.
+25. When the reduction changes, the field or transcript changed--file an incident report.
 26. `simple_prng` is dead; the challenge stream is now BLAKE2b-256 seeded by the transcript plus domain tag.
 27. Never allow anyone to talk wistfully about linear-congruential generators again.
 28. The `scripts/smoke_net.sh` ritual depends on stable keys; if the metrics server refuses to bind, document the environment block.
@@ -54,12 +54,21 @@ Chapter I — Anchor Echo Engine Command Doctrine
 31. Keep a laminated cheat sheet with the three transcript digests and the fold digest.
 32. Add a second sheet listing the domain tags; auditors adore label discipline.
 33. Print the digests with caret markers every four bytes: `139f_1985_df5b_36da_...`.
+```
++================ HEX SIGIL :: ANCHOR CORE ================+
+| GENESIS      139f 1985 df5b 36da e23f a509 fb53         |
+| DENSE POLY   ded7 5c45 b3b7 eedd 3704 1aae 7971         |
+| HASH ANCHOR  0f50 904f 7be0 6930 a550 0c2c 54cf         |
+| FOLD DIGEST  a5a1 b952 8dd9 b4e8 11e8 9fb4 9297         |
+| FIELD REDUCE -> 21 (anchor hinge)                       |
++=========================================================+
+```
 34. The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
 35. If you must annotate, prefix with `#` outside the transcript block.
 36. `hash_pipeline` reduces to the canonical demo; treat its output as the lab reference.
 37. Use `power_house::transcript_digest_to_hex` in your scripts; do not reinvent hex formatting.
 38. If someone doubts determinism, rerun the example and shove the matching hashes under their nose.
-39. When a cadet forgets a digit, force them to rewrite the digest 32 times—one per byte.
+39. When a cadet forgets a digit, force them to rewrite the digest 32 times--one per byte.
 40. Disaster recovery scenario: power outage; print the digests from this book, run manual comparisons, reestablish finality.
 41. Regulatory drill: produce log file, book excerpt, and CLI output; they must match byte-for-byte.
 42. Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
@@ -76,9 +85,9 @@ Chapter I — Anchor Echo Engine Command Doctrine
 53. If that test fails, fix it before touching production.
 54. Teach cadets that every hex pair represents eight bits of inevitability; there is no shortcut.
 55. Binary toggles no longer amuse me, but you may use them to dramatize a single byte flip.
-56. When presenting to executives, describe this chapter as “hexadecimal finality discipline.”
-57. When presenting to mathematicians, describe it as “BLAKE2b commitments over deterministic transcripts.”
-58. When presenting to auditors, describe it as “evidence that nothing is hidden.”
+56. When presenting to executives, describe this chapter as "hexadecimal finality discipline."
+57. When presenting to mathematicians, describe it as "BLAKE2b commitments over deterministic transcripts."
+58. When presenting to auditors, describe it as "evidence that nothing is hidden."
 59. The genesis digest anchors the entire JULIAN network; treat it as sacred text.
 60. If someone requests the old 64-bit values, hand them a shredder.
 61. Update the compliance wiki with screenshots of `hash_pipeline` output; redacting nothing.
@@ -98,18 +107,18 @@ Chapter I — Anchor Echo Engine Command Doctrine
 75. Re-run `hash_pipeline` after any change to transcript formatting; whitespace is deadly.
 76. When the ledger evolves, update the book first, THEN announce the change.
 77. Keep the aggregated digest visible on the boot node status page; stake your bragging rights on it.
-78. If you hear “why not shorter digests,” answer with threat of expulsion.
+78. If you hear "why not shorter digests," answer with threat of expulsion.
 79. Always store transcripts and digests together; context is armor.
 80. Replicate this manual in triplicate: on paper, in git, and in cold storage.
 81. Tattoo the domain tags on your forearm if that helps.
 82. Run `cargo test --features net` after every patch; the tests confirm our identity counting and digest logic.
 83. If a colleague tries to skip the tests, this book authorizes you to snatch their keyboard.
 84. The aggregated digest converts to field element 21; include that value in any whiteboard explanation.
-85. Draw the folding pipeline as: transcripts → BLAKE2b digest → anchor fold → quorum.
-86. Each step must be reproducible from logs plus this manual—no hidden state.
+85. Draw the folding pipeline as: transcripts -> BLAKE2b digest -> anchor fold -> quorum.
+86. Each step must be reproducible from logs plus this manual--no hidden state.
 87. Record the BLAKE2b command used by external auditors if they verify independently.
 88. When this book says memorize, you memorize; complacency breeds forks.
-89. The anchor echo engine is still the handshake ritual—now with heavier hex.
+89. The anchor echo engine is still the handshake ritual--now with heavier hex.
 90. Sign the compliance sheet confirming you verified all four digests (three transcripts plus the fold) before leaving the room.
 91. File the signed sheet next to the ledger backups.
 92. Only after these steps may you advance to Chapter II.
@@ -118,7 +127,7 @@ Chapter I — Anchor Echo Engine Command Doctrine
 100. Finish this chapter by writing `ANCHOR!!` in your own handwriting across the margin as proof you completed the ritual.
 
 
-Chapter II — Foundational Field Algebra Procedures
+Chapter II -- Foundational Field Algebra Procedures
 ================================================================================
 01. Punctual cadets start with fields; everything else is decoration.
 02. The crate defines `Field::new(p)` where `p` must be prime.
@@ -129,9 +138,9 @@ Chapter II — Foundational Field Algebra Procedures
 07. Exponentiation is implemented via square-and-multiply, ensuring O(log exponent).
 08. Inversion triggers the extended Euclidean algorithm; zero input raises panic.
 09. The panic is intentional; the crate refuses undefined algebra.
-10. Example: In F₁₀₁, inverse of 37 equals 11 because `37*11 = 407` and `407 mod 101 = 1`.
+10. Example: In F101, inverse of 37 equals 11 because `37*11 = 407` and `407 mod 101 = 1`.
 11. This result is verified by the deterministic tests under `tests::field_inverse`.
-12. Another example: `FieldElement::new(57).pow(100)` equals 1 due to Fermat’s little theorem.
+12. Another example: `FieldElement::new(57).pow(100)` equals 1 due to Fermat's little theorem.
 13. The crate ensures these results remain reproducible regardless of platform.
 14. Sum-check routines depend on field operations to remain exact while reducing dimensions.
 15. Without precise algebra, transcripts would diverge, and ledger anchors would reveal contradictions.
@@ -149,7 +158,7 @@ Chapter II — Foundational Field Algebra Procedures
 27. When teaching cadets, use small primes first, then escalate to 64-bit primes.
 28. Provide them with modular arithmetic drill spreadsheets.
 29. Guarantee they can multiply numbers mod 97 faster than they can recite multiplication tables.
-30. The crate’s tests call `assert_eq!((a * b).value(), expected)` to confirm arithmetic operations.
+30. The crate's tests call `assert_eq!((a * b).value(), expected)` to confirm arithmetic operations.
 31. Keep tests deterministic to avoid flaky proofs.
 32. Use `cargo test` after modifying arithmetic; never assume.
 33. The absence of external dependencies means the arithmetic sits directly under your control.
@@ -158,21 +167,21 @@ Chapter II — Foundational Field Algebra Procedures
 36. Document every custom modulus in mission playbooks for traceability.
 37. When auditors ask why deterministic fields matter, mention ledger reproducibility.
 38. When mathematicians ask the same question, mention polynomial commitments.
-39. When executives ask, say “ribcage of the proof engine.”
+39. When executives ask, say "ribcage of the proof engine."
 40. Use `FieldElement::from` functions to convert integers into field elements gracefully.
 41. Always subtract using field operations; plain subtraction may underflow.
 42. If you witness a colleague using `%` directly on `u64`, confiscate their keyboard.
-43. Replace naive mod expressions with the crate’s specific operations.
+43. Replace naive mod expressions with the crate's specific operations.
 44. Example: `(a + b - c) % p` becomes `((a + b) - c).value()` using field wrappers.
 45. Keep alphabetic naming consistent: `a`, `b`, `lambda`, `chi`.
-46. Document the notation in your team’s style guide.
+46. Document the notation in your team's style guide.
 47. When computing sums inside transcripts, do not convert to plain integers.
 48. Maintain final values as field elements until writing to ledger.
 49. The ledger stores textual integers but the operations leading there must stay in the field.
-50. To emulate this book’s demonstration, compile transcripts manually and check each numeric entry.
+50. To emulate this book's demonstration, compile transcripts manually and check each numeric entry.
 51. If a ledger entry reads `round_sums: 37 11`, you now understand the field context.
 52. Provide cross references inside ledger comments: `# F101`.
-53. This manual expects you to remember Fermat’s little theorem without apologizing.
+53. This manual expects you to remember Fermat's little theorem without apologizing.
 54. Individuals unable to recall modular arithmetic fundamentals must repeat cadet training.
 55. JROC-NET relies on deterministic math to keep nodes in sync; chaos begins with sloppy algebra.
 56. Even networked operations refer back to this chapter when verifying digests.
@@ -201,7 +210,7 @@ Chapter II — Foundational Field Algebra Procedures
 79. Keep message logs that reference the field used for each transcript.
 80. The manual does not repeat this chapter; this is your single warning.
 81. Field arithmetic is the base layer; nothing above it is negotiable.
-82. If asked “why not floats,” respond “because floats mutate logs and ruin consensus.”
+82. If asked "why not floats," respond "because floats mutate logs and ruin consensus."
 83. Power-house deliberately uses integer arithmetic to keep transcripts identical across machines.
 84. There is no tolerance window; errors are binary: correct or fraudulent.
 85. Expect your ledger to throw errors the moment you deviate from deterministic field behavior.
@@ -214,7 +223,7 @@ Chapter II — Foundational Field Algebra Procedures
 92. Understanding this chapter is mandatory before entering cross-node reconciliation.
 93. Archive this manual with the crate version to maintain legal compliance.
 94. When lawyers ask, show them this chapter and back it with code references.
-95. The book’s authority stems from the code; cross-check each statement; nothing is marketing fluff.
+95. The book's authority stems from the code; cross-check each statement; nothing is marketing fluff.
 96. When you finish reading, annotate the margin with the prime currently deployed.
 97. Your signature below indicates you can reproduce every example manually.
 98. Sign here: ____________________.
@@ -222,8 +231,23 @@ Chapter II — Foundational Field Algebra Procedures
 100. Proceed to the next chapter only if you completed the exercises honestly.
 
 
-Chapter III — Hyperplane Cartography Briefing
+Chapter III -- Hyperplane Cartography Briefing
 ================================================================================
+Hypercube Holo-map (dim=3 reference):
+```
+            z
+            ^
+            |
+        *---* (0,1,1)
+       /|  /|
+      *-+-* |
+     /| |/| |
+    *-+-*-|-*  -> y
+    | *-+-* /
+    |/  | / 
+    *---*---* -> x
+ (0,0,0)   (1,0,0)
+```
 01. Hyperplane cartography means navigating the Boolean hypercube with precision.
 02. `MultilinearPolynomial::from_evaluations(dim, values)` enforces `values.len() == 1 << dim`.
 03. Suppose `dim = 3`; values correspond to vertices `(0,0,0)` through `(1,1,1)`.
@@ -323,10 +347,10 @@ Chapter III — Hyperplane Cartography Briefing
 97. Admission to advanced training requires presenting a hand-written transcript analysis.
 98. You now understand why the hypercube matters for consensus.
 99. Sign the ledger: ____________________.
-100. Today’s date: ____________________.
+100. Today's date: ____________________.
 
 
-Chapter IV — Transcript Metallurgy Protocols
+Chapter IV -- Transcript Metallurgy Protocols
 ================================================================================
 01. Transcript metallurgy is my term for shaping ledger entries with surgical precision.
 02. Each transcript is a composite of lines: statements, challenges, round sums, final evaluation, hash.
@@ -368,7 +392,7 @@ Chapter IV — Transcript Metallurgy Protocols
 38. When verifying transcripts manually, check each line for formatting errors.
 39. Example: double-check there are no tab characters.
 40. Use a script to detect trailing spaces; remove them before digest generation.
-41. Understand that transcripts are not logs—they are proof artifacts.
+41. Understand that transcripts are not logs--they are proof artifacts.
 42. Do not mix general logging messages within transcript files.
 43. Use separate log for CLI output.
 44. This manual enforces the rule: transcripts must be pristine.
@@ -404,7 +428,7 @@ Chapter IV — Transcript Metallurgy Protocols
 74. When crate updates digest algorithm, update this manual immediately.
 75. Provide compatibility tables mapping version to digest method.
 76. Resist quoting digest values out of context; always include statement and proof details.
-77. Mention in your compliance log that you validated each transcript using this manual’s checklists.
+77. Mention in your compliance log that you validated each transcript using this manual's checklists.
 78. Keep transcript directories accessible but immutable for all operations except append.
 79. Provide read-only mounts for network nodes to avoid accidental changes.
 80. Confirm backup scripts treat transcripts as static files.
@@ -430,8 +454,20 @@ Chapter IV — Transcript Metallurgy Protocols
 100. Date: ____________________.
 
 
-Chapter V — Ledger Genesis Mechanics Checklist
+Chapter V -- Ledger Genesis Mechanics Checklist
 ================================================================================
+Anchor Cross-Section (ledger strata):
+```
+[Transcript Lines]  --BLAKE2b-->  [Digest Row]
+        |                            |
+        +--> per-entry stack --------+
+                v (merkle mix)
+          [Merkle Root Capsule]
+                v
+          [Ledger Anchor]
+                v (quorum pass)
+          [Finality Ring]
+```
 01. Ledger anchors are the commitments stored across sessions.
 02. `julian_genesis_anchor()` returns baseline anchor containing `JULIAN::GENESIS`.
 03. `LedgerAnchor` struct has `entries: Vec<EntryAnchor>`.
@@ -534,16 +570,30 @@ Chapter V — Ledger Genesis Mechanics Checklist
 100. Proceed to Chapter VI with discipline intact.
 
 
-Chapter VI — Deterministic Randomness Discipline Orders
+Chapter VI -- Deterministic Randomness Discipline Orders
 ================================================================================
-01. Fiat–Shamir challenges must be reproducible.
-02. power_house now derives Fiat–Shamir challenges with domain-separated BLAKE2b-256.
+01. Fiat-Shamir challenges must be reproducible.
+02. power_house now derives Fiat-Shamir challenges with domain-separated BLAKE2b-256.
 03. Each invocation absorbs the transcript words, the domain tag `JROC_CHALLENGE`, and an ever-increasing counter.
 04. The output block is 32 bytes; the first eight bytes reduce modulo the field to produce the challenge value.
 05. Deterministic hashing replaces the old LCG while retaining reproducibility.
 06. The seed material is the transcript itself; identical transcripts yield identical challenge streams.
 07. The crate avoids ambient randomness so auditors can replay transcripts without external state.
 08. When verifying transcripts, recompute challenges using the same hashing steps presented in `prng.rs`.
+Challenge Waterfall (Fiat-Shamir stream):
+```
+counter 0 -- digest[f7bc...0d4d] --> challenge 247
+    |
+counter 1 -- digest[f65f...4b64] --> challenge 246
+    |
+counter 2 -- digest[908b...c51f] --> challenge 144
+    |
+counter 3 -- digest[44f5...13e4] --> challenge 68
+    |
+counter 4 -- digest[9669...7ced] --> challenge 105
+    |
+counter 5 -- digest[5c00...4b66] --> challenge 92
+```
 09. Document the counter sequence in your audit notes: counter starts at zero and increments per challenge.
 10. Provide challenge logs listing counter, digest block, and reduced value.
 11. Resist mixing in OS entropy; you would break determinism and fail compliance instantly.
@@ -554,7 +604,7 @@ Chapter VI — Deterministic Randomness Discipline Orders
 16. Keep a small script (audited) that prints per-round digests for cross-checking.
 17. Validate that challenge values in the ledger appear in the exact order emitted by the hash generator.
 18. Document `r_i` values alongside transcripts so auditors can confirm the sequence.
-19. Example challenge list for the demo ledger: r₁ = 247, r₂ = 246, r₃ = 144 (exact values from the transcript).
+19. Example challenge list for the demo ledger: r1 = 247, r2 = 246, r3 = 144 (exact values from the transcript).
 20. Any deviation indicates transcript tampering; the digest exposes it immediately.
 21. Provide training exercises where cadets recompute a challenge block by hand using BLAKE2b references.
 22. No randomness enters from the environment; everything comes from transcript words and counter.
@@ -564,13 +614,13 @@ Chapter VI — Deterministic Randomness Discipline Orders
 26. When verifying, recompute the first two challenges; mismatch means halt the process.
 27. This manual expects silent verification every time you touch a transcript.
 28. Provide reproducibility logs showing counter, digest hex, and reduced challenge.
-29. Example log line: `counter=2 digest=a8e7… challenge=11`.
+29. Example log line: `counter=2 digest=a8e7... challenge=11`.
 30. Store such logs with your audit package.
 31. Cross-check scripts must use `derive_many_mod_p` from the crate to avoid inconsistencies.
 32. Document script output in your operational runbook for future teams.
 33. Avoid customizing domain tags without updating this manual and all tooling.
 34. Deterministic hashing ensures anchor digests and challenge streams stay synchronized over time.
-35. Without it, Chapter I’s hex ritual would drift and finality would crumble.
+35. Without it, Chapter I's hex ritual would drift and finality would crumble.
 36. Because transcripts embed the challenge lines and the digest covers the entire transcript, the chain remains immutable.
 37. When verifying aggregated proofs, ensure each component proof uses the same domain-tagged hash derivation.
 38. Commit changes to randomness code with explicit review; include diff snippets in change logs.
@@ -582,16 +632,16 @@ Chapter VI — Deterministic Randomness Discipline Orders
 44. Distinguish between the base deterministic hash generator and any optional enhancements layered on top.
 63. For now, base generator serves all official operations.
 64. Provide mental model: LCG acts as crank; each transcript line turns the crank once.
-65. The crank’s clicking ensures no hidden state.
+65. The crank's clicking ensures no hidden state.
 66. Every node manipulates identical crank and obtains identical output.
 67. Document unstoppable nature of this process.
 68. Should LCG constants change, recompute transcripts and anchors.
-69. Update this manual’s Chapter I digests after crate upgrade.
+69. Update this manual's Chapter I digests after crate upgrade.
 70. Provide guidance on migrating anchored logs when constants change.
 71. Keep old transcripts archived with documentation describing old constants.
 72. For new deployments, record generator constants in configuration baseline.
 73. Ensure admin consoles highlight deterministic randomness as key feature.
-74. Do not let marketing rename this concept to “AI spontaneity.”
+74. Do not let marketing rename this concept to "AI spontaneity."
 75. This is not random; it is deliberate reproducibility.
 76. Provide simple pseudocode in training manuals for clarity.
 77. Example:
@@ -620,7 +670,7 @@ Chapter VI — Deterministic Randomness Discipline Orders
 100. Only now may you proceed to network operations.
 
 
-Chapter VII — Consensus Theater Operations
+Chapter VII -- Consensus Theater Operations
 ================================================================================
 01. Time to stage consensus on the big network.
 02. Feature `net` in `Cargo.toml` activates libp2p integration.
@@ -672,7 +722,7 @@ Chapter VII — Consensus Theater Operations
 48. Only rotate membership after verifying at least `threshold` signatures on the `GovernanceUpdate` payload; archive every rotation in `logs/policy/`.
 49. Legacy clusters can still pass `--policy-allowlist allow.json`, but note that it is read-only and unsuitable for automated rotation.
 50. Stake-backed deployments require bond postings recorded in the staking registry; no bond, no quorum rights.
-51. Conflicting anchors automatically trigger slashing—investigate the incident, keep the evidence, and reissue the staking registry with the slashed flag preserved.
+51. Conflicting anchors automatically trigger slashing--investigate the incident, keep the evidence, and reissue the staking registry with the slashed flag preserved.
 52. Provide step-by-step onboarding instructions for new nodes, including where to fetch the current policy descriptor.
 51. Example: copy ledger logs to new node directory, place the current `governance.json`, run `julian net start` with bootstrap peers.
 53. Ensure firewall rules allow incoming connections on chosen ports.
@@ -726,7 +776,7 @@ Chapter VII — Consensus Theater Operations
 100. Proceed to closing chapter once operations ledger updated.
 
 
-Chapter VIII — Closing Benediction and Compliance Oath
+Chapter VIII -- Closing Benediction and Compliance Oath
 ================================================================================
 01. You have survived the Book of Power condensed edition.
 02. You now understand the deterministic skeleton of `power_house`.
@@ -741,10 +791,10 @@ Chapter VIII — Closing Benediction and Compliance Oath
 11. In compliance audits, this book is admissible evidence.
 12. In regulatory hearings, the Anchor Echo ritual becomes showpiece.
 13. In training, each cadet must swear the following oath:
-14. “I will not permit entropy into my transcripts.”
-15. “I will not accept anchor mismatches.”
-16. “I will not fudge field arithmetic to save time.”
-17. “I will not allow network nodes to broadcast unverified envelopes.”
+14. "I will not permit entropy into my transcripts."
+15. "I will not accept anchor mismatches."
+16. "I will not fudge field arithmetic to save time."
+17. "I will not allow network nodes to broadcast unverified envelopes."
 18. The oath includes writing the three hex digests from Chapter I without error.
 19. After taking the oath, sign the compliance ledger.
 20. Provide version of this manual in organizational wiki.
@@ -754,6 +804,15 @@ Chapter VIII — Closing Benediction and Compliance Oath
 24. Always bring calculators and transcript printouts to the meetups.
 25. When new features arrive, extend this book by new chapters following same style.
 26. Keep appended chapters in separate supplements to avoid confusion.
+Compliance Seal (sign before dismissal):
+```
++-----------------------------------------------------+
+| ANCHOR!! COMPLIANCE SEAL                            |
+| HEIR DIGESTS: genesis * dense * hash * fold         |
+| OATH: no entropy, no mismatches, no excuses.        |
+| LEDGER: __________________  DATE: ________________  |
++-----------------------------------------------------+
+```
 27. In closing, remember: a minimal dependency surface means zero excuses for reproducibility lapses.
 28. When transcripts lie, anchoring fails; when anchors fail, consensus dies; when consensus dies, the grumpy alien returns.
 29. Do not summon me unnecessarily.
