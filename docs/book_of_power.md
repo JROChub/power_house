@@ -3,7 +3,9 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book/Crate Version Lock: **v0.1.37** (all transcripts, anchors, and golden tests reference this crate build)
+Book Edition: **v0.1.37**
+Crate Version Required: **v0.1.37**
+All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Repository Source: crate checkout `power_house`
 This User Guide Lives Inside the Crate: `docs/book_of_power.md`
