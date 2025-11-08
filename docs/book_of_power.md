@@ -265,16 +265,18 @@ Hypercube Holo-map (dim=3 reference):
             z
             ^
             |
-        *---* (0,1,1)
-       /|  /|
-      *-+-* |
-     /| |/| |
-    *-+-*-|-*  -> y
-    | *-+-* /
-    |/  | / 
-    *---*---* -> x
- (0,0,0)   (1,0,0)
+    H(0,1,1)*-------*G(1,1,1)
+            /|      /|
+           / |     / |
+E(0,0,1) *--+-----*--+ F(1,0,1)
+          |  |     |  |
+D(0,1,0) *--+-----*--+ C(1,1,0)  +y (toward rear face)
+          | /      | /
+          |/       |/
+A(0,0,0) *---------* B(1,0,0)
+                -> x
 ```
+Axis orientation: right-handed with `+x` to the right, `+y` toward the rear face (diagonal in the drawing), and `+z` upward.
 Hyperplane cartography means navigating the Boolean hypercube with precision.
 `MultilinearPolynomial::from_evaluations(dim, values)` enforces `values.len() == 1 << dim`.
 Suppose `dim = 3`; values correspond to vertices `(0,0,0)` through `(1,1,1)`.

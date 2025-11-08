@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.1.40 — 2025-11-07
+
+### Changed
+- Corrected the hypercube holo-map axes and vertex labels, added the explicit orientation legend, and regenerated the PDF to match.
+
 ## v0.1.39 — 2025-11-07
 
 ### Changed
