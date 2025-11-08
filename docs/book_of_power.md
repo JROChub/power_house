@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.38**
-Crate Version Required: **v0.1.38**
+Book Edition: **v0.1.41**
+Crate Version Required: **v0.1.41**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -101,7 +101,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.26`.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.41`.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.

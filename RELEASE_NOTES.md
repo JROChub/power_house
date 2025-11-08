@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.1.41 — 2025-11-07
+
+### Changed
+- Title page and Chapter I now reference version `0.1.41` so the manual, crate metadata, and release stay aligned.
+
 ## v0.1.40 — 2025-11-07
 
 ### Changed
