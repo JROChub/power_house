@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.37**
-Crate Version Required: **v0.1.37**
+Book Edition: **v0.1.38**
+Crate Version Required: **v0.1.38**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -564,7 +564,7 @@ JSON schema sketch (`jrocnet.anchor.v1`):
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.37"
+  "crate_version": "0.1.38"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -578,7 +578,7 @@ JSON schema sketch (`jrocnet.anchor.v1`):
 19. `JROC-NET :: JULIAN::GENESIS -> [139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a]`.
 20. `JROC-NET :: Dense polynomial proof -> [ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c]`.
 21. `JROC-NET :: Hash anchor proof -> [0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b]`.
-Golden test vector (book edition `v0.1.37`, field 257):
+Golden test vector (book edition `v0.1.38`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod

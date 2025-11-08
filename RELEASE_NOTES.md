@@ -1,5 +1,12 @@
 # Release Notes
 
+## v0.1.38 — 2025-11-07
+
+### Changed
+- Fully renumbered each chapter (no ghost indices) and documented fallback typography for the Book of Power PDF.
+- Added explicit version-lock blurb plus challenge-mode metadata in transcripts/anchors.
+- Regenerated `docs/book_of_power.pdf` to match the finalized manual.
+
 ## v0.1.37 — 2025-11-07
 
 ### Added
