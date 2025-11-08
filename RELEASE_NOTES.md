@@ -1,5 +1,11 @@
 # Release Notes
 
+
+## v0.1.36 — 2025-11-07
+
+### Changed
+- Fixed manual wording to remove disallowed terminology and regenerated the published PDF.
+
 ## v0.1.35 — 2025-11-07
 
 ### Added
