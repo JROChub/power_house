@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.1.39 — 2025-11-07
+
+### Changed
+- Realigned the hypercube holo-map ASCII diagram in `docs/book_of_power.md` and regenerated the PDF so inspectors receive the precise geometry reference.
+
 ## v0.1.38 — 2025-11-07
 
 ### Changed

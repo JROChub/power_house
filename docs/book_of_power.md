@@ -262,19 +262,18 @@ Chapter III -- Hyperplane Cartography Briefing
 ================================================================================
 Hypercube Holo-map (dim=3 reference):
 ```
-        z
-        ^
-        |
-    *---* (0,1,1)
-   /|  /|
-  *-+-* |
- /| |/| |
-6*-+-*-|-* -> y
- | *-+-* /
- |/  | /
- *---*---* -> x
-(0,0,0)
-(1,0,0)
+            z
+            ^
+            |
+        *---* (0,1,1)
+       /|  /|
+      *-+-* |
+     /| |/| |
+    *-+-*-|-*  -> y
+    | *-+-* /
+    |/  | / 
+    *---*---* -> x
+ (0,0,0)   (1,0,0)
 ```
 Hyperplane cartography means navigating the Boolean hypercube with precision.
 `MultilinearPolynomial::from_evaluations(dim, values)` enforces `values.len() == 1 << dim`.
