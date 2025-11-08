@@ -75,13 +75,13 @@ Note: Bias note: current derivation uses `next_u64() % p`; keep `p` close to 2^6
 32. Add a second sheet listing the domain tags; auditors adore label discipline.
 33. Print the digests with caret markers every four bytes: `139f_1985_df5b_36da_...`.
 ```
-+================ HEX SIGIL :: ANCHOR CORE ================+
-| GENESIS      139f 1985 df5b 36da e23f a509 fb53         |
-| DENSE POLY   ded7 5c45 b3b7 eedd 3704 1aae 7971         |
-| HASH ANCHOR  0f50 904f 7be0 6930 a550 0c2c 54cf         |
-| FOLD DIGEST  a5a1 b952 8dd9 b4e8 11e8 9fb4 9297         |
-| FIELD REDUCE -> 21 (anchor hinge)                       |
-+=========================================================+
++================= HEX SIGIL :: ANCHOR CORE =================+
+| GENESIS      139f 1985 df5b 36da e23f a509 fb53           |
+| DENSE POLY   ded7 5c45 b3b7 eedd 3704 1aae 7971           |
+| HASH ANCHOR  0f50 904f 7be0 6930 a550 0c2c 54cf           |
+| FOLD DIGEST  a5a1 b952 8dd9 b4e8 11e8 9fb4 9297           |
+| FIELD REDUCE -> 21 (anchor hinge)                         |
++===========================================================+
 ```
 34. The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
 35. If you must annotate, prefix with `#` outside the transcript block.
