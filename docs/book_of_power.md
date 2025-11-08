@@ -3,6 +3,7 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
+Book/Crate Version Lock: **v0.1.37** (all transcripts, anchors, and golden tests reference this crate build)
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Repository Source: crate checkout `power_house`
 This User Guide Lives Inside the Crate: `docs/book_of_power.md`
@@ -55,10 +56,14 @@ digest = hasher.finalize()
 - All transcript numbers are encoded as u64 big-endian before hashing.
 - No personalization/salt is used; the explicit domain tag enforces separation.
 - ASCII hex with spaces or carets is cosmetic; the canonical digest is 32 raw bytes rendered as contiguous lowercase `[0-9a-f]` characters.
-Remember the split:
-- Transcript files store values as decimal ASCII tokens (e.g., `round_sums:209 235`).
-- The hash pipeline absorbs each integer as an 8-byte big-endian block (e.g., `0x00000000000000D1` for 209).
-Hashing the ASCII digits instead of the big-endian bytes is an audit failure.
+Encoding commandment (commit to memory):
+```
+Transcript text  : decimal ASCII tokens (e.g., `round_sums:209 235`).
+Hash inputs      : each integer serialized as u64 big-endian bytes.
+Hex digests      : 64 lowercase `[0-9a-f]` chars, no spaces.
+Line endings     : LF only; tabs forbidden.
+```
+Hash the big-endian bytes, never the ASCII digits; auditors treat deviations as tampering.
 21. `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
 22. The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
 23. To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
@@ -287,11 +292,12 @@ Hypercube Holo-map (dim=3 reference):
 18. The manual forbids pushing transcripts with omitted challenges.
 19. Ensure ledger logs list challenges in order; do not shuffle lines.
 20. An example transcript snippet:
-21. `statement: Dense polynomial proof`.
-22. `challenge: 37`.
-23. `round_sums: 12 47`.
-24. `final_eval: 19`.
-25. `hash: 999B55116F6AFC2F`.
+21. `# challenge_mode: mod` (comment line outside the hashed block).
+22. `statement: Dense polynomial proof`.
+23. `challenge: 37`.
+24. `round_sums: 12 47`.
+25. `final_eval: 19`.
+26. `hash: 999B55116F6AFC2F`.
 26. The hash matches `digest_A` from Chapter I; cross-reference completed.
 27. Each round multiplies dimension by the challenge; watch arithmetic carefully.
 28. If you miscompute, fix the code before writing ledger lines.
@@ -392,6 +398,7 @@ Canonicalization checklist:
 - Emit lowercase hex, exactly two chars per byte, no spacing.
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
+- Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay.
 04. Example statement: `statement: Dense polynomial proof`.
 05. Example challenge line: `challenge: 37`.
 06. Example round sums: `round_sums: 12 47`.
@@ -525,6 +532,7 @@ root      = fold(node, leaves) duplicating the last leaf if count is odd
 - `i_u64_be` is the 8-byte big-endian encoding of the leaf index (padding with zeros).
 - Leaves consume the 32-byte transcript digests; no additional domain tag is needed.
 - Internal nodes always hash `(left || right)`; never sort or swap siblings.
+- The literal strings `"LEAF"` and `"NODE"` are ASCII bytes `0x4c 0x45 0x41 0x46` and `0x4e 0x4f 0x44 0x45` respectively--no null terminators.
 - Render the resulting root as lowercase hex and store alongside the statement.
 Worked example (2 leaves):
 ```
@@ -547,6 +555,7 @@ JSON schema sketch (`jrocnet.anchor.v1`):
   "schema": "jrocnet.anchor.v1",
   "network": "JROC-NET",
   "node_id": "nodeA",
+  "challenge_mode": "mod",
   "fold_digest": "a5a1...99b3",   // optional but recommended
   "entries": [
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
@@ -569,6 +578,7 @@ JSON schema sketch (`jrocnet.anchor.v1`):
 Golden test vector (book edition `v0.1.37`, field 257):
 ```
 ledger_0000.txt
+# challenge_mode: mod
 statement:Dense polynomial proof
 transcript:247 246 144 68 105 92 243 202 72 124
 round_sums:209 235 57 13 205 8 245 122 72 159
@@ -576,6 +586,7 @@ final:9
 hash:ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 
 ledger_0001.txt
+# challenge_mode: mod
 statement:Hash anchor proof
 transcript:17 230 192 174 226 171
 round_sums:21 139 198 99 178 89
