@@ -403,7 +403,7 @@ round-sums  = "round_sums: " numbers
 final       = "final: " number
 hash        = "hash: " hexdigits
 text        = 1*(%x20-7E)
-numbers     = 1*(SP number)
+numbers     = number *(SP number)
 number      = 1*DIGIT
 hexdigits   = 64*64(%x30-39 / %x61-66) ; exactly 64 lowercase hex chars
 ```
