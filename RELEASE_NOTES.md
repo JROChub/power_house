@@ -2,6 +2,11 @@
 
 # Release Notes
 
+## v0.1.45 — 2025-11-08
+
+### Changed
+- Tightened the Book of Power transcript grammar (ABNF cardinality, historical `final_eval` note), clarified JSON/Merkle disclaimers, standardised “fold digest” terminology, and bumped all version references/PDF output to `0.1.45`.
+
 ## v0.1.44 — 2025-11-08
 
 ### Changed

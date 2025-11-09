@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.44**
-Crate Version Required: **v0.1.44**
+Book Edition: **v0.1.45**
+Crate Version Required: **v0.1.45**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -102,7 +102,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.44`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.45`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -388,7 +388,7 @@ Chapter IV -- Transcript Metallurgy Protocols
 Transcript metallurgy is my term for shaping ledger entries with surgical precision.
 Each transcript is a composite of lines: statements, round sums, final value, hash, plus optional metadata comments (challenge hints, fold digests, field tags).
 Lines are plain ASCII; no binary, no compression.
-Transcript grammar (ABNF; ASCII 0x20-0x7E only). This grammar documents the canonical format; the crate’s parser (`parse_transcript_record`) remains the source of truth for enforcement:
+Transcript grammar (ABNF; ASCII 0x20-0x7E only). This grammar documents the canonical format; the crate’s parser (`parse_transcript_record`) remains the source of truth for enforcement. All examples in this chapter conform exactly to this ABNF; any deviation is a documentation bug:
 ```
 record      = statement LF metadata* transcript LF round-sums LF final LF hash LF
 metadata    = comment
@@ -399,7 +399,7 @@ round-sums  = "round_sums:" numbers
 final       = "final:" number
 hash        = "hash:" hexdigits
 text        = 1*(%x20-7E)
-numbers     = *(SP number)
+numbers     = 1*(SP number)
 number      = 1*DIGIT
 hexdigits   = 64*(%x30-39 / %x61-66) ; lowercase only
 ```
@@ -409,6 +409,7 @@ Canonicalization checklist:
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
 - Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay. Additional audit data such as `# challenge_0: 247` or `# fold_digest: ...` may follow the same pattern; they never participate in the digest.
+- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.44 uses `final:` exclusively.
 Example statement: `statement: Dense polynomial proof`.
 Example challenge comment: `# challenge_0: 247`.
 Example round sums: `round_sums: 12 47`.
@@ -554,6 +555,7 @@ root  = BLAKE2b-256("NODE" || leaf0 || leaf1)
       = 57bb734b042f02c81d7145f8692eb9ff8acea72b6afb66f134df7463b8381447
 ```
 If you feed the inputs in the opposite order you will obtain a different root; always hash `"NODE" || left || right` exactly as shown.
+Example Merkle roots shown elsewhere (e.g., in JSON summaries) are illustrative and may derive from a different leaf set; always recompute roots from the exact transcript digest list you are anchoring.
 `EntryAnchor` holds `statement` and `hashes`.
 Anchor entries remain append-only.
 `LedgerAnchor::push` appends new statement and hash; duplicates rejected.
@@ -563,7 +565,7 @@ Reconciliation compares statement text and associated hash vectors.
 Quorum is typically 2 for simple demonstrations.
 Mismatch yields errors describing diverging statements or hash values.
 Anchor JSON representation includes `schema`, `network`, `node_id`, `entries`.
-JSON schema sketch (`jrocnet.anchor.v1`, pseudo-JSON; remove comments in actual files):
+JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; remove commented lines and trailing commas in real output):
 ```
 {
   "schema": "jrocnet.anchor.v1",
@@ -575,11 +577,12 @@ JSON schema sketch (`jrocnet.anchor.v1`, pseudo-JSON; remove comments in actual 
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.44"
+  "crate_version": "0.1.45"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
-- `fold_digest` joins the anchor so remote auditors see the quorum hinge without reading stdout.
+- `fold_digest` joins the anchor so remote auditors see the fold digest without reading stdout.
+- Example Merkle roots shown in JSON sketches are illustrative; compute actual roots from the ordered transcript digests you are anchoring.
 Node anchor generation command: `julian node run <node_id> <log_dir> <output_file>`.
 Example: `julian node run nodeA ./logs/nodeA nodeA.anchor`.
 Output file lists anchor statements and hash numbers.
@@ -590,7 +593,8 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Dense polynomial proof -> [ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c]`.
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 64.
-Golden test vector (book edition `v0.1.44`, field 257):
+Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
+Golden test vector (book edition `v0.1.45`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod
@@ -729,6 +733,7 @@ loop {
     if r < threshold {
         return r mod p
     }
+    // otherwise discard and resample
 }
 ```
 Declare in your transcript metadata which variant you used so verifiers can reproduce the same stream.
