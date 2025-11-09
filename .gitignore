@@ -7,3 +7,6 @@ powerhouse/
 powerhouse-boot1.service
 powerhouse-boot2.service
 infra/ops_hosts.toml
+# Local anchor captures copied from production nodes
+boot1.anchor
+boot2.anchor

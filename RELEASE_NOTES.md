@@ -2,6 +2,11 @@
 
 # Release Notes
 
+## v0.1.47 — 2025-11-08
+
+### Changed
+- Clarified transcript digest framing (binary layout, non-participating lines), documented the exact Merkle hash domain/markers, added the normative fold-digest framing, tightened ABNF to exactly 64 hex characters, and refreshed the Book of Power/PDF accordingly.
+
 ## v0.1.46 — 2025-11-08
 
 ### Changed

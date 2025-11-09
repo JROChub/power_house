@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.46**
-Crate Version Required: **v0.1.46**
+Book Edition: **v0.1.47**
+Crate Version Required: **v0.1.47**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -47,18 +47,22 @@ When exporting anchors, append a comment `# fold_digest: <hex>` or store it in `
 `LedgerAnchor::anchor()` automatically prepends the JULIAN genesis entry with the new digest.
 Domain separation summary: `JROC_TRANSCRIPT` for individual records, `JROC_ANCHOR` for ledger folds, `JROC_CHALLENGE` for Fiat-Shamir challenge derivation.
 Do not mix domains--if you re-tag transcripts with the anchor label, you will deserve the audit citation.
-Hash framing specification (tagged stream; not a sponge):
+Hash framing specification (binary, tagged stream):
 ```
+transcript_bytes = concat(u64::to_be_bytes(challenge_i) for each entry in transcript)
+round_sum_bytes  = concat(u64::to_be_bytes(sum_i) for each entry in round_sums)
 hasher = BLAKE2b-256()
-hasher.update(DOMAIN_TAG)                     # e.g., JROC_TRANSCRIPT
-hasher.update(len(section) as u64 big-endian) # applied to each section
-hasher.update(section bytes)                  # transcripts, round_sums, etc.
+hasher.update(b"JROC_TRANSCRIPT")
+hasher.update(len(transcript_bytes) as u64_be)
+hasher.update(transcript_bytes)
+hasher.update(len(round_sum_bytes) as u64_be)
+hasher.update(round_sum_bytes)
 hasher.update(final_value.to_be_bytes())
 digest = hasher.finalize()
 ```
+- `statement:` text, comment metadata, and the `hash:` line never participate in the digest; only the numeric sections above are hashed, in that order.
 - All transcript numbers are encoded as u64 big-endian before hashing.
-- Every section (`transcript`, `round_sums`, `final`) must be preceded by its own `len(section) as u64_be`; never reuse a prior length or skip the prefix.
-- No personalization/salt is used; the explicit domain tag enforces separation.
+- No personalization/salt is used beyond the explicit domain tag.
 - ASCII hex with spaces or carets is cosmetic; the canonical digest is 32 raw bytes rendered as contiguous lowercase `[0-9a-f]` characters.
 Encoding commandment (commit to memory):
 ```
@@ -102,7 +106,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.46`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.47`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -305,7 +309,7 @@ An example transcript snippet:
 `round_sums: 12 47`.
 `final: 19`.
 `hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c`.
-Only the `statement`, `transcript`, `round_sums`, `final`, and `hash` lines participate in the digest. Any metadata (`# challenge_i: ...`, `# fold_digest: ...`, `# field: ...`) must remain comment lines that sit outside the hashed block.
+Only the numeric sections (`transcript`, `round_sums`, `final`) participate in the digest framing described in Chapter I. The `statement:` text, `hash:` line, and any metadata comments (`# challenge_i: ...`, `# fold_digest: ...`, `# field: ...`) are outside the hash.
 The hash matches `digest_A` from Chapter I; cross-reference completed.
 Each round multiplies dimension by the challenge; watch arithmetic carefully.
 If you miscompute, fix the code before writing ledger lines.
@@ -401,7 +405,7 @@ hash        = "hash: " hexdigits
 text        = 1*(%x20-7E)
 numbers     = 1*(SP number)
 number      = 1*DIGIT
-hexdigits   = 64*(%x30-39 / %x61-66) ; lowercase only
+hexdigits   = 64*64(%x30-39 / %x61-66) ; exactly 64 lowercase hex chars
 ```
 Canonicalization checklist:
 - Encode every integer in base-10 ASCII with no separators.
@@ -409,7 +413,7 @@ Canonicalization checklist:
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
 - Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay. Additional audit data such as `# challenge_0: 247` or `# fold_digest: ...` may follow the same pattern; they never participate in the digest.
-- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.46 uses `final:` exclusively.
+- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.47 uses `final:` exclusively.
 Example statement: `statement: Dense polynomial proof`.
 Example challenge comment: `# challenge_0: 247`.
 Example round sums: `round_sums: 12 47`.
@@ -534,28 +538,27 @@ Anchor Cross-Section (ledger strata):
 Ledger anchors are the commitments stored across sessions.
 `julian_genesis_anchor()` returns baseline anchor containing `JULIAN::GENESIS`.
 `LedgerAnchor` struct has `entries: Vec<EntryAnchor>`.
-Merkle capsule specification:
+Merkle capsule specification (matches `src/merkle.rs`):
 ```
-leaf(i)   = BLAKE2b-256("LEAF" || i_u64_be || transcript_hash_i)
-node(a,b) = BLAKE2b-256("NODE" || a || b) ; left/right preserved
-root      = fold(node, leaves) duplicating the last leaf if count is odd
+hash_leaf(d)   = BLAKE2b-256("JROC_MERKLE" || 0x00 || d)
+hash_empty()   = BLAKE2b-256("JROC_MERKLE" || 0x01)
+hash_pair(a,b) = BLAKE2b-256("JROC_MERKLE" || a || b) ; left/right order is preserved
+root(leaves)   = carry singletons upward; combine adjacent pairs with hash_pair
 ```
-- `i_u64_be` is the 8-byte big-endian encoding of the leaf index (padding with zeros).
-- Leaves consume the 32-byte transcript digests; no additional domain tag is needed.
-- Internal nodes always hash `(left || right)`; never sort or swap siblings.
-- The literal strings `"LEAF"` and `"NODE"` are ASCII bytes `0x4c 0x45 0x41 0x46` and `0x4e 0x4f 0x44 0x45` respectively--no null terminators.
+- Leaves are the transcript digests (32 raw bytes). Each digest is wrapped with the 0x00 marker before entering the tree; there is no index prefix.
+- If a level has an odd number of nodes, the last node is carried up unchanged (no implicit duplicate hashing).
+- An empty tree hashes to `hash_empty()`.
 - Render the resulting root as lowercase hex and store alongside the statement.
-Worked example (2 leaves):
+Worked example (two transcript digests):
 ```
-leaf0 = BLAKE2b-256("LEAF" || 0x0000000000000000 || ded7...6e8c)
-      = ccfe98e6cd537c0c115465557c01088db3c21b57397adb269b002df88f25ba28
-leaf1 = BLAKE2b-256("LEAF" || 0x0000000000000001 || c724...2114)
-      = ff4a069f17d645393f0a665e7565e3db95f5fd083d5de6e6ff63452593a5f477
-root  = BLAKE2b-256("NODE" || leaf0 || leaf1)
-      = 57bb734b042f02c81d7145f8692eb9ff8acea72b6afb66f134df7463b8381447
+leaf0 = hash_leaf(ded7...6e8c)
+      = 80e7cb9d1721ce47f6f908f9ac01098d9c035f1225fff84083a6e1d0828144f4
+leaf1 = hash_leaf(c724...2114)
+      = 637aeed7e8fbb42747c39c82dfe1eb242bda92fead2a24abaf8c5ffc45ff8e82
+root  = hash_pair(leaf0, leaf1)
+      = 9f00fdfa95c530d81d5a95385a1f71905d143396d0791480a0d8ce17c7ed7ef2
 ```
-If you feed the inputs in the opposite order you will obtain a different root; always hash `"NODE" || left || right` exactly as shown.
-Example Merkle roots shown elsewhere (e.g., in JSON summaries) are illustrative and may derive from a different leaf set; always recompute roots from the exact transcript digest list you are anchoring.
+If you feed the inputs in the opposite order you will obtain a different root; always hash `"JROC_MERKLE" || left || right` exactly as shown. Each statement in the anchor records its own `merkle_root` (e.g., single-leaf statements publish `hash_leaf(d)` such as `80e7…` or `637a…`). The global `anchor_root` combines those per-statement roots in order; for the two-digest golden run above it equals `9f00…7ef2`. Example Merkle roots shown elsewhere (e.g., in JSON summaries) are illustrative; always recompute roots from the exact transcript digest list you are anchoring.
 `EntryAnchor` holds `statement` and `hashes`.
 Anchor entries remain append-only.
 `LedgerAnchor::push` appends new statement and hash; duplicates rejected.
@@ -577,7 +580,7 @@ JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; rem
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.46"
+  "crate_version": "0.1.47"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -594,7 +597,7 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 64.
 Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
-Golden test vector (book edition `v0.1.46`, field 257):
+Golden test vector (book edition `v0.1.47`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod
@@ -613,9 +616,18 @@ final: 1
 hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 
 fold_digest:98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b
-anchor_root:637aeed7e8fbb42747c39c82dfe1eb242bda92fead2a24abaf8c5ffc45ff8e82
+anchor_root:9f00fdfa95c530d81d5a95385a1f71905d143396d0791480a0d8ce17c7ed7ef2
 ```
 Maintain a single numeric representation (hex in this manual); record the chosen format with the ledger and ensure every anchor reproduces the Chapter I digests.
+Fold digest framing (normative):
+```
+hasher = BLAKE2b-256()
+hasher.update(b"JROC_ANCHOR")
+for digest in ordered_transcript_hashes:
+    hasher.update(digest)
+fold_digest = hasher.finalize()
+```
+The fold digest therefore binds the ordered list of transcript digests; any omission or reorder yields a different value.
 CI guardrail: `cargo run --example hash_pipeline` must emit the golden digests above; fail the build if the field reduction or fold digest drifts.
 CI also checks that `Cargo.toml`'s `version` equals the version string printed in this book's title page; no silent mismatches.
 Document anchors with version numbers and node descriptors.
