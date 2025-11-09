@@ -2,6 +2,11 @@
 
 # Release Notes
 
+## v0.1.44 — 2025-11-08
+
+### Changed
+- Corrected Book of Power inconsistencies (hash tables, transcript grammar, challenge/merkle descriptions, Chapter VI challenge wording), rebuilt the PDF, and bumped all version strings to `0.1.44`.
+
 ## v0.1.43 — 2025-11-08
 
 ### Changed

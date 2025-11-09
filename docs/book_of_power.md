@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.43**
-Crate Version Required: **v0.1.43**
+Book Edition: **v0.1.44**
+Crate Version Required: **v0.1.44**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -57,6 +57,7 @@ hasher.update(final_value.to_be_bytes())
 digest = hasher.finalize()
 ```
 - All transcript numbers are encoded as u64 big-endian before hashing.
+- Every section (`transcript`, `round_sums`, `final`) must be preceded by its own `len(section) as u64_be`; never reuse a prior length or skip the prefix.
 - No personalization/salt is used; the explicit domain tag enforces separation.
 - ASCII hex with spaces or carets is cosmetic; the canonical digest is 32 raw bytes rendered as contiguous lowercase `[0-9a-f]` characters.
 Encoding commandment (commit to memory):
@@ -84,11 +85,11 @@ Add a second sheet listing the domain tags; auditors adore label discipline.
 Print the digests with caret markers every four bytes: `139f_1985_df5b_36da_...`.
 ```
 HEX SIGIL :: ANCHOR CORE
-  GENESIS     139f 1985 df5b 36da e23f a509 fb53
-  DENSE POLY  ded7 5c45 b3b7 eedd 3704 1aae 7971
-  HASH ANCHOR 0f50 904f 7be0 6930 a550 0c2c 54cf
-  FOLD DIGEST 9880 7230 712c d2b0 9c17 df61 7b1f
-  FIELD REDUCE -> 64 (anchor hinge)
+  GENESIS     139f 1985 df5b 36da e23f a509 fb53 a006 ba58 e28e 6dbb 41d6 d71c c1e9 1a82 d84a
+  DENSE POLY  ded7 5c45 b3b7 eedd 3704 1aae 7971 3d73 82e0 00eb 4d83 fab5 f6ac a6ca 4d27 6e8c
+  HASH ANCHOR c724 1346 6b2f 76f1 471f 2e71 60da dcbf 912a 4f8b c80e f1f2 ffdb 54ec b2bb 2114
+  FOLD DIGEST 9880 7230 712c d2b0 9c17 df61 7b1f 9517 8781 5b29 c703 7dbe 9fca b2af 490d 196b
+  FIELD REDUCE -> u64_be(first 8 bytes) mod 257 = 64
 ```
 The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
 If you must annotate, prefix with `#` outside the transcript block.
@@ -101,7 +102,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.43`.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.44`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -298,11 +299,13 @@ The manual forbids pushing transcripts with omitted challenges.
 Ensure ledger logs list challenges in order; do not shuffle lines.
 An example transcript snippet:
 `# challenge_mode: mod` (comment line outside the hashed block).
+`# challenge_0: 247` (optional audit note outside the hashed block).
 `statement: Dense polynomial proof`.
-`challenge: 37`.
+`transcript: 247 246 144 68 105 92 243 202 72 124`.
 `round_sums: 12 47`.
-`final_eval: 19`.
-`hash: 999B55116F6AFC2F`.
+`final: 19`.
+`hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c`.
+Only the `statement`, `transcript`, `round_sums`, `final`, and `hash` lines participate in the digest. Any metadata (`# challenge_i: ...`, `# fold_digest: ...`, `# field: ...`) must remain comment lines that sit outside the hashed block.
 The hash matches `digest_A` from Chapter I; cross-reference completed.
 Each round multiplies dimension by the challenge; watch arithmetic carefully.
 If you miscompute, fix the code before writing ledger lines.
@@ -383,11 +386,13 @@ Today's date: ____________________.
 Chapter IV -- Transcript Metallurgy Protocols
 ================================================================================
 Transcript metallurgy is my term for shaping ledger entries with surgical precision.
-Each transcript is a composite of lines: statements, challenges, round sums, final evaluation, hash.
+Each transcript is a composite of lines: statements, round sums, final value, hash, plus optional metadata comments (challenge hints, fold digests, field tags).
 Lines are plain ASCII; no binary, no compression.
-Transcript grammar (ABNF; ASCII 0x20-0x7E only):
+Transcript grammar (ABNF; ASCII 0x20-0x7E only). This grammar documents the canonical format; the crate’s parser (`parse_transcript_record`) remains the source of truth for enforcement:
 ```
-record      = statement LF transcript LF round-sums LF final LF hash LF
+record      = statement LF metadata* transcript LF round-sums LF final LF hash LF
+metadata    = comment
+comment     = "#" *(%x20-7E) LF
 statement   = "statement:" text
 transcript  = "transcript:" numbers
 round-sums  = "round_sums:" numbers
@@ -403,11 +408,11 @@ Canonicalization checklist:
 - Emit lowercase hex, exactly two chars per byte, no spacing.
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
-- Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay.
+- Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay. Additional audit data such as `# challenge_0: 247` or `# fold_digest: ...` may follow the same pattern; they never participate in the digest.
 Example statement: `statement: Dense polynomial proof`.
-Example challenge line: `challenge: 37`.
+Example challenge comment: `# challenge_0: 247`.
 Example round sums: `round_sums: 12 47`.
-Example final evaluation: `final_eval: 19`.
+Example final value: `final: 19`.
 Example digest: `hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c`.
 Digest is produced by `transcript_digest` using BLAKE2b.
 The digest ensures tamper evidence; any change mutates the number.
@@ -542,9 +547,13 @@ root      = fold(node, leaves) duplicating the last leaf if count is odd
 Worked example (2 leaves):
 ```
 leaf0 = BLAKE2b-256("LEAF" || 0x0000000000000000 || ded7...6e8c)
-leaf1 = BLAKE2b-256("LEAF" || 0x0000000000000001 || 0f50...08f9b)
-root  = BLAKE2b-256("NODE" || leaf0 || leaf1) = 80e7...44f4
+      = ccfe98e6cd537c0c115465557c01088db3c21b57397adb269b002df88f25ba28
+leaf1 = BLAKE2b-256("LEAF" || 0x0000000000000001 || c724...2114)
+      = ff4a069f17d645393f0a665e7565e3db95f5fd083d5de6e6ff63452593a5f477
+root  = BLAKE2b-256("NODE" || leaf0 || leaf1)
+      = 57bb734b042f02c81d7145f8692eb9ff8acea72b6afb66f134df7463b8381447
 ```
+If you feed the inputs in the opposite order you will obtain a different root; always hash `"NODE" || left || right` exactly as shown.
 `EntryAnchor` holds `statement` and `hashes`.
 Anchor entries remain append-only.
 `LedgerAnchor::push` appends new statement and hash; duplicates rejected.
@@ -554,19 +563,19 @@ Reconciliation compares statement text and associated hash vectors.
 Quorum is typically 2 for simple demonstrations.
 Mismatch yields errors describing diverging statements or hash values.
 Anchor JSON representation includes `schema`, `network`, `node_id`, `entries`.
-JSON schema sketch (`jrocnet.anchor.v1`):
+JSON schema sketch (`jrocnet.anchor.v1`, pseudo-JSON; remove comments in actual files):
 ```
 {
   "schema": "jrocnet.anchor.v1",
   "network": "JROC-NET",
   "node_id": "nodeA",
   "challenge_mode": "mod",
-  "fold_digest": "9880...196b",   // optional but recommended
+  "fold_digest": "9880...196b",
   "entries": [
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.43"
+  "crate_version": "0.1.44"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -580,7 +589,8 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: JULIAN::GENESIS -> [139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a]`.
 `JROC-NET :: Dense polynomial proof -> [ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c]`.
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
-Golden test vector (book edition `v0.1.43`, field 257):
+Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 64.
+Golden test vector (book edition `v0.1.44`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod
@@ -692,7 +702,7 @@ Critical warning:
 - In every transcript metadata block, write `challenge_mode: mod` or `challenge_mode: rejection` so auditors know which derivation to replay.
 Fiat-Shamir challenges must be reproducible.
 power_house now derives Fiat-Shamir challenges with domain-separated BLAKE2b-256.
-Each invocation absorbs the transcript words, the domain tag `JROC_CHALLENGE`, and an ever-increasing counter.
+Each invocation absorbs the transcript words exactly once together with the domain tag `JROC_CHALLENGE`; the counter shown in the waterfall is purely the PRNG iteration number and is **not** reabsorbed into the hash.
 The output block is 32 bytes; the first eight bytes reduce modulo the field to produce the challenge value.
 Deterministic hashing replaces the old LCG while retaining reproducibility.
 The seed material is the transcript itself; identical transcripts yield identical challenge streams.
@@ -700,7 +710,11 @@ The crate avoids ambient randomness so auditors can replay transcripts without e
 When verifying transcripts, recompute challenges using the same hashing steps presented in `prng.rs`.
 Challenge derivation pseudocode (current implementation):
 ```
-seed = BLAKE2b-256("JROC_CHALLENGE" || len(tag) || tag || len(transcript) || transcript_words)
+seed_hasher = BLAKE2b-256()
+seed_hasher.update(b"JROC_CHALLENGE")
+seed_hasher.update(len(transcript_words) as u64_be)
+seed_hasher.update(transcript_words)
+seed = seed_hasher.finalize()
 prng = SimplePrng::from_seed_bytes(seed)
 for i in 0..k {
     r = prng.next_u64()
@@ -732,7 +746,7 @@ counter 4 -- digest[9669...7ced] --> challenge 105
     |
 counter 5 -- digest[5c00...4b66] --> challenge 92
 ```
-Document the counter sequence in your audit notes: counter starts at zero and increments per challenge.
+Document the counter sequence in your audit notes: counter starts at zero and increments per challenge; because it lives inside the PRNG state, you never append it to the transcript hash input.
 Provide challenge logs listing counter, digest block, and reduced value.
 Resist mixing in OS entropy; you would break determinism and fail compliance instantly.
 Should a protocol require additional entropy, layer it outside the core transcript and record the reasoning.
@@ -759,13 +773,13 @@ Document script output in your operational runbook for future teams.
 Avoid customizing domain tags without updating this manual and all tooling.
 Deterministic hashing ensures anchor digests and challenge streams stay synchronized over time.
 Without it, Chapter I's hex ritual would drift and finality would crumble.
-Because transcripts embed the challenge lines and the digest covers the entire transcript, the chain remains immutable.
+Challenge values are deterministically derived from the canonical transcript via domain-separated BLAKE2b; they are not included in the transcript hash. The chain remains immutable because the transcript itself is immutable.
 When verifying aggregated proofs, ensure each component proof uses the same domain-tagged hash derivation.
 Commit changes to randomness code with explicit review; include diff snippets in change logs.
 Maintain unit tests that verify the hash-based generator yields stable sequences for known transcripts.
 Include test results in compliance reports to prove nothing regressed.
 In training, have cadets inspect the updated `prng.rs` and explain each hashing step.
-Confirm they understand why the counter is reabsorbed into the transcript after emission.
+Confirm they understand that the counter is PRNG-internal and never added back into the transcript hash input.
 Document instructions for customizing challenge derivation if protocol extensions demand it, and update transcripts accordingly.
 Distinguish between the base deterministic hash generator and any optional enhancements layered on top.
 For now, base generator serves all official operations.
@@ -955,7 +969,7 @@ Compliance Seal (sign before dismissal):
 ```
 +-----------------------------------------------------+
 | ANCHOR!! COMPLIANCE SEAL                            |
-| HEIR DIGESTS: genesis * dense * hash * fold         |
+| ANCHOR DIGESTS: genesis * dense * hash * fold       |
 | OATH: no entropy, no mismatches, no excuses.        |
 | LEDGER: __________________  DATE: ________________  |
 +-----------------------------------------------------+
