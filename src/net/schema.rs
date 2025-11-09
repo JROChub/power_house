@@ -1,11 +1,11 @@
 #![cfg(feature = "net")]
 
 use crate::{
-    alien::JULIAN_GENESIS_STATEMENT, data::digest_from_hex, data::digest_to_hex, EntryAnchor,
-    LedgerAnchor,
+    alien::JULIAN_GENESIS_STATEMENT, compute_fold_digest, data::digest_from_hex,
+    data::digest_to_hex, AnchorMetadata, EntryAnchor, LedgerAnchor,
 };
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt};
+use std::{env, error::Error, fmt};
 
 /// Canonical schema identifiers that are embedded inside anchors and envelopes.
 pub const SCHEMA_ANCHOR: &str = "jrocnet.anchor.v1";
@@ -45,6 +45,15 @@ pub struct AnchorJson {
     pub quorum: usize,
     /// Millisecond timestamp representing when the anchor was produced.
     pub timestamp_ms: u64,
+    /// Challenge derivation mode (matches transcript logs).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub challenge_mode: Option<String>,
+    /// Fold digest hashed across transcript digests (hex).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fold_digest: Option<String>,
+    /// Crate version that emitted this anchor.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crate_version: Option<String>,
 }
 
 /// Signed envelope broadcast across the gossip layer.
@@ -142,6 +151,10 @@ impl AnchorJson {
                 merkle_root: Some(digest_to_hex(&entry.merkle_root)),
             })
             .collect();
+        let fold_digest = anchor
+            .metadata
+            .fold_digest
+            .unwrap_or_else(|| compute_fold_digest(anchor));
         Ok(Self {
             schema: SCHEMA_ANCHOR.to_string(),
             network: NETWORK_ID.to_string(),
@@ -150,6 +163,9 @@ impl AnchorJson {
             entries,
             quorum,
             timestamp_ms,
+            challenge_mode: anchor.metadata.challenge_mode.clone(),
+            fold_digest: Some(digest_to_hex(&fold_digest)),
+            crate_version: anchor.metadata.crate_version.clone(),
         })
     }
 
@@ -190,7 +206,25 @@ impl AnchorJson {
                 merkle_root,
             });
         }
-        Ok(LedgerAnchor { entries })
+        let mut metadata = AnchorMetadata::default();
+        metadata.challenge_mode = self.challenge_mode;
+        metadata.crate_version = self
+            .crate_version
+            .or_else(|| Some(env!("CARGO_PKG_VERSION").to_string()));
+        if let Some(fold_hex) = self.fold_digest {
+            metadata.fold_digest = Some(
+                digest_from_hex(&fold_hex)
+                    .map_err(|reason| AnchorCodecError::InvalidDigest { entry: 0, reason })?,
+            );
+        }
+        if metadata.fold_digest.is_none() {
+            let temp = LedgerAnchor {
+                entries: entries.clone(),
+                metadata: AnchorMetadata::default(),
+            };
+            metadata.fold_digest = Some(compute_fold_digest(&temp));
+        }
+        Ok(LedgerAnchor { entries, metadata })
     }
 
     /// Serialises the anchor to JSON text.

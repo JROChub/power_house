@@ -8,7 +8,7 @@ This binder distills the mandatory drills called out across `book_of_power.md`. 
 | --- | --- | --- | --- |
 | F-1 | 97 | Compute inverses for 12, 37, 81. Show that `a * a⁻¹ ≡ 1 (mod p)` for each. | |
 | F-2 | 101 | Verify `FieldElement::new(57).pow(100) == 1`. Note each intermediate square-and-multiply step. | |
-| F-3 | 257 | Reduce the aggregated digest `0xa5a1…99b3` to the field element `21` by taking the first 8 bytes → `u64::from_be_bytes` → `mod 257`. | |
+| F-3 | 257 | Reduce the aggregated digest `0x9880…96b` to the field element `64` by taking the first 8 bytes → `u64::from_be_bytes` → `mod 257`. | |
 | F-4 | 65537 | Demonstrate extended Euclidean inversion by hand for 37. Record quotient steps and bezout coefficients. | |
 
 *Completion checklist:* □ documented modulus choice □ noted failure cases □ reran `cargo test field_inverse`.
@@ -27,10 +27,10 @@ hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 
 ```
 statement: Hash anchor proof
-transcript: 17 230 192 174 226 171
-round_sums: 21 139 198 99 178 89
-final: 173
-hash: 0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b
+transcript: 204 85 135 147 28 132
+round_sums: 64 32 16 8 4 2
+final: 1
+hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 ```
 
 Instructions: highlight challenge lines, check that each `round_sums` pair collapses to the previous accumulator, and confirm hashes match Chapter I (`book_of_power.md:24-34`).
@@ -67,7 +67,7 @@ Instructions: highlight challenge lines, check that each `round_sums` pair colla
 
 2. **Transcript Metallurgy**
    - Verified ledgers (`hash_pipeline` date/time): ______________________
-   - Hashes checked: □ `ded75c45…6e8c` □ `0f50904f…08f9b`
+   - Hashes checked: □ `ded75c45…6e8c` □ `c7241346…2114`
    - Signature: ______________________
 
 3. **Challenge Reconstruction**
@@ -86,7 +86,7 @@ Store completed sheets in the compliance ledger alongside the latest anchor file
 
 | Item | Action | Initials |
 | --- | --- | --- |
-| Fold digest persistence | Captured `fold_digest:a5a1…99b3` beside every ledger before reconciling. | |
+| Fold digest persistence | Captured `fold_digest:9880…96b` beside every ledger before reconciling. | |
 | Transcript grammar | Validated that `ledger_0000.txt` satisfies the ABNF (ASCII, LF endings, 64-char lowercase hash). | |
 | JSON schema | Produced `anchor_meta.json` with `fold_digest`, `crate_version`, and verified UTF-8 encoding. | |
 | CI guardrail notes | Logged `hash_pipeline` output SHA256 and Cargo version to satisfy CI rules. | |

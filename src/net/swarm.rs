@@ -16,8 +16,8 @@ use crate::net::{
     },
 };
 use crate::{
-    julian_genesis_anchor, merkle_root, transcript_digest, verify_transcript_lines, AnchorVote,
-    EntryAnchor, LedgerAnchor,
+    compute_fold_digest, julian_genesis_anchor, merkle_root, parse_log_file, read_fold_digest_hint,
+    transcript_digest, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use futures::StreamExt;
@@ -35,6 +35,7 @@ use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    env,
     io::{self, Read},
     path::{Path, PathBuf},
     sync::{
@@ -773,22 +774,33 @@ mod tests {
 
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
     let mut cutoff: Option<String> = None;
-    let mut entries = match load_latest_checkpoint(path) {
+    let mut anchor_from_checkpoint = false;
+    let mut anchor = match load_latest_checkpoint(path) {
         Ok(Some(checkpoint)) => {
+            anchor_from_checkpoint = true;
             let (anchor, cp_cutoff) = checkpoint
                 .clone()
                 .into_ledger()
                 .map_err(|err| NetworkError::Anchor(err.to_string()))?;
             cutoff = cp_cutoff;
-            anchor.entries
+            anchor
         }
-        Ok(None) => julian_genesis_anchor().entries,
+        Ok(None) => julian_genesis_anchor(),
         Err(err) => return Err(NetworkError::Anchor(err.to_string())),
     };
+    let mut entries = anchor.entries;
+    let mut metadata = anchor.metadata;
+    if !anchor_from_checkpoint {
+        metadata.challenge_mode = None;
+        metadata.fold_digest = None;
+    }
+    metadata
+        .crate_version
+        .get_or_insert_with(|| env!("CARGO_PKG_VERSION").to_string());
     let mut files: Vec<PathBuf> = std::fs::read_dir(path)
         .map_err(|err| NetworkError::Io(format!("failed to read {}: {err}", path.display())))?
         .filter_map(|entry| entry.ok().map(|e| e.path()))
-        .filter(|p| p.is_file())
+        .filter(|p| p.is_file() && is_ledger_file(p))
         .collect();
     files.sort();
     for file in files {
@@ -799,53 +811,64 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
                 }
             }
         }
-        let mut contents = String::new();
-        std::fs::File::open(&file)
-            .map_err(|err| NetworkError::Io(format!("failed to open {}: {err}", file.display())))?
-            .read_to_string(&mut contents)
-            .map_err(|err| NetworkError::Io(format!("failed to read {}: {err}", file.display())))?;
-        let mut lines: Vec<String> = contents
-            .lines()
-            .map(|line| line.trim().to_string())
-            .filter(|line| !line.is_empty())
-            .collect();
-        if lines.is_empty() {
-            continue;
+        let parsed = parse_log_file(&file).map_err(NetworkError::Anchor)?;
+        if let Some(mode) = parsed.metadata.challenge_mode {
+            match &mut metadata.challenge_mode {
+                None => metadata.challenge_mode = Some(mode),
+                Some(existing) if existing != &mode => {
+                    return Err(NetworkError::Anchor(format!(
+                        "{} challenge_mode {} conflicts with existing {}",
+                        file.display(),
+                        mode,
+                        existing
+                    )));
+                }
+                _ => {}
+            }
         }
-        let statement_line = lines.remove(0);
-        if !statement_line.starts_with("statement:") {
-            return Err(NetworkError::Anchor(format!(
-                "{} missing statement prefix",
-                file.display()
-            )));
+        if let Some(digest) = parsed.metadata.fold_digest {
+            if let Some(existing) = &metadata.fold_digest {
+                if existing != &digest && anchor_from_checkpoint {
+                    return Err(NetworkError::Anchor(format!(
+                        "{} fold_digest conflicts with existing value",
+                        file.display()
+                    )));
+                }
+            }
+            metadata.fold_digest = Some(digest);
         }
-        let statement = statement_line[10..].to_string();
-        verify_transcript_lines(lines.iter().map(|s| s.as_str())).map_err(|err| {
-            NetworkError::Anchor(format!("{} verification failed: {err}", file.display()))
-        })?;
-        let (challenges, round_sums, final_value, stored_hash) =
-            crate::parse_transcript_record(lines.iter().map(|s| s.as_str())).map_err(|err| {
-                NetworkError::Anchor(format!("{} parse error: {err}", file.display()))
-            })?;
-        let computed = transcript_digest(&challenges, &round_sums, final_value);
-        if computed != stored_hash {
-            let stored_hex = crate::transcript_digest_to_hex(&stored_hash);
-            let computed_hex = crate::transcript_digest_to_hex(&computed);
-            return Err(NetworkError::Anchor(format!(
-                "{} hash mismatch: stored={}, computed={}",
-                file.display(),
-                stored_hex,
-                computed_hex
-            )));
-        }
-        let entry_hashes = vec![computed];
+        let entry_hashes = vec![parsed.digest];
         entries.push(EntryAnchor {
-            statement,
+            statement: parsed.statement,
             merkle_root: merkle_root(&entry_hashes),
             hashes: entry_hashes,
         });
     }
-    Ok(LedgerAnchor { entries })
+    if entries.is_empty() {
+        entries = julian_genesis_anchor().entries;
+    }
+    if let Some(digest) = read_fold_digest_hint(path).map_err(NetworkError::Anchor)? {
+        if let Some(existing) = &metadata.fold_digest {
+            if existing != &digest && anchor_from_checkpoint {
+                return Err(NetworkError::Anchor(
+                    "fold_digest hint conflicts with checkpoint metadata".to_string(),
+                ));
+            }
+        }
+        metadata.fold_digest = Some(digest);
+    }
+    let mut anchor = LedgerAnchor { entries, metadata };
+    if anchor.metadata.fold_digest.is_none() {
+        anchor.metadata.fold_digest = Some(compute_fold_digest(&anchor));
+    }
+    Ok(anchor)
+}
+
+fn is_ledger_file(path: &Path) -> bool {
+    match path.file_name().and_then(|n| n.to_str()) {
+        Some(name) => name.starts_with("ledger_") && name.ends_with(".txt"),
+        None => false,
+    }
 }
 
 fn now_millis() -> u64 {

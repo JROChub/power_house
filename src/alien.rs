@@ -140,11 +140,24 @@ pub struct EntryAnchor {
     pub merkle_root: TranscriptDigest,
 }
 
+/// Additional metadata associated with a ledger anchor.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct AnchorMetadata {
+    /// Challenge derivation mode recorded in transcript logs (e.g., `mod`).
+    pub challenge_mode: Option<String>,
+    /// Optional fold digest aggregated from transcript hashes.
+    pub fold_digest: Option<TranscriptDigest>,
+    /// Crate version that produced this anchor.
+    pub crate_version: Option<String>,
+}
+
 /// Anchor aggregation for an entire ledger.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LedgerAnchor {
     /// Ordered entry anchors mirroring the ledger submissions.
     pub entries: Vec<EntryAnchor>,
+    /// Supplementary metadata emitted alongside transcript hashes.
+    pub metadata: AnchorMetadata,
 }
 
 /// Statement string used for the JULIAN genesis anchor.
@@ -157,12 +170,19 @@ pub fn julian_genesis_hash() -> TranscriptDigest {
 
 /// Returns the canonical JULIAN genesis anchor.
 pub fn julian_genesis_anchor() -> LedgerAnchor {
+    let hashes = vec![julian_genesis_hash()];
+    let merkle = merkle_root(&hashes);
     LedgerAnchor {
         entries: vec![EntryAnchor {
             statement: JULIAN_GENESIS_STATEMENT.to_string(),
-            hashes: vec![julian_genesis_hash()],
-            merkle_root: merkle_root(&[julian_genesis_hash()]),
+            hashes: hashes.clone(),
+            merkle_root: merkle,
         }],
+        metadata: AnchorMetadata {
+            crate_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+            fold_digest: Some(fold_digest_from_hashes(&hashes)),
+            ..AnchorMetadata::default()
+        },
     }
 }
 
@@ -343,7 +363,7 @@ impl ProofLedger {
 
     /// Returns the current ledger anchor containing transcript hashes per entry.
     pub fn anchor(&self) -> LedgerAnchor {
-        let entries = self
+        let entries: Vec<EntryAnchor> = self
             .entries
             .iter()
             .map(|entry| EntryAnchor {
@@ -352,7 +372,15 @@ impl ProofLedger {
                 merkle_root: entry.merkle_root,
             })
             .collect();
-        LedgerAnchor { entries }
+        let fold_digest = fold_digest_from_entries(&entries);
+        LedgerAnchor {
+            entries,
+            metadata: AnchorMetadata {
+                challenge_mode: None,
+                fold_digest: Some(fold_digest),
+                crate_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+            },
+        }
     }
 
     /// Ensures the JULIAN genesis anchor is present at the head of the ledger.
@@ -397,6 +425,35 @@ fn mix_hash_list(hasher: &mut Blake2b256, hashes: &[TranscriptDigest]) {
     for digest in hashes {
         hasher.update(digest);
     }
+}
+
+fn fold_digest_from_hashes(hashes: &[TranscriptDigest]) -> TranscriptDigest {
+    let mut hasher = Blake2b256::new();
+    hasher.update(ANCHOR_DOMAIN);
+    for digest in hashes {
+        hasher.update(digest);
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&hasher.finalize());
+    out
+}
+
+fn fold_digest_from_entries(entries: &[EntryAnchor]) -> TranscriptDigest {
+    let mut hasher = Blake2b256::new();
+    hasher.update(ANCHOR_DOMAIN);
+    for entry in entries {
+        for digest in &entry.hashes {
+            hasher.update(digest);
+        }
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&hasher.finalize());
+    out
+}
+
+/// Computes the fold digest for a ledger anchor.
+pub fn compute_fold_digest(anchor: &LedgerAnchor) -> TranscriptDigest {
+    fold_digest_from_entries(&anchor.entries)
 }
 
 fn anchor_digest(anchor: &LedgerAnchor) -> [u8; 32] {

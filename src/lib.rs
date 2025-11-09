@@ -64,6 +64,7 @@ pub mod consensus;
 mod data;
 mod field;
 mod io;
+mod log_parser;
 mod merkle;
 mod multilinear;
 mod prng;
@@ -75,9 +76,9 @@ mod transcript;
 pub mod net;
 
 pub use alien::{
-    julian_genesis_anchor, julian_genesis_hash, reconcile_anchors, reconcile_anchors_with_quorum,
-    AnchorVote, EntryAnchor, LedgerAnchor, Proof, ProofKind, ProofLedger, Statement,
-    JULIAN_GENESIS_STATEMENT,
+    compute_fold_digest, julian_genesis_anchor, julian_genesis_hash, reconcile_anchors,
+    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor, Proof,
+    ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
 };
 pub use consensus::consensus;
 pub use data::{
@@ -88,6 +89,7 @@ pub use data::{
 };
 pub use field::Field;
 pub use io::write_text_series;
+pub use log_parser::{parse_log_file, read_fold_digest_hint, LogRecordMetadata, ParsedLogFile};
 pub use merkle::{
     build_proof as build_merkle_proof, merkle_root, verify_proof as verify_merkle_proof,
     MerkleProof, MerkleProofNode,

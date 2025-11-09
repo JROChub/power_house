@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.41**
-Crate Version Required: **v0.1.41**
+Book Edition: **v0.1.42**
+Crate Version Required: **v0.1.42**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -28,17 +28,17 @@ Chapter I -- Anchor Echo Engine Command Doctrine
 I remain your irritable cosmic supervisor; this page is the manual for the 256-bit Anchor Echo Engine.
 Memorize the genesis digest `139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a`.
 Memorize the dense polynomial digest `ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c`.
-Memorize the hash anchor proof digest `0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b`.
-Memorize the anchor-fold digest emitted by `hash_pipeline`: `a5a1b9528dd9b4e811e89fb492977c2010322d09d2318530b0f01b5b238399b3`.
+Memorize the hash anchor proof digest `c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114`.
+Memorize the anchor-fold digest emitted by `hash_pipeline`: `98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b`.
 Write them on the wall; anyone who shrugs at 64 hex bytes should be reassigned to kitchen duty.
 `transcript_digest` now feeds every `u64` transcript value into a BLAKE2b-256 tagged hash stream tagged with `JROC_TRANSCRIPT`.
 No XOR tricks, no decimal fallbacks--pure hex, 32 bytes, immutable.
 Ledger files still appear as `ledger_0000.txt`, `ledger_0001.txt`, etc., but every `hash:` line is now lowercase hex.
-Run `cargo run --example hash_pipeline` weekly; the output must include the fold digest above and the reduced field value `21`.
+Run `cargo run --example hash_pipeline` weekly; the output must include the fold digest above and the reduced field value `64`.
 The program stages two ledgers under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
 Note: Windows or hardened hosts lacking `/tmp` must set `POWER_HOUSE_TMP=/path/to/workdir`; never assume a Unix tmpfs is writable in prod.
 Open `ledger_0000.txt`; the hash must match `ded75c45...6e8c`.
-Open `ledger_0001.txt`; the hash must match `0f50904f...08f9b`.
+Open `ledger_0001.txt`; the hash must match `c7241346...2114`.
 If either hash deviates, the log is corrupt or you miscopied the hex--both offences carry penalties.
 `julian node anchor /tmp/power_house_anchor_a` should print three lines headed by `JROC-NET`.
 Verify that the genesis line prints the digest from step 02 without error.
@@ -70,8 +70,8 @@ Hash the big-endian bytes, never the ASCII digits; auditors treat deviations as 
 `ProofLedger` persists transcripts exactly once; any extra whitespace or comment must stay outside the recorded lines.
 The CLI renders the digests via `transcript_digest_to_hex`; keep that function untouched.
 To test deterministic recomputation, delete one byte from a log and rerun `verify_logs`; expect a digest mismatch in red text.
-The aggregated digest reduces to field element `21`. Say it. Write it. Remember it.
-Note: Digest-to-field procedure: interpret the first eight bytes of the 32-byte digest as a big-endian u64, then compute `value mod p` (e.g., `0xa5a1b9528dd9b4e8 -> 0xA5A1B9528DD9B4E8 -> 11916436223453507944 -> 21 (mod 257)`).
+The aggregated digest reduces to field element `64`. Say it. Write it. Remember it.
+Note: Digest-to-field procedure: interpret the first eight bytes of the 32-byte digest as a big-endian u64, then compute `value mod p` (e.g., `0x98807230712cd2b0 -> 0x98807230712CD2B0 -> 10988908643166769840 -> 64 (mod 257)`).
 When the reduction changes, the field or transcript changed--file an incident report.
 `simple_prng` is dead; the challenge stream is now BLAKE2b-256 seeded by the transcript plus domain tag.
 Never allow anyone to talk wistfully about linear-congruential generators again.
@@ -87,8 +87,8 @@ HEX SIGIL :: ANCHOR CORE
   GENESIS     139f 1985 df5b 36da e23f a509 fb53
   DENSE POLY  ded7 5c45 b3b7 eedd 3704 1aae 7971
   HASH ANCHOR 0f50 904f 7be0 6930 a550 0c2c 54cf
-  FOLD DIGEST a5a1 b952 8dd9 b4e8 11e8 9fb4 9297
-  FIELD REDUCE -> 21 (anchor hinge)
+  FOLD DIGEST 9880 7230 712c d2b0 9c17 df61 7b1f
+  FIELD REDUCE -> 64 (anchor hinge)
 ```
 The ledger logs must remain ASCII; the hex lives on one line with no prefixes.
 If you must annotate, prefix with `#` outside the transcript block.
@@ -101,7 +101,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.41`.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.42`.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -140,7 +140,7 @@ Replicate this manual in triplicate: on paper, in git, and in cold storage.
 Tattoo the domain tags on your forearm if that helps.
 Run `cargo test --features net` after every patch; the tests confirm our identity counting and digest logic.
 If a colleague tries to skip the tests, this book authorizes you to snatch their keyboard.
-The aggregated digest converts to field element 21; include that value in any whiteboard explanation.
+The aggregated digest converts to field element 64; include that value in any whiteboard explanation.
 Draw the folding pipeline as: transcripts -> BLAKE2b digest -> anchor fold -> quorum.
 Each step must be reproducible from logs plus this manual--no hidden state.
 Record the BLAKE2b command used by external auditors if they verify independently.
@@ -561,12 +561,12 @@ JSON schema sketch (`jrocnet.anchor.v1`):
   "network": "JROC-NET",
   "node_id": "nodeA",
   "challenge_mode": "mod",
-  "fold_digest": "a5a1...99b3",   // optional but recommended
+  "fold_digest": "9880...196b",   // optional but recommended
   "entries": [
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.38"
+  "crate_version": "0.1.42"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -579,8 +579,8 @@ Boot nodes produce identical anchors when reading identical transcripts.
 Example summary in anchor file (hex digests):
 `JROC-NET :: JULIAN::GENESIS -> [139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a]`.
 `JROC-NET :: Dense polynomial proof -> [ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c]`.
-`JROC-NET :: Hash anchor proof -> [0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b]`.
-Golden test vector (book edition `v0.1.38`, field 257):
+`JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
+Golden test vector (book edition `v0.1.42`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod
@@ -593,13 +593,13 @@ hash:ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 ledger_0001.txt
 # challenge_mode: mod
 statement:Hash anchor proof
-transcript:17 230 192 174 226 171
-round_sums:21 139 198 99 178 89
-final:173
-hash:0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b
+transcript:204 85 135 147 28 132
+round_sums:64 32 16 8 4 2
+final:1
+hash:c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 
-fold_digest:a5a1b9528dd9b4e811e89fb492977c2010322d09d2318530b0f01b5b238399b3
-anchor_root:80e7cb9d1721ce47f6f908f9ac01098d9c035f1225fff84083a6e1d0828144f4
+fold_digest:98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b
+anchor_root:637aeed7e8fbb42747c39c82dfe1eb242bda92fead2a24abaf8c5ffc45ff8e82
 ```
 Maintain a single numeric representation (hex in this manual); record the chosen format with the ledger and ensure every anchor reproduces the Chapter I digests.
 CI guardrail: `cargo run --example hash_pipeline` must emit the golden digests above; fail the build if the field reduction or fold digest drifts.

@@ -74,7 +74,7 @@ python3 scripts/netctl.py logs --lines 200 --hosts boot1</pre>
 
 <pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">statement: JULIAN::GENESIS          hash: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
 statement: Dense polynomial proof   hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
-statement: Hash anchor proof        hash: 0f50904f7be06930a5500c2c54cfb6c2df76241507ebd01ab0a25039d2f08f9b</pre>
+statement: Hash anchor proof        hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114</pre>
 
 <p>Boot nodes run with deterministic seeds (<code style="font-size:0.66rem;">ed25519://boot1-seed</code>, <code style="font-size:0.66rem;">ed25519://boot2-seed</code>) so their libp2p Peer IDs remain constant.</p>
 
@@ -293,10 +293,25 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
   "network": "JROC-NET",
   "node_id": "nodeA",
   "genesis": "JULIAN::GENESIS",
+  "challenge_mode": "mod",
+  "fold_digest": "98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b",
+  "crate_version": "0.1.42",
   "entries": [
-    { "statement": "JULIAN::GENESIS", "hashes": [17942395924573474124] },
-    { "statement": "Dense polynomial proof", "hashes": [1560461912026565426] },
-    { "statement": "Hash anchor proof", "hashes": [17506285175808955616] }
+    {
+      "statement": "JULIAN::GENESIS",
+      "hashes": ["139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a"],
+      "merkle_root": "09c0673e5d1a15ea98da1e7188d64e4db53f46982810d631264dbbd001ad995a"
+    },
+    {
+      "statement": "Dense polynomial proof",
+      "hashes": ["ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c"],
+      "merkle_root": "80e7cb9d1721ce47f6f908f9ac01098d9c035f1225fff84083a6e1d0828144f4"
+    },
+    {
+      "statement": "Hash anchor proof",
+      "hashes": ["c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114"],
+      "merkle_root": "637aeed7e8fbb42747c39c82dfe1eb242bda92fead2a24abaf8c5ffc45ff8e82"
+    }
   ],
   "quorum": 2,
   "timestamp_ms": 1730246400000

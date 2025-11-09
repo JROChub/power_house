@@ -1,5 +1,13 @@
 # Release Notes
 
+# Release Notes
+
+## v0.1.42 — 2025-11-08
+
+### Changed
+- Ledger parsers now ignore non-`ledger_*.txt` files, accept `# challenge_mode`/`# fold_digest` comment lines, load `fold_digest.txt` hints, and include metadata in anchor files/JSON (`challenge_mode`, `fold_digest`, `crate_version`).
+- Updated the hash-pipeline demo to anchor the actual proof transcript (not the genesis stub), regenerate the fold digest/field value, refresh bootstrap logs, and synchronize every README/book/training reference with the new constants.
+
 ## v0.1.41 — 2025-11-07
 
 ### Changed

@@ -11,8 +11,8 @@ use power_house::net::{
     MultisigPolicy, NetConfig, StakePolicy, StaticPolicy,
 };
 use power_house::{
-    julian_genesis_anchor, reconcile_anchors_with_quorum, transcript_digest,
-    verify_transcript_lines, AnchorVote, EntryAnchor, LedgerAnchor,
+    compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
+    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -554,30 +554,44 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
     let mut cutoff: Option<String> = None;
     #[cfg(not(feature = "net"))]
     let cutoff: Option<String> = None;
-    let mut entries = {
+    #[allow(unused_mut)]
+    let mut anchor_from_checkpoint = false;
+    let anchor = {
         #[cfg(feature = "net")]
         {
             match power_house::net::load_latest_checkpoint(path) {
-                Ok(Some(checkpoint)) => match checkpoint.into_ledger() {
-                    Ok((anchor, cp_cutoff)) => {
-                        cutoff = cp_cutoff;
-                        anchor.entries
+                Ok(Some(checkpoint)) => {
+                    anchor_from_checkpoint = true;
+                    match checkpoint.into_ledger() {
+                        Ok((anchor, cp_cutoff)) => {
+                            cutoff = cp_cutoff;
+                            anchor
+                        }
+                        Err(err) => return Err(format!("checkpoint error: {err}")),
                     }
-                    Err(err) => return Err(format!("checkpoint error: {err}")),
-                },
-                Ok(None) => julian_genesis_anchor().entries,
+                }
+                Ok(None) => julian_genesis_anchor(),
                 Err(err) => return Err(format!("checkpoint error: {err}")),
             }
         }
         #[cfg(not(feature = "net"))]
         {
-            julian_genesis_anchor().entries
+            julian_genesis_anchor()
         }
     };
+    let mut entries = anchor.entries;
+    let mut metadata = anchor.metadata;
+    if !anchor_from_checkpoint {
+        metadata.challenge_mode = None;
+        metadata.fold_digest = None;
+    }
+    metadata
+        .crate_version
+        .get_or_insert_with(|| env!("CARGO_PKG_VERSION").to_string());
     let mut files: Vec<PathBuf> = fs::read_dir(path)
         .map_err(|err| format!("failed to read directory {}: {err}", path.display()))?
         .filter_map(|entry| entry.ok().map(|e| e.path()))
-        .filter(|p| p.is_file())
+        .filter(|p| p.is_file() && is_ledger_file(p))
         .collect();
     files.sort();
     for file in files {
@@ -588,48 +602,62 @@ fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, String> {
                 }
             }
         }
-        let mut contents = String::new();
-        fs::File::open(&file)
-            .map_err(|err| format!("failed to open {}: {err}", file.display()))?
-            .read_to_string(&mut contents)
-            .map_err(|err| format!("failed to read {}: {err}", file.display()))?;
-        let mut lines: Vec<String> = contents
-            .lines()
-            .map(|line| line.trim().to_string())
-            .filter(|line| !line.is_empty())
-            .collect();
-        if lines.is_empty() {
-            continue;
+        let parsed = parse_log_file(&file)?;
+        if let Some(mode) = parsed.metadata.challenge_mode {
+            match &mut metadata.challenge_mode {
+                None => metadata.challenge_mode = Some(mode),
+                Some(existing) if existing != &mode => {
+                    return Err(format!(
+                        "{} challenge_mode {} conflicts with existing {}",
+                        file.display(),
+                        mode,
+                        existing
+                    ));
+                }
+                _ => {}
+            }
         }
-        let statement_line = lines.remove(0);
-        if !statement_line.starts_with("statement:") {
-            return Err(format!("{} missing statement prefix", file.display()));
+        if let Some(digest) = parsed.metadata.fold_digest {
+            if let Some(existing) = &metadata.fold_digest {
+                if existing != &digest && anchor_from_checkpoint {
+                    return Err(format!(
+                        "{} fold_digest conflicts with existing value",
+                        file.display()
+                    ));
+                }
+            }
+            metadata.fold_digest = Some(digest);
         }
-        let statement = statement_line[10..].to_string();
-        verify_transcript_lines(lines.iter().map(|s| s.as_str()))
-            .map_err(|err| format!("{} verification failed: {err}", file.display()))?;
-        let (challenges, round_sums, final_value, stored_hash) =
-            power_house::parse_transcript_record(lines.iter().map(|s| s.as_str()))
-                .map_err(|err| format!("{} parse error: {err}", file.display()))?;
-        let computed = transcript_digest(&challenges, &round_sums, final_value);
-        if computed != stored_hash {
-            let stored_hex = power_house::transcript_digest_to_hex(&stored_hash);
-            let computed_hex = power_house::transcript_digest_to_hex(&computed);
-            return Err(format!(
-                "{} hash mismatch: stored={}, computed={}",
-                file.display(),
-                stored_hex,
-                computed_hex
-            ));
-        }
-        let entry_hashes = vec![computed];
+        let entry_hashes = vec![parsed.digest];
         entries.push(EntryAnchor {
-            statement,
+            statement: parsed.statement,
             merkle_root: power_house::merkle_root(&entry_hashes),
             hashes: entry_hashes,
         });
     }
-    Ok(LedgerAnchor { entries })
+    if entries.is_empty() {
+        entries = julian_genesis_anchor().entries;
+    }
+    if let Some(digest) = read_fold_digest_hint(path)? {
+        if let Some(existing) = &metadata.fold_digest {
+            if existing != &digest && anchor_from_checkpoint {
+                return Err("fold_digest hint conflicts with checkpoint metadata".to_string());
+            }
+        }
+        metadata.fold_digest = Some(digest);
+    }
+    let mut anchor = LedgerAnchor { entries, metadata };
+    if anchor.metadata.fold_digest.is_none() {
+        anchor.metadata.fold_digest = Some(compute_fold_digest(&anchor));
+    }
+    Ok(anchor)
+}
+
+fn is_ledger_file(path: &Path) -> bool {
+    match path.file_name().and_then(|n| n.to_str()) {
+        Some(name) => name.starts_with("ledger_") && name.ends_with(".txt"),
+        None => false,
+    }
 }
 
 fn write_anchor(path: &Path, anchor: &LedgerAnchor) -> io::Result<()> {
@@ -647,6 +675,18 @@ fn read_anchor(path: &Path) -> Result<LedgerAnchor, String> {
 
 fn anchor_to_string(anchor: &LedgerAnchor) -> String {
     let mut lines = Vec::new();
+    if let Some(mode) = &anchor.metadata.challenge_mode {
+        lines.push(format!("# challenge_mode: {mode}"));
+    }
+    if let Some(digest) = &anchor.metadata.fold_digest {
+        lines.push(format!(
+            "# fold_digest: {}",
+            power_house::transcript_digest_to_hex(digest)
+        ));
+    }
+    if let Some(version) = &anchor.metadata.crate_version {
+        lines.push(format!("# crate_version: {version}"));
+    }
     for entry in &anchor.entries {
         let hash_list = entry
             .hashes
@@ -667,9 +707,32 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
 
 fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
     let mut entries = Vec::new();
+    let mut metadata = AnchorMetadata::default();
     for line in input.lines() {
         let trimmed = line.trim();
         if trimmed.is_empty() {
+            continue;
+        }
+        if let Some(rest) = trimmed.strip_prefix('#') {
+            if let Some((key, value)) = rest.trim().split_once(':') {
+                let key = key.trim();
+                let value = value.trim();
+                match key {
+                    "challenge_mode" if !value.is_empty() => {
+                        metadata.challenge_mode = Some(value.to_string())
+                    }
+                    "fold_digest" if !value.is_empty() => {
+                        metadata.fold_digest =
+                            Some(power_house::transcript_digest_from_hex(value).map_err(
+                                |err| format!("invalid fold_digest value {value}: {err}"),
+                            )?);
+                    }
+                    "crate_version" if !value.is_empty() => {
+                        metadata.crate_version = Some(value.to_string())
+                    }
+                    _ => {}
+                }
+            }
             continue;
         }
         let segments: Vec<&str> = trimmed.split('|').collect();
@@ -721,11 +784,33 @@ fn anchor_from_string(input: &str) -> Result<LedgerAnchor, String> {
     if entries.is_empty() {
         entries = julian_genesis_anchor().entries;
     }
-    Ok(LedgerAnchor { entries })
+    if metadata.fold_digest.is_none() {
+        let temp = LedgerAnchor {
+            entries: entries.clone(),
+            metadata: AnchorMetadata::default(),
+        };
+        metadata.fold_digest = Some(compute_fold_digest(&temp));
+    }
+    metadata
+        .crate_version
+        .get_or_insert_with(|| env!("CARGO_PKG_VERSION").to_string());
+    Ok(LedgerAnchor { entries, metadata })
 }
 
 fn format_anchor(anchor: &LedgerAnchor) -> String {
     let mut lines = Vec::new();
+    if let Some(mode) = &anchor.metadata.challenge_mode {
+        lines.push(format!("challenge_mode: {mode}"));
+    }
+    if let Some(digest) = &anchor.metadata.fold_digest {
+        lines.push(format!(
+            "fold_digest: {}",
+            power_house::transcript_digest_to_hex(digest)
+        ));
+    }
+    if let Some(version) = &anchor.metadata.crate_version {
+        lines.push(format!("crate_version: {version}"));
+    }
     for entry in &anchor.entries {
         let hashes = entry
             .hashes

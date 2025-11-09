@@ -91,7 +91,11 @@ fn main() {
         },
     );
 
-    let base_hashes = ledger_a.entries()[0].hashes.clone();
+    assert!(
+        ledger_a.entries().len() >= 2,
+        "ledger is missing the dense proof entry"
+    );
+    let base_hashes = ledger_a.entries()[1].hashes.clone();
     let aggregated_digest = aggregate_hashes(&base_hashes);
     let mut head = [0u8; 8];
     head.copy_from_slice(&aggregated_digest[..8]);
@@ -102,6 +106,11 @@ fn main() {
         power_house::transcript_digest_to_hex(&aggregated_digest),
         aggregated_hash
     );
+    let fold_hex = power_house::transcript_digest_to_hex(&aggregated_digest);
+    fs::write(dir_a.join("fold_digest.txt"), format!("{fold_hex}\n"))
+        .expect("write fold digest for ledger A");
+    fs::write(dir_b.join("fold_digest.txt"), format!("{fold_hex}\n"))
+        .expect("write fold digest for ledger B");
 
     let anchor_poly = constant_polynomial(&field, 6, aggregated_hash);
     let (anchor_proof, anchor_stats) =
