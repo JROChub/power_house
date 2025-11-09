@@ -1,6 +1,11 @@
-# Release Notes
+﻿# Release Notes
 
 # Release Notes
+
+## v0.1.43 — 2025-11-08
+
+### Changed
+- Bumped crate/docs to `0.1.43` and removed stray nested `powerhouse/` + `publicpower/` directories so the workspace matches the published layout exactly.
 
 ## v0.1.42 — 2025-11-08
 
