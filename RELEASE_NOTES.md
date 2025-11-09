@@ -2,6 +2,11 @@
 
 # Release Notes
 
+## v0.1.46 — 2025-11-08
+
+### Changed
+- Normalised transcript examples to include a space after every `statement:/transcript:/round_sums:/final:` colon, and bumped all version references/PDF output to `0.1.46`.
+
 ## v0.1.45 — 2025-11-08
 
 ### Changed

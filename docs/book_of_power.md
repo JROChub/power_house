@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.45**
-Crate Version Required: **v0.1.45**
+Book Edition: **v0.1.46**
+Crate Version Required: **v0.1.46**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -33,7 +33,7 @@ Memorize the anchor-fold digest emitted by `hash_pipeline`: `98807230712cd2b09c1
 Write them on the wall; anyone who shrugs at 64 hex bytes should be reassigned to kitchen duty.
 `transcript_digest` now feeds every `u64` transcript value into a BLAKE2b-256 tagged hash stream tagged with `JROC_TRANSCRIPT`.
 No XOR tricks, no decimal fallbacks--pure hex, 32 bytes, immutable.
-Ledger files still appear as `ledger_0000.txt`, `ledger_0001.txt`, etc., but every `hash:` line is now lowercase hex.
+Ledger files still appear as `ledger_0000.txt`, `ledger_0001.txt`, etc., but every `hash: ` line is now lowercase hex.
 Run `cargo run --example hash_pipeline` weekly; the output must include the fold digest above and the reduced field value `64`.
 The program stages two ledgers under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
 Note: Windows or hardened hosts lacking `/tmp` must set `POWER_HOUSE_TMP=/path/to/workdir`; never assume a Unix tmpfs is writable in prod.
@@ -62,7 +62,7 @@ digest = hasher.finalize()
 - ASCII hex with spaces or carets is cosmetic; the canonical digest is 32 raw bytes rendered as contiguous lowercase `[0-9a-f]` characters.
 Encoding commandment (commit to memory):
 ```
-Transcript text  : decimal ASCII tokens (e.g., `round_sums:209 235`).
+Transcript text  : decimal ASCII tokens (e.g., `round_sums: 209 235`).
 Hash inputs      : each integer serialized as u64 big-endian bytes.
 Hex digests      : 64 lowercase `[0-9a-f]` chars, no spaces.
 Line endings     : LF only; tabs forbidden.
@@ -102,7 +102,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.45`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.46`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -393,11 +393,11 @@ Transcript grammar (ABNF; ASCII 0x20-0x7E only). This grammar documents the cano
 record      = statement LF metadata* transcript LF round-sums LF final LF hash LF
 metadata    = comment
 comment     = "#" *(%x20-7E) LF
-statement   = "statement:" text
-transcript  = "transcript:" numbers
-round-sums  = "round_sums:" numbers
-final       = "final:" number
-hash        = "hash:" hexdigits
+statement   = "statement: " text
+transcript  = "transcript: " numbers
+round-sums  = "round_sums: " numbers
+final       = "final: " number
+hash        = "hash: " hexdigits
 text        = 1*(%x20-7E)
 numbers     = 1*(SP number)
 number      = 1*DIGIT
@@ -409,7 +409,7 @@ Canonicalization checklist:
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
 - Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay. Additional audit data such as `# challenge_0: 247` or `# fold_digest: ...` may follow the same pattern; they never participate in the digest.
-- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.44 uses `final:` exclusively.
+- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.46 uses `final:` exclusively.
 Example statement: `statement: Dense polynomial proof`.
 Example challenge comment: `# challenge_0: 247`.
 Example round sums: `round_sums: 12 47`.
@@ -577,7 +577,7 @@ JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; rem
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.45"
+  "crate_version": "0.1.46"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -594,23 +594,23 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 64.
 Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
-Golden test vector (book edition `v0.1.45`, field 257):
+Golden test vector (book edition `v0.1.46`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod
-statement:Dense polynomial proof
-transcript:247 246 144 68 105 92 243 202 72 124
-round_sums:209 235 57 13 205 8 245 122 72 159
-final:9
-hash:ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
+statement: Dense polynomial proof
+transcript: 247 246 144 68 105 92 243 202 72 124
+round_sums: 209 235 57 13 205 8 245 122 72 159
+final: 9
+hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 
 ledger_0001.txt
 # challenge_mode: mod
-statement:Hash anchor proof
-transcript:204 85 135 147 28 132
-round_sums:64 32 16 8 4 2
-final:1
-hash:c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
+statement: Hash anchor proof
+transcript: 204 85 135 147 28 132
+round_sums: 64 32 16 8 4 2
+final: 1
+hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 
 fold_digest:98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b
 anchor_root:637aeed7e8fbb42747c39c82dfe1eb242bda92fead2a24abaf8c5ffc45ff8e82
@@ -726,6 +726,7 @@ for i in 0..k {
 }
 ```
 Bias-mitigated variant (recommended for larger fields):
+If `r >= threshold`, discard and resample.
 ```
 threshold = 2^64 - ((2^64) mod p)
 loop {
