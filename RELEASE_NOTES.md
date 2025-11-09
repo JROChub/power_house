@@ -1,6 +1,9 @@
 ﻿# Release Notes
 
-# Release Notes
+## v0.1.48 — 2025-11-09
+
+### Changed
+- Bumped crate/docs to `0.1.48` and updated the transcript ABNF (`numbers = number *(SP number)`), regenerating the Book of Power PDF to keep the canonical format aligned with the crate.
 
 ## v0.1.47 — 2025-11-08
 

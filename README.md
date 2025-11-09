@@ -295,7 +295,7 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b",
-  "crate_version": "0.1.47",
+  "crate_version": "0.1.48",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",
