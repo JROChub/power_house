@@ -1,0 +1,20 @@
+{
+  "threshold": 2,
+  "bond_threshold": 100,
+  "signers": [
+    "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I=",
+    "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew="
+  ],
+  "entries": [
+    {
+      "public_key": "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I=",
+      "bond": 150,
+      "slashed": false
+    },
+    {
+      "public_key": "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
+      "bond": 150,
+      "slashed": false
+    }
+  ]
+}

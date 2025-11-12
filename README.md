@@ -338,8 +338,8 @@ Stake-backed example:
   "node_id": "nodeA",
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
-  "fold_digest": "98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b",
-  "crate_version": "0.1.49",
+  "fold_digest": "c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe",
+  "crate_version": "0.1.50",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",
