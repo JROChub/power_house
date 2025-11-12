@@ -1,184 +1,221 @@
-<p style="margin:0;padding:0;">
-  <img src="https://raw.githubusercontent.com/JROChub/power_house/master/assets/JROC-NET.jpeg" alt="power_house" style="display:block;width:100%;max-width:100%;margin:0;padding:0;">
-</p>
+# Power-House
 
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.6;letter-spacing:0.03em;">
-<h1 style="font-size:0.9rem;margin:1.4rem 0 0.6rem;">Power-House</h1>
+power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—implemented end-to-end in Rust.
 
-<p style="margin:0.9rem 0 0.6rem;">power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—implemented end-to-end in Rust.</p>
+Badges
 
-<p style="margin:0.4rem 0;">
-  <a href="https://crates.io/crates/power_house"><img src="https://img.shields.io/crates/v/power_house.svg" alt="Crates.io badge" style="height:0.9rem;vertical-align:middle;"></a>
-  <a href="https://docs.rs/power_house"><img src="https://docs.rs/power_house/badge.svg" alt="docs.rs badge" style="height:0.9rem;vertical-align:middle;margin-left:0.4rem;"></a>
-  <img src="https://img.shields.io/badge/tests-passing-brightgreen.svg" alt="tests passing" style="height:0.9rem;vertical-align:middle;margin-left:0.4rem;">
-</p>
+* Crates.io: [https://crates.io/crates/power_house](https://crates.io/crates/power_house)
+* docs.rs:   [https://docs.rs/power_house](https://docs.rs/power_house)
+* Tests:     passing
 
-<p style="margin:0.3rem 0;">Author: <strong style="font-weight:600;">lexluger</strong> &nbsp;|&nbsp; Email: <a href="mailto:lexluger.dev@proton.me">lexluger.dev@proton.me</a> &nbsp;|&nbsp; Site: <a href="https://jrocnet.com">jrocnet.com</a> &nbsp;|&nbsp; Last update: 2025‑10‑16</p>
+Author: lexluger
+Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
+Site:   [https://jrocnet.com](https://jrocnet.com)
+Last update: 11/11/2025
 
-<p style="margin:0.6rem 0;font-size:0.7rem;">Need the full operations guide? Read the <a href="./docs/book_of_power.md">Book of Power — Condensed Graviton Edition</a> for the alien-grade user manual bundled with this crate, and consult <a href="./docs/ops.md">docs/ops.md</a> for the streamlined VPS/network runbook.</p>
+Need the full operations guide?
+Read the “Book of Power — Condensed Graviton Edition” (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Quick Join (Public Testnet A2)</h2>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">cargo install power_house --features net
+## Quick Join (Public Testnet A2)
+
+```
+cargo install power_house --features net
 # optional: export a deterministic identity (ed25519://your-seed) or use an encrypted identity file
 julian net start \
-  --node-id &lt;your_name&gt; \
-  --log-dir ./logs/&lt;your_name&gt; \
+  --node-id <your_name> \
+  --log-dir ./logs/<your_name> \
   --listen /ip4/0.0.0.0/tcp/0 \
   --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
   --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
-  --policy governance.json \
-  --key ed25519://&lt;seed&gt;
-</pre>
+  --key ed25519://<seed>
+```
 
-<p style="margin:0.3rem 0;">Optional Prometheus metrics: add <code style="font-size:0.66rem;">--metrics :9100</code> (or another port) when starting a node.</p>
+Optional Prometheus metrics: add `--metrics :9100` (or another port) when starting a node.
+Optional governance: add `--policy governance.json` to enforce a membership policy.
 
-<p style="margin:0.3rem 0;">Identity governance now supports descriptor-driven policies. Supply <code style="font-size:0.66rem;">--policy governance.json</code> to load either a static allowlist, a referenced allowlist file, or a multisig-governed membership set. Legacy deployments can keep using <code style="font-size:0.66rem;">--policy-allowlist allow.json</code> with base64 ed25519 keys. Persist signed snapshots by adding <code style="font-size:0.66rem;">--checkpoint-interval 100</code> (for example) to emit checkpoints every <em>100</em> broadcasts under <code>./logs/&lt;node&gt;/checkpoints</code>.</p>
+## Identity Governance (descriptor-driven)
 
-<p style="margin:0.3rem 0;">Sample descriptor (<code style="font-size:0.66rem;">--policy</code>):</p>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+Supply `--policy governance.json` to load a governance descriptor (static allowlist, referenced file, stake-backed, or multisig).
+Legacy: `--policy-allowlist allow.json` with base64 ed25519 keys still works.
+Checkpoints: add `--checkpoint-interval 100` to emit signed anchor checkpoints every 100 broadcasts under `./logs/<node>/checkpoints`.
+
+Sample descriptor (`--policy`):
+
+```json
+{
   "backend": "static",
   "allowlist": [
     "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
     "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
   ]
-}</pre>
-<p style="margin:0.3rem 0;">Multisig descriptors point to a state file containing <code style="font-size:0.66rem;">{"threshold":2,"signers":[...],"members":[...]}</code>; the helper verifies that at least <code>K</code> authorised signers approve a membership rotation before writing it back to disk.</p>
+}
+```
 
-<p>To load an encrypted identity instead of <code style="font-size:0.66rem;">--key</code>, create a file containing the base64 result of XORing your 32-byte secret key with the first 32 bytes of <code style="font-size:0.66rem;">SHA-512(passphrase)</code>, then run <code style="font-size:0.66rem;">julian net start --identity /path/to/file</code>. You’ll be prompted for the passphrase at startup.</p>
+Multisig descriptors point to a state file containing:
+`{"threshold":2,"signers":[...],"members":[...]}`.
+The helper verifies that at least K authorized signers approve a rotation before writing the updated membership to disk.
 
-<ul style="margin:0.3rem 0 0.8rem 1.1rem;">
-  <li style="margin:0.2rem 0;"><code style="font-size:0.66rem;">/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q</code></li>
-  <li style="margin:0.2rem 0;"><code style="font-size:0.66rem;">/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd</code></li>
-</ul>
+Encrypted identity file (instead of `--key`):
+Create a file containing the base64 result of XORing your 32-byte secret key with the first 32 bytes of SHA-512(passphrase), then:
 
-<p><code style="font-size:0.66rem;">boot1.jrocnet.com</code> and <code style="font-size:0.66rem;">boot2.jrocnet.com</code> resolve to the current public ingress addresses. Update DNS—not this README—if underlying IPs move.</p>
+```
+julian net start --identity /path/to/file
+```
 
-<p>Run <code style="font-size:0.66rem;">scripts/smoke_net.sh</code> for a local two-node quorum smoke test (ports 7211/7212, 8 s runtime).</p>
+You’ll be prompted for the passphrase at startup.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Operations Toolkit</h3>
-<p>The brittle <code style="font-size:0.66rem;">boot_*.sh</code> helpers have been replaced with <code style="font-size:0.66rem;">scripts/netctl.py</code>—a Python CLI that builds, deploys, restarts, and inspects JULIAN bootstrap nodes from a single entry point.</p>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;"># inspect configured hosts (from infra/ops_hosts.toml or $POWERHOUSE_HOSTS_FILE)
-python3 scripts/netctl.py list-hosts
+Bootstrap multiaddrs:
 
-# rebuild + copy binaries/configs, then restart services on both boot nodes
-python3 scripts/netctl.py deploy --hosts boot1 boot2
+* `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+* `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
-# stream the latest anchors/log output
-python3 scripts/netctl.py logs --lines 200 --hosts boot1</pre>
-<p>Configuration lives in <code style="font-size:0.66rem;">infra/ops_hosts.toml</code> (copy the bundled <code>ops_hosts.example.toml</code> to get started). The full runbook—including a systemd template and step-by-step VPS checklist—resides in <a href="./docs/ops.md">docs/ops.md</a>. Pass <code style="font-size:0.66rem;">--dry-run</code> to preview actions, or set <code style="font-size:0.66rem;">restart_command</code> per host if you are not using systemd.</p>
+`boot1.jrocnet.com` and `boot2.jrocnet.com` resolve to the current public ingress addresses.
+Update DNS—not this README—if underlying IPs move.
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Genesis Anchor (Pinned)</h2>
-<p>The A2 testnet ledger is frozen to the following statements and domain-separated BLAKE2b-256 digests (hex). Every node should reproduce these values from its local logs:</p>
+Local smoke test (two-node quorum; ports 7211/7212):
 
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">statement: JULIAN::GENESIS          hash: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
+```
+scripts/smoke_net.sh
+```
+
+## Operations Toolkit
+
+See `docs/ops.md` for the full runbook (systemd template, VPS checklist). Use `infra/ops_hosts.example.toml` as a starting point for host metadata. Package and deploy the `julian` binary with your preferred tooling (scp/rsync). If systemd is unavailable, use a custom restart command.
+
+## Genesis Anchor (Pinned)
+
+The A2 testnet ledger is frozen to these statements and domain-separated BLAKE2b-256 digests (hex).
+Every node should reproduce these values from its local logs:
+
+```
+statement: JULIAN::GENESIS          hash: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
 statement: Dense polynomial proof   hash: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
-statement: Hash anchor proof        hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114</pre>
+statement: Hash anchor proof        hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
+```
 
-<p>Boot nodes run with deterministic seeds (<code style="font-size:0.66rem;">ed25519://boot1-seed</code>, <code style="font-size:0.66rem;">ed25519://boot2-seed</code>) so their libp2p Peer IDs remain constant.</p>
+Boot nodes run with deterministic seeds (`ed25519://boot1-seed`, `ed25519://boot2-seed`) so libp2p Peer IDs remain constant.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Verify Your Anchor</h3>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;"># Produce an anchor file from your local logs
+## Verify Your Anchor
+
+```
+# Produce an anchor file from your local logs
 julian node run mynode ./logs/mynode mynode.anchor.txt
 
-# Inspect the statements and compare to the pinned digests above
+# Inspect and compare to pinned digests above
 cat mynode.anchor.txt
 
 # Reconcile against a published anchor (example with boot1)
-julian node reconcile ./logs/mynode boot1.anchor.txt 2</pre>
+julian node reconcile ./logs/mynode boot1.anchor.txt 2
+```
 
-<p>To recreate the bootstrap anchors themselves:</p>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">julian node run boot1 ./logs/boot1 boot1.anchor.txt
+Recreate the bootstrap anchors:
+
+```
+julian node run boot1 ./logs/boot1 boot1.anchor.txt
 julian node run boot2 ./logs/boot2 boot2.anchor.txt
 
 julian node reconcile ./logs/boot1 boot2.anchor.txt 2
-julian node reconcile ./logs/boot2 boot1.anchor.txt 2</pre>
+julian node reconcile ./logs/boot2 boot1.anchor.txt 2
+```
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">License</h2>
-<p>power_house ships under the <strong style="font-weight:600;">Alien Public License 3.0 (APL‑3.0)</strong>:</p>
-<ul style="margin:0.3rem 0 0.8rem 1.1rem;">
-  <li style="margin:0.2rem 0;">Keep provenance: ship source, logs, and proof transcripts with every redistribution.</li>
-  <li style="margin:0.2rem 0;">Attribute <em>“power_house — JULIAN Protocol”</em> in docs, consoles, and research.</li>
-  <li style="margin:0.2rem 0;">Disclose fixes, audits, and benchmark data within 30 days of discovery.</li>
-  <li style="margin:0.2rem 0;">Ask first for commercial deployment (SaaS, resale, embedded products).</li>
-</ul>
-<p>See <a href="./LICENSE">LICENSE</a> for the full legal text.</p>
+Note: On systemd-managed hosts using the provided template, logs are under `/var/lib/jrocnet/<node>/logs` (for example, `/var/lib/jrocnet/boot1/logs`). Adjust the commands accordingly on your VPS.
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">power_house overview</h2>
-<p><strong style="font-weight:600;">power_house</strong> is a paradigmatic exploration of interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness—all implemented in pure Rust with a focus on reproducibility. It emulates the <em>sum-check protocol</em>, demonstrates a quorum finality primitive, and now backs the JULIAN Protocol ledger.</p>
+## License
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Motivation</h3>
+power_house ships under the Alien Public License 3.0 (APL-3.0):
 
-Interactive proof techniques underpin cutting-edge cryptographic protocols and blockchain consensus.
-This crate distills those advanced concepts into a standalone laboratory for experimentation, formal verification, and pedagogy.
-It emulates the essential features of the **sum-check protocol**, exhibits a **rudimentary Byzantine consensus mechanism**, and now powers the **JULIAN Protocol**—a proof-transparent ledger that anchors folding transcripts into verifiable consensus states.
+* Keep provenance: ship source, logs, and proof transcripts with every redistribution.
+* Attribute “power_house — JULIAN Protocol” in docs, consoles, and research.
+* Disclose fixes, audits, and benchmark data within 30 days of discovery.
+* Ask first for commercial deployment (SaaS, resale, embedded products).
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Features</h3>
+See `LICENSE` for the full text.
 
--  **Finite Field Arithmetic:**
-  A lean yet robust implementation of arithmetic modulo a prime, essential for homomorphic operations and algebraic proofs.
+## Overview
 
--  **Sum-Check Protocol Demo:**
-  Illustrates how a prover can succinctly certify a polynomial’s evaluation over a Boolean hypercube, while the verifier checks integrity with negligible soundness error.
+power_house explores interactive proof systems, finite-field arithmetic, and deterministic pseudo-randomness in pure Rust with a focus on reproducibility. It emulates the sum-check protocol, demonstrates a quorum finality primitive, and backs the JULIAN Protocol ledger.
 
--  **Deterministic PRNG:**
-  A compact linear-congruential generator serving as a deterministic source of challenge derivation, thereby eliminating external entropy dependencies.
+## Motivation
 
--  **Generalized Multilinear Sum-Check:**
-  The `MultilinearPolynomial`, `Transcript`, and `GeneralSumClaim` types enable non-interactive proofs for arbitrary multilinear polynomials—still without any external crates.
+Interactive proof techniques underpin modern verifiable compute and consensus. This crate distills those ideas into a standalone lab for experimentation, verification, and operations. It provides transcript-anchored proofs, a deterministic audit path, and a quorum primitive for anchor finality.
 
--  **Transcript & Chaining Toolkit:**
-  Capture Fiat–Shamir challenges, per-round sums, and final evaluations, then chain proofs together or feed them directly into the ALIEN ledger scaffold for deterministic auditing.
+## Features
 
--  **Streaming Proof Generation:**
-  Build massive sum-checks via streaming evaluators (no full hypercube allocation), with per-round timing exported by the benchmarking CLI.
+* **Finite Field Arithmetic**
+  Prime-mod arithmetic via `Field`. Deterministic, no external deps.
 
--  **Ledger Transcript Logging with Integrity Hashes:**
-  Persist proofs as ASCII dossiers tagged with built-in hash digests so transcripts remain self-authenticating without external crates. Ledger anchors are append-only commitments to those transcripts; a ledger state is valid iff every anchor agrees on the statement string and ordered hash list.
+* **Sum-Check Protocol Demo**
+  Prover certifies polynomial sums over the Boolean hypercube; verifier checks with negligible soundness error.
 
--  **Quorum Finality for the JULIAN Protocol:**
-  `reconcile_anchors_with_quorum` formalises finality: once ≥ *q* nodes publish matching anchors, the JULIAN ledger state is final. Divergent anchors are immediately pinpointed by re-running `verify_logs`.
+* **Deterministic PRNG (Fiat–Shamir)**
+  BLAKE2b-based expander for challenge derivation. No OS entropy. Reproducible.
+  (The `crt_chain` example intentionally uses an LCG for CRT illustration.)
 
--  **Consensus Primitive:**
-  Demonstrates quorum-based agreement logic reflective of Byzantine fault tolerance in distributed systems.
+* **Generalized Multilinear Sum-Check**
+  `MultilinearPolynomial`, `Transcript`, `GeneralSumClaim` enable non-interactive proofs for arbitrary multilinear polynomials.
 
--  **ALIEN Ledger Blueprint:**
-  A scaffold for integrating proofs, consensus, and randomness into a unified verification ledger, pointing toward PSPACE-level expressive power and quantum-assisted extensions.
+* **Transcript & Chaining Toolkit**
+  Capture per-round sums, challenges, final evaluations; chain proofs; feed them into the ledger. All entries carry domain-separated BLAKE2b-256 integrity digests.
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">CLI Workflow</h2>
+* **Streaming Proof Generation**
+  Build large proofs via streaming evaluators; benchmarking CLI reports per-round timing.
 
-The `julian` binary exposes both local ledger tooling and the optional `JROC-NET` networking stack.
+* **Ledger Transcript Logging with Integrity Hashes**
+  Proofs persist as plain ASCII dossiers with deterministic digests. Anchors are append-only commitments; a ledger state is valid iff statement strings and ordered hash lists match.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Local ledger (<code style="font-size:0.66rem;">julian node …</code>)</h3>
+* **Quorum Finality for JULIAN**
+  `reconcile_anchors_with_quorum` defines finality: once ≥ q nodes publish matching anchors, the state is final. Divergent anchors are identified by `verify_logs`.
 
-These commands are always available and require only the standard library:
+* **Consensus Primitive**
+  Quorum-based agreement logic reflecting core BFT ideas.
 
-- `julian node run <node_id> <log_dir> <output>` – recomputes transcript hashes from `<log_dir>`, prepends the JULIAN genesis anchor, and writes a machine-readable anchor file.
-- `julian node anchor <log_dir>` – prints a formatted ledger anchor derived from the logs.
-- `julian node reconcile <log_dir> <peer_anchor> <quorum>` – recomputes the local anchor, loads a peer’s anchor file, and checks quorum finality.
-- `julian node prove <log_dir> <entry_index> <leaf_index> [output.json]` – emits a Merkle proof for a specific transcript digest.
-- `julian node verify-proof <anchor_file> <proof_file>` – checks a proof against a stored anchor and exits non-zero on failure.
+* **ALIEN Ledger Blueprint**
+  A scaffold that unifies proofs, deterministic randomness, and anchor reconciliation.
 
-End-to-end anchor example (after running `cargo run --example hash_pipeline`):
+## CLI Workflow
 
-```bash
-# Prepare node log directories.
+The `julian` binary exposes local ledger tooling and the optional `JROC-NET` networking stack.
+
+### Local ledger (`julian node …`)
+
+These commands require only the standard library:
+
+* `julian node run <node_id> <log_dir> <output>`
+  Recompute transcript hashes from `<log_dir>`, prepend JULIAN genesis, and write a machine-readable anchor file.
+
+* `julian node anchor <log_dir>`
+  Print a formatted ledger anchor derived from logs.
+
+* `julian node reconcile <log_dir> <peer_anchor> <quorum>`
+  Recompute local anchor, load peer anchor, check quorum finality.
+
+* `julian node prove <log_dir> <entry_index> <leaf_index> [output.json]`
+  Emit a Merkle proof for a specific transcript digest.
+
+* `julian node verify-proof <anchor_file> <proof_file>`
+  Verify a Merkle proof against a stored anchor (non-zero exit on failure).
+
+End-to-end anchor example (after `cargo run --example hash_pipeline`):
+
+```
+# Prepare node log directories
 mkdir -p ./logs/nodeA ./logs/nodeB
 cp /tmp/power_house_anchor_a/* ./logs/nodeA/
 cp /tmp/power_house_anchor_b/* ./logs/nodeB/
 
-# Produce anchors and reach quorum.
+# Produce anchors and reach quorum
 julian node run nodeA ./logs/nodeA nodeA.anchor
 julian node run nodeB ./logs/nodeB nodeB.anchor
 julian node reconcile ./logs/nodeA nodeB.anchor 2
 ```
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Network mode (<code style="font-size:0.66rem;">julian net …</code>, feature <code style="font-size:0.66rem;">net</code>)</h3>
+### Network mode (`julian net …`, feature `net`)
 
-The networking subcommands pull in optional dependencies (`libp2p`, `ed25519-dalek`, `tokio`). Build with the feature enabled:
+The network subcommands pull in optional dependencies (`libp2p`, `ed25519-dalek`, `tokio`). Build with the feature:
 
-```bash
+```
 cargo install --path . --features net
 # or, for local runs
 cargo run --features net --bin julian -- net ...
@@ -186,19 +223,23 @@ cargo run --features net --bin julian -- net ...
 
 Supported commands:
 
-- `julian net start --node-id <id> --log-dir <path> --listen <multiaddr> --bootstrap <multiaddr>... --broadcast-interval <ms> --quorum <q> [--key <spec>]`
-  * `--key` accepts `ed25519://deterministic-seed`, or a path to raw/hex/base64 secret key bytes; omitted ⇒ fresh key.
-  * `--identity` loads an encrypted identity file (XOR of the secret key with `SHA-512(passphrase)`); the CLI prompts for the passphrase.
-  * `--metrics [:port]` exposes Prometheus metrics (defaults to `0.0.0.0:<port>` when prefixed with a colon).
-  * `--policy governance.json` loads a governance descriptor (`backend: static | static-file | multisig`) and enforces the returned membership set.
-  * `--policy-allowlist allow.json` restricts quorum counting to the listed ed25519 keys.
-  * `--checkpoint-interval N` writes signed anchor checkpoints every <code>N</code> broadcasts.
-- `julian net anchor --log-dir <path> [--node-id <id>] [--quorum <q>]` emits a machine-readable JSON anchor.
-- `julian net verify-envelope --file <path> --log-dir <path> [--quorum <q>]` validates a signed envelope, decodes the anchor payload, and performs the quorum check against local logs.
+* `julian net start --node-id <id> --log-dir <path> --listen <multiaddr> --bootstrap <multiaddr>... --broadcast-interval <ms> --quorum <q> [--key <spec>]`
+  • `--key` accepts `ed25519://deterministic-seed`, or a path to raw/hex/base64 secret key bytes; omitted ⇒ fresh key.
+  • `--identity` loads an encrypted identity file (XOR of secret key with SHA-512(passphrase), first 32 bytes).
+  • `--metrics [:port]` exposes Prometheus metrics (binds `0.0.0.0:<port>` if prefixed with a colon).
+  • `--policy governance.json` loads a governance descriptor (`backend: static | static-file | stake | multisig`) and enforces the membership set.
+  • `--policy-allowlist allow.json` restricts quorum counting to listed ed25519 keys.
+  • `--checkpoint-interval N` writes signed anchor checkpoints every N broadcasts.
 
-Example session with two local nodes and deterministic keys:
+* `julian net anchor --log-dir <path> [--node-id <id>] [--quorum <q>]`
+  Emit a machine-readable JSON anchor.
 
-```bash
+* `julian net verify-envelope --file <path> --log-dir <path> [--quorum <q>]`
+  Validate a signed envelope, decode the anchor payload, and perform the quorum check against local logs.
+
+Two local nodes with deterministic keys:
+
+```
 # Terminal 1 – nodeA
 cargo run --features net --bin julian -- net start \
   --node-id nodeA \
@@ -208,47 +249,47 @@ cargo run --features net --bin julian -- net start \
   --quorum 2 \
   --key ed25519://nodeA-seed
 
-# Terminal 2 – nodeB
+# Terminal 2 – nodeB (bootstraps to nodeA locally)
 cargo run --features net --bin julian -- net start \
   --node-id nodeB \
   --log-dir ./logs/nodeB \
   --listen /ip4/127.0.0.1/tcp/7002 \
-  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /ip4/127.0.0.1/tcp/7001 \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://nodeB-seed
 ```
 
-Each node recomputes anchors from its log directory, signs them, broadcasts envelopes over Gossipsub, and logs finality events once the quorum predicate succeeds.
+Each node recomputes anchors from its log directory, signs them, gossips envelopes, and logs finality once quorum succeeds.
 
-Run `scripts/smoke_net.sh` to exercise the two-node quorum workflow locally; the script boots nodes on ports 7211/7212, waits for signed anchor broadcasts, confirms finality, and exits non-zero on failure.
+Local smoke: `scripts/smoke_net.sh` (ports 7211/7212). Confirms signed anchor broadcasts and finality; exits non-zero on failure.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Boot node operations (systemd)</h3>
-<p style="margin:0.3rem 0;font-size:0.66rem;line-height:1.6;">
-Public ingress nodes should be managed like any other long-lived systemd service. Treat the binary as an artifact, keep service files outside this repo, and rely on IP multiaddrs when DNS is slow to update.
-</p>
-<ol style="margin:0.3rem 0 0.8rem 1.1rem;font-size:0.66rem;line-height:1.6;">
-  <li><strong>Build locally</strong> – <code>cargo build --release --features net --bin julian</code>.</li>
-  <li><strong>Ship the binary</strong> – <code>scp target/release/julian root@host:/root/julian.new</code> followed by <code>install -m 0755 /root/julian.new /usr/local/bin/julian</code>.</li>
-  <li><strong>Install a systemd unit per node</strong> – copy the template in <code>docs/ops.md</code>, set unique <code>--node-id</code>/<code>--log-dir</code>, and point <code>--bootstrap</code> at explicit <code>/ip4/&lt;peer-ip&gt;/tcp/&lt;port&gt;/p2p/&lt;peer-id&gt;</code> multiaddrs so the service dials the correct ingress even if DNS lags.</li>
-  <li><strong>Reload and start</strong> – <code>systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service</code>.</li>
-  <li><strong>Verify health</strong> – <code>journalctl -u powerhouse-bootN.service -n 40 -f</code> should show “waiting for gossip peers…” once, then alternating <code>broadcasted local anchor</code> and <code>finality reached</code> lines.</li>
-  <li><strong>Confirm reachability</strong> – from each host run <code>nc -vz &lt;other-ip&gt; 7001</code>/<code>7002</code>; failures mean firewall or routing issues, not libp2p.</li>
-</ol>
-<p style="margin:0.3rem 0;font-size:0.66rem;line-height:1.6;">
-Keep the customised unit files and deterministic seeds in your infra repo or secrets manager—never commit live service definitions to the public tree.
-</p>
+## Boot Node Operations (systemd)
 
-<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Governance descriptor reference</h4>
-<p style="margin:0.3rem 0;">The <code style="font-size:0.66rem;">--policy</code> flag accepts a JSON descriptor with a <code style="font-size:0.66rem;">backend</code> key:</p>
-<ul style="margin:0.3rem 0 0.6rem 1.1rem;font-size:0.66rem;line-height:1.6;">
-  <li><code>static</code> &mdash; inline allowlist via <code>allowlist: [&quot;base64&quot;,...]</code>.</li>
-  <li><code>static-file</code> &mdash; pointer to a legacy allowlist JSON (<code>{"allowed":[...]}</code>).</li>
-  <li><code>stake</code> &mdash; bond-backed membership loaded from a staking state file.</li>
-  <li><code>multisig</code> &mdash; pointer to a state file tracking K-of-N signers and active members.</li>
-</ul>
-<p style="margin:0.3rem 0;">Example multisig state file:</p>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+Treat public ingress nodes as long-lived services.
+
+1. Build: `cargo build --release --features net --bin julian`
+2. Ship:  `scp target/release/julian root@host:/root/julian.new && sudo install -m 0755 /root/julian.new /usr/local/bin/julian`
+3. Unit:  copy the systemd template from `docs/ops.md`; set unique `--node-id`/`--log-dir`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `--bootstrap` so the service dials the right ingress even if DNS lags.
+4. Start: `systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service`
+5. Health: `journalctl -u powerhouse-bootN.service -n 40 -f` → see “waiting for gossip peers…” then alternating “broadcasted local anchor” and “finality reached”.
+6. Reachability: from each host `nc -vz <other-ip> 7001` / `7002`; failures imply firewall/routing, not libp2p.
+
+Keep customized unit files and deterministic seeds in your infra repo or secrets manager (do not commit live service defs publicly).
+
+## Governance Descriptor Reference
+
+`--policy` accepts a JSON descriptor with a `backend` key:
+
+* `static`       — inline allowlist via `allowlist: ["base64", ...]`
+* `static-file`  — pointer to legacy allowlist JSON (`{"allowed":[...]}`)
+* `stake`        — bond-backed membership loaded from a staking state file
+* `multisig`     — pointer to state tracking K-of-N signers and active members
+
+Example multisig state:
+
+```json
+{
   "threshold": 2,
   "signers": [
     "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
@@ -259,9 +300,13 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
     "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=",
     "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I="
   ]
-}</pre>
-<p style="margin:0.3rem 0;">Stake-backed state files embed bonds and slash flags:</p>
-<pre style="font-size:0.66rem;line-height:1.5;padding:0.8rem;background:#0d0d0d;color:#f0f0f0;border-radius:0.3rem;overflow:auto;">{
+}
+```
+
+Stake-backed example:
+
+```json
+{
   "threshold": 2,
   "bond_threshold": 100,
   "signers": [
@@ -272,20 +317,19 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
     {"public_key": "mbnfAp950/gQfEPc2J27MEvc+TPkY65/AJ6Xs0NjYew=", "bond": 150, "slashed": false},
     {"public_key": "5o2IL90EOYBUPvXMgCwFoo94UDYe9mAvZBCAwtasJ+I=", "bond": 120, "slashed": false}
   ]
-}</pre>
-<p style="margin:0.3rem 0;">To rotate membership, craft a <code style="font-size:0.66rem;">GovernanceUpdate</code> JSON (new member list plus metadata), collect the required signatures offline, and feed it to your operational tooling before replacing the state file. The staking backend automatically marks keys as slashed when they broadcast conflicting anchors—review and commit those changes to the registry after each incident.</p>
+}
+```
 
-<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Membership rotation checklist</h4>
-<ul style="margin:0.3rem 0 0.8rem 1.1rem;font-size:0.66rem;line-height:1.6;">
-  <li>Fetch the current descriptor (e.g., <code>scp root@boot1:/etc/jrocnet/governance.json ./</code>).</li>
-  <li>Edit the descriptor or state file offline, ensuring the new membership list is correct.</li>
-  <li>For multisig mode, prepare a <code>GovernanceUpdate</code> document with the new members and collect at least <code>threshold</code> ed25519 signatures.</li>
-  <li>For stake mode, embed bond deposits and explicit slashes in the update metadata; conflicting anchors are auto-slashed at runtime, so review and re-affirm the registry after incidents.</li>
-  <li>Drop the signed update plus refreshed state file onto each boot node (keeping the previous version archived in <code>logs/policy/</code>).</li>
-  <li>Restart the node with the same <code>--policy</code> argument; <code>julian net start</code> loads the updated membership immediately.</li>
-</ul>
+## Membership Rotation Checklist
 
-<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Anchor JSON schema</h4>
+* Fetch current descriptor (e.g., `scp root@boot1:/etc/jrocnet/governance.json ./`).
+* Edit offline; confirm the new membership list.
+* Multisig: craft a `GovernanceUpdate` with the new members; collect ≥ threshold ed25519 signatures.
+* Stake: embed bond deposits and explicit slashes in the update metadata; conflicting anchors are auto-slashed at runtime—review and re-affirm the registry after incidents.
+* Distribute the signed update + refreshed state file to each boot node (archive prior version under `logs/policy/`).
+* Restart with the same `--policy` argument; `julian net start` loads the new membership immediately.
+
+## Anchor JSON Schema (reference)
 
 ```json
 {
@@ -295,7 +339,7 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "98807230712cd2b09c17df617b1f951787815b29c7037dbe9fcab2af490d196b",
-  "crate_version": "0.1.48",
+  "crate_version": "0.1.49",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",
@@ -318,7 +362,7 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
 }
 ```
 
-<h4 style="font-size:0.72rem;margin:0.9rem 0 0.3rem;">Signed envelope format</h4>
+## Signed Envelope Format
 
 ```json
 {
@@ -330,47 +374,68 @@ Keep the customised unit files and deterministic seeds in your infra repo or sec
 }
 ```
 
-Validation steps: ensure the schema matches, base64-decode the payload, verify the ed25519 signature, parse the embedded anchor JSON, then reconcile with the local ledger.
+Validation steps: ensure the schema matches, base64-decode the payload, verify the ed25519 signature, parse the embedded anchor JSON, then reconcile with local logs.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">JROC-NET Public Testnet (A2) roadmap</h3>
+## JROC-NET Public Testnet (A2) Roadmap (snapshot)
 
-1. **Topics & networking**
-   - Gossip topics: `jrocnet/anchors/v1`, optional `jrocnet/ping/v1`, `jrocnet/peers/v1`.
-   - Bootstrap multiaddrs: `/ip4/<BOOT>/tcp/7001/p2p/<PEER_ID>` defined per public node.
-2. **Anchor schema** – Machine-readable anchors follow `jrocnet.anchor.v1` as shown above.
-3. **Signed envelopes** – `jrocnet.envelope.v1` ensures tamper-evident broadcasts (ed25519 signatures over the raw anchor JSON).
-4. **CLI flags** – `julian net start` accepts `--bootstrap`, `--key`, `--broadcast-interval`, `--quorum`, mirroring the launch playbook; `julian net anchor`/`verify-envelope` cover audit tooling.
-5. **Libp2p behaviour** – TCP + Noise + Yamux transports, Gossipsub for anchor gossip, Kademlia for peer discovery, Identify for metadata.
-6. **Security hygiene** – Message-id cache (SHA256 payload hash), strict validation, per-topic rate limiting, and schema/network checks before reconciliation.
-7. **Observability** – Console summaries plus the optional `--metrics` Prometheus endpoint exporting `anchors_received_total`, `anchors_verified_total`, `invalid_envelopes_total`, `lrucache_evictions_total`, `finality_events_total`, and `gossipsub_rejects_total`.
-   - Import `contrib/grafana/jroc_net_dashboard.json` into Grafana for a starter dashboard.
-8. **Launch playbook** – Run at least two bootstrap nodes, publish their multiaddrs, then let community nodes join via:
+1. Topics & networking
 
-   ```bash
-   cargo install power_house --features net
-   julian net start \
-     --node-id <your_name> \
-     --log-dir ./logs/<your_name> \
-     --listen /ip4/0.0.0.0/tcp/0 \
-     --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-     --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
-     --broadcast-interval 5000 \
-     --quorum 2 \
-     --key ed25519://<seed>
-   ```
+   * Gossipsub topic: `jrocnet/anchors/v1`.
+   * Bootstrap multiaddrs: publish `/ip4/<BOOT>/tcp/7001/p2p/<PEER_ID>` per public node.
 
-   Bootstrap multiaddrs (A2 testnet reference):
+2. Anchor schema
 
-- `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
-- `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+   * Machine-readable anchors follow `jrocnet.anchor.v1` (see schema above).
+
+3. Signed envelopes
+
+   * `jrocnet.envelope.v1` provides tamper-evident anchor broadcasts (ed25519 over raw anchor JSON).
+
+4. CLI flags
+
+   * `julian net start` supports `--bootstrap`, `--key`, `--broadcast-interval`, `--quorum`, `--policy`, `--metrics`;
+     `julian net anchor` / `julian net verify-envelope` cover audit and validation.
+
+5. Libp2p behavior
+
+   * TCP + Noise + Yamux; Gossipsub for gossip; Kademlia for peer discovery; Identify for metadata.
+
+6. Security hygiene
+
+   * Message-id cache (SHA-256 of payload), strict validation, per-topic rate limiting, schema/network checks before reconciliation.
+
+7. Observability
+
+   * Prometheus `--metrics` endpoint exports:
+     `anchors_received_total`, `anchors_verified_total`, `invalid_envelopes_total`, `lrucache_evictions_total`, `finality_events_total`, `gossipsub_rejects_total`.
+
+   * Starter Grafana dashboard: `contrib/grafana/jroc_net_dashboard.json`.
+
+8. Launch playbook (community join)
+
+```
+cargo install power_house --features net
+julian net start \
+  --node-id <your_name> \
+  --log-dir ./logs/<your_name> \
+  --listen /ip4/0.0.0.0/tcp/0 \
+  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --broadcast-interval 5000 \
+  --quorum 2 \
+  --key ed25519://<seed>
+```
+
+Bootstrap multiaddrs (A2 reference):
+
+* `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+* `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
 The testnet keeps every transcript, proof, and anchor transparent so auditors can replay history end-to-end.
 
-<hr style="border:0;border-top:1px solid #333;margin:1.6rem 0;">
+## Examples
 
-<h2 style="font-size:0.82rem;margin:1.2rem 0 0.5rem;">Examples</h2>
-
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Sum-check verification</h3>
+Sum-check verification
 
 ```rust
 use power_house::{Field, SumClaim};
@@ -380,26 +445,21 @@ let claim = SumClaim::prove_demo(&field, 8);
 assert!(claim.verify_demo());
 ```
 
-Run the executable variant to see the non-interactive sum-check in action:
+Run the executable demo:
 
-```bash
+```
 cargo run --example demo
 ```
 
-The program exits with a non-zero status if verification ever fails, making it easy to embed inside scripts or CI checks.
+CRT chain showcase (LCG for CRT illustration)
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">CRT chain showcase</h3>
-
-The `crt_chain` example threads three large primes through a deterministic LCG, combines the outputs
-with the Chinese Remainder Theorem, and emits transcript digests derived from the `Field` arithmetic:
-
-```bash
+```
 cargo run --example crt_chain
 ```
 
-It prints a 12-round trace with reproducible totals and hash pairs, highlighting how Power-House components compose into a heavier protocol.
+Prints a 12-round trace with reproducible totals and hash pairs; shows how components compose into a heavier protocol.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">General multilinear sum-check</h3>
+General multilinear sum-check
 
 ```rust
 use power_house::{Field, GeneralSumClaim, MultilinearPolynomial};
@@ -412,61 +472,60 @@ let claim = GeneralSumClaim::prove(&poly, &field);
 assert!(claim.verify(&poly, &field));
 ```
 
-Re-run it interactively with:
+Interactive variant:
 
-```bash
+```
 cargo run --example general_sumcheck
 ```
 
-The example exercises the Fiat–Shamir transcript helper and the generalized sum-check prover/verifier against a three-variable polynomial.
+Transcript outputs include deterministic Fiat–Shamir challenges; each record carries a domain-separated BLAKE2b-256 integrity hash for tamper-evident storage.
 
-Transcript outputs include deterministic Fiat–Shamir challenges; when logged via the ledger, each record carries a domain-separated BLAKE2b-256 integrity hash for tamper-evident storage.
+Mega sum-check & chaining
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Mega sum-check &amp; chaining demo</h3>
-
-```bash
+```
 cargo run --example mega_sumcheck
 ```
 
-This walkthrough builds 10-variable polynomials, records per-round timings, and chains multiple proofs together before handing them off to the ALIEN ledger scaffold.
+Build 10-variable polynomials, record per-round timings, chain multiple proofs, hand to the ledger scaffold.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Scaling benchmark</h3>
+Scaling benchmark
 
-```bash
+```
 cargo run --example scale_sumcheck
 ```
 
-Prints a timing table for increasing numbers of variables, helping you profile how multilinear proofs scale as the hypercube size grows.
-Set `POWER_HOUSE_SCALE_OUT=/path/to/results.csv` to emit machine-readable timing data alongside the console output.
+Prints a timing table for increasing numbers of variables; set `POWER_HOUSE_SCALE_OUT=/path/to/results.csv` to emit machine-readable timing data.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Transcript hash verification</h3>
+Transcript hash verification
 
-```bash
+```
 cargo run --example verify_logs -- /tmp/power_house_ledger_logs
 ```
 
-Replays ledger log files, recomputes their integrity hashes, and prints a pass/fail summary so archived transcripts remain tamper-evident.
+Replays ledger logs, recomputes integrity hashes, prints pass/fail summary.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Hash pipeline &amp; anchor reconciliation</h3>
+Hash pipeline & anchor reconciliation
 
-```bash
+```
 cargo run --example hash_pipeline
 ```
 
-Streams per-proof hashes into constant-time anchors, folds them with domain-separated BLAKE2b-256, and reconciles the anchors across multiple ledgers while emitting tamper-evident logs. This example is the reference JULIAN Protocol pipeline: nodes replay transcript logs, exchange `LedgerAnchor` structures, and call `reconcile_anchors_with_quorum` to reach finality.
+Streams per-proof hashes into constant-time anchors, folds them with domain-separated BLAKE2b-256, and reconciles across multiple ledgers. This is the reference JULIAN pipeline.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">Whitepaper</h3>
+## Whitepaper
 
-The full JULIAN Protocol write-up lives in [`JULIAN_PROTOCOL.md`](JULIAN_PROTOCOL.md).
+See `JULIAN_PROTOCOL.md`.
 
-<h3 style="font-size:0.78rem;margin:1rem 0 0.4rem;">CLI node commands</h3>
+## CLI node commands (quick ref)
 
-```bash
+```
 cargo run --bin julian -- node run <node_id> <log_dir> <output_anchor>
 cargo run --bin julian -- node anchor <log_dir>
 cargo run --bin julian -- node reconcile <log_dir> <peer_anchor> <quorum>
 ```
 
-These commands replay transcript logs, derive JULIAN anchors, and check quorum finality using nothing beyond the Rust standard library.
+These commands replay transcript logs, derive JULIAN anchors, and check quorum finality using only the Rust standard library.
 
-</div>
+---
+
+End of README.txt

@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.48**
-Crate Version Required: **v0.1.48**
+Book Edition: **v0.1.49**
+Crate Version Required: **v0.1.49**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -106,7 +106,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.48`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.49`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -413,7 +413,7 @@ Canonicalization checklist:
 - Enforce LF line endings and append a terminal newline.
 - Reject tab characters; comments must be standalone `#` lines outside the hashed block.
 - Prepend a comment `# challenge_mode: mod|rejection` so later audits know which derivation to replay. Additional audit data such as `# challenge_0: 247` or `# fold_digest: ...` may follow the same pattern; they never participate in the digest.
-- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.48 uses `final:` exclusively.
+- Older logs may contain `final_eval:` due to historical tooling; the canonical format in v0.1.49 uses `final:` exclusively.
 Example statement: `statement: Dense polynomial proof`.
 Example challenge comment: `# challenge_0: 247`.
 Example round sums: `round_sums: 12 47`.
@@ -580,7 +580,7 @@ JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; rem
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.48"
+  "crate_version": "0.1.49"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -597,7 +597,7 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 64.
 Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
-Golden test vector (book edition `v0.1.48`, field 257):
+Golden test vector (book edition `v0.1.49`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod

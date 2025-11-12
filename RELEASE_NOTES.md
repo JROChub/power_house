@@ -1,5 +1,10 @@
 ﻿# Release Notes
 
+## v0.1.49 — 2025-11-11
+
+### Changed
+- Bumped crate/docs to `0.1.49`; synchronized README, Book of Power, and schema samples. Generic `0.1.x` references remain as-is by design.
+
 ## v0.1.48 — 2025-11-09
 
 ### Changed

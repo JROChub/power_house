@@ -74,7 +74,7 @@ WantedBy=multi-user.target
 Enable with:
 
 ```bash
-systemctl enable --now jrocnet_boot1.service
+systemctl enable --now powerhouse-boot1.service
 ```
 
 If systemd is unavailable, set `restart_command = "supervisorctl restart julian"`
