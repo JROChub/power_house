@@ -11,12 +11,26 @@ Badges
 Author: lexluger
 Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
 Site:   [https://jrocnet.com](https://jrocnet.com)
-Last update: 11/11/2025
+Last update: 11/24/2025
 
 Need the full operations guide?
 Read the “Book of Power — Condensed Graviton Edition” (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
 
-## Quick Join (Public Testnet A2)
+## DA commitments (dual roots)
+
+- Blob ingest (`POST /submit_blob`) now returns both `share_root` (legacy) and `pedersen_root` for ZK circuits.
+- Commitments, sampling, and storage proofs expose `pedersen_root` plus `pedersen_proof` (siblings as hex) for clients.
+- Rollup verifiers must use `pedersen_root` + `pedersen_proof`; legacy `share_root` remains for light clients.
+
+## Evidence, gating, and settlement (stake-aware)
+
+- Anchors are gated on DA commitments with stake-weighted attestation QC; QC files are persisted per blob.
+- Availability faults enqueue evidence to `evidence_outbox.jsonl`, get gossiped, and trigger slashing via the stake registry.
+- Blob fees are debited from the payer, credited to the operator, and split with attestors; DA attestors get a reward when QC is persisted.
+- Rollup settlement helpers return fault evidence on verification failure and can split fees between operator/attesters (`settle_rollup_with_rewards`). Faults are appended to `evidence_outbox.jsonl` (default: sibling to the stake registry if `--outbox` not provided, or `evidence_outbox.jsonl` under the blob service base_dir).
+- Evidence handling rejects senders not permitted by membership policy and applies slashing on validated evidence. Stake registry accounts track `{balance, stake, slashed}`; fees debit `balance`, rewards credit `balance`, bonding moves `balance -> stake`, slashing zeroes stake and marks `slashed`.
+
+## Quick Join (Public Net)
 
 ```
 cargo install power_house --features net
@@ -34,6 +48,41 @@ julian net start \
 
 Optional Prometheus metrics: add `--metrics :9100` (or another port) when starting a node.
 Optional governance: add `--policy governance.json` to enforce a membership policy.
+
+## Quick API / CLI examples
+
+- Submit a blob (HTTP):
+  ```bash
+  curl -X POST http://127.0.0.1:8080/submit_blob \
+    -H 'X-Namespace: default' \
+    -H 'X-Fee: 10' \
+    --data-binary @file.bin
+  ```
+- Fetch a commitment:
+  ```bash
+  curl http://127.0.0.1:8080/commitment/default/<hash>
+  ```
+- Sample shares:
+  ```bash
+  curl "http://127.0.0.1:8080/sample/default/<hash>?count=2"
+  ```
+- Prove storage for a share:
+  ```bash
+  curl http://127.0.0.1:8080/prove_storage/default/<hash>/0
+  ```
+- Stake registry (CLI):
+  ```bash
+  julian stake show /path/to/registry.json
+  julian stake fund /path/to/registry.json <pubkey_b64> 1000
+  julian stake bond /path/to/registry.json <pubkey_b64> 500
+  ```
+- Rollup settlement (CLI):
+  ```bash
+  julian rollup settle /path/to/registry.json default <share_root> <payer_b64> 1000 optimistic
+  # with ZK proof files:
+  julian rollup settle /path/to/registry.json default <share_root> <payer_b64> 1000 zk \
+    --proof=proof.bin --public-inputs=inputs.bin --merkle-path=path.bin
+  ```
 
 ## Identity Governance (descriptor-driven)
 
@@ -79,6 +128,18 @@ Local smoke test (two-node quorum; ports 7211/7212):
 ```
 scripts/smoke_net.sh
 ```
+
+## Data Availability API (HTTP)
+
+Start the blob service with `--blob-dir` and `--blob-listen :8080` (plus optional `--blob-policy policy.json`). Endpoints:
+- `POST /submit_blob` (headers: `X-Namespace`, optional `X-Fee`, `X-Publisher`) body = raw bytes. Returns share_root, hash, shard counts.
+- `GET /commitment/<namespace>/<hash>` returns commitment metadata + attestations.
+- `GET /sample/<namespace>/<hash>?count=N` returns sampled shares + Merkle proofs.
+- `GET /prove_storage/<namespace>/<hash>/<idx>` proves a specific share (slashes publisher if missing).
+
+Anchors carry `da_commitments` (namespace, blob_hash, share_root) and are rejected unless QC attestation quorum is met.
+
+Stake registry tooling: manage balances/stake with `julian stake show|fund|bond|unbond|reward <registry.json> ...`; the blob server debits fees, shares operator/attestor rewards (bps per namespace), and slashing writes evidence to `evidence.jsonl`/`evidence_outbox.jsonl`.
 
 ## Operations Toolkit
 
@@ -339,7 +400,7 @@ Stake-backed example:
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe",
-  "crate_version": "0.1.50",
+  "crate_version": "0.1.51",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",
@@ -376,12 +437,12 @@ Stake-backed example:
 
 Validation steps: ensure the schema matches, base64-decode the payload, verify the ed25519 signature, parse the embedded anchor JSON, then reconcile with local logs.
 
-## JROC-NET Public Testnet (A2) Roadmap (snapshot)
+## JROC-NET Public Net (current snapshot)
 
 1. Topics & networking
 
    * Gossipsub topic: `jrocnet/anchors/v1`.
-   * Bootstrap multiaddrs: publish `/ip4/<BOOT>/tcp/7001/p2p/<PEER_ID>` per public node.
+   * Bootstrap multiaddrs: publish `/ip4/<BOOT>/tcp/7001/p2p/<PEER_ID>` per public node (or DNS4 equivalents).
 
 2. Anchor schema
 
@@ -391,10 +452,10 @@ Validation steps: ensure the schema matches, base64-decode the payload, verify t
 
    * `jrocnet.envelope.v1` provides tamper-evident anchor broadcasts (ed25519 over raw anchor JSON).
 
-4. CLI flags
+4. CLI flags / behavior
 
-   * `julian net start` supports `--bootstrap`, `--key`, `--broadcast-interval`, `--quorum`, `--policy`, `--metrics`;
-     `julian net anchor` / `julian net verify-envelope` cover audit and validation.
+   * `julian net start` supports `--bootstrap`, `--key`, `--broadcast-interval`, `--quorum`, `--policy`, `--metrics`.
+   * `julian net anchor` / `julian net verify-envelope` cover audit and validation.
 
 5. Libp2p behavior
 
@@ -529,3 +590,5 @@ These commands replay transcript logs, derive JULIAN anchors, and check quorum f
 ---
 
 End of README.txt
+
+Rollup settlement: `julian rollup settle <registry.json> <namespace> <share_root> <payer_b64> <fee> [zk|optimistic]` debits fees and emits a receipt (proof verification is stubbed for now; optimistic faults are rejected).

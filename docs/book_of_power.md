@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.50**
-Crate Version Required: **v0.1.50**
+Book Edition: **v0.1.51**
+Crate Version Required: **v0.1.51**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -21,6 +21,23 @@ Chapter V -- Ledger Genesis Mechanics Checklist
 Chapter VI -- Deterministic Randomness Discipline Orders
 Chapter VII -- Consensus Theater Operations
 Chapter VIII -- Closing Benediction and Compliance Oath
+
+
+Data Availability Commitments (Dual Roots)
+------------------------------------------
+- Every blob now carries both `share_root` (legacy) and `pedersen_root` (Pedersen Merkle over share hashes) for ZK circuits.
+- `/submit_blob`, `/commitment/<ns>/<hash>`, `/sample/<ns>/<hash>` expose `pedersen_root`; sampling also returns `pedersen_proof` siblings (hex).
+- Rollup verification must bind to `pedersen_root` + `pedersen_proof`; light clients can keep using `share_root`.
+
+Evidence, Gating, and Slashing
+------------------------------
+- Anchors are gated on DA commitments plus stake-weighted attestation QC; QC is persisted per blob (`<ns>/<hash>.qc`).
+- Availability faults enqueue evidence in `evidence_outbox.jsonl`, gossiped as signed envelopes or raw availability evidence; receipt applies slashing via the stake registry/policy.
+- Blob submit: payer debited, operator rewarded, attestors rewarded when QC persists.
+- Rollup settlement helpers return fault evidence on verification failure and can split fees between operator/attesters.
+- Rollup fault channel: any rollup verification/settlement failure writes `RollupFaultEvidence { namespace, commitment, reason, payload? }` to `evidence_outbox.jsonl` (HTTP handler and CLI default to an outbox next to the registry); this stream is what you slash or reconcile from.
+- Account model: stake registry entries track `{balance, stake, slashed}`; fees debit `balance`, rewards credit `balance`, bonding moves `balance -> stake`, slashing zeroes stake and flags `slashed`.
+- Gating rules: DA publication requires namespace policy + fee + attestation QC; rollup settlement requires DA binding (share_root/pedersen_root) plus stake-backed payer; evidence outbox is the durable audit trail for faults.
 
 
 Chapter I -- Anchor Echo Engine Command Doctrine
@@ -106,7 +123,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.50`. Continuous integration asserts that these strings match the crate’s manifest before any release ships.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.51`. Continuous integration asserts that these strings match the crate’s manifest before any release ships. Data-availability APIs now expose blob commitments, sampling proofs, attestations, and storage challenges; see README for endpoint details.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -580,7 +597,7 @@ JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; rem
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.50"
+  "crate_version": "0.1.51"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -597,7 +614,7 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 219.
 Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
-Golden test vector (book edition `v0.1.50`, field 257):
+Golden test vector (book edition `v0.1.51`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod

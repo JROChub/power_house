@@ -1,4 +1,5 @@
 # Power-House Operations Guide
+Doc version: v0.1.51
 
 This guide replaces the brittle bootstrap scripts with a single declarative
 workflow that works on any VPS (including stock Ubuntu/Debian images) and
@@ -123,3 +124,17 @@ When you only have one or two ingress VPS nodes, you can deploy manually:
 7. **Connectivity check** – from each node run `nc -vz <other-ip> 700{1,2}`. If either direction fails, fix firewall/routing before blaming libp2p.
 
 This mirrors what `scripts/netctl.py` automates, but the explicit steps are handy for quick maintenance windows or bare-metal installs.
+
+## Evidence outbox and stake registry (DA + rollup)
+
+- Availability faults and rollup verification/settlement failures append evidence lines to `evidence_outbox.jsonl`. The HTTP handler writes under the blob service base dir; the CLI defaults to an outbox next to the stake registry unless `--outbox` is provided. Forward or harvest this file for slashing/audit.
+- Stake registry accounts track `{ balance, stake, slashed }`. Fees debit `balance`; rewards credit `balance`; bonding moves `balance -> stake`; slashing zeroes `stake` and sets `slashed = true`.
+- Rollup settlement: HTTP `POST /rollup_settle` or `julian rollup settle|settle-file`. On failure, `RollupFaultEvidence { namespace, commitment, reason, payload? }` is written to the outbox; on success, fees can be split between operator and attesters.
+
+## DA/rollup endpoint quick commands (ops)
+
+- Submit: `curl -X POST http://<host>:8080/submit_blob -H 'X-Namespace: default' -H 'X-Fee: 10' --data-binary @file.bin`
+- Commitment: `curl http://<host>:8080/commitment/default/<hash>`
+- Sample: `curl "http://<host>:8080/sample/default/<hash>?count=2"`
+- Prove storage: `curl http://<host>:8080/prove_storage/default/<hash>/0`
+- Rollup settle: `curl -X POST http://<host>:8080/rollup_settle -H 'Content-Type: application/json' -d '{"namespace":"default","share_root":"…","payer_pk":"…","fee":1000,"mode":"optimistic"}'`
