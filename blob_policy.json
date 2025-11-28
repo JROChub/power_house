@@ -1,0 +1,10 @@
+  {
+    "namespaces": {
+      "default": {
+        "max_bytes": 524288,
+        "retention_days": 30,
+        "max_per_min": 60,
+        "min_fee": 0
+      }
+    }
+  }

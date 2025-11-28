@@ -5,22 +5,33 @@ use crate::net::sign::{
     verify_signature_base64, KeyError, KeyMaterial,
 };
 use crate::net::{
+    attestation::{aggregate_attestations, Attestation},
+    availability::{self, encode_shares, AvailabilityEvidence},
+    blob::BlobJson,
     checkpoint::{
         latest_log_cutoff, load_latest_checkpoint, write_checkpoint, AnchorCheckpoint,
         CheckpointSignature,
     },
     governance::MembershipPolicy,
     schema::{
-        AnchorCodecError, AnchorEnvelope, AnchorJson, ENVELOPE_SCHEMA_VERSION, NETWORK_ID,
-        SCHEMA_ENVELOPE,
+        AnchorCodecError, AnchorEnvelope, AnchorJson, DaCommitmentJson, ENVELOPE_SCHEMA_VERSION,
+        NETWORK_ID, SCHEMA_ENVELOPE,
     },
+    stake_registry::StakeRegistry,
 };
 use crate::{
-    compute_fold_digest, julian_genesis_anchor, merkle_root, parse_log_file, read_fold_digest_hint,
-    transcript_digest, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor,
+    build_merkle_proof, compute_fold_digest, julian_genesis_anchor, merkle_root, parse_log_file,
+    read_fold_digest_hint,
+    rollup::{
+        settle_rollup_with_rewards, RollupCommitment, RollupFaultEvidence, RollupSettlementMode,
+        ZkRollupProof,
+    },
+    AnchorVote, EntryAnchor, LedgerAnchor,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use ed25519_dalek::{Signer, SigningKey};
 use futures::StreamExt;
+use hex;
 use libp2p::{
     gossipsub::{self, IdentTopic, MessageAuthenticity, PublishError, ValidationMode},
     identify, identity,
@@ -30,14 +41,15 @@ use libp2p::{
     tcp, yamux, Multiaddr, SwarmBuilder,
 };
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
-    env,
-    io::{self, Read},
+    env, fs, io,
     path::{Path, PathBuf},
+    str,
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         Arc,
@@ -45,15 +57,32 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::{select, signal, time};
 
 static TOPIC_ANCHORS: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/anchors/v1"));
+static TOPIC_EVIDENCE: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/evidence/v1"));
 static NO_GOSSIP_PEERS_LOGGED: AtomicBool = AtomicBool::new(false);
 const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
 const SEEN_CACHE_LIMIT: usize = 2048;
 const INVALID_THRESHOLD: usize = 5;
+
+/// Per-namespace limits applied to blob ingestion.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct NamespaceRule {
+    /// Maximum blob size in bytes permitted for this namespace.
+    pub max_bytes: Option<usize>,
+    /// Retention policy (days) before pruning stored blobs.
+    pub retention_days: Option<u64>,
+    /// Rate limit in blobs per minute.
+    pub max_per_min: Option<u32>,
+    /// Minimum fee required to accept a blob.
+    pub min_fee: Option<u64>,
+    /// Operator reward in basis points (default 50%).
+    #[serde(default)]
+    pub operator_reward_bps: Option<u16>,
+}
 
 fn policy_permits(policy: &dyn MembershipPolicy, key: &[u8]) -> bool {
     let members = policy.current_members();
@@ -84,6 +113,20 @@ pub struct NetConfig {
     pub membership_policy: Arc<dyn MembershipPolicy>,
     /// Optional checkpoint interval (in broadcasts).
     pub checkpoint_interval: Option<u64>,
+    /// Directory used to store blobs and share commitments.
+    pub blob_dir: Option<PathBuf>,
+    /// TCP socket for the blob ingest server.
+    pub blob_listen: Option<SocketAddr>,
+    /// Maximum blob size in bytes.
+    pub max_blob_bytes: Option<usize>,
+    /// Retention window in days for stored blobs.
+    pub blob_retention_days: Option<u64>,
+    /// Optional per-namespace policy overrides.
+    pub blob_policies: Option<HashMap<String, NamespaceRule>>,
+    /// Attestation quorum required for DA commitments.
+    pub attestation_quorum: usize,
+    /// Path to the stake registry used for fees and slashing.
+    pub stake_registry_path: Option<PathBuf>,
     metrics: Arc<Metrics>,
     metrics_addr: Option<SocketAddr>,
 }
@@ -102,7 +145,15 @@ impl NetConfig {
         metrics_addr: Option<SocketAddr>,
         membership_policy: Arc<dyn MembershipPolicy>,
         checkpoint_interval: Option<u64>,
+        blob_dir: Option<PathBuf>,
+        blob_listen: Option<SocketAddr>,
+        max_blob_bytes: Option<usize>,
+        blob_retention_days: Option<u64>,
+        blob_policies: Option<HashMap<String, NamespaceRule>>,
+        attestation_quorum: Option<usize>,
     ) -> Self {
+        let attestation_quorum = attestation_quorum.unwrap_or(quorum);
+        let stake_registry_path = blob_dir.as_ref().map(|dir| dir.join("stake_registry.json"));
         Self {
             node_id,
             listen_addr,
@@ -111,12 +162,740 @@ impl NetConfig {
             quorum,
             broadcast_interval,
             key_material,
-            metrics: Arc::new(Metrics::default()),
-            metrics_addr,
             membership_policy,
             checkpoint_interval,
+            blob_dir,
+            blob_listen,
+            max_blob_bytes,
+            blob_retention_days,
+            blob_policies,
+            attestation_quorum,
+            stake_registry_path,
+            metrics: Arc::new(Metrics::default()),
+            metrics_addr,
         }
     }
+}
+
+#[derive(Clone)]
+struct BlobServiceConfig {
+    base_dir: PathBuf,
+    listen: SocketAddr,
+    max_bytes: Option<usize>,
+    retention_days: Option<u64>,
+    policies: Option<HashMap<String, NamespaceRule>>,
+    signing: SigningKey,
+    verifying_b64: String,
+    stake_registry_path: Option<PathBuf>,
+    membership_policy: Arc<dyn MembershipPolicy>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct EvidenceRecord {
+    namespace: String,
+    blob_hash: String,
+    pk: String,
+    reason: String,
+    ts: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct EvidenceEnvelope {
+    public_key: String,
+    signature: String,
+    evidence: EvidenceRecord,
+}
+
+fn sign_evidence(sk: &SigningKey, ev: &EvidenceRecord) -> EvidenceEnvelope {
+    let payload = serde_json::to_vec(ev).expect("evidence encode");
+    let sig = sk.sign(&payload);
+    EvidenceEnvelope {
+        public_key: encode_public_key_base64(&sk.verifying_key()),
+        signature: BASE64.encode(sig.to_bytes()),
+        evidence: ev.clone(),
+    }
+}
+
+struct HttpRequest {
+    method: String,
+    path: String,
+    headers: HashMap<String, String>,
+    body: Vec<u8>,
+}
+
+async fn run_blob_service(cfg: BlobServiceConfig) {
+    if let Err(err) = fs::create_dir_all(&cfg.base_dir) {
+        eprintln!("blob dir init error: {err}");
+        return;
+    }
+    let _retention_days = cfg.retention_days;
+    let listener = match TcpListener::bind(cfg.listen).await {
+        Ok(l) => l,
+        Err(err) => {
+            eprintln!("failed to bind blob listener {}: {err}", cfg.listen);
+            return;
+        }
+    };
+    println!("blob ingest server listening on {}", cfg.listen);
+    loop {
+        match listener.accept().await {
+            Ok((mut stream, _addr)) => {
+                let cfg_clone = cfg.clone();
+                tokio::spawn(async move {
+                    if let Err(err) = handle_blob_connection(&mut stream, cfg_clone).await {
+                        eprintln!("blob connection error: {err}");
+                    }
+                });
+            }
+            Err(err) => {
+                eprintln!("blob accept error: {err}");
+                break;
+            }
+        }
+    }
+}
+
+async fn handle_blob_connection(stream: &mut TcpStream, cfg: BlobServiceConfig) -> io::Result<()> {
+    let req = match read_http_request(stream).await {
+        Ok(r) => r,
+        Err(err) => {
+            let resp = build_response(
+                "400 Bad Request",
+                format!("{{\"error\":\"{err}\"}}"),
+                "application/json",
+            );
+            let _ = stream.write_all(&resp).await;
+            let _ = stream.shutdown().await;
+            return Ok(());
+        }
+    };
+    let (status, body, content_type) = match req.method.as_str() {
+        "POST" if req.path.starts_with("/submit_blob") => {
+            match handle_submit_blob(&req, &cfg).await {
+                Ok(json) => ("200 OK".to_string(), json, "application/json".to_string()),
+                Err(err) => (
+                    "400 Bad Request".to_string(),
+                    format!("{{\"error\":\"{err}\"}}"),
+                    "application/json".to_string(),
+                ),
+            }
+        }
+        "GET" if req.path.starts_with("/commitment/") => {
+            let json = handle_commitment(&req, &cfg).unwrap_or_else(|e| e);
+            if json.starts_with("{") {
+                ("200 OK".to_string(), json, "application/json".to_string())
+            } else {
+                ("404 Not Found".to_string(), json, "text/plain".to_string())
+            }
+        }
+        "GET" if req.path.starts_with("/sample/") => {
+            let (code, body) = handle_sample(&req, &cfg).unwrap_or((404, "Not Found".to_string()));
+            let status = match code {
+                200 => "200 OK",
+                400 => "400 Bad Request",
+                _ => "404 Not Found",
+            };
+            (
+                status.to_string(),
+                body,
+                if code == 200 {
+                    "application/json"
+                } else {
+                    "text/plain"
+                }
+                .to_string(),
+            )
+        }
+        "GET" if req.path.starts_with("/prove_storage/") => {
+            let (code, body) =
+                handle_prove_storage(&req, &cfg).unwrap_or((404, "Not Found".to_string()));
+            let status = match code {
+                200 => "200 OK",
+                400 => "400 Bad Request",
+                _ => "404 Not Found",
+            };
+            (
+                status.to_string(),
+                body,
+                if code == 200 {
+                    "application/json"
+                } else {
+                    "text/plain"
+                }
+                .to_string(),
+            )
+        }
+        "POST" if req.path.starts_with("/rollup_settle") => {
+            match handle_rollup_settle(&req, &cfg) {
+                Ok(json) => ("200 OK".to_string(), json, "application/json".to_string()),
+                Err(err) => (
+                    "400 Bad Request".to_string(),
+                    format!("{{\"error\":\"{err}\"}}"),
+                    "application/json".to_string(),
+                ),
+            }
+        }
+        _ => (
+            "404 Not Found".to_string(),
+            "Not Found".to_string(),
+            "text/plain".to_string(),
+        ),
+    };
+
+    let resp = build_response(&status, body, &content_type);
+    stream.write_all(&resp).await?;
+    stream.shutdown().await
+}
+
+async fn read_http_request(stream: &mut TcpStream) -> io::Result<HttpRequest> {
+    let mut buf = Vec::new();
+    let mut header_end = None;
+    loop {
+        let mut tmp = [0u8; 1024];
+        let n = stream.read(&mut tmp).await?;
+        if n == 0 {
+            break;
+        }
+        buf.extend_from_slice(&tmp[..n]);
+        if let Some(pos) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+            header_end = Some(pos + 4);
+            break;
+        }
+    }
+    let end = header_end
+        .ok_or_else(|| io::Error::new(io::ErrorKind::UnexpectedEof, "malformed request"))?;
+    let header_str = str::from_utf8(&buf[..end])
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "invalid header"))?;
+    let mut lines = header_str.split("\r\n").filter(|l| !l.is_empty());
+    let request_line = lines
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing request line"))?;
+    let mut parts = request_line.split_whitespace();
+    let method = parts.next().unwrap_or("").to_string();
+    let path = parts.next().unwrap_or("").to_string();
+    let mut headers = HashMap::new();
+    for line in lines {
+        if let Some((name, value)) = line.split_once(":") {
+            headers.insert(name.trim().to_ascii_lowercase(), value.trim().to_string());
+        }
+    }
+    let content_len: usize = headers
+        .get("content-length")
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(0);
+    let mut body = if end < buf.len() {
+        buf[end..].to_vec()
+    } else {
+        Vec::new()
+    };
+    while body.len() < content_len {
+        let mut tmp = vec![0u8; content_len - body.len()];
+        let n = stream.read(&mut tmp).await?;
+        if n == 0 {
+            break;
+        }
+        body.extend_from_slice(&tmp[..n]);
+    }
+    Ok(HttpRequest {
+        method,
+        path,
+        headers,
+        body,
+    })
+}
+
+fn build_response(status: &str, body: String, content_type: &str) -> Vec<u8> {
+    format!(
+        "HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {content_type}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    )
+    .into_bytes()
+}
+
+fn sanitize_token(token: &str) -> Option<String> {
+    if token
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        Some(token.to_string())
+    } else {
+        None
+    }
+}
+
+fn namespace_rule<'a>(cfg: &'a BlobServiceConfig, namespace: &str) -> Option<NamespaceRule> {
+    cfg.policies
+        .as_ref()
+        .and_then(|m| m.get(namespace).cloned())
+}
+
+fn read_shares(
+    base: &Path,
+    namespace: &str,
+    hash: &str,
+    total: usize,
+) -> Result<Vec<Vec<u8>>, NetworkError> {
+    let (_, _, share_dir) = blob_paths(base, namespace, hash);
+    let mut shares = Vec::with_capacity(total);
+    for idx in 0..total {
+        let path = share_dir.join(format!("{idx}.share"));
+        let data = fs::read(&path)
+            .map_err(|err| NetworkError::Io(format!("failed to read {}: {err}", path.display())))?;
+        shares.push(data);
+    }
+    Ok(shares)
+}
+
+fn share_hashes(shares: &[Vec<u8>]) -> Vec<[u8; 32]> {
+    shares
+        .iter()
+        .map(|s| {
+            let mut hasher = Sha256::new();
+            hasher.update(s);
+            hasher.finalize().into()
+        })
+        .collect()
+}
+
+async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<String, String> {
+    let namespace = req
+        .headers
+        .get("x-namespace")
+        .and_then(|v| sanitize_token(v))
+        .unwrap_or_else(|| "default".to_string());
+    let fee: Option<u64> = req.headers.get("x-fee").and_then(|v| v.parse().ok());
+    let publisher_pk = req.headers.get("x-publisher").cloned();
+    let publisher_sig = req.headers.get("x-publisher-sig").cloned();
+    if let Some(rule) = namespace_rule(cfg, &namespace) {
+        if let Some(max) = rule.max_bytes {
+            if req.body.len() > max {
+                return Err(format!("blob exceeds max_bytes for namespace {namespace}"));
+            }
+        }
+        if let Some(min_fee) = rule.min_fee {
+            if fee.unwrap_or(0) < min_fee {
+                return Err("fee below namespace minimum".into());
+            }
+        }
+    }
+    if let Some(max) = cfg.max_bytes {
+        if req.body.len() > max {
+            return Err("blob exceeds max_bytes".into());
+        }
+    }
+    let blob = BlobJson::from_bytes(&namespace, &req.body);
+    let data_shards = 4u8;
+    let parity_shards = 2u8;
+    let (shares, commitment) = encode_shares(&req.body, data_shards, parity_shards)
+        .map_err(|e| format!("encode error: {e}"))?;
+
+    let (meta_path, blob_path, share_dir) = blob_paths(&cfg.base_dir, &namespace, &blob.hash);
+    if let Some(parent) = meta_path.parent() {
+        fs::create_dir_all(parent).map_err(|err| format!("create dirs: {err}"))?;
+    }
+    fs::write(&blob_path, &req.body).map_err(|err| format!("write blob: {err}"))?;
+    fs::create_dir_all(&share_dir).map_err(|err| format!("create share dir: {err}"))?;
+    for (idx, share) in shares.iter().enumerate() {
+        let path = share_dir.join(format!("{idx}.share"));
+        fs::write(&path, share).map_err(|err| format!("write share: {err}"))?;
+    }
+
+    let sig = sign_payload(&cfg.signing, commitment.share_root.as_bytes());
+    let operator_att = StoredAttestation {
+        pk: cfg.verifying_b64.clone(),
+        sig: encode_signature_base64(&sig),
+    };
+    let mut attestations = vec![operator_att];
+    if let (Some(att_pk), Some(att_sig)) = (
+        req.headers.get("x-attestation-pk"),
+        req.headers.get("x-attestation-sig"),
+    ) {
+        if verify_signature_base64(att_pk, commitment.share_root.as_bytes(), att_sig).is_ok() {
+            attestations.push(StoredAttestation {
+                pk: att_pk.clone(),
+                sig: att_sig.clone(),
+            });
+        }
+    }
+    let meta = BlobMeta {
+        namespace: namespace.clone(),
+        hash: blob.hash.clone(),
+        size: blob.size,
+        data_shards,
+        parity_shards,
+        share_root: commitment.share_root.clone(),
+        pedersen_root: Some(commitment.pedersen_root.clone()),
+        attestations,
+        publisher_pk,
+    };
+    if let Some(pk) = meta.publisher_pk.as_ref() {
+        if let Some(sig) = publisher_sig.as_ref() {
+            verify_signature_base64(pk, commitment.share_root.as_bytes(), sig)
+                .map_err(|_| "invalid x-publisher-sig signature".to_string())?;
+        } else {
+            return Err("missing x-publisher-sig header for publisher".into());
+        }
+    }
+    save_blob_meta(&cfg.base_dir, &meta).map_err(|err| err.to_string())?;
+    // Fees and rewards (split between operator and attestors by stake).
+    if let (Some(path), Some(amount)) = (&cfg.stake_registry_path, fee) {
+        let payer = meta
+            .publisher_pk
+            .clone()
+            .unwrap_or_else(|| cfg.verifying_b64.clone());
+        match StakeRegistry::load(path) {
+            Ok(mut reg) => {
+                reg.debit_fee(&payer, amount)
+                    .map_err(|err| format!("fee debit failed: {err}"))?;
+                let ns_rule = namespace_rule(cfg, &namespace).unwrap_or_default();
+                let op_bps = ns_rule.operator_reward_bps.unwrap_or(5000) as u64;
+                let operator_cut = amount.saturating_mul(op_bps).saturating_div(10_000);
+                let attestor_pool = amount.saturating_sub(operator_cut);
+                reg.credit_reward(&cfg.verifying_b64, operator_cut);
+                let attestors = meta.attestations.clone();
+                let total_weight: u64 = attestors.iter().filter_map(|a| reg.stake_for(&a.pk)).sum();
+                if total_weight == 0 {
+                    reg.credit_reward(&cfg.verifying_b64, attestor_pool);
+                } else {
+                    for att in attestors {
+                        if let Some(w) = reg.stake_for(&att.pk) {
+                            let share = attestor_pool.saturating_mul(w) / total_weight;
+                            if share > 0 {
+                                reg.credit_reward(&att.pk, share);
+                            }
+                        }
+                    }
+                }
+                reg.save(path)
+                    .map_err(|err| format!("failed to persist stake registry: {err}"))?;
+            }
+            Err(err) => return Err(format!("failed to load stake registry: {err}")),
+        }
+    }
+
+    let response = serde_json::json!({
+        "status": "ok",
+        "size": blob.size,
+        "hash": blob.hash,
+        "share_root": meta.share_root,
+        "pedersen_root": meta.pedersen_root,
+        "data_shards": data_shards,
+        "parity_shards": parity_shards,
+    });
+    Ok(response.to_string())
+}
+
+fn handle_rollup_settle(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<String, String> {
+    #[derive(Deserialize)]
+    struct RollupSettleRequest {
+        namespace: String,
+        share_root: String,
+        #[serde(default)]
+        pedersen_root: Option<String>,
+        payer_pk: String,
+        #[serde(default)]
+        operator_pk: Option<String>,
+        #[serde(default)]
+        attesters: Option<Vec<String>>,
+        fee: u64,
+        #[serde(default)]
+        mode: Option<String>,
+        #[serde(default)]
+        proof_b64: Option<String>,
+        #[serde(default)]
+        public_inputs_b64: Option<String>,
+        #[serde(default)]
+        merkle_path_b64: Option<String>,
+    }
+    let req_body: RollupSettleRequest =
+        serde_json::from_slice(&req.body).map_err(|e| format!("decode error: {e}"))?;
+    let registry_path = cfg
+        .stake_registry_path
+        .as_ref()
+        .ok_or_else(|| "stake registry not configured".to_string())?;
+    let pedersen_root = req_body
+        .pedersen_root
+        .clone()
+        .unwrap_or_else(|| req_body.share_root.clone());
+    let commitment = RollupCommitment {
+        namespace: req_body.namespace.clone(),
+        share_root: req_body.share_root.clone(),
+        pedersen_root: Some(pedersen_root),
+        settlement_slot: None,
+    };
+    let operator_pk = req_body
+        .operator_pk
+        .clone()
+        .unwrap_or_else(|| req_body.payer_pk.clone());
+    let attesters = req_body.attesters.unwrap_or_default();
+    let mode = req_body.mode.unwrap_or_else(|| "optimistic".to_string());
+
+    let zk_proof = if let (Some(p_b64), Some(pi_b64), Some(mp_b64)) = (
+        req_body.proof_b64.as_ref(),
+        req_body.public_inputs_b64.as_ref(),
+        req_body.merkle_path_b64.as_ref(),
+    ) {
+        let proof = BASE64
+            .decode(p_b64.as_bytes())
+            .map_err(|e| format!("proof decode: {e}"))?;
+        let public_inputs = BASE64
+            .decode(pi_b64.as_bytes())
+            .map_err(|e| format!("public inputs decode: {e}"))?;
+        let merkle_path = BASE64
+            .decode(mp_b64.as_bytes())
+            .map_err(|e| format!("merkle path decode: {e}"))?;
+        ZkRollupProof {
+            proof,
+            public_inputs,
+            merkle_path,
+        }
+    } else {
+        ZkRollupProof {
+            proof: Vec::new(),
+            public_inputs: Vec::new(),
+            merkle_path: Vec::new(),
+        }
+    };
+
+    let mode_enum = if mode == "zk" {
+        RollupSettlementMode::Zk(zk_proof)
+    } else {
+        RollupSettlementMode::Optimistic(Vec::new())
+    };
+
+    match settle_rollup_with_rewards(
+        registry_path,
+        commitment.clone(),
+        &req_body.payer_pk,
+        &operator_pk,
+        &attesters,
+        req_body.fee,
+        mode_enum,
+    ) {
+        Ok(receipt) => Ok(serde_json::to_string(&serde_json::json!({
+            "status": "ok",
+            "payer": receipt.payer,
+            "fee": receipt.fee,
+            "commitment": receipt.commitment.share_root
+        }))
+        .unwrap_or_else(|_| "{}".to_string())),
+        Err(fault) => {
+            let outbox = cfg.base_dir.join("evidence_outbox.jsonl");
+            append_rollup_fault_evidence(&outbox, &fault);
+            Err(format!("rollup fault: {}", fault.reason))
+        }
+    }
+}
+
+fn handle_commitment(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<String, String> {
+    let parts: Vec<&str> = req.path.split('/').collect();
+    if parts.len() < 4 {
+        return Err("Not Found".into());
+    }
+    let namespace = sanitize_token(parts[2]).ok_or_else(|| "Not Found".to_string())?;
+    let hash = sanitize_token(parts[3]).ok_or_else(|| "Not Found".to_string())?;
+    let meta = load_blob_meta(&cfg.base_dir, &namespace, &hash)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "Not Found".to_string())?;
+    let attestations: Vec<_> = meta
+        .attestations
+        .iter()
+        .map(|a| serde_json::json!({"pk": a.pk, "sig": a.sig}))
+        .collect();
+    let body = serde_json::json!({
+        "namespace": meta.namespace,
+        "hash": meta.hash,
+        "size": meta.size,
+        "share_root": meta.share_root,
+        "pedersen_root": meta.pedersen_root,
+        "data_shards": meta.data_shards,
+        "parity_shards": meta.parity_shards,
+        "shares": (meta.data_shards as usize + meta.parity_shards as usize),
+        "attestations": attestations,
+        "publisher_pk": meta.publisher_pk,
+    });
+    Ok(body.to_string())
+}
+
+fn parse_count(query: Option<&str>) -> usize {
+    query
+        .and_then(|q| {
+            q.split('&').find_map(|kv| {
+                let mut parts = kv.split('=');
+                if parts.next() == Some("count") {
+                    parts.next().and_then(|v| v.parse().ok())
+                } else {
+                    None
+                }
+            })
+        })
+        .unwrap_or(1)
+}
+
+fn pick_slash_target(meta: &BlobMeta) -> Option<String> {
+    meta.publisher_pk
+        .clone()
+        .or_else(|| meta.attestations.first().map(|a| a.pk.clone()))
+}
+
+fn handle_sample(
+    req: &HttpRequest,
+    cfg: &BlobServiceConfig,
+) -> Result<(u16, String), (u16, String)> {
+    let parts: Vec<&str> = req.path.split('?').collect();
+    let path_part = parts[0];
+    let query_part = if parts.len() > 1 {
+        Some(parts[1])
+    } else {
+        None
+    };
+    let segs: Vec<&str> = path_part.split('/').collect();
+    if segs.len() < 4 {
+        return Err((404, "Not Found".into()));
+    }
+    let namespace = sanitize_token(segs[2]).ok_or((404, "Not Found".into()))?;
+    let hash = sanitize_token(segs[3]).ok_or((404, "Not Found".into()))?;
+    let meta = load_blob_meta(&cfg.base_dir, &namespace, &hash)
+        .map_err(|e| (400, e.to_string()))?
+        .ok_or((404, "Not Found".into()))?;
+    let total = meta.data_shards as usize + meta.parity_shards as usize;
+    let shares = match read_shares(&cfg.base_dir, &namespace, &hash, total) {
+        Ok(s) => s,
+        Err(_err) => {
+            if let Some(pk) = meta.publisher_pk.as_ref() {
+                record_slash_with_registry(
+                    &cfg.membership_policy,
+                    &cfg.stake_registry_path,
+                    pk,
+                    "blob-missing",
+                );
+            }
+            let ev_path = cfg.base_dir.join("evidence_outbox.jsonl");
+            let ev = availability::build_missing_share_evidence(&namespace, &hash, 0);
+            append_availability_evidence(&ev_path, &ev);
+            return Err((404, "Not Found".into()));
+        }
+    };
+    let share_hashes = share_hashes(&shares);
+    let root_hex = hex::encode(crate::merkle_root(&share_hashes));
+    if root_hex != meta.share_root {
+        let ev_path = cfg.base_dir.join("evidence_outbox.jsonl");
+        let ev = AvailabilityEvidence {
+            namespace: namespace.clone(),
+            blob_hash: hash.clone(),
+            idx: 0,
+            share: None,
+            reason: "share_root_mismatch".into(),
+        };
+        append_availability_evidence(&ev_path, &ev);
+        return Err((400, "share_root mismatch".into()));
+    }
+    let pedersen_root = availability::pedersen_merkle_root(&share_hashes);
+    let pedersen_root_hex = hex::encode(pedersen_root);
+    if let Some(stored) = &meta.pedersen_root {
+        if &pedersen_root_hex != stored {
+            let ev_path = cfg.base_dir.join("evidence_outbox.jsonl");
+            let ev = AvailabilityEvidence {
+                namespace: namespace.clone(),
+                blob_hash: hash.clone(),
+                idx: 0,
+                share: None,
+                reason: "pedersen_root_mismatch".into(),
+            };
+            append_availability_evidence(&ev_path, &ev);
+            return Err((400, "pedersen_root mismatch".into()));
+        }
+    }
+    let mut indices: Vec<usize> = (0..shares.len()).collect();
+    let count = parse_count(query_part);
+    indices.truncate(count.min(indices.len()));
+    let mut sampled = Vec::new();
+    for idx in indices {
+        let proof = build_merkle_proof(&share_hashes, idx).ok_or((400, "bad index".into()))?;
+        let pedersen_proof =
+            availability::pedersen_share_proof(&share_hashes, idx).map_err(|e| (400, e))?;
+        sampled.push(serde_json::json!({
+            "idx": idx,
+            "data": BASE64.encode(&shares[idx]),
+            "leaf": hex::encode(share_hashes[idx]),
+            "proof": proof.path.iter().map(|n| serde_json::json!({"left": n.left, "sibling": hex::encode(n.sibling)})).collect::<Vec<_>>(),
+            "pedersen_proof": pedersen_proof.path.iter().map(|n| serde_json::json!({"left": n.left, "hash": hex::encode(n.sibling)})).collect::<Vec<_>>(),
+        }));
+    }
+    let attestations: Vec<_> = meta
+        .attestations
+        .iter()
+        .map(|a| serde_json::json!({"pk": a.pk, "sig": a.sig}))
+        .collect();
+    let body = serde_json::json!({
+        "namespace": meta.namespace,
+        "hash": meta.hash,
+        "size": meta.size,
+        "share_root": meta.share_root,
+        "pedersen_root": meta.pedersen_root,
+        "data_shards": meta.data_shards,
+        "parity_shards": meta.parity_shards,
+        "shares": sampled,
+        "attestations": attestations,
+    });
+    Ok((200, body.to_string()))
+}
+
+fn handle_prove_storage(
+    req: &HttpRequest,
+    cfg: &BlobServiceConfig,
+) -> Result<(u16, String), (u16, String)> {
+    let evidence_log = cfg.base_dir.join("evidence.jsonl");
+    let evidence_outbox = cfg.base_dir.join("evidence_outbox.jsonl");
+    let segs: Vec<&str> = req.path.split('/').collect();
+    if segs.len() < 5 {
+        return Err((404, "Not Found".into()));
+    }
+    let namespace = sanitize_token(segs[2]).ok_or((404, "Not Found".into()))?;
+    let hash = sanitize_token(segs[3]).ok_or((404, "Not Found".into()))?;
+    let idx: usize = segs[4].parse().map_err(|_| (400, "invalid index".into()))?;
+    let meta = load_blob_meta(&cfg.base_dir, &namespace, &hash)
+        .map_err(|e| (400, e.to_string()))?
+        .ok_or((404, "Not Found".into()))?;
+    let total = meta.data_shards as usize + meta.parity_shards as usize;
+    let shares = match read_shares(&cfg.base_dir, &namespace, &hash, total) {
+        Ok(s) => s,
+        Err(_err) => {
+            if let Some(pk) = pick_slash_target(&meta) {
+                record_slash_with_registry(
+                    &cfg.membership_policy,
+                    &cfg.stake_registry_path,
+                    &pk,
+                    "blob-missing",
+                );
+                append_evidence(
+                    &evidence_log,
+                    &meta.namespace,
+                    &meta.hash,
+                    &pk,
+                    "blob-missing",
+                );
+                let ev = availability::build_missing_share_evidence(&namespace, &hash, idx);
+                append_availability_evidence(&evidence_outbox, &ev);
+            }
+            return Err((404, "Not Found".into()));
+        }
+    };
+    if idx >= shares.len() {
+        return Err((404, "Not Found".into()));
+    }
+    let share_hashes = share_hashes(&shares);
+    let proof = build_merkle_proof(&share_hashes, idx).ok_or((400, "bad index".into()))?;
+    let body = serde_json::json!({
+        "namespace": meta.namespace,
+        "hash": meta.hash,
+        "idx": idx,
+        "share": BASE64.encode(&shares[idx]),
+        "share_root": meta.share_root,
+        "leaf": hex::encode(share_hashes[idx]),
+        "proof": proof.path.iter().map(|n| serde_json::json!({"left": n.left, "sibling": hex::encode(n.sibling)})).collect::<Vec<_>>(),
+    });
+    Ok((200, body.to_string()))
 }
 
 struct PayloadCache {
@@ -217,6 +996,8 @@ pub enum NetworkError {
     Key(String),
     /// Underlying libp2p API returned an error.
     Libp2p(String),
+    /// Evidence sender not permitted.
+    Policy(String),
 }
 
 impl std::fmt::Display for NetworkError {
@@ -227,6 +1008,7 @@ impl std::fmt::Display for NetworkError {
             Self::Io(msg) => write!(f, "I/O error: {msg}"),
             Self::Key(msg) => write!(f, "key error: {msg}"),
             Self::Libp2p(msg) => write!(f, "libp2p error: {msg}"),
+            Self::Policy(msg) => write!(f, "policy error: {msg}"),
         }
     }
 }
@@ -294,6 +1076,21 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
         println!("metrics server listening on {addr}");
     }
 
+    if let (Some(blob_dir), Some(blob_listen)) = (cfg.blob_dir.clone(), cfg.blob_listen) {
+        let blob_cfg = BlobServiceConfig {
+            base_dir: blob_dir,
+            listen: blob_listen,
+            max_bytes: cfg.max_blob_bytes,
+            retention_days: cfg.blob_retention_days,
+            policies: cfg.blob_policies.clone(),
+            signing: cfg.key_material.signing.clone(),
+            verifying_b64: encode_public_key_base64(&cfg.key_material.verifying),
+            stake_registry_path: cfg.stake_registry_path.clone(),
+            membership_policy: cfg.membership_policy.clone(),
+        };
+        tokio::spawn(run_blob_service(blob_cfg));
+    }
+
     let mut seen_payloads = PayloadCache::new(metrics.clone());
     let mut invalid_counters: HashMap<libp2p::PeerId, usize> = HashMap::new();
     let mut last_payload = Vec::new();
@@ -322,6 +1119,9 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                 {
                     metrics.inc_gossipsub_rejects();
                     eprintln!("broadcast error: {err}");
+                }
+                if let Err(err) = broadcast_evidence(&mut swarm, &cfg) {
+                    eprintln!("evidence broadcast error: {err}");
                 }
             }
             event = swarm.select_next_some() => {
@@ -394,6 +1194,152 @@ fn build_behaviour(key: &identity::Keypair) -> Result<JrocBehaviour, NetworkErro
     })
 }
 
+fn evidence_outbox(cfg: &NetConfig) -> Option<PathBuf> {
+    cfg.blob_dir
+        .as_ref()
+        .map(|d| d.join("evidence_outbox.jsonl"))
+}
+
+fn broadcast_evidence(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+) -> Result<(), NetworkError> {
+    let Some(path) = evidence_outbox(cfg) else {
+        return Ok(());
+    };
+    let contents = match fs::read_to_string(&path) {
+        Ok(c) => c,
+        Err(err) => {
+            if err.kind() == io::ErrorKind::NotFound {
+                return Ok(());
+            }
+            return Err(NetworkError::Io(err.to_string()));
+        }
+    };
+    if contents.trim().is_empty() {
+        return Ok(());
+    }
+    let lines: Vec<&str> = contents.lines().filter(|l| !l.trim().is_empty()).collect();
+    if lines.is_empty() {
+        return Ok(());
+    }
+    fs::write(&path, "").map_err(|e| NetworkError::Io(e.to_string()))?;
+    for line in lines {
+        if let Ok(record) = serde_json::from_str::<EvidenceRecord>(line) {
+            let env = sign_evidence(&cfg.key_material.signing, &record);
+            if let Ok(msg) = serde_json::to_vec(&env) {
+                let _ = swarm
+                    .behaviour_mut()
+                    .gossipsub
+                    .publish(TOPIC_EVIDENCE.clone(), msg);
+            }
+        } else if let Ok(av) = serde_json::from_str::<AvailabilityEvidence>(line) {
+            let msg = serde_json::to_vec(&av).map_err(|e| NetworkError::Codec(e.to_string()))?;
+            let _ = swarm
+                .behaviour_mut()
+                .gossipsub
+                .publish(TOPIC_EVIDENCE.clone(), msg);
+        } else if let Ok(rf) = serde_json::from_str::<RollupFaultEvidence>(line) {
+            let msg = serde_json::to_vec(&rf).map_err(|e| NetworkError::Codec(e.to_string()))?;
+            let _ = swarm
+                .behaviour_mut()
+                .gossipsub
+                .publish(TOPIC_EVIDENCE.clone(), msg);
+        }
+    }
+    Ok(())
+}
+
+fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkError> {
+    // Try to parse signed evidence envelope first.
+    if let Ok(env) = serde_json::from_slice::<EvidenceEnvelope>(data) {
+        let payload =
+            serde_json::to_vec(&env.evidence).map_err(|e| NetworkError::Codec(e.to_string()))?;
+        verify_signature_base64(&env.public_key, &payload, &env.signature)?;
+        // Basic validation: ensure peer is permitted by policy.
+        let vk = decode_public_key_base64(&env.public_key)
+            .map_err(|e| NetworkError::Codec(e.to_string()))?;
+        if !policy_permits(cfg.membership_policy.as_ref(), &vk.to_bytes()) {
+            return Err(NetworkError::Policy("evidence sender not permitted".into()));
+        }
+        if let Some(path) = cfg.blob_dir.as_ref().map(|d| d.join("evidence.jsonl")) {
+            append_evidence(
+                &path,
+                &env.evidence.namespace,
+                &env.evidence.blob_hash,
+                &env.evidence.pk,
+                &env.evidence.reason,
+            );
+        }
+        record_slash_with_registry(
+            &cfg.membership_policy,
+            &cfg.stake_registry_path,
+            &env.evidence.pk,
+            &env.evidence.reason,
+        );
+        return Ok(());
+    }
+    // Fallback: raw availability or rollup evidence.
+    if let Ok(av) = serde_json::from_slice::<AvailabilityEvidence>(data) {
+        if let Some(path) = cfg.blob_dir.as_ref().map(|d| d.join("evidence.jsonl")) {
+            append_availability_evidence(&path, &av);
+        }
+        if let Some(pk) = pick_slash_target(&BlobMeta {
+            namespace: av.namespace.clone(),
+            hash: av.blob_hash.clone(),
+            size: 0,
+            data_shards: 0,
+            parity_shards: 0,
+            share_root: String::new(),
+            pedersen_root: None,
+            attestations: Vec::new(),
+            publisher_pk: None,
+        }) {
+            record_slash_with_registry(
+                &cfg.membership_policy,
+                &cfg.stake_registry_path,
+                &pk,
+                "availability-fault",
+            );
+        }
+        return Ok(());
+    }
+    if let Ok(rf) = serde_json::from_slice::<RollupFaultEvidence>(data) {
+        if let Some(path) = cfg.blob_dir.as_ref().map(|d| d.join("evidence.jsonl")) {
+            append_availability_evidence(
+                &path,
+                &AvailabilityEvidence {
+                    namespace: rf.namespace.clone(),
+                    blob_hash: rf.commitment.clone(),
+                    idx: 0,
+                    share: rf.payload.clone(),
+                    reason: rf.reason.clone(),
+                },
+            );
+        }
+        if let Some(pk) = pick_slash_target(&BlobMeta {
+            namespace: rf.namespace.clone(),
+            hash: rf.commitment.clone(),
+            size: 0,
+            data_shards: 0,
+            parity_shards: 0,
+            share_root: String::new(),
+            pedersen_root: None,
+            attestations: Vec::new(),
+            publisher_pk: None,
+        }) {
+            record_slash_with_registry(
+                &cfg.membership_policy,
+                &cfg.stake_registry_path,
+                &pk,
+                "rollup-fault",
+            );
+        }
+        return Ok(());
+    }
+    Ok(())
+}
+
 async fn broadcast_local_anchor(
     swarm: &mut Swarm<JrocBehaviour>,
     cfg: &NetConfig,
@@ -412,8 +1358,14 @@ async fn broadcast_local_anchor(
     }
     let ledger = load_anchor_from_logs(&cfg.log_dir)?;
     let timestamp_ms = now_millis();
-    let anchor_json =
-        AnchorJson::from_ledger(cfg.node_id.clone(), cfg.quorum, &ledger, timestamp_ms)?;
+    let anchor_json = AnchorJson::from_ledger(
+        cfg.node_id.clone(),
+        cfg.quorum,
+        &ledger,
+        timestamp_ms,
+        latest_da_commitments(&cfg.blob_dir),
+        evidence_root(&cfg.blob_dir),
+    )?;
     let payload =
         serde_json::to_vec(&anchor_json).map_err(|err| NetworkError::Codec(err.to_string()))?;
     if *last_payload == payload {
@@ -507,6 +1459,10 @@ async fn handle_event(
                 message,
                 ..
             } => {
+                if message.topic == TOPIC_EVIDENCE.hash() {
+                    handle_evidence_message(cfg, &message.data)?;
+                    return Ok(());
+                }
                 metrics.inc_anchors_received();
                 if message.data.len() > MAX_ENVELOPE_BYTES {
                     metrics.inc_gossipsub_rejects();
@@ -555,6 +1511,110 @@ async fn handle_event(
                     metrics.inc_gossipsub_rejects();
                     record_invalid(invalid_counters, propagation_source, metrics);
                     return Ok(());
+                }
+                // DA gating: require commitments and verify share roots + attestation QC; require persisted QC.
+                if anchor_json.da_commitments.is_empty() {
+                    metrics.inc_gossipsub_rejects();
+                    println!(
+                        "rejecting peer {}: missing DA commitments in anchor",
+                        envelope.node_id
+                    );
+                    return Ok(());
+                }
+                if let Some(blob_dir) = cfg.blob_dir.as_ref() {
+                    for da in &anchor_json.da_commitments {
+                        let meta = load_blob_meta(blob_dir, &da.namespace, &da.blob_hash)
+                            .ok()
+                            .flatten();
+                        let Some(meta) = meta else {
+                            metrics.inc_gossipsub_rejects();
+                            println!(
+                                "rejecting peer {}: missing blob {} in {}",
+                                envelope.node_id, da.blob_hash, da.namespace
+                            );
+                            return Ok(());
+                        };
+                        if meta.share_root != da.share_root {
+                            metrics.inc_gossipsub_rejects();
+                            println!(
+                                "rejecting peer {}: share_root mismatch for {}",
+                                envelope.node_id, da.blob_hash
+                            );
+                            return Ok(());
+                        }
+                        if let (Some(meta_p), Some(da_p)) = (&meta.pedersen_root, &da.pedersen_root)
+                        {
+                            if meta_p != da_p {
+                                metrics.inc_gossipsub_rejects();
+                                println!(
+                                    "rejecting peer {}: pedersen_root mismatch for {}",
+                                    envelope.node_id, da.blob_hash
+                                );
+                                return Ok(());
+                            }
+                        }
+                        if da.pedersen_root.is_none() {
+                            metrics.inc_gossipsub_rejects();
+                            println!(
+                                "rejecting peer {}: pedersen_root missing for {}",
+                                envelope.node_id, da.blob_hash
+                            );
+                            return Ok(());
+                        }
+                        let attestations: Vec<_> = meta
+                            .attestations
+                            .iter()
+                            .map(|a| a.to_attestation(&meta.share_root, &meta.pedersen_root))
+                            .collect();
+                        let qc =
+                            aggregate_attestations(&attestations, cfg.attestation_quorum, |pk| {
+                                lookup_stake(cfg, pk)
+                            })
+                            .map_err(|e| NetworkError::Codec(e.to_string()))?;
+                        if !qc.quorum_reached {
+                            metrics.inc_gossipsub_rejects();
+                            println!(
+                                "rejecting peer {}: DA quorum not met for {}",
+                                envelope.node_id, da.blob_hash
+                            );
+                            return Ok(());
+                        }
+                        // Persist QC for evidence and rollup settlement.
+                        if let Some(log_dir) = cfg.blob_dir.as_ref() {
+                            let qc_path = log_dir
+                                .join(&da.namespace)
+                                .join(format!("{}.qc", da.blob_hash));
+                            if let Some(parent) = qc_path.parent() {
+                                let _ = fs::create_dir_all(parent);
+                            }
+                            if let Ok(bytes) = serde_json::to_vec(&qc) {
+                                let _ = fs::write(&qc_path, bytes);
+                            }
+                            // Reward attesters (best-effort).
+                            if let Some(path) = &cfg.stake_registry_path {
+                                if let Ok(mut reg) = StakeRegistry::load(path) {
+                                    for signer in &qc.signers {
+                                        reg.credit_reward(signer, 1);
+                                    }
+                                    let _ = reg.save(path);
+                                }
+                            }
+                        }
+                        // Require QC file to exist (stake-weighted gating).
+                        if let Some(log_dir) = cfg.blob_dir.as_ref() {
+                            let qc_path = log_dir
+                                .join(&da.namespace)
+                                .join(format!("{}.qc", da.blob_hash));
+                            if !qc_path.exists() {
+                                metrics.inc_gossipsub_rejects();
+                                println!(
+                                    "rejecting peer {}: missing QC for {}",
+                                    envelope.node_id, da.blob_hash
+                                );
+                                return Ok(());
+                            }
+                        }
+                    }
                 }
                 let remote_anchor = anchor_json.clone().into_ledger()?;
                 let local_anchor = load_anchor_from_logs(&cfg.log_dir)?;
@@ -688,9 +1748,260 @@ async fn respond_with_metrics(
     stream.shutdown().await
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StoredAttestation {
+    pk: String,
+    sig: String,
+}
+
+impl StoredAttestation {
+    fn to_attestation(&self, share_root: &str, pedersen_root: &Option<String>) -> Attestation {
+        Attestation {
+            share_root: share_root.to_string(),
+            pedersen_root: pedersen_root.clone(),
+            public_key: self.pk.clone(),
+            signature: self.sig.clone(),
+            ts: Some(now_millis()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct BlobMeta {
+    namespace: String,
+    hash: String,
+    size: u64,
+    data_shards: u8,
+    parity_shards: u8,
+    share_root: String,
+    #[serde(default)]
+    pedersen_root: Option<String>,
+    #[serde(default)]
+    attestations: Vec<StoredAttestation>,
+    #[serde(default)]
+    publisher_pk: Option<String>,
+}
+
+fn blob_paths(base: &Path, namespace: &str, hash: &str) -> (PathBuf, PathBuf, PathBuf) {
+    let ns_dir = base.join(namespace);
+    let meta_path = ns_dir.join(format!("{hash}.meta"));
+    let blob_path = ns_dir.join(format!("{hash}.blob"));
+    let share_dir = ns_dir.join(hash).join("shares");
+    (meta_path, blob_path, share_dir)
+}
+
+fn load_blob_meta(
+    base: &Path,
+    namespace: &str,
+    hash: &str,
+) -> Result<Option<BlobMeta>, NetworkError> {
+    let (meta_path, _blob_path, _share_dir) = blob_paths(base, namespace, hash);
+    if !meta_path.exists() {
+        return Ok(None);
+    }
+    let bytes = fs::read(&meta_path).map_err(|err| {
+        NetworkError::Io(format!("failed to read {}: {err}", meta_path.display()))
+    })?;
+    let meta: BlobMeta = serde_json::from_slice(&bytes).map_err(|err| {
+        NetworkError::Codec(format!("invalid blob meta {}: {err}", meta_path.display()))
+    })?;
+    Ok(Some(meta))
+}
+
+fn save_blob_meta(base: &Path, meta: &BlobMeta) -> Result<(), NetworkError> {
+    let (meta_path, _, _) = blob_paths(base, &meta.namespace, &meta.hash);
+    if let Some(parent) = meta_path.parent() {
+        fs::create_dir_all(parent).map_err(|err| {
+            NetworkError::Io(format!("failed to create {}: {err}", parent.display()))
+        })?;
+    }
+    let data = serde_json::to_vec_pretty(meta)
+        .map_err(|err| NetworkError::Codec(format!("meta encode error: {err}")))?;
+    fs::write(&meta_path, data)
+        .map_err(|err| NetworkError::Io(format!("failed to write {}: {err}", meta_path.display())))
+}
+
+fn evidence_root(blob_dir: &Option<PathBuf>) -> Option<String> {
+    let Some(dir) = blob_dir.as_ref() else {
+        return None;
+    };
+    let path = dir.join("evidence.jsonl");
+    let contents = std::fs::read_to_string(&path).ok()?;
+    let mut leaves = Vec::new();
+    for line in contents.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let mut hasher = Sha256::new();
+        hasher.update(line.as_bytes());
+        leaves.push(hasher.finalize().into());
+    }
+    if leaves.is_empty() {
+        return None;
+    }
+    Some(hex::encode(crate::merkle_root(&leaves)))
+}
+
+fn latest_da_commitments(blob_dir: &Option<PathBuf>) -> Vec<DaCommitmentJson> {
+    let mut map: HashMap<String, (SystemTime, DaCommitmentJson)> = HashMap::new();
+    let Some(dir) = blob_dir.as_ref() else {
+        return Vec::new();
+    };
+    let Ok(ns_entries) = fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    for ns in ns_entries.flatten() {
+        let ns_path = ns.path();
+        let Some(_ns_name) = ns_path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if !ns_path.is_dir() {
+            continue;
+        }
+        let Ok(meta_entries) = fs::read_dir(&ns_path) else {
+            continue;
+        };
+        for entry in meta_entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("meta") {
+                continue;
+            }
+            let meta_bytes = match fs::read(&path) {
+                Ok(bytes) => bytes,
+                Err(_) => continue,
+            };
+            let meta: BlobMeta = match serde_json::from_slice(&meta_bytes) {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
+            let mtime = entry
+                .metadata()
+                .and_then(|m| m.modified())
+                .unwrap_or(SystemTime::UNIX_EPOCH);
+            let dc = DaCommitmentJson {
+                namespace: meta.namespace.clone(),
+                blob_hash: meta.hash.clone(),
+                share_root: meta.share_root.clone(),
+                pedersen_root: meta.pedersen_root.clone(),
+                attestation_qc: None,
+            };
+            match map.get(&meta.namespace) {
+                Some((seen_time, _)) if *seen_time >= mtime => {}
+                _ => {
+                    map.insert(meta.namespace.clone(), (mtime, dc));
+                }
+            }
+        }
+    }
+    map.into_iter().map(|(_, v)| v.1).collect()
+}
+
+fn lookup_stake(cfg: &NetConfig, pk_b64: &str) -> Option<u64> {
+    let vk = decode_public_key_base64(pk_b64).ok()?;
+    if let Some(weight) = cfg.membership_policy.stake_for(&vk) {
+        return Some(weight);
+    }
+    if let Some(path) = &cfg.stake_registry_path {
+        if let Ok(reg) = StakeRegistry::load(path) {
+            if let Some(w) = reg.stake_for(pk_b64) {
+                return Some(w);
+            }
+        }
+    }
+    Some(1)
+}
+
+fn append_evidence(path: &Path, namespace: &str, blob_hash: &str, pk: &str, reason: &str) {
+    let record = serde_json::json!({
+        "namespace": namespace,
+        "blob_hash": blob_hash,
+        "pk": pk,
+        "reason": reason,
+        "ts": now_millis(),
+    });
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    let line = format!("{}\n", record);
+    if let Err(err) = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()))
+    {
+        eprintln!("failed to write evidence: {err}");
+    }
+}
+
+fn append_availability_evidence(path: &Path, ev: &AvailabilityEvidence) {
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    match serde_json::to_string(ev) {
+        Ok(line) => {
+            let line = format!("{}\n", line);
+            if let Err(err) = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()))
+            {
+                eprintln!("failed to write availability evidence: {err}");
+            }
+        }
+        Err(err) => eprintln!("failed to encode availability evidence: {err}"),
+    }
+}
+
+fn append_rollup_fault_evidence(path: &Path, ev: &RollupFaultEvidence) {
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    match serde_json::to_string(ev) {
+        Ok(line) => {
+            let line = format!("{}\n", line);
+            if let Err(err) = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()))
+            {
+                eprintln!("failed to write rollup fault evidence: {err}");
+            }
+        }
+        Err(err) => eprintln!("failed to encode rollup fault evidence: {err}"),
+    }
+}
+
+fn record_slash_with_registry(
+    policy: &Arc<dyn MembershipPolicy>,
+    registry_path: &Option<PathBuf>,
+    pk_b64: &str,
+    reason: &str,
+) {
+    if let Ok(vk) = decode_public_key_base64(pk_b64) {
+        if let Err(err) = policy.record_slash(&vk) {
+            eprintln!("failed to record slash in policy: {err}");
+        }
+    }
+    if let Some(path) = registry_path {
+        match StakeRegistry::load(path) {
+            Ok(mut reg) => {
+                reg.slash(pk_b64);
+                if let Err(err) = reg.save(path) {
+                    eprintln!("failed to persist stake registry: {err}");
+                } else {
+                    println!("slash recorded for {pk_b64} ({reason})");
+                }
+            }
+            Err(err) => eprintln!("failed to load stake registry for slashing: {err}"),
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::transcript_digest;
     use std::fs;
     use std::sync::atomic::Ordering;
     use std::time::SystemTime;
@@ -775,7 +2086,7 @@ mod tests {
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
     let mut cutoff: Option<String> = None;
     let mut anchor_from_checkpoint = false;
-    let mut anchor = match load_latest_checkpoint(path) {
+    let anchor = match load_latest_checkpoint(path) {
         Ok(Some(checkpoint)) => {
             anchor_from_checkpoint = true;
             let (anchor, cp_cutoff) = checkpoint

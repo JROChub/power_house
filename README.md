@@ -400,7 +400,7 @@ Stake-backed example:
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe",
-  "crate_version": "0.1.51",
+  "crate_version": "0.1.52",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",

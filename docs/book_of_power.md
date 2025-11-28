@@ -3,8 +3,8 @@ Title Page
 Book of Power -- Condensed Graviton Edition
 Author: Julian Christian Sanders (lexluger)
 Crate Under Review: `power_house`
-Book Edition: **v0.1.51**
-Crate Version Required: **v0.1.51**
+Book Edition: **v0.1.52**
+Crate Version Required: **v0.1.52**
 All examples and golden test vectors correspond to this exact build; if your crate version differs, regenerate every artifact before trusting the results.
 Typeface Cue: Eldritch Vector Mono (conceptual spiral monospaced design)
 Fallback Typeface: Fira Mono or JetBrains Mono (use standard monospace if unavailable)
@@ -123,7 +123,7 @@ Regulatory drill: produce log file, book excerpt, and CLI output; they must matc
 Museum display idea: light panel showing the genesis digest scrolling endlessly; educational, intimidating.
 The anchor fold digest is the workshop handshake. Recite it at the start of every session.
 Always verify `hash_pipeline` after upgrading Rust or dependencies; compilers surprise the lazy.
-Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.51`. Continuous integration asserts that these strings match the crate’s manifest before any release ships. Data-availability APIs now expose blob commitments, sampling proofs, attestations, and storage challenges; see README for endpoint details.
+Keep the book version synchronized with `Cargo.toml`; current edition references `power_house 0.1.52`. Continuous integration asserts that these strings match the crate’s manifest before any release ships. Data-availability APIs now expose blob commitments, sampling proofs, attestations, and storage challenges; see README for endpoint details.
 If the crate version bumps, rerun `hash_pipeline`, update the values, and amend every compliance log.
 Record the output path `/tmp/power_house_anchor_a` in your field log; easier for midnight audits.
 Do not compress the `/tmp` logs before verifying them; compression hides tampering.
@@ -597,7 +597,7 @@ JSON schema sketch (`jrocnet.anchor.v1`, schema sketch — not literal JSON; rem
      {"statement":"JULIAN::GENESIS","hashes":["139f...84a"],"merkle_root":"09c0...995a"},
      {"statement":"Dense polynomial proof","hashes":["ded7...6e8c"],"merkle_root":"80e7...44f4"}
   ],
-  "crate_version": "0.1.51"
+  "crate_version": "0.1.52"
 }
 ```
 - Strings are UTF-8; digests remain lowercase hex strings.
@@ -614,7 +614,7 @@ Example summary in anchor file (hex digests):
 `JROC-NET :: Hash anchor proof -> [c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114]`.
 Field reduction rule (anchor hinge): take the first eight bytes of the fold digest as `u64::from_be_bytes` and reduce modulo 257; for the current fold, that equals 219.
 Root reminder: this `anchor_root` depends on the exact ordered list of transcript digests; reordering or omitting any digest yields a different root.
-Golden test vector (book edition `v0.1.51`, field 257):
+Golden test vector (book edition `v0.1.52`, field 257):
 ```
 ledger_0000.txt
 # challenge_mode: mod

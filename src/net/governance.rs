@@ -30,6 +30,11 @@ pub trait MembershipPolicy: Send + Sync {
     fn record_slash(&self, _key: &VerifyingKey) -> Result<(), PolicyUpdateError> {
         Ok(())
     }
+
+    /// Returns the bonded stake weight for a key, if tracked.
+    fn stake_for(&self, _key: &VerifyingKey) -> Option<u64> {
+        None
+    }
 }
 
 /// Raw governance update payload used to evolve membership.
@@ -515,6 +520,14 @@ impl MembershipPolicy for StakePolicy {
                 slashed: true,
             });
         self.persist(&guard)
+    }
+
+    fn stake_for(&self, key: &VerifyingKey) -> Option<u64> {
+        let guard = self.state.lock().expect("stake state poisoned");
+        guard
+            .get(&key.to_bytes().to_vec())
+            .filter(|acct| !acct.slashed && acct.bond >= self.bond_threshold)
+            .map(|acct| acct.bond)
     }
 }
 

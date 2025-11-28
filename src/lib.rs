@@ -62,12 +62,14 @@
 pub mod alien;
 pub mod consensus;
 mod data;
+pub mod economics;
 mod field;
 mod io;
 mod log_parser;
 mod merkle;
 mod multilinear;
 mod prng;
+pub mod rollup;
 mod streaming;
 pub mod sumcheck;
 mod transcript;

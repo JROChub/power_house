@@ -1,5 +1,5 @@
 # Training Binder — Power House Cadet Packet
-Doc version: v0.1.51
+Doc version: v0.1.52
 
 This binder distills the mandatory drills called out across `book_of_power.md`. Work through each section, initial in the signature block, and archive the completed packet with your ledger logs.
 

@@ -8,7 +8,7 @@
 use power_house::net::{
     decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
     verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy,
-    MultisigPolicy, NetConfig, StakePolicy, StaticPolicy,
+    MultisigPolicy, NamespaceRule, NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
 };
 use power_house::{
     compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
@@ -35,12 +35,35 @@ use rpassword::prompt_password;
 #[cfg(feature = "net")]
 use serde::Deserialize;
 use serde_json;
+#[cfg(feature = "net")]
+use std::collections::HashMap;
 
 const NETWORK_ID: &str = "JROC-NET";
 
 fn fatal(message: &str) -> ! {
     eprintln!("{message}");
     std::process::exit(1);
+}
+
+#[cfg(feature = "net")]
+fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    match serde_json::to_string(ev) {
+        Ok(line) => {
+            let line = format!("{line}\n");
+            if let Err(err) = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()))
+            {
+                eprintln!("failed to write rollup fault evidence: {err}");
+            }
+        }
+        Err(err) => eprintln!("failed to encode rollup fault evidence: {err}"),
+    }
 }
 
 fn main() {
@@ -62,8 +85,51 @@ fn main() {
             });
             handle_net(&sub, args.collect());
         }
+        #[cfg(feature = "net")]
+        Some("stake") => {
+            let sub = args.next().unwrap_or_else(|| {
+                eprintln!("Usage: julian stake <show> --stake-registry <path>");
+                std::process::exit(1);
+            });
+            handle_stake(&sub, args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("rollup") => {
+            let sub = args.next().unwrap_or_else(|| {
+                eprintln!("Usage: julian rollup <settle> ...");
+                std::process::exit(1);
+            });
+            handle_rollup(&sub, args.collect());
+        }
         _ => {
-            eprintln!("Usage: julian <node|net> ...");
+            eprintln!("Usage: julian <node|net|stake> ...");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn handle_stake(sub: &str, tail: Vec<String>) {
+    match sub {
+        "show" => cmd_stake_show(tail),
+        "fund" => cmd_stake_fund(tail),
+        "bond" => cmd_stake_bond(tail),
+        "unbond" => cmd_stake_unbond(tail),
+        "reward" => cmd_stake_reward(tail),
+        _ => {
+            eprintln!("Unknown stake subcommand: {sub}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn handle_rollup(sub: &str, tail: Vec<String>) {
+    match sub {
+        "settle" => cmd_rollup_settle(tail),
+        "settle-file" => cmd_rollup_settle_file(tail),
+        _ => {
+            eprintln!("Unknown rollup subcommand: {sub}");
             std::process::exit(1);
         }
     }
@@ -92,6 +158,353 @@ fn handle_net(sub: &str, tail: Vec<String>) {
         _ => {
             eprintln!("Unknown net subcommand: {sub}");
             std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn load_registry(path: &Path) -> StakeRegistry {
+    StakeRegistry::load(path).unwrap_or_else(|err| {
+        fatal(&format!(
+            "failed to load stake registry {}: {err}",
+            path.display()
+        ))
+    })
+}
+
+#[cfg(feature = "net")]
+fn save_registry(path: &Path, reg: &StakeRegistry) {
+    reg.save(path).unwrap_or_else(|err| {
+        fatal(&format!(
+            "failed to save stake registry {}: {err}",
+            path.display()
+        ))
+    });
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_show(args: Vec<String>) {
+    if args.is_empty() {
+        eprintln!("Usage: julian stake show <stake_registry.json>");
+        std::process::exit(1);
+    }
+    let path = Path::new(&args[0]);
+    match StakeRegistry::load(path) {
+        Ok(reg) => {
+            let pretty = serde_json::to_string_pretty(&reg)
+                .unwrap_or_else(|e| format!("{{\"error\":\"{e}\"}}"));
+            println!("{pretty}");
+        }
+        Err(err) => fatal(&format!(
+            "failed to load stake registry {}: {err}",
+            path.display()
+        )),
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_fund(args: Vec<String>) {
+    if args.len() < 3 {
+        eprintln!("Usage: julian stake fund <registry.json> <pubkey_b64> <amount>");
+        std::process::exit(1);
+    }
+    let path = Path::new(&args[0]);
+    let pk = &args[1];
+    let amount: u64 = args[2].parse().unwrap_or_else(|_| fatal("invalid amount"));
+    let mut reg = load_registry(path);
+    reg.fund_balance(pk, amount);
+    save_registry(path, &reg);
+    if let Some(acct) = reg.account(pk) {
+        println!(
+            "funded {pk} by {amount}, balance={} stake={}",
+            acct.balance, acct.stake
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_bond(args: Vec<String>) {
+    if args.len() < 3 {
+        eprintln!("Usage: julian stake bond <registry.json> <pubkey_b64> <amount>");
+        std::process::exit(1);
+    }
+    let path = Path::new(&args[0]);
+    let pk = &args[1];
+    let amount: u64 = args[2].parse().unwrap_or_else(|_| fatal("invalid amount"));
+    let mut reg = load_registry(path);
+    reg.bond_from_balance(pk, amount)
+        .unwrap_or_else(|err| fatal(&err));
+    save_registry(path, &reg);
+    if let Some(acct) = reg.account(pk) {
+        println!(
+            "bonded {amount} for {pk}, balance={} stake={}",
+            acct.balance, acct.stake
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_unbond(args: Vec<String>) {
+    if args.len() < 3 {
+        eprintln!("Usage: julian stake unbond <registry.json> <pubkey_b64> <amount>");
+        std::process::exit(1);
+    }
+    let path = Path::new(&args[0]);
+    let pk = &args[1];
+    let amount: u64 = args[2].parse().unwrap_or_else(|_| fatal("invalid amount"));
+    let mut reg = load_registry(path);
+    reg.unbond(pk, amount).unwrap_or_else(|err| fatal(&err));
+    save_registry(path, &reg);
+    if let Some(acct) = reg.account(pk) {
+        println!(
+            "unbonded {amount} for {pk}, balance={} stake={}",
+            acct.balance, acct.stake
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_reward(args: Vec<String>) {
+    if args.len() < 3 {
+        eprintln!("Usage: julian stake reward <registry.json> <pubkey_b64> <amount>");
+        std::process::exit(1);
+    }
+    let path = Path::new(&args[0]);
+    let pk = &args[1];
+    let amount: u64 = args[2].parse().unwrap_or_else(|_| fatal("invalid amount"));
+    let mut reg = load_registry(path);
+    reg.credit_reward(pk, amount);
+    save_registry(path, &reg);
+    if let Some(acct) = reg.account(pk) {
+        println!(
+            "rewarded {pk} by {amount}, balance={} stake={}",
+            acct.balance, acct.stake
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_rollup_settle(args: Vec<String>) {
+    if args.len() < 5 {
+        eprintln!("Usage: julian rollup settle <registry.json> <namespace> <share_root> <payer_b64> <fee> [zk|optimistic] [operator_b64] [attesters_csv] [--proof file] [--public-inputs file] [--merkle-path file] [--outbox path]");
+        std::process::exit(1);
+    }
+    let registry = Path::new(&args[0]);
+    let namespace = args[1].clone();
+    let share_root = args[2].clone();
+    let payer = args[3].clone();
+    let fee: u64 = args[4].parse().unwrap_or_else(|_| fatal("invalid fee"));
+
+    let mut mode = "optimistic".to_string();
+    let mut operator_pk: Option<String> = None;
+    let mut attesters: Vec<String> = Vec::new();
+    let mut proof_path: Option<String> = None;
+    let mut public_inputs_path: Option<String> = None;
+    let mut merkle_path_file: Option<String> = None;
+    let mut outbox: Option<String> = None;
+
+    for arg in args.iter().skip(5) {
+        if arg.starts_with("--proof=") {
+            proof_path = Some(arg.trim_start_matches("--proof=").to_string());
+        } else if arg.starts_with("--public-inputs=") {
+            public_inputs_path = Some(arg.trim_start_matches("--public-inputs=").to_string());
+        } else if arg.starts_with("--merkle-path=") {
+            merkle_path_file = Some(arg.trim_start_matches("--merkle-path=").to_string());
+        } else if arg.starts_with("--outbox=") {
+            outbox = Some(arg.trim_start_matches("--outbox=").to_string());
+        } else if mode == "optimistic" && (arg == "zk" || arg == "optimistic") {
+            mode = arg.clone();
+        } else if operator_pk.is_none() {
+            operator_pk = Some(arg.clone());
+        } else if attesters.is_empty() {
+            attesters = arg
+                .split(',')
+                .filter(|v| !v.is_empty())
+                .map(|v| v.to_string())
+                .collect();
+        }
+    }
+
+    let operator_pk = operator_pk.unwrap_or_else(|| payer.clone());
+    let commitment = power_house::rollup::RollupCommitment {
+        namespace,
+        share_root,
+        pedersen_root: None,
+        settlement_slot: None,
+    };
+
+    let zk_proof = if let (Some(pp), Some(pi_path), Some(mp_path)) =
+        (proof_path, public_inputs_path, merkle_path_file)
+    {
+        let proof_bytes = std::fs::read(&pp).unwrap_or_else(|_| fatal("failed to read proof file"));
+        let public_inputs =
+            std::fs::read(&pi_path).unwrap_or_else(|_| fatal("failed to read public inputs file"));
+        let merkle_path =
+            std::fs::read(&mp_path).unwrap_or_else(|_| fatal("failed to read merkle path file"));
+        power_house::rollup::ZkRollupProof {
+            proof: proof_bytes,
+            public_inputs,
+            merkle_path,
+        }
+    } else {
+        power_house::rollup::ZkRollupProof {
+            proof: Vec::new(),
+            public_inputs: Vec::new(),
+            merkle_path: Vec::new(),
+        }
+    };
+
+    let result = match mode.as_str() {
+        "zk" => power_house::rollup::settle_rollup_with_rewards(
+            registry,
+            commitment.clone(),
+            &payer,
+            &operator_pk,
+            &attesters,
+            fee,
+            power_house::rollup::RollupSettlementMode::Zk(zk_proof),
+        ),
+        _ => power_house::rollup::settle_rollup_with_rewards(
+            registry,
+            commitment.clone(),
+            &payer,
+            &operator_pk,
+            &attesters,
+            fee,
+            power_house::rollup::RollupSettlementMode::Optimistic(Vec::new()),
+        ),
+    };
+    match result {
+        Ok(receipt) => {
+            println!(
+                "settled rollup for {payer} fee={fee} commitment={}",
+                receipt.commitment.share_root
+            );
+        }
+        Err(err) => {
+            let outbox_path: PathBuf = outbox.map(PathBuf::from).unwrap_or_else(|| {
+                registry
+                    .parent()
+                    .unwrap_or(Path::new("."))
+                    .join("evidence_outbox.jsonl")
+            });
+            append_rollup_fault(&outbox_path, &err);
+            eprintln!("fault evidence written to {}", outbox_path.display());
+            fatal(&format!("settlement failed: {}", err.reason));
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_rollup_settle_file(args: Vec<String>) {
+    if args.len() < 2 {
+        eprintln!(
+            "Usage: julian rollup settle-file <registry.json> <request.json> [--outbox path]"
+        );
+        std::process::exit(1);
+    }
+    #[derive(serde::Deserialize)]
+    struct RollupSettleRequest {
+        namespace: String,
+        share_root: String,
+        #[serde(default)]
+        pedersen_root: Option<String>,
+        payer_pk: String,
+        #[serde(default)]
+        operator_pk: Option<String>,
+        #[serde(default)]
+        attesters: Option<Vec<String>>,
+        fee: u64,
+        #[serde(default)]
+        mode: Option<String>,
+        #[serde(default)]
+        proof_b64: Option<String>,
+        #[serde(default)]
+        public_inputs_b64: Option<String>,
+        #[serde(default)]
+        merkle_path_b64: Option<String>,
+    }
+    let registry = Path::new(&args[0]);
+    let req_bytes =
+        std::fs::read(&args[1]).unwrap_or_else(|_| fatal("failed to read request file"));
+    let mut outbox: Option<String> = None;
+    for arg in args.iter().skip(2) {
+        if arg.starts_with("--outbox=") {
+            outbox = Some(arg.trim_start_matches("--outbox=").to_string());
+        }
+    }
+    let req: RollupSettleRequest =
+        serde_json::from_slice(&req_bytes).unwrap_or_else(|_| fatal("invalid request JSON"));
+    let pedersen_root = req
+        .pedersen_root
+        .clone()
+        .unwrap_or_else(|| req.share_root.clone());
+    let commitment = power_house::rollup::RollupCommitment {
+        namespace: req.namespace.clone(),
+        share_root: req.share_root.clone(),
+        pedersen_root: Some(pedersen_root),
+        settlement_slot: None,
+    };
+    let operator_pk = req
+        .operator_pk
+        .clone()
+        .unwrap_or_else(|| req.payer_pk.clone());
+    let attesters = req.attesters.clone().unwrap_or_default();
+    let mode = req.mode.clone().unwrap_or_else(|| "optimistic".to_string());
+    let zk_proof = if let (Some(p_b64), Some(pi_b64), Some(mp_b64)) = (
+        req.proof_b64.as_ref(),
+        req.public_inputs_b64.as_ref(),
+        req.merkle_path_b64.as_ref(),
+    ) {
+        let proof = BASE64
+            .decode(p_b64.as_bytes())
+            .unwrap_or_else(|_| fatal("proof decode failed"));
+        let public_inputs = BASE64
+            .decode(pi_b64.as_bytes())
+            .unwrap_or_else(|_| fatal("public inputs decode failed"));
+        let merkle_path = BASE64
+            .decode(mp_b64.as_bytes())
+            .unwrap_or_else(|_| fatal("merkle path decode failed"));
+        power_house::rollup::ZkRollupProof {
+            proof,
+            public_inputs,
+            merkle_path,
+        }
+    } else {
+        power_house::rollup::ZkRollupProof {
+            proof: Vec::new(),
+            public_inputs: Vec::new(),
+            merkle_path: Vec::new(),
+        }
+    };
+    let mode_enum = if mode == "zk" {
+        power_house::rollup::RollupSettlementMode::Zk(zk_proof)
+    } else {
+        power_house::rollup::RollupSettlementMode::Optimistic(Vec::new())
+    };
+    match power_house::rollup::settle_rollup_with_rewards(
+        registry,
+        commitment.clone(),
+        &req.payer_pk,
+        &operator_pk,
+        &attesters,
+        req.fee,
+        mode_enum,
+    ) {
+        Ok(receipt) => println!(
+            "settled rollup fee={} commitment={}",
+            receipt.fee, receipt.commitment.share_root
+        ),
+        Err(fault) => {
+            let outbox_path: PathBuf = outbox.map(PathBuf::from).unwrap_or_else(|| {
+                registry
+                    .parent()
+                    .unwrap_or(Path::new("."))
+                    .join("evidence_outbox.jsonl")
+            });
+            append_rollup_fault(&outbox_path, &fault);
+            eprintln!("fault evidence written to {}", outbox_path.display());
+            fatal(&format!("settlement failed: {}", fault.reason));
         }
     }
 }
@@ -293,6 +706,12 @@ fn cmd_net_start(args: Vec<String>) {
     let mut policy_allowlist_spec: Option<String> = None;
     let mut policy_spec: Option<String> = None;
     let mut checkpoint_interval_spec: Option<String> = None;
+    let mut blob_dir_spec: Option<String> = None;
+    let mut blob_listen_spec: Option<String> = None;
+    let mut max_blob_bytes_spec: Option<String> = None;
+    let mut blob_retention_days_spec: Option<String> = None;
+    let mut blob_policy_spec: Option<String> = None;
+    let mut attestation_quorum_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -377,6 +796,42 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--checkpoint-interval expects a value")),
                 );
             }
+            "--blob-dir" => {
+                blob_dir_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-dir expects a value")),
+                );
+            }
+            "--blob-listen" => {
+                blob_listen_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-listen expects a value")),
+                );
+            }
+            "--max-blob-bytes" => {
+                max_blob_bytes_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--max-blob-bytes expects a value")),
+                );
+            }
+            "--blob-retention-days" => {
+                blob_retention_days_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-retention-days expects a value")),
+                );
+            }
+            "--blob-policy" => {
+                blob_policy_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-policy expects a value")),
+                );
+            }
+            "--attestation-quorum" => {
+                attestation_quorum_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--attestation-quorum expects a value")),
+                );
+            }
             other => fatal(&format!("unknown argument: {other}")),
         }
     }
@@ -414,6 +869,26 @@ fn cmd_net_start(args: Vec<String>) {
             .parse()
             .unwrap_or_else(|_| fatal("invalid --checkpoint-interval"))
     });
+    let blob_dir = blob_dir_spec.map(PathBuf::from);
+    let blob_listen = blob_listen_spec
+        .as_deref()
+        .map(parse_metrics_addr)
+        .unwrap_or(None);
+    let max_blob_bytes = max_blob_bytes_spec.map(|v| {
+        v.parse::<usize>()
+            .unwrap_or_else(|_| fatal("invalid --max-blob-bytes"))
+    });
+    let blob_retention_days = blob_retention_days_spec.map(|v| {
+        v.parse::<u64>()
+            .unwrap_or_else(|_| fatal("invalid --blob-retention-days"))
+    });
+    let blob_policies = blob_policy_spec
+        .as_deref()
+        .map(|path| load_blob_policies(Path::new(path)));
+    let attestation_quorum = attestation_quorum_spec.map(|v| {
+        v.parse::<usize>()
+            .unwrap_or_else(|_| fatal("invalid --attestation-quorum"))
+    });
 
     let config = NetConfig::new(
         node_id,
@@ -426,6 +901,12 @@ fn cmd_net_start(args: Vec<String>) {
         metrics_addr,
         membership_policy.clone(),
         checkpoint_interval,
+        blob_dir,
+        blob_listen,
+        max_blob_bytes,
+        blob_retention_days,
+        blob_policies,
+        attestation_quorum,
     );
 
     let runtime = tokio::runtime::Runtime::new()
@@ -467,8 +948,9 @@ fn cmd_net_anchor(args: Vec<String>) {
 
     let log_dir = log_dir.unwrap_or_else(|| fatal("--log-dir is required"));
     let ledger = load_anchor_from_logs(Path::new(&log_dir)).unwrap_or_else(|err| fatal(&err));
-    let anchor_json = AnchorJson::from_ledger(node_id, quorum, &ledger, now_millis())
-        .unwrap_or_else(|err| fatal(&format!("anchor conversion failed: {err}")));
+    let anchor_json =
+        AnchorJson::from_ledger(node_id, quorum, &ledger, now_millis(), Vec::new(), None)
+            .unwrap_or_else(|err| fatal(&format!("anchor conversion failed: {err}")));
     match anchor_json.to_json_string() {
         Ok(text) => println!("{text}"),
         Err(err) => fatal(&format!("FAIL: failed to encode anchor: {err}")),
@@ -904,4 +1386,24 @@ fn load_membership_policy(
     } else {
         Arc::new(StaticPolicy::allow_all())
     }
+}
+
+#[cfg(feature = "net")]
+#[derive(Debug, Deserialize, Clone)]
+struct BlobPolicyFile {
+    #[serde(default)]
+    namespaces: HashMap<String, NamespaceRule>,
+}
+
+#[cfg(feature = "net")]
+fn load_blob_policies(path: &Path) -> HashMap<String, NamespaceRule> {
+    let contents = fs::read_to_string(path).unwrap_or_else(|err| {
+        fatal(&format!(
+            "failed to read blob policy {}: {err}",
+            path.display()
+        ))
+    });
+    let file: BlobPolicyFile = serde_json::from_str(&contents)
+        .unwrap_or_else(|err| fatal(&format!("invalid blob policy {}: {err}", path.display())));
+    file.namespaces
 }

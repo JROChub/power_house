@@ -54,8 +54,30 @@ pub struct AnchorJson {
     /// Crate version that emitted this anchor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub crate_version: Option<String>,
+    /// Data-availability commitments this anchor depends on.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub da_commitments: Vec<DaCommitmentJson>,
+    /// Optional evidence root (hex) for slashing records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence_root: Option<String>,
 }
 
+/// Data-availability commitment describing blob binding.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DaCommitmentJson {
+    /// Namespace of the blob.
+    pub namespace: String,
+    /// Blob hash (hex).
+    pub blob_hash: String,
+    /// Share root (hex).
+    pub share_root: String,
+    /// Pedersen share root (hex) for ZK circuits.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pedersen_root: Option<String>,
+    /// Optional attestation QC (stake-weighted) over the share root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attestation_qc: Option<String>,
+}
 /// Signed envelope broadcast across the gossip layer.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnchorEnvelope {
@@ -131,6 +153,8 @@ impl AnchorJson {
         quorum: usize,
         anchor: &LedgerAnchor,
         timestamp_ms: u64,
+        da_commitments: Vec<DaCommitmentJson>,
+        evidence_root: Option<String>,
     ) -> Result<Self, AnchorCodecError> {
         if anchor.entries.is_empty()
             || anchor.entries.first().map(|e| e.statement.as_str())
@@ -166,6 +190,8 @@ impl AnchorJson {
             challenge_mode: anchor.metadata.challenge_mode.clone(),
             fold_digest: Some(digest_to_hex(&fold_digest)),
             crate_version: anchor.metadata.crate_version.clone(),
+            da_commitments,
+            evidence_root,
         })
     }
 

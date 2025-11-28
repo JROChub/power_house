@@ -1,0 +1,12 @@
+[package]
+name = "funding_service"
+version = "0.1.1"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# NOTE: minimal stripe crate version available here; no extra features needed for webhook verification in this simplified build.
+stripe = { version = "0.0.5", default-features = false }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
