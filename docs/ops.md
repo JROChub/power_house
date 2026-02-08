@@ -71,10 +71,9 @@ The healthcheck verifies:
 - finality progress (stall detection)
 
 Alerts are delivered via `/usr/local/lib/powerhouse/alert.sh`.
-Set `PH_ALERT_EMAIL` and related values in `powerhouse-common.env`.
-For outbound email, configure `/etc/msmtprc` and place your SMTP token in
-`/etc/jrocnet/smtp_pass` (600 perms). The default template assumes SendGrid
-(`smtp.sendgrid.net`, user `apikey`).
+If `PH_ALERT_EMAIL` is empty, alerts log to syslog only. To enable email,
+set `PH_ALERT_EMAIL`/`PH_ALERT_FROM` and wire any local MTA (msmtp, postfix,
+or equivalent). Keep SMTP credentials in a root‑only file.
 
 ## 6. Metrics + log export
 
