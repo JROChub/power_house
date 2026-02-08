@@ -1,5 +1,5 @@
 JROC NET: The JULIAN Protocol Network
-Version 0.1.53 — February 2026
+Version 0.1.54 — February 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors

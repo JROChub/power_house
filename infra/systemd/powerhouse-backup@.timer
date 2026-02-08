@@ -1,0 +1,10 @@
+[Unit]
+Description=Power-House Backup Timer (%i)
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=30min
+Unit=powerhouse-backup@%i.service
+
+[Install]
+WantedBy=timers.target

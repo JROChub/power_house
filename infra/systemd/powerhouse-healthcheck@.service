@@ -1,0 +1,10 @@
+[Unit]
+Description=Power-House Healthcheck (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/jrocnet/powerhouse-common.env
+EnvironmentFile=/etc/jrocnet/powerhouse-%i.env
+ExecStart=/usr/local/lib/powerhouse/healthcheck.py

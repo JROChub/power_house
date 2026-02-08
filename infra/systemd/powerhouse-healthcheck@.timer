@@ -1,0 +1,11 @@
+[Unit]
+Description=Power-House Healthcheck Timer (%i)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=powerhouse-healthcheck@%i.service
+
+[Install]
+WantedBy=timers.target

@@ -51,22 +51,22 @@ Optional governance: add `--policy governance.json` to enforce a membership poli
 
 - Submit a blob (HTTP):
   ```bash
-  curl -X POST http://127.0.0.1:8080/submit_blob \
+  curl -X POST http://127.0.0.1:8181/submit_blob \
     -H 'X-Namespace: default' \
     -H 'X-Fee: 10' \
     --data-binary @file.bin
   ```
 - Fetch a commitment:
   ```bash
-  curl http://127.0.0.1:8080/commitment/default/<hash>
+  curl http://127.0.0.1:8181/commitment/default/<hash>
   ```
 - Sample shares:
   ```bash
-  curl "http://127.0.0.1:8080/sample/default/<hash>?count=2"
+  curl "http://127.0.0.1:8181/sample/default/<hash>?count=2"
   ```
 - Prove storage for a share:
   ```bash
-  curl http://127.0.0.1:8080/prove_storage/default/<hash>/0
+  curl http://127.0.0.1:8181/prove_storage/default/<hash>/0
   ```
 - Stake registry (CLI):
   ```bash
@@ -129,7 +129,7 @@ scripts/smoke_net.sh
 
 ## Data Availability API (HTTP)
 
-Start the blob service with `--blob-dir` and `--blob-listen :8080` (plus optional `--blob-policy policy.json`). Endpoints:
+Start the blob service with `--blob-dir` and `--blob-listen :8181` (plus optional `--blob-policy policy.json`). Endpoints:
 - `POST /submit_blob` (headers: `X-Namespace`, optional `X-Fee`, `X-Publisher`) body = raw bytes. Returns share_root, hash, shard counts.
 - `GET /commitment/<namespace>/<hash>` returns commitment metadata + attestations.
 - `GET /sample/<namespace>/<hash>?count=N` returns sampled shares + Merkle proofs.
@@ -141,7 +141,7 @@ Stake registry tooling: manage balances/stake with `julian stake show|fund|bond|
 
 ## Operations Toolkit
 
-See `docs/ops.md` for the full runbook (systemd template, VPS checklist). Use `infra/ops_hosts.example.toml` as a starting point for host metadata. Package and deploy the `julian` binary with your preferred tooling (scp/rsync). If systemd is unavailable, use a custom restart command.
+See `docs/ops.md` for the full runbook (systemd templates, env layout, healthcheck/backup timers). Use `infra/ops_hosts.example.toml` as a starting point for host metadata. Package and deploy the `julian` binary with your preferred tooling (scp/rsync). If systemd is unavailable, use a custom restart command.
 
 ## Genesis Anchor (Pinned)
 
@@ -329,7 +329,7 @@ Treat public ingress nodes as long-lived services.
 
 1. Build: `cargo build --release --features net --bin julian`
 2. Ship:  `scp target/release/julian root@host:/root/julian.new && sudo install -m 0755 /root/julian.new /usr/local/bin/julian`
-3. Unit:  copy the systemd template from `docs/ops.md`; set unique `--node-id`/`--log-dir`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `--bootstrap` so the service dials the right ingress even if DNS lags.
+3. Unit: copy the systemd template from `docs/ops.md`; set node-specific `/etc/jrocnet/powerhouse-bootN.env` and shared `/etc/jrocnet/powerhouse-common.env`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `PH_BOOTSTRAPS` so the service dials the right ingress even if DNS lags.
 4. Start: `systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service`
 5. Health: `journalctl -u powerhouse-bootN.service -n 40 -f` → see `QSYS|mod=ANCHOR|evt=STANDBY` then alternating `QSYS|mod=ANCHOR|evt=BROADCAST` and `QSYS|mod=QUORUM|evt=FINALIZED`.
 6. Reachability: from each host `nc -vz <other-ip> 7001` / `7002`; failures imply firewall/routing, not libp2p.
@@ -398,7 +398,7 @@ Stake-backed example:
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe",
-  "crate_version": "0.1.53",
+  "crate_version": "0.1.54",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",

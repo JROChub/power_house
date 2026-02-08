@@ -1,0 +1,11 @@
+[Unit]
+Description=Power-House Metrics Snapshot Timer (%i)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=powerhouse-metrics@%i.service
+
+[Install]
+WantedBy=timers.target

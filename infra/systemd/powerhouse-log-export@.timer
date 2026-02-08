@@ -1,0 +1,10 @@
+[Unit]
+Description=Power-House Log Export Timer (%i)
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=10min
+Unit=powerhouse-log-export@%i.service
+
+[Install]
+WantedBy=timers.target

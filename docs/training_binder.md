@@ -1,9 +1,9 @@
-# Training Binder — Power House Cadet Packet
-Doc version: v0.1.53
+# Training Binder — Power House Operator Packet
+Doc version: v0.1.54
 
 This binder distills the mandatory drills called out across `book_of_power.md`. Work through each section, initial in the signature block, and archive the completed packet with your ledger logs.
 
-## 1. Field Prime Drills *(Book refs: Chapter II, §§01–41)*
+## 1. Field Prime Exercises *(Book refs: Chapter II, §§01–41)*
 
 | Drill | Prime | Task | Scratchpad |
 | --- | --- | --- | --- |

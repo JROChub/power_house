@@ -1,7 +1,7 @@
 Power-House Protocol Manual
 ===========================
-Version: v0.1.53
-Crate: power_house v0.1.53
+Version: v0.1.54
+Crate: power_house v0.1.54
 Scope: deterministic proof ledger, DA commitments, and JROC-NET operations.
 
 Table of Contents
@@ -19,7 +19,7 @@ Table of Contents
 
 1. Canonical digests and reference commands
 -------------------------------------------
-Reference digests (v0.1.53):
+Reference digests (v0.1.54):
 - Genesis digest: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
 - Dense polynomial digest: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 - Hash anchor proof digest: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114

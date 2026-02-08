@@ -17,7 +17,7 @@ work_dir = "/var/lib/jrocnet"
 name = "boot1"
 host = "boot1.jrocnet.com"
 service = "powerhouse-boot1"
-log_path = "/var/log/powerhouse-boot1.log"
+log_path = "/var/log/powerhouse/powerhouse-boot1-*.log.gz"
 work_dir = "/var/lib/jrocnet/boot1"
 bootstrap = [
   "/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd"
@@ -27,7 +27,7 @@ bootstrap = [
 name = "boot2"
 host = "boot2.jrocnet.com"
 service = "powerhouse-boot2"
-log_path = "/var/log/powerhouse-boot2.log"
+log_path = "/var/log/powerhouse/powerhouse-boot2-*.log.gz"
 work_dir = "/var/lib/jrocnet/boot2"
 bootstrap = [
   "/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q"

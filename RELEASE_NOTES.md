@@ -1,10 +1,12 @@
 ﻿# Release Notes
 
-## v0.1.53 — 2026-02-08
+## v0.1.54 — 2026-02-08
 
 ### Changed
-- Bumped crate/docs to `0.1.53` and synchronized README, ops notes, training binder, mainnet launch notes, and Protocol Manual version stamps.
-- Updated schema examples to reflect the new crate version.
+- Production ops hardening: shared node env files, new launcher script, and systemd security guards.
+- Added healthcheck, backup, and log-export timers with alert hooks.
+- Introduced release deployment/rollback helpers.
+- Bumped crate/docs to `0.1.54` and synchronized README, ops notes, training binder, mainnet launch notes, and Protocol Manual version stamps.
 
 ## v0.1.49 — 2025-11-11
 

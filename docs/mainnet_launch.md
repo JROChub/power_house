@@ -1,5 +1,5 @@
 # POWER_HOUSE MAINNET LAUNCH – OPERATIONS GUIDE
-Doc version: v0.1.53
+Doc version: v0.1.54
 
 This guide promotes your current two‑boot topology (boot1, boot2) to an open, public mainnet without manual peer approvals. It preserves uptime, removes trust boundaries, and keeps the network observable and maintainable.
 
@@ -29,85 +29,27 @@ Remove the following flags from both boot nodes:
 The rest of the runtime remains unchanged.
 
 ## Systemd Updates (Boot1 and Boot2)
-Use the canonical, open ExecStart lines. Provide explicit `/dns4` and `/ip4` bootstraps as shown.
+Use the templates in `infra/systemd/` plus node env files:
 
-Boot1 (`/etc/systemd/system/powerhouse-boot1.service`):
-```
-[Unit]
-Description=JROC-NET Boot1 (julian)
-After=network-online.target
-Wants=network-online.target
+- `/etc/jrocnet/powerhouse-common.env`
+- `/etc/jrocnet/powerhouse-boot1.env`
+- `/etc/jrocnet/powerhouse-boot2.env`
 
-[Service]
-Type=simple
-WorkingDirectory=/var/lib/jrocnet/boot1
-ExecStart=/usr/local/bin/julian net start \
-  --node-id boot1 \
-  --log-dir /var/lib/jrocnet/boot1/logs \
-  --listen /ip4/0.0.0.0/tcp/7001 \
-  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
-  --broadcast-interval 5000 \
-  --quorum 2 \
-  --key ed25519://boot1-seed \
-  --checkpoint-interval 60 \
-  --metrics :9100 \
-  --blob-dir /var/lib/jrocnet/boot1/blobs \
-  --blob-listen :8181 \
-  --blob-policy /etc/jrocnet/blob_policy.json \
-  --blob-auth-token <token> \
-  --blob-max-concurrency 128 \
-  --blob-request-timeout-ms 10000 \
-  --max-blob-bytes 5242880 \
-  --blob-retention-days 30
-Restart=always
-RestartSec=3
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Boot2 (`/etc/systemd/system/powerhouse-boot2.service`):
-```
-[Unit]
-Description=JROC-NET Boot2 (julian)
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-WorkingDirectory=/var/lib/jrocnet/boot2
-ExecStart=/usr/local/bin/julian net start \
-  --node-id boot2 \
-  --log-dir /var/lib/jrocnet/boot2/logs \
-  --listen /ip4/0.0.0.0/tcp/7002 \
-  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --broadcast-interval 5000 \
-  --quorum 2 \
-  --key ed25519://boot2-seed \
-  --checkpoint-interval 60 \
-  --metrics :9100 \
-  --blob-dir /var/lib/jrocnet/boot2/blobs \
-  --blob-listen :8181 \
-  --blob-policy /etc/jrocnet/blob_policy.json \
-  --blob-auth-token <token> \
-  --blob-max-concurrency 128 \
-  --blob-request-timeout-ms 10000 \
-  --max-blob-bytes 5242880 \
-  --blob-retention-days 30
-Restart=always
-RestartSec=3
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-```
+Those feed `/usr/local/bin/powerhouse-boot.sh` (the shared launcher).
+Copy the example env files from `infra/systemd/` and set:
+`PH_BOOTSTRAPS`, `PH_BLOB_AUTH_TOKEN`, `PH_METRICS_ADDR`, and per-node paths.
 
 Apply safely on each host:
 ```
 systemctl daemon-reload
-systemctl restart powerhouse-boot1.service   # on boot1
-systemctl restart powerhouse-boot2.service   # on boot2
+systemctl enable --now powerhouse-boot1.service   # on boot1
+systemctl enable --now powerhouse-boot2.service   # on boot2
+```
+
+Enable ops timers (health, backup, log export):
+```
+systemctl enable --now powerhouse-healthcheck@boot1.timer powerhouse-backup@boot1.timer powerhouse-log-export@boot1.timer
+systemctl enable --now powerhouse-healthcheck@boot2.timer powerhouse-backup@boot2.timer powerhouse-log-export@boot2.timer
 ```
 
 ## Networking and Discovery
