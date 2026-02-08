@@ -1,5 +1,5 @@
 JROC NET: The JULIAN Protocol Network
-Version 0.1.7 — February 2025
+Version 0.1.53 — February 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -19,8 +19,8 @@ tooling.
 
 Modern proof systems often resemble black boxes: a verifier accepts or rejects proofs, but the
 intermediate checks and state are rarely exposed, making multi-party verification difficult.
-The JULIAN Protocol takes the opposite approach. Inspired by the ALIEN theorem’s vision of
-transparent, composable ledgers, we construct a pipeline in which the transcript of every proof
+The JULIAN Protocol takes the opposite approach. Inspired by prior work on transparent,
+composable ledgers, we construct a pipeline in which the transcript of every proof
 is captured, hashed, and chained into a consensus anchor. Because transcript generation is
 deterministic, independently replaying the verification yields identical anchors, enabling multiple
 nodes to agree on a ledger’s state simply by comparing ordered hash lists. Polynomial evaluation,

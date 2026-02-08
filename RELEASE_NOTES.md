@@ -3,23 +3,23 @@
 ## v0.1.53 — 2026-02-08
 
 ### Changed
-- Bumped crate/docs to `0.1.53` and synchronized README, ops notes, training binder, mainnet launch notes, and Book of Power version stamps.
+- Bumped crate/docs to `0.1.53` and synchronized README, ops notes, training binder, mainnet launch notes, and Protocol Manual version stamps.
 - Updated schema examples to reflect the new crate version.
 
 ## v0.1.49 — 2025-11-11
 
 ### Changed
-- Bumped crate/docs to `0.1.49`; synchronized README, Book of Power, and schema samples. Generic `0.1.x` references remain as-is by design.
+- Bumped crate/docs to `0.1.49`; synchronized README, Protocol Manual, and schema samples. Generic `0.1.x` references remain as-is by design.
 
 ## v0.1.48 — 2025-11-09
 
 ### Changed
-- Bumped crate/docs to `0.1.48` and updated the transcript ABNF (`numbers = number *(SP number)`), regenerating the Book of Power PDF to keep the canonical format aligned with the crate.
+- Bumped crate/docs to `0.1.48` and updated the transcript ABNF (`numbers = number *(SP number)`), regenerating the Protocol Manual PDF to keep the canonical format aligned with the crate.
 
 ## v0.1.47 — 2025-11-08
 
 ### Changed
-- Clarified transcript digest framing (binary layout, non-participating lines), documented the exact Merkle hash domain/markers, added the normative fold-digest framing, tightened ABNF to exactly 64 hex characters, and refreshed the Book of Power/PDF accordingly.
+- Clarified transcript digest framing (binary layout, non-participating lines), documented the exact Merkle hash domain/markers, added the normative fold-digest framing, tightened ABNF to exactly 64 hex characters, and refreshed the Protocol Manual/PDF accordingly.
 
 ## v0.1.46 — 2025-11-08
 
@@ -29,12 +29,12 @@
 ## v0.1.45 — 2025-11-08
 
 ### Changed
-- Tightened the Book of Power transcript grammar (ABNF cardinality, historical `final_eval` note), clarified JSON/Merkle disclaimers, standardised “fold digest” terminology, and bumped all version references/PDF output to `0.1.45`.
+- Tightened the Protocol Manual transcript grammar (ABNF cardinality, historical `final_eval` note), clarified JSON/Merkle disclaimers, standardised “fold digest” terminology, and bumped all version references/PDF output to `0.1.45`.
 
 ## v0.1.44 — 2025-11-08
 
 ### Changed
-- Corrected Book of Power inconsistencies (hash tables, transcript grammar, challenge/merkle descriptions, Chapter VI challenge wording), rebuilt the PDF, and bumped all version strings to `0.1.44`.
+- Corrected Protocol Manual inconsistencies (hash tables, transcript grammar, challenge/merkle descriptions, Chapter VI challenge wording), rebuilt the PDF, and bumped all version strings to `0.1.44`.
 
 ## v0.1.43 — 2025-11-08
 
@@ -65,7 +65,7 @@
 ## v0.1.38 — 2025-11-07
 
 ### Changed
-- Fully renumbered each chapter (no ghost indices) and documented fallback typography for the Book of Power PDF.
+- Fully renumbered each chapter (no ghost indices) and documented fallback typography for the Protocol Manual PDF.
 - Added explicit version-lock blurb plus challenge-mode metadata in transcripts/anchors.
 - Regenerated `docs/book_of_power.pdf` to match the finalized manual.
 
@@ -90,7 +90,7 @@
 
 ### Added
 - Ritual ASCII visualizations (hex sigil, hypercube map, anchor cross-section, challenge waterfall, compliance seal) directly into `docs/book_of_power.md` so auditors get instant visual cues.
-- `docs/training_binder.md` cadet packet covering field drills, transcript printouts, challenge logs, and signature blocks for compliance.
+- `docs/training_binder.md` operator packet covering field drills, transcript printouts, challenge logs, and signature blocks for compliance.
 - `docs/book_of_power.tex` + generated PDF export for sharing the manual without depending on local markdown renderers.
 
 ### Changed

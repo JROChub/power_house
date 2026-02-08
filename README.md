@@ -14,7 +14,7 @@ Site:   [https://jrocnet.com](https://jrocnet.com)
 Last update: 02/08/2026
 
 Need the full operations guide?
-Read the “Book of Power — Condensed Graviton Edition” (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
+Read the Power-House Protocol Manual (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
 
 ## DA commitments (dual roots)
 
