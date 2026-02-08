@@ -95,9 +95,11 @@ pub fn write_checkpoint(
 ) -> Result<PathBuf, CheckpointError> {
     fs::create_dir_all(dir).map_err(|err| CheckpointError::Io(err.to_string()))?;
     let path = dir.join(format!("checkpoint_{}.json", checkpoint.epoch));
+    let tmp_path = dir.join(format!("checkpoint_{}.json.tmp", checkpoint.epoch));
     let contents = serde_json::to_string_pretty(checkpoint)
         .map_err(|err| CheckpointError::Io(err.to_string()))?;
-    fs::write(&path, contents).map_err(|err| CheckpointError::Io(err.to_string()))?;
+    fs::write(&tmp_path, contents).map_err(|err| CheckpointError::Io(err.to_string()))?;
+    fs::rename(&tmp_path, &path).map_err(|err| CheckpointError::Io(err.to_string()))?;
     Ok(path)
 }
 

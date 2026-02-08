@@ -648,6 +648,11 @@ impl ChainedSumProof {
         self.links.len()
     }
 
+    /// Returns true if the chain has no proofs.
+    pub fn is_empty(&self) -> bool {
+        self.links.is_empty()
+    }
+
     /// Verifies the entire chain and returns the per-proof traces on success.
     pub fn verify_with_traces(
         &self,

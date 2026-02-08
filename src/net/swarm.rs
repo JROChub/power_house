@@ -58,6 +58,7 @@ use std::{
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{Mutex, Semaphore};
 use tokio::{select, signal, time};
 
 static TOPIC_ANCHORS: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/anchors/v1"));
@@ -67,6 +68,10 @@ const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
 const SEEN_CACHE_LIMIT: usize = 2048;
 const INVALID_THRESHOLD: usize = 5;
+const MAX_HEADER_BYTES: usize = 32 * 1024;
+const DEFAULT_MAX_REQUEST_BYTES: usize = 64 * 1024 * 1024;
+const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 10_000;
+const DEFAULT_BLOB_MAX_CONCURRENCY: usize = 128;
 
 /// Per-namespace limits applied to blob ingestion.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -123,6 +128,12 @@ pub struct NetConfig {
     pub blob_retention_days: Option<u64>,
     /// Optional per-namespace policy overrides.
     pub blob_policies: Option<HashMap<String, NamespaceRule>>,
+    /// Optional bearer token for blob HTTP endpoints.
+    pub blob_auth_token: Option<String>,
+    /// Maximum concurrent blob HTTP connections.
+    pub blob_max_concurrency: usize,
+    /// Request read timeout for blob HTTP endpoints.
+    pub blob_request_timeout: Duration,
     /// Attestation quorum required for DA commitments.
     pub attestation_quorum: usize,
     /// Path to the stake registry used for fees and slashing.
@@ -150,10 +161,18 @@ impl NetConfig {
         max_blob_bytes: Option<usize>,
         blob_retention_days: Option<u64>,
         blob_policies: Option<HashMap<String, NamespaceRule>>,
+        blob_auth_token: Option<String>,
+        blob_max_concurrency: Option<usize>,
+        blob_request_timeout_ms: Option<u64>,
         attestation_quorum: Option<usize>,
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
         let stake_registry_path = blob_dir.as_ref().map(|dir| dir.join("stake_registry.json"));
+        let blob_max_concurrency =
+            blob_max_concurrency.unwrap_or(DEFAULT_BLOB_MAX_CONCURRENCY);
+        let blob_request_timeout = Duration::from_millis(
+            blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS),
+        );
         Self {
             node_id,
             listen_addr,
@@ -169,6 +188,9 @@ impl NetConfig {
             max_blob_bytes,
             blob_retention_days,
             blob_policies,
+            blob_auth_token,
+            blob_max_concurrency,
+            blob_request_timeout,
             attestation_quorum,
             stake_registry_path,
             metrics: Arc::new(Metrics::default()),
@@ -188,6 +210,16 @@ struct BlobServiceConfig {
     verifying_b64: String,
     stake_registry_path: Option<PathBuf>,
     membership_policy: Arc<dyn MembershipPolicy>,
+    auth_token: Option<String>,
+    max_concurrency: usize,
+    request_timeout: Duration,
+    rate_limits: Arc<Mutex<HashMap<String, RateState>>>,
+}
+
+#[derive(Debug, Clone)]
+struct RateState {
+    window_start: Instant,
+    count: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -236,12 +268,21 @@ async fn run_blob_service(cfg: BlobServiceConfig) {
             return;
         }
     };
-    println!("blob ingest server listening on {}", cfg.listen);
+    println!("QSYS|mod=BLOB|evt=LISTEN|addr={}", cfg.listen);
+    let limiter = Arc::new(Semaphore::new(cfg.max_concurrency));
     loop {
         match listener.accept().await {
             Ok((mut stream, _addr)) => {
+                let permit = match limiter.clone().acquire_owned().await {
+                    Ok(permit) => permit,
+                    Err(_) => {
+                        eprintln!("blob accept error: limiter closed");
+                        continue;
+                    }
+                };
                 let cfg_clone = cfg.clone();
                 tokio::spawn(async move {
+                    let _permit = permit;
                     if let Err(err) = handle_blob_connection(&mut stream, cfg_clone).await {
                         eprintln!("blob connection error: {err}");
                     }
@@ -256,7 +297,9 @@ async fn run_blob_service(cfg: BlobServiceConfig) {
 }
 
 async fn handle_blob_connection(stream: &mut TcpStream, cfg: BlobServiceConfig) -> io::Result<()> {
-    let req = match read_http_request(stream).await {
+    let max_body = cfg.max_bytes.unwrap_or(DEFAULT_MAX_REQUEST_BYTES);
+    let req = match read_http_request(stream, MAX_HEADER_BYTES, max_body, cfg.request_timeout).await
+    {
         Ok(r) => r,
         Err(err) => {
             let resp = build_response(
@@ -269,7 +312,37 @@ async fn handle_blob_connection(stream: &mut TcpStream, cfg: BlobServiceConfig) 
             return Ok(());
         }
     };
+    if let Some(token) = cfg.auth_token.as_deref() {
+        let mut ok = false;
+        if let Some(auth) = req.headers.get("authorization") {
+            if let Some(bearer) = auth.strip_prefix("Bearer ") {
+                ok = bearer == token;
+            }
+        }
+        if let Some(key) = req.headers.get("x-api-key") {
+            ok = ok || key == token;
+        }
+        if !ok {
+            let resp = build_response(
+                "401 Unauthorized",
+                "{\"error\":\"unauthorized\"}".to_string(),
+                "application/json",
+            );
+            let _ = stream.write_all(&resp).await;
+            let _ = stream.shutdown().await;
+            return Ok(());
+        }
+    }
     let (status, body, content_type) = match req.method.as_str() {
+        "GET" if req.path == "/healthz" => (
+            "200 OK".to_string(),
+            format!(
+                "{{\"status\":\"ok\",\"network\":\"{}\",\"version\":\"{}\"}}",
+                NETWORK_ID,
+                env!("CARGO_PKG_VERSION")
+            ),
+            "application/json".to_string(),
+        ),
         "POST" if req.path.starts_with("/submit_blob") => {
             match handle_submit_blob(&req, &cfg).await {
                 Ok(json) => ("200 OK".to_string(), json, "application/json".to_string()),
@@ -347,16 +420,29 @@ async fn handle_blob_connection(stream: &mut TcpStream, cfg: BlobServiceConfig) 
     stream.shutdown().await
 }
 
-async fn read_http_request(stream: &mut TcpStream) -> io::Result<HttpRequest> {
+async fn read_http_request(
+    stream: &mut TcpStream,
+    max_header_bytes: usize,
+    max_body_bytes: usize,
+    timeout: Duration,
+) -> io::Result<HttpRequest> {
     let mut buf = Vec::new();
     let mut header_end = None;
     loop {
         let mut tmp = [0u8; 1024];
-        let n = stream.read(&mut tmp).await?;
+        let n = time::timeout(timeout, stream.read(&mut tmp))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "read timeout"))??;
         if n == 0 {
             break;
         }
         buf.extend_from_slice(&tmp[..n]);
+        if buf.len() > max_header_bytes && header_end.is_none() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "header too large",
+            ));
+        }
         if let Some(pos) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
             header_end = Some(pos + 4);
             break;
@@ -383,18 +469,33 @@ async fn read_http_request(stream: &mut TcpStream) -> io::Result<HttpRequest> {
         .get("content-length")
         .and_then(|v| v.parse().ok())
         .unwrap_or(0);
+    if content_len > max_body_bytes {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "content-length exceeds limit",
+        ));
+    }
     let mut body = if end < buf.len() {
         buf[end..].to_vec()
     } else {
         Vec::new()
     };
     while body.len() < content_len {
-        let mut tmp = vec![0u8; content_len - body.len()];
-        let n = stream.read(&mut tmp).await?;
+        let remaining = content_len - body.len();
+        let mut tmp = vec![0u8; remaining.min(8192)];
+        let n = time::timeout(timeout, stream.read(&mut tmp))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "read timeout"))??;
         if n == 0 {
             break;
         }
         body.extend_from_slice(&tmp[..n]);
+    }
+    if body.len() < content_len {
+        return Err(io::Error::new(
+            io::ErrorKind::UnexpectedEof,
+            "incomplete request body",
+        ));
     }
     Ok(HttpRequest {
         method,
@@ -467,6 +568,25 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
     let publisher_pk = req.headers.get("x-publisher").cloned();
     let publisher_sig = req.headers.get("x-publisher-sig").cloned();
     if let Some(rule) = namespace_rule(cfg, &namespace) {
+        if let Some(max_per_min) = rule.max_per_min {
+            if max_per_min > 0 {
+                let mut limits = cfg.rate_limits.lock().await;
+                let entry = limits
+                    .entry(namespace.clone())
+                    .or_insert(RateState {
+                        window_start: Instant::now(),
+                        count: 0,
+                    });
+                if entry.window_start.elapsed() >= Duration::from_secs(60) {
+                    entry.window_start = Instant::now();
+                    entry.count = 0;
+                }
+                if entry.count >= max_per_min {
+                    return Err("rate limit exceeded".into());
+                }
+                entry.count += 1;
+            }
+        }
         if let Some(max) = rule.max_bytes {
             if req.body.len() > max {
                 return Err(format!("blob exceeds max_bytes for namespace {namespace}"));
@@ -1053,6 +1173,20 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             "local key not permitted by identity policy".to_string(),
         ));
     }
+    fs::create_dir_all(&cfg.log_dir).map_err(|err| {
+        NetworkError::Io(format!(
+            "failed to create log dir {}: {err}",
+            cfg.log_dir.display()
+        ))
+    })?;
+    if let Some(blob_dir) = cfg.blob_dir.as_ref() {
+        fs::create_dir_all(blob_dir).map_err(|err| {
+            NetworkError::Io(format!(
+                "failed to create blob dir {}: {err}",
+                blob_dir.display()
+            ))
+        })?;
+    }
     let mut swarm = build_swarm(&cfg)?;
     Swarm::listen_on(&mut swarm, cfg.listen_addr.clone())
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
@@ -1073,7 +1207,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                 eprintln!("metrics server error: {err}");
             }
         });
-        println!("metrics server listening on {addr}");
+        println!("QSYS|mod=METRICS|evt=LISTEN|addr={addr}");
     }
 
     if let (Some(blob_dir), Some(blob_listen)) = (cfg.blob_dir.clone(), cfg.blob_listen) {
@@ -1087,6 +1221,10 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             verifying_b64: encode_public_key_base64(&cfg.key_material.verifying),
             stake_registry_path: cfg.stake_registry_path.clone(),
             membership_policy: cfg.membership_policy.clone(),
+            auth_token: cfg.blob_auth_token.clone(),
+            max_concurrency: cfg.blob_max_concurrency,
+            request_timeout: cfg.blob_request_timeout,
+            rate_limits: Arc::new(Mutex::new(HashMap::new())),
         };
         tokio::spawn(run_blob_service(blob_cfg));
     }
@@ -1100,7 +1238,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let local_peer = cfg.key_material.libp2p.public().to_peer_id();
 
     println!(
-        "JROC-NET node {} (peer {}) listening on {}",
+        "QSYS|mod=NET|evt=LISTEN|node={} peer={} addr={}",
         cfg.node_id, local_peer, cfg.listen_addr
     );
 
@@ -1398,7 +1536,7 @@ async fn broadcast_local_anchor(
         }
         Err(PublishError::InsufficientPeers) => {
             if !NO_GOSSIP_PEERS_LOGGED.swap(true, Ordering::Relaxed) {
-                println!("waiting for gossip peers before broadcasting anchor");
+                println!("QSYS|mod=ANCHOR|evt=STANDBY|reason=awaiting_peers");
             }
             return Ok(());
         }
@@ -1409,10 +1547,7 @@ async fn broadcast_local_anchor(
     }
     *last_payload = payload;
     *last_publish = Some(Instant::now());
-    println!(
-        "broadcasted local anchor ({} entries)",
-        ledger.entries.len()
-    );
+    println!("QSYS|mod=ANCHOR|evt=BROADCAST|entries={}", ledger.entries.len());
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
             *broadcast_counter = broadcast_counter.saturating_add(1);
@@ -1431,7 +1566,7 @@ async fn broadcast_local_anchor(
                     eprintln!("checkpoint write failed: {err}");
                 } else {
                     println!(
-                        "checkpoint {} recorded (entries={})",
+                        "QSYS|mod=CHECKPOINT|evt=RECORDED|epoch={} entries={}",
                         checkpoint.epoch,
                         ledger.entries.len()
                     );
@@ -1451,7 +1586,7 @@ async fn handle_event(
 ) -> Result<(), NetworkError> {
     match event {
         SwarmEvent::NewListenAddr { address, .. } => {
-            println!("listening on {address}");
+            println!("QSYS|mod=NET|evt=LISTEN|addr={address}");
         }
         SwarmEvent::Behaviour(JrocBehaviourEvent::Gossipsub(event)) => match event {
             gossipsub::Event::Message {
@@ -1634,7 +1769,7 @@ async fn handle_event(
                         metrics.inc_anchors_verified();
                         metrics.inc_finality_events();
                         println!(
-                            "finality reached with peer {} :: entries={}",
+                            "QSYS|mod=QUORUM|evt=FINALIZED|peer={} entries={}",
                             envelope.node_id,
                             remote_anchor.entries.len()
                         );

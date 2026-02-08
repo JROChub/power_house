@@ -1,12 +1,12 @@
 # Power-House
 
+[![git](https://img.shields.io/badge/git-JROChub%2Fpower__house-6f2da8?logo=github&logoColor=white)](https://github.com/JROChub/power_house)
+[![tests](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?label=tests&logo=github&logoColor=white&color=39ff14)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/power_house?label=crates.io&color=blue)](https://crates.io/crates/power_house)
+[![docs.rs](https://img.shields.io/docsrs/power_house?label=docs.rs)](https://docs.rs/power_house)
+[![license](https://img.shields.io/crates/l/power_house?label=license)](LICENSE)
+
 power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—implemented end-to-end in Rust.
-
-Badges
-
-* Crates.io: [https://crates.io/crates/power_house](https://crates.io/crates/power_house)
-* docs.rs:   [https://docs.rs/power_house](https://docs.rs/power_house)
-* Tests:     passing
 
 Author: lexluger
 Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
@@ -333,7 +333,7 @@ Treat public ingress nodes as long-lived services.
 2. Ship:  `scp target/release/julian root@host:/root/julian.new && sudo install -m 0755 /root/julian.new /usr/local/bin/julian`
 3. Unit:  copy the systemd template from `docs/ops.md`; set unique `--node-id`/`--log-dir`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `--bootstrap` so the service dials the right ingress even if DNS lags.
 4. Start: `systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service`
-5. Health: `journalctl -u powerhouse-bootN.service -n 40 -f` → see “waiting for gossip peers…” then alternating “broadcasted local anchor” and “finality reached”.
+5. Health: `journalctl -u powerhouse-bootN.service -n 40 -f` → see `QSYS|mod=ANCHOR|evt=STANDBY` then alternating `QSYS|mod=ANCHOR|evt=BROADCAST` and `QSYS|mod=QUORUM|evt=FINALIZED`.
 6. Reachability: from each host `nc -vz <other-ip> 7001` / `7002`; failures imply firewall/routing, not libp2p.
 
 Keep customized unit files and deterministic seeds in your infra repo or secrets manager (do not commit live service defs publicly).

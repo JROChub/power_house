@@ -207,6 +207,7 @@ features = [
     "signal",
     "net",
     "io-util",
+    "sync",
 ]
 optional = true
 

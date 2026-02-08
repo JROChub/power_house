@@ -34,7 +34,6 @@ use libp2p::Multiaddr;
 use rpassword::prompt_password;
 #[cfg(feature = "net")]
 use serde::Deserialize;
-use serde_json;
 #[cfg(feature = "net")]
 use std::collections::HashMap;
 
@@ -613,7 +612,7 @@ fn cmd_node_prove(args: Vec<String>) {
     let leaf_index: usize = args[2]
         .parse()
         .unwrap_or_else(|_| fatal("invalid leaf index"));
-    let anchor = load_anchor_from_logs(log_dir).unwrap_or_else(|err| fatal(&format!("{err}")));
+    let anchor = load_anchor_from_logs(log_dir).unwrap_or_else(|err| fatal(&err.to_string()));
     let entry = anchor
         .entries
         .get(entry_index)
@@ -711,6 +710,9 @@ fn cmd_net_start(args: Vec<String>) {
     let mut max_blob_bytes_spec: Option<String> = None;
     let mut blob_retention_days_spec: Option<String> = None;
     let mut blob_policy_spec: Option<String> = None;
+    let mut blob_auth_token_spec: Option<String> = None;
+    let mut blob_max_concurrency_spec: Option<String> = None;
+    let mut blob_request_timeout_ms_spec: Option<String> = None;
     let mut attestation_quorum_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
@@ -826,6 +828,24 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--blob-policy expects a value")),
                 );
             }
+            "--blob-auth-token" => {
+                blob_auth_token_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-auth-token expects a value")),
+                );
+            }
+            "--blob-max-concurrency" => {
+                blob_max_concurrency_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-max-concurrency expects a value")),
+                );
+            }
+            "--blob-request-timeout-ms" => {
+                blob_request_timeout_ms_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--blob-request-timeout-ms expects a value")),
+                );
+            }
             "--attestation-quorum" => {
                 attestation_quorum_spec = Some(
                     iter.next()
@@ -885,6 +905,15 @@ fn cmd_net_start(args: Vec<String>) {
     let blob_policies = blob_policy_spec
         .as_deref()
         .map(|path| load_blob_policies(Path::new(path)));
+    let blob_auth_token = blob_auth_token_spec;
+    let blob_max_concurrency = blob_max_concurrency_spec.map(|v| {
+        v.parse::<usize>()
+            .unwrap_or_else(|_| fatal("invalid --blob-max-concurrency"))
+    });
+    let blob_request_timeout_ms = blob_request_timeout_ms_spec.map(|v| {
+        v.parse::<u64>()
+            .unwrap_or_else(|_| fatal("invalid --blob-request-timeout-ms"))
+    });
     let attestation_quorum = attestation_quorum_spec.map(|v| {
         v.parse::<usize>()
             .unwrap_or_else(|_| fatal("invalid --attestation-quorum"))
@@ -906,6 +935,9 @@ fn cmd_net_start(args: Vec<String>) {
         max_blob_bytes,
         blob_retention_days,
         blob_policies,
+        blob_auth_token,
+        blob_max_concurrency,
+        blob_request_timeout_ms,
         attestation_quorum,
     );
 
@@ -1173,7 +1205,7 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
         let hash_list = entry
             .hashes
             .iter()
-            .map(|h| power_house::transcript_digest_to_hex(h))
+            .map(power_house::transcript_digest_to_hex)
             .collect::<Vec<_>>()
             .join(",");
         lines.push(format!(
@@ -1297,7 +1329,7 @@ fn format_anchor(anchor: &LedgerAnchor) -> String {
         let hashes = entry
             .hashes
             .iter()
-            .map(|h| power_house::transcript_digest_to_hex(h))
+            .map(power_house::transcript_digest_to_hex)
             .collect::<Vec<_>>()
             .join(", ");
         lines.push(format!(

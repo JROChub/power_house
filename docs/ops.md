@@ -1,140 +1,78 @@
 # Power-House Operations Guide
 Doc version: v0.1.53
 
-This guide replaces the brittle bootstrap scripts with a single declarative
-workflow that works on any VPS (including stock Ubuntu/Debian images) and
-survives future Rust toolchain updates.
+This guide documents the production-grade deployment flow for the JULIAN network
+nodes and blob service. It assumes explicit manual control (no hidden scripts),
+so every step is auditable.
 
 ## 1. Requirements
 
 - Rust toolchain (via `rustup`) and `cargo` on the build machine.
-- Python ≥ 3.11 for the new control script (ships with most modern distros).
-- `ssh`/`scp` access to every VPS. Passwords or keys both work.
-- Systemd on the VPS *or* a custom restart command (see below).
+- `ssh`/`scp` access to every VPS (keys or password).
+- systemd on the VPS (recommended).
 
-## 2. Configure hosts
-
-`scripts/netctl.py` reads host metadata from a TOML file. Copy the template and
-adjust it to match your environment:
+## 2. Build the binary
 
 ```bash
-cp infra/ops_hosts.example.toml infra/ops_hosts.toml
-$EDITOR infra/ops_hosts.toml
+cargo build --release --features net --bin julian
 ```
 
-Each `[[node]]` entry needs:
-
-| Key            | Description                                                                 |
-| -------------- | --------------------------------------------------------------------------- |
-| `name`         | Short identifier used by the CLI (ex: `boot1`).                             |
-| `host`         | DNS name or IP reachable over SSH.                                          |
-| `ssh_user`     | (optional) Remote user; defaults to `root`.                                  |
-| `service`      | (optional) Systemd unit. Falls back to `powerhouse-{name}.service`.         |
-| `binary_path`  | Destination of the `julian` binary (defaults to `/usr/local/bin/julian`).   |
-| `config_dir`   | Directory that will receive `infra/*.json`.                                 |
-| `log_path`     | File read by the `logs`/`follow` sub-commands.                               |
-| `work_dir`     | Persistent ledger/log directory on the node.                                |
-| `restart_command` | (optional) Command to run instead of `systemctl restart …`.              |
-
-Override the hosts file path via `POWERHOUSE_HOSTS_FILE=/path/to/ops.toml` or
-`python3 scripts/netctl.py --hosts-file …`.
-
-## 3. Systemd template (optional)
-
-Install the following on each VPS when using systemd. Replace placeholders with
-values from your TOML entry, and prefer literal `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>`
-bootstrap multiaddrs when DNS is slow to update. Keep these unit files in your
-infra repo or secrets manager—do not ship live IPs or seeds in the public tree.
-
-```ini
-[Unit]
-Description=JULIAN bootstrap node (%i)
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-User=root
-WorkingDirectory=/var/lib/jrocnet/%i
-ExecStart=/usr/local/bin/julian net start \
-  --node-id %i \
-  --log-dir /var/lib/jrocnet/%i \
-  --listen /ip4/0.0.0.0/tcp/700%I \
-  --bootstrap /ip4/<peer-ip>/tcp/<peer-port>/p2p/<peer-id> \
-  --quorum 2 \
-  --broadcast-interval 5000 \
-  --policy /etc/jrocnet/governance.json \
-  --key ed25519://boot%I-seed
-Restart=always
-RestartSec=2
-Environment=RUST_LOG=info
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable with:
+## 3. Install/upgrade on each VPS
 
 ```bash
-systemctl enable --now powerhouse-boot1.service
+scp target/release/julian root@HOST:/usr/local/bin/julian.new
+ssh root@HOST 'install -m 0755 /usr/local/bin/julian.new /usr/local/bin/julian && rm /usr/local/bin/julian.new'
 ```
 
-If systemd is unavailable, set `restart_command = "supervisorctl restart julian"`
-or similar in `infra/ops_hosts.toml`.
+## 4. Systemd units
 
-## 4. Common workflows
+Use the unit files in `infra/systemd/` as the canonical service definitions.
+Deploy them with:
 
-| Task                           | Command                                                                 |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| Show configured hosts          | `python3 scripts/netctl.py list-hosts`                                  |
-| Build + compress artifacts     | `python3 scripts/netctl.py package`                                     |
-| Deploy to all hosts            | `python3 scripts/netctl.py deploy`                                      |
-| Deploy to a subset             | `python3 scripts/netctl.py deploy --hosts boot1 boot2`                  |
-| Deploy without restarting      | `python3 scripts/netctl.py deploy --no-restart`                         |
-| Restart services               | `python3 scripts/netctl.py restart --hosts boot1`                       |
-| Check systemd status           | `python3 scripts/netctl.py status`                                      |
-| Tail logs                      | `python3 scripts/netctl.py logs --lines 200`                            |
-| Follow logs continuously       | `python3 scripts/netctl.py follow --hosts boot1`                        |
-| Open an interactive SSH shell  | `python3 scripts/netctl.py shell boot1`                                 |
-| Run ad-hoc command             | `python3 scripts/netctl.py exec boot2 'df -h /var'`                     |
+```bash
+scripts/deploy_units.sh root@BOOT1 root@BOOT2
+```
 
-Use `--dry-run` with any command to preview the actions before executing them.
+If you need custom flags, update the shell wrappers on the hosts
+(`/usr/local/bin/powerhouse-boot1.sh` and `/usr/local/bin/powerhouse-boot2.sh`).
 
-## 5. End-to-end checklist
+Recommended production flags:
 
-1. `rustup update stable` (ensures compatibility with new compiler releases).
-2. `cargo test --all` locally.
-3. `python3 scripts/netctl.py package` (builds + archives).
-4. `python3 scripts/netctl.py deploy --hosts boot1 boot2`.
-5. `python3 scripts/netctl.py status` to verify systemd health.
-6. `python3 scripts/netctl.py logs --lines 120` to ensure anchors broadcast.
+- `--blob-dir /var/lib/jrocnet/<node>/blobs`
+- `--blob-listen 0.0.0.0:8080`
+- `--max-blob-bytes <bytes>`
+- `--blob-auth-token <token>` (enforces Authorization or x-api-key)
+- `--blob-max-concurrency <n>` (defaults to 128)
+- `--blob-request-timeout-ms <ms>` (defaults to 10000)
+- `--attestation-quorum <n>`
 
-Following the checklist keeps deployments deterministic and prevents the
-"works-on-my-laptop" failures that plagued the previous bash wrappers.
+## 5. Health checks
 
-## 6. Manual systemd rollout (without `netctl`)
+1. Service status: `systemctl is-active powerhouse-bootN.service`
+2. Logs: `journalctl -u powerhouse-bootN.service -n 40 -f`
+   - Expect `QSYS|mod=ANCHOR|evt=STANDBY` then alternating
+     `QSYS|mod=ANCHOR|evt=BROADCAST` and `QSYS|mod=QUORUM|evt=FINALIZED`.
+3. Blob service health: `curl http://<host>:8080/healthz`
+4. Metrics (if enabled): `curl http://<host>:9100`
 
-When you only have one or two ingress VPS nodes, you can deploy manually:
+## 6. Blob/DA endpoints
 
-1. **Build** – `cargo build --release --features net --bin julian`
-2. **Upload** – `scp target/release/julian root@host:/root/julian.new`
-3. **Install** – `ssh root@host 'install -m 0755 /root/julian.new /usr/local/bin/julian && rm /root/julian.new'`
-4. **Install/refresh unit** – copy the template above with the correct `--node-id`, log paths, and `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` bootstraps.
-5. **Reload & restart** – `systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service`
-6. **Tail logs** – `journalctl -u powerhouse-bootN.service -n 40 -f` should show exactly one “waiting for gossip peers…” followed by alternating `broadcasted local anchor` and `finality reached` lines.
-7. **Connectivity check** – from each node run `nc -vz <other-ip> 700{1,2}`. If either direction fails, fix firewall/routing before blaming libp2p.
-
-This mirrors what `scripts/netctl.py` automates, but the explicit steps are handy for quick maintenance windows or bare-metal installs.
-
-## Evidence outbox and stake registry (DA + rollup)
-
-- Availability faults and rollup verification/settlement failures append evidence lines to `evidence_outbox.jsonl`. The HTTP handler writes under the blob service base dir; the CLI defaults to an outbox next to the stake registry unless `--outbox` is provided. Forward or harvest this file for slashing/audit.
-- Stake registry accounts track `{ balance, stake, slashed }`. Fees debit `balance`; rewards credit `balance`; bonding moves `balance -> stake`; slashing zeroes `stake` and sets `slashed = true`.
-- Rollup settlement: HTTP `POST /rollup_settle` or `julian rollup settle|settle-file`. On failure, `RollupFaultEvidence { namespace, commitment, reason, payload? }` is written to the outbox; on success, fees can be split between operator and attesters.
-
-## DA/rollup endpoint quick commands (ops)
-
+- Health: `curl http://<host>:8080/healthz`
 - Submit: `curl -X POST http://<host>:8080/submit_blob -H 'X-Namespace: default' -H 'X-Fee: 10' --data-binary @file.bin`
 - Commitment: `curl http://<host>:8080/commitment/default/<hash>`
 - Sample: `curl "http://<host>:8080/sample/default/<hash>?count=2"`
 - Prove storage: `curl http://<host>:8080/prove_storage/default/<hash>/0`
 - Rollup settle: `curl -X POST http://<host>:8080/rollup_settle -H 'Content-Type: application/json' -d '{"namespace":"default","share_root":"…","payer_pk":"…","fee":1000,"mode":"optimistic"}'`
+
+If `--blob-auth-token` is set, add:
+- `Authorization: Bearer <token>` or `x-api-key: <token>`
+
+## 7. Namespace policies and rate limits
+
+`blob_policy.json` supports per-namespace guards:
+- `max_bytes` (size cap)
+- `min_fee` (fee floor)
+- `max_per_min` (rate limit per namespace)
+
+These are enforced at ingest time and are the first line of defense against
+abuse on public endpoints.

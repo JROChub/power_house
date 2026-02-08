@@ -385,7 +385,7 @@ impl ProofLedger {
 
     /// Ensures the JULIAN genesis anchor is present at the head of the ledger.
     pub fn ensure_genesis(&mut self) {
-        let needs_genesis = self.entries.first().map_or(true, |entry| {
+        let needs_genesis = self.entries.first().is_none_or(|entry| {
             entry.statement.description != JULIAN_GENESIS_STATEMENT
         });
         if needs_genesis {
@@ -408,6 +408,12 @@ impl ProofLedger {
             };
             self.entries.insert(0, genesis_entry);
         }
+    }
+}
+
+impl Default for ProofLedger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -525,7 +531,7 @@ pub fn reconcile_anchors_with_quorum(
             return Err("vote missing public key bytes".to_string());
         }
         let digest = anchor_digest(vote.anchor);
-        let entry = groups.entry(digest).or_insert_with(HashMap::new);
+        let entry = groups.entry(digest).or_default();
         entry
             .entry(vote.public_key.to_vec())
             .or_insert_with(|| vote.anchor.clone());

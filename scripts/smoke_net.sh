@@ -9,6 +9,8 @@ RUSTFLAGS=${RUSTFLAGS:-}
 
 LOG_DIR_A="${SMOKE_LOG_DIR_A:-./logs/smoke_nodeA}"
 LOG_DIR_B="${SMOKE_LOG_DIR_B:-./logs/smoke_nodeB}"
+BLOB_DIR="${SMOKE_BLOB_DIR:-./logs/smoke_blob}"
+BLOB_LISTEN_A="${SMOKE_BLOB_LISTEN_A:-127.0.0.1:8891}"
 PORT_A=7211
 PORT_B=7212
 
@@ -21,20 +23,28 @@ cleanup() {
 
 trap cleanup EXIT
 
-rm -rf "$LOG_DIR_A" "$LOG_DIR_B"
-mkdir -p "$LOG_DIR_A" "$LOG_DIR_B"
+rm -rf "$LOG_DIR_A" "$LOG_DIR_B" "$BLOB_DIR"
+mkdir -p "$LOG_DIR_A" "$LOG_DIR_B" "$BLOB_DIR"
 
 run_node() {
   local node_id=$1
   local port=$2
   local log_dir=$3
   local out_file=$4
+  local blob_listen=${5:-}
+  local blob_args=()
+  blob_args+=(--blob-dir "$BLOB_DIR")
+  if [[ -n "$blob_listen" ]]; then
+    blob_args+=(--blob-listen "$blob_listen")
+  fi
   stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start \
     --node-id "$node_id" \
     --log-dir "$log_dir" \
     --listen "/ip4/127.0.0.1/tcp/$port" \
     --broadcast-interval 1000 \
     --quorum 2 \
+    --attestation-quorum 1 \
+    "${blob_args[@]}" \
     --key "ed25519://smoke-$node_id" \
     >"$out_file" 2>&1 &
   echo $!
@@ -43,7 +53,7 @@ run_node() {
 TMP_A="$(mktemp)"
 TMP_B="$(mktemp)"
 
-PID_A=$(run_node nodeA "$PORT_A" "$LOG_DIR_A" "$TMP_A")
+PID_A=$(run_node nodeA "$PORT_A" "$LOG_DIR_A" "$TMP_A" "$BLOB_LISTEN_A")
 sleep 2
 
 stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start \
@@ -53,23 +63,55 @@ stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start
   --bootstrap "/ip4/127.0.0.1/tcp/$PORT_A" \
   --broadcast-interval 1000 \
   --quorum 2 \
+  --attestation-quorum 1 \
+  --blob-dir "$BLOB_DIR" \
   --key "ed25519://smoke-nodeB" \
   >"$TMP_B" 2>&1 &
 PID_B=$!
 
-sleep 6
-
-cleanup
-
-check_output() {
-  local file=$1
-  grep -q "listening on" "$file" || { echo "missing listen confirmation in $file"; return 1; }
-  grep -q "broadcasted local anchor" "$file" || { echo "missing broadcast in $file"; return 1; }
-  grep -q "finality reached" "$file" || { echo "missing finality in $file"; return 1; }
+wait_for_port() {
+  local port=$1
+  for _ in $(seq 1 120); do
+    if ss -lnt 2>/dev/null | grep -q ":${port}"; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  return 1
 }
 
-check_output "$TMP_A"
-check_output "$TMP_B"
+wait_for_log() {
+  local file=$1
+  local pattern=$2
+  for _ in $(seq 1 120); do
+    if grep -q "$pattern" "$file"; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  return 1
+}
+
+wait_for_port "$PORT_A" || { echo "port $PORT_A not listening"; tail -n 50 "$TMP_A" || true; exit 1; }
+wait_for_port "$PORT_B" || { echo "port $PORT_B not listening"; tail -n 50 "$TMP_B" || true; exit 1; }
+
+SAMPLE_BLOB="${SMOKE_SAMPLE_BLOB:-$ROOT_DIR/sample.bin}"
+if [[ ! -f "$SAMPLE_BLOB" ]]; then
+  echo "missing sample blob: $SAMPLE_BLOB"
+  exit 1
+fi
+curl -sS -X POST "http://${BLOB_LISTEN_A}/submit_blob" \
+  -H 'X-Namespace: default' \
+  -H 'X-Fee: 1' \
+  --data-binary @"$SAMPLE_BLOB" \
+  >/dev/null
+
+wait_for_log "$TMP_A" "QSYS|mod=ANCHOR|evt=BROADCAST" || { echo "missing broadcast in $TMP_A"; tail -n 50 "$TMP_A" || true; exit 1; }
+wait_for_log "$TMP_B" "QSYS|mod=ANCHOR|evt=BROADCAST" || { echo "missing broadcast in $TMP_B"; tail -n 50 "$TMP_B" || true; exit 1; }
+wait_for_log "$TMP_A" "QSYS|mod=QUORUM|evt=FINALIZED" || { echo "missing finality in $TMP_A"; tail -n 50 "$TMP_A" || true; exit 1; }
+wait_for_log "$TMP_B" "QSYS|mod=QUORUM|evt=FINALIZED" || { echo "missing finality in $TMP_B"; tail -n 50 "$TMP_B" || true; exit 1; }
+
+cleanup
 
 rm -f "$TMP_A" "$TMP_B"
 

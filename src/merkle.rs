@@ -47,7 +47,7 @@ pub fn merkle_root(leaves: &[TranscriptDigest]) -> TranscriptDigest {
     }
     let mut level: Vec<TranscriptDigest> = leaves.iter().map(hash_leaf).collect();
     while level.len() > 1 {
-        let mut next = Vec::with_capacity((level.len() + 1) / 2);
+        let mut next = Vec::with_capacity(level.len().div_ceil(2));
         for chunk in level.chunks(2) {
             if chunk.len() == 1 {
                 next.push(chunk[0]);
@@ -104,7 +104,7 @@ pub fn build_proof(leaves: &[TranscriptDigest], index: usize) -> Option<MerklePr
                 left: true,
             });
         }
-        let mut next = Vec::with_capacity((layer.len() + 1) / 2);
+        let mut next = Vec::with_capacity(layer.len().div_ceil(2));
         for chunk in layer.chunks(2) {
             if chunk.len() == 1 {
                 next.push(chunk[0]);
