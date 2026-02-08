@@ -91,7 +91,7 @@ pub fn build_proof(leaves: &[TranscriptDigest], index: usize) -> Option<MerklePr
     let mut idx = index;
     let mut path = Vec::new();
     while layer.len() > 1 {
-        if idx % 2 == 0 {
+        if idx.is_multiple_of(2) {
             if idx + 1 < layer.len() {
                 path.push(MerkleProofNode {
                     sibling: layer[idx + 1],
