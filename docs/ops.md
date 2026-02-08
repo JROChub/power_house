@@ -1,5 +1,5 @@
 # Power-House Operations Guide
-Doc version: v0.1.52
+Doc version: v0.1.53
 
 This guide replaces the brittle bootstrap scripts with a single declarative
 workflow that works on any VPS (including stock Ubuntu/Debian images) and

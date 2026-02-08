@@ -1,5 +1,11 @@
 ﻿# Release Notes
 
+## v0.1.53 — 2026-02-08
+
+### Changed
+- Bumped crate/docs to `0.1.53` and synchronized README, ops notes, training binder, mainnet launch notes, and Book of Power version stamps.
+- Updated schema examples to reflect the new crate version.
+
 ## v0.1.49 — 2025-11-11
 
 ### Changed

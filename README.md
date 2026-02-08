@@ -11,7 +11,7 @@ Badges
 Author: lexluger
 Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
 Site:   [https://jrocnet.com](https://jrocnet.com)
-Last update: 11/24/2025
+Last update: 02/08/2026
 
 Need the full operations guide?
 Read the “Book of Power — Condensed Graviton Edition” (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
@@ -400,7 +400,7 @@ Stake-backed example:
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
   "fold_digest": "c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe",
-  "crate_version": "0.1.52",
+  "crate_version": "0.1.53",
   "entries": [
     {
       "statement": "JULIAN::GENESIS",

@@ -1,5 +1,5 @@
 # POWER_HOUSE MAINNET LAUNCH – STRATEGIC EXECUTION GUIDE
-Doc version: v0.1.52
+Doc version: v0.1.53
 
 This guide promotes your current two‑boot topology (boot1, boot2) to an open, public mainnet without manual peer approvals. It preserves uptime, removes trust boundaries, and keeps the network observable and maintainable.
 
