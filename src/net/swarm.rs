@@ -168,11 +168,9 @@ impl NetConfig {
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
         let stake_registry_path = blob_dir.as_ref().map(|dir| dir.join("stake_registry.json"));
-        let blob_max_concurrency =
-            blob_max_concurrency.unwrap_or(DEFAULT_BLOB_MAX_CONCURRENCY);
-        let blob_request_timeout = Duration::from_millis(
-            blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS),
-        );
+        let blob_max_concurrency = blob_max_concurrency.unwrap_or(DEFAULT_BLOB_MAX_CONCURRENCY);
+        let blob_request_timeout =
+            Duration::from_millis(blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS));
         Self {
             node_id,
             listen_addr,
@@ -571,12 +569,10 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         if let Some(max_per_min) = rule.max_per_min {
             if max_per_min > 0 {
                 let mut limits = cfg.rate_limits.lock().await;
-                let entry = limits
-                    .entry(namespace.clone())
-                    .or_insert(RateState {
-                        window_start: Instant::now(),
-                        count: 0,
-                    });
+                let entry = limits.entry(namespace.clone()).or_insert(RateState {
+                    window_start: Instant::now(),
+                    count: 0,
+                });
                 if entry.window_start.elapsed() >= Duration::from_secs(60) {
                     entry.window_start = Instant::now();
                     entry.count = 0;
@@ -1547,7 +1543,10 @@ async fn broadcast_local_anchor(
     }
     *last_payload = payload;
     *last_publish = Some(Instant::now());
-    println!("QSYS|mod=ANCHOR|evt=BROADCAST|entries={}", ledger.entries.len());
+    println!(
+        "QSYS|mod=ANCHOR|evt=BROADCAST|entries={}",
+        ledger.entries.len()
+    );
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
             *broadcast_counter = broadcast_counter.saturating_add(1);

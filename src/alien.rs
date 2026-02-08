@@ -385,9 +385,10 @@ impl ProofLedger {
 
     /// Ensures the JULIAN genesis anchor is present at the head of the ledger.
     pub fn ensure_genesis(&mut self) {
-        let needs_genesis = self.entries.first().is_none_or(|entry| {
-            entry.statement.description != JULIAN_GENESIS_STATEMENT
-        });
+        let needs_genesis = self
+            .entries
+            .first()
+            .is_none_or(|entry| entry.statement.description != JULIAN_GENESIS_STATEMENT);
         if needs_genesis {
             let genesis_entry = LedgerEntry {
                 statement: Statement {

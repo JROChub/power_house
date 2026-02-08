@@ -9,8 +9,6 @@
 power_house delivers deterministically reproducible multilinear sum-check proofs, deterministic PRNG wiring, and quorum ledger tooling for transparent transcript auditing—implemented end-to-end in Rust.
 
 Author: lexluger
-Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
-Site:   [https://jrocnet.com](https://jrocnet.com)
 Last update: 02/08/2026
 
 Need the full operations guide?
