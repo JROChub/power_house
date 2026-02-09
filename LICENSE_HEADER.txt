@@ -1,0 +1,2 @@
+// SPDX-License-Identifier: MIT OR BSD-2-Clause
+// Copyright (c) 2026 Julian Christian Sanders

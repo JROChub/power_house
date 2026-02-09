@@ -183,12 +183,10 @@ Note: On systemd-managed hosts using the provided template, logs are under `/var
 
 ## License
 
-power_house is dual-licensed under either of:
+power_house is dual-licensed under the MIT License OR the BSD 2-Clause License.
 
-* MIT License
-* BSD 2-Clause License
-
-See `LICENSE` for the full text.
+See `LICENSE` for the combined text, `LICENSES/` for per-license copies, and
+`NOTICE` for project attribution.
 
 ## Overview
 
