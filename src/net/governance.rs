@@ -202,16 +202,8 @@ impl MultisigPolicy {
     fn persist(&self) -> Result<(), PolicyUpdateError> {
         let state = MultisigState {
             threshold: self.threshold,
-            signers: self
-                .signers
-                .iter()
-                .map(|vk| encode_public_key_base64(vk))
-                .collect(),
-            members: self
-                .members
-                .iter()
-                .map(|vk| encode_public_key_base64(vk))
-                .collect(),
+            signers: self.signers.iter().map(encode_public_key_base64).collect(),
+            members: self.members.iter().map(encode_public_key_base64).collect(),
         };
         let canonical = serde_json::to_string_pretty(&state).unwrap();
         fs::write(&self.state_path, canonical).map_err(|err| PolicyUpdateError::Io(err.to_string()))
@@ -380,11 +372,7 @@ impl StakePolicy {
         let state = StakeState {
             threshold: self.threshold,
             bond_threshold: self.bond_threshold,
-            signers: self
-                .signers
-                .iter()
-                .map(|vk| encode_public_key_base64(vk))
-                .collect(),
+            signers: self.signers.iter().map(encode_public_key_base64).collect(),
             entries,
         };
         let pretty = serde_json::to_string_pretty(&state)
@@ -469,7 +457,7 @@ impl MembershipPolicy for StakePolicy {
         guard
             .values()
             .filter(|account| account.bond >= self.bond_threshold && !account.slashed)
-            .map(|account| account.key.clone())
+            .map(|account| account.key)
             .collect()
     }
 
@@ -515,7 +503,7 @@ impl MembershipPolicy for StakePolicy {
                 account.bond = 0;
             })
             .or_insert(StakeAccount {
-                key: key.clone(),
+                key: *key,
                 bond: 0,
                 slashed: true,
             });

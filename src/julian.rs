@@ -557,6 +557,8 @@ pub fn reconcile_anchors_with_quorum(
     Err("no anchor reached required quorum".to_string())
 }
 
+type Blake2b256 = blake2::Blake2b<U32>;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -886,4 +888,3 @@ mod tests {
         assert!(reconcile_anchors_with_quorum(&votes, 2).is_err());
     }
 }
-type Blake2b256 = blake2::Blake2b<U32>;

@@ -21,7 +21,7 @@ fn build_high_dimensional(field: &Field, num_vars: usize) -> MultilinearPolynomi
             acc = field.add(acc, field.mul(coef, field.mul(a, b)));
         }
         if num_vars >= 3 {
-            let a = ((idx >> 0) & 1) as u64;
+            let a = (idx & 1) as u64;
             let b = ((idx >> 1) & 1) as u64;
             let c = ((idx >> 2) & 1) as u64;
             let triple = field.mul(a, field.mul(b, c));

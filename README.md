@@ -1,6 +1,6 @@
 # Power-House
 
-[![git](https://img.shields.io/badge/git-JROChub%2Fpower__house-6f2da8?logo=github&logoColor=white)](https://github.com/JROChub/power_house)
+[![git](https://img.shields.io/badge/git-power__house-6f2da8?logo=github&logoColor=white)](https://github.com/JROChub/power_house)
 [![tests](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?label=tests&logo=github&logoColor=white&color=39ff14)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/power_house?label=crates.io&color=blue)](https://crates.io/crates/power_house)
 [![docs.rs](https://img.shields.io/docsrs/power_house?label=docs.rs)](https://docs.rs/power_house)
