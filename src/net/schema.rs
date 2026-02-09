@@ -167,11 +167,7 @@ impl AnchorJson {
             .iter()
             .map(|entry| AnchorEntryJson {
                 statement: entry.statement.clone(),
-                hashes: entry
-                    .hashes
-                    .iter()
-                    .map(digest_to_hex)
-                    .collect(),
+                hashes: entry.hashes.iter().map(digest_to_hex).collect(),
                 merkle_root: Some(digest_to_hex(&entry.merkle_root)),
             })
             .collect();
