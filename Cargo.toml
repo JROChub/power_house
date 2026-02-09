@@ -44,7 +44,7 @@ categories = [
     "algorithms",
     "mathematics",
 ]
-license-file = "LICENSE"
+license = "MIT OR BSD-2-Clause"
 
 [badges.maintenance]
 status = "actively-developed"

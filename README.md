@@ -183,12 +183,10 @@ Note: On systemd-managed hosts using the provided template, logs are under `/var
 
 ## License
 
-power_house ships under the Alien Public License 3.0 (APL-3.0):
+power_house is dual-licensed under either of:
 
-* Keep provenance: ship source, logs, and proof transcripts with every redistribution.
-* Attribute “power_house — JULIAN Protocol” in docs, consoles, and research.
-* Disclose fixes, audits, and benchmark data within 30 days of discovery.
-* Ask first for commercial deployment (SaaS, resale, embedded products).
+* MIT License
+* BSD 2-Clause License
 
 See `LICENSE` for the full text.
 
