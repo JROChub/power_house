@@ -35,9 +35,9 @@ The JULIAN Protocol is implemented in the `power_house` crate. The key architect
 |-----------|----------------|-----------|
 | `StreamingPolynomial` | On-demand evaluation of multilinear polynomials without allocating the entire hypercube | `src/streaming.rs` |
 | `GeneralSumProof` | Non-interactive sum-check prover/verifier with deterministic Fiat–Shamir transcripts | `src/sumcheck.rs` |
-| `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/alien.rs` |
-| Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/alien.rs` |
-| Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/alien.rs` |
+| `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/julian.rs` |
+| Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/julian.rs` |
+| Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/julian.rs` |
 | Tooling | Examples for benchmarking (`scale_sumcheck`), chaining (`mega_sumcheck`), hashing (`hash_pipeline`), and log verification (`verify_logs`) | `examples/*.rs` |
 
 The prover workflow is:
@@ -88,7 +88,7 @@ exposed alongside the hash list, enabling compact inclusion proofs (`julian node
 
 ## 4. Ledger Anchors and Finality
 
-A **ledger anchor** is formalised in `src/alien.rs` as:
+A **ledger anchor** is formalised in `src/julian.rs` as:
 
 - `EntryAnchor { statement: String, hashes: Vec<TranscriptDigest>, merkle_root: TranscriptDigest }`
 - `LedgerAnchor { entries: Vec<EntryAnchor> }`
@@ -124,7 +124,7 @@ library, the protocol remains lightweight and deterministic across platforms.
   evaluator closure `Fn(usize) -> u64`.
 - **Sum-check folding** (`src/sumcheck.rs`): `GeneralSumProof::prove_streaming_with_stats` records
   per-round timings, claimed sums, and challenges; `verify_general_sum_streaming` replays the transcript.
-- **Ledger** (`src/alien.rs`): accepts `ProofKind::General` and `ProofKind::StreamingGeneral`, emits logs,
+- **Ledger** (`src/julian.rs`): accepts `ProofKind::General` and `ProofKind::StreamingGeneral`, emits logs,
   maintains in-memory hashes, and exposes `LedgerAnchor` structures.
 - **Logging** (`src/data.rs`, `src/io.rs`): ASCII output with transcript, sums, final value, and hash.
 - **Merkle accumulation** (`src/merkle.rs`): every entry records a BLAKE2b-256 Merkle root, allowing

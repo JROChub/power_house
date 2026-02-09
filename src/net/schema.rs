@@ -1,7 +1,7 @@
 #![cfg(feature = "net")]
 
 use crate::{
-    alien::JULIAN_GENESIS_STATEMENT, compute_fold_digest, data::digest_from_hex,
+    julian::JULIAN_GENESIS_STATEMENT, compute_fold_digest, data::digest_from_hex,
     data::digest_to_hex, AnchorMetadata, EntryAnchor, LedgerAnchor,
 };
 use serde::{Deserialize, Serialize};

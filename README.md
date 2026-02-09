@@ -226,12 +226,12 @@ Interactive proof techniques underpin modern verifiable compute and consensus. T
 * **Consensus Primitive**
   Quorum-based agreement logic reflecting core BFT ideas.
 
-* **ALIEN Ledger Blueprint**
+* **JULIAN Ledger Blueprint**
   A scaffold that unifies proofs, deterministic randomness, and anchor reconciliation.
 
 ## CLI Workflow
 
-The `julian` binary exposes local ledger tooling and the optional `JROC-NET` networking stack.
+The `julian` binary exposes local ledger tooling and the optional Power-House networking stack.
 
 ### Local ledger (`julian node …`)
 

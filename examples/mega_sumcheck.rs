@@ -1,5 +1,5 @@
 use power_house::{
-    alien::{Proof, ProofKind, ProofLedger, Statement},
+    julian::{Proof, ProofKind, ProofLedger, Statement},
     ChainedSumProof, Field, GeneralSumProof, MultilinearPolynomial, ProofStats,
 };
 use std::fs;
