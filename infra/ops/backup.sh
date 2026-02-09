@@ -2,7 +2,7 @@
 set -euo pipefail
 
 NODE_ID=${PH_NODE_ID:-node}
-BACKUP_DIR=${PH_BACKUP_DIR:-/var/backups/jrocnet}
+BACKUP_DIR=${PH_BACKUP_DIR:-/var/backups/powerhouse}
 SOURCES=${PH_BACKUP_SOURCES:-}
 RETENTION_DAYS=${PH_BACKUP_RETENTION_DAYS:-14}
 

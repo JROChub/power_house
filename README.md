@@ -37,8 +37,8 @@ julian net start \
   --node-id <your_name> \
   --log-dir ./logs/<your_name> \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://<seed>
@@ -115,10 +115,10 @@ You’ll be prompted for the passphrase at startup.
 
 Bootstrap multiaddrs:
 
-* `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
-* `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+* `/ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+* `/ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
-`boot1.jrocnet.com` and `boot2.jrocnet.com` resolve to the current public ingress addresses.
+`137.184.33.2` and `146.190.126.101` resolve to the current public ingress addresses.
 Update DNS—not this README—if underlying IPs move.
 
 Local smoke test (two-node quorum; ports 7211/7212):
@@ -179,7 +179,7 @@ julian node reconcile ./logs/boot1 boot2.anchor.txt 2
 julian node reconcile ./logs/boot2 boot1.anchor.txt 2
 ```
 
-Note: On systemd-managed hosts using the provided template, logs are under `/var/lib/jrocnet/<node>/logs` (for example, `/var/lib/jrocnet/boot1/logs`). Adjust the commands accordingly on your VPS.
+Note: On systemd-managed hosts using the provided template, logs are under `/var/lib/powerhouse/<node>/logs` (for example, `/var/lib/powerhouse/boot1/logs`). Adjust the commands accordingly on your VPS.
 
 ## License
 
@@ -325,7 +325,7 @@ Treat public ingress nodes as long-lived services.
 
 1. Build: `cargo build --release --features net --bin julian`
 2. Ship:  `scp target/release/julian root@host:/root/julian.new && sudo install -m 0755 /root/julian.new /usr/local/bin/julian`
-3. Unit: copy the systemd template from `docs/ops.md`; set node-specific `/etc/jrocnet/powerhouse-bootN.env` and shared `/etc/jrocnet/powerhouse-common.env`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `PH_BOOTSTRAPS` so the service dials the right ingress even if DNS lags.
+3. Unit: copy the systemd template from `docs/ops.md`; set node-specific `/etc/powerhouse/powerhouse-bootN.env` and shared `/etc/powerhouse/powerhouse-common.env`; use explicit `/ip4/<peer-ip>/tcp/<port>/p2p/<peer-id>` for `PH_BOOTSTRAPS` so the service dials the right ingress even if DNS lags.
 4. Start: `systemctl daemon-reload && systemctl enable --now powerhouse-bootN.service`
 5. Health: `journalctl -u powerhouse-bootN.service -n 40 -f` → see `QSYS|mod=ANCHOR|evt=STANDBY` then alternating `QSYS|mod=ANCHOR|evt=BROADCAST` and `QSYS|mod=QUORUM|evt=FINALIZED`.
 6. Reachability: from each host `nc -vz <other-ip> 7001` / `7002`; failures imply firewall/routing, not libp2p.
@@ -377,7 +377,7 @@ Stake-backed example:
 
 ## Membership Rotation Checklist
 
-* Fetch current descriptor (e.g., `scp root@boot1:/etc/jrocnet/governance.json ./`).
+* Fetch current descriptor (e.g., `scp root@boot1:/etc/powerhouse/governance.json ./`).
 * Edit offline; confirm the new membership list.
 * Multisig: craft a `GovernanceUpdate` with the new members; collect ≥ threshold ed25519 signatures.
 * Stake: embed bond deposits and explicit slashes in the update metadata; conflicting anchors are auto-slashed at runtime—review and re-affirm the registry after incidents.
@@ -388,8 +388,8 @@ Stake-backed example:
 
 ```json
 {
-  "schema": "jrocnet.anchor.v1",
-  "network": "JROC-NET",
+  "schema": "mfenx.powerhouse.anchor.v1",
+  "network": "MFENX Power-House Network",
   "node_id": "nodeA",
   "genesis": "JULIAN::GENESIS",
   "challenge_mode": "mod",
@@ -421,7 +421,7 @@ Stake-backed example:
 
 ```json
 {
-  "schema": "jrocnet.envelope.v1",
+  "schema": "mfenx.powerhouse.envelope.v1",
   "public_key": "<base64-ed25519-pk>",
   "node_id": "nodeA",
   "payload": "<base64-raw-json-of-anchor>",
@@ -431,20 +431,20 @@ Stake-backed example:
 
 Validation steps: ensure the schema matches, base64-decode the payload, verify the ed25519 signature, parse the embedded anchor JSON, then reconcile with local logs.
 
-## JROC-NET Public Net (current snapshot)
+## MFENX Power-House Network Public Net (current snapshot)
 
 1. Topics & networking
 
-   * Gossipsub topic: `jrocnet/anchors/v1`.
+   * Gossipsub topic: `mfenx/powerhouse/anchors/v1`.
    * Bootstrap multiaddrs: publish `/ip4/<BOOT>/tcp/7001/p2p/<PEER_ID>` per public node (or DNS4 equivalents).
 
 2. Anchor schema
 
-   * Machine-readable anchors follow `jrocnet.anchor.v1` (see schema above).
+   * Machine-readable anchors follow `mfenx.powerhouse.anchor.v1` (see schema above).
 
 3. Signed envelopes
 
-   * `jrocnet.envelope.v1` provides tamper-evident anchor broadcasts (ed25519 over raw anchor JSON).
+   * `mfenx.powerhouse.envelope.v1` provides tamper-evident anchor broadcasts (ed25519 over raw anchor JSON).
 
 4. CLI flags / behavior
 
@@ -464,7 +464,7 @@ Validation steps: ensure the schema matches, base64-decode the payload, verify t
    * Prometheus `--metrics` endpoint exports:
      `anchors_received_total`, `anchors_verified_total`, `invalid_envelopes_total`, `lrucache_evictions_total`, `finality_events_total`, `gossipsub_rejects_total`.
 
-   * Starter Grafana dashboard: `contrib/grafana/jroc_net_dashboard.json`.
+   * Starter Grafana dashboard: `contrib/grafana/mfenx_powerhouse_dashboard.json`.
 
 8. Launch playbook (community join)
 
@@ -474,8 +474,8 @@ julian net start \
   --node-id <your_name> \
   --log-dir ./logs/<your_name> \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
   --key ed25519://<seed>
@@ -483,8 +483,8 @@ julian net start \
 
 Bootstrap multiaddrs (A2 reference):
 
-* `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
-* `/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+* `/ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
+* `/ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
 
 The testnet keeps every transcript, proof, and anchor transparent so auditors can replay history end-to-end.
 

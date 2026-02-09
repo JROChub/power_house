@@ -2,7 +2,7 @@ Power-House Protocol Manual
 ===========================
 Version: v0.1.54
 Crate: power_house v0.1.54
-Scope: deterministic proof ledger, DA commitments, and JROC-NET operations.
+Scope: deterministic proof ledger, DA commitments, and MFENX Power-House Network operations.
 
 Table of Contents
 -----------------
@@ -13,7 +13,7 @@ Table of Contents
 5. Ledger logs and anchors
 6. Deterministic randomness
 7. Data availability commitments and evidence
-8. Network operations (JROC-NET)
+8. Network operations (MFENX Power-House Network)
 9. Troubleshooting
 10. Glossary
 
@@ -29,7 +29,7 @@ Reference commands:
 - `cargo run --example hash_pipeline` must emit the fold digest above and a reduced field value of 219.
 - Example logs are staged under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
   On hosts without `/tmp`, set `POWER_HOUSE_TMP=/path/to/workdir`.
-- `julian node anchor /tmp/power_house_anchor_a` should print `JROC-NET` lines including the genesis digest.
+- `julian node anchor /tmp/power_house_anchor_a` should print `MFENX Power-House Network` lines including the genesis digest.
 
 Keep the fold digest with exported anchors (comment or `anchor_meta.json`).
 
@@ -41,7 +41,7 @@ Binary framing specification (BLAKE2b-256, domain-separated):
 transcript_bytes = concat(u64::to_be_bytes(challenge_i) for each entry in transcript)
 round_sum_bytes  = concat(u64::to_be_bytes(sum_i) for each entry in round_sums)
 hasher = BLAKE2b-256()
-hasher.update(b"JROC_TRANSCRIPT")
+hasher.update(b"MFENX_TRANSCRIPT")
 hasher.update(len(transcript_bytes) as u64_be)
 hasher.update(transcript_bytes)
 hasher.update(len(round_sum_bytes) as u64_be)
@@ -63,10 +63,10 @@ digest = hasher.finalize()
 
 4. Domain tags
 --------------
-- `JROC_TRANSCRIPT` — transcript hashing
-- `JROC_ANCHOR` — ledger fold digest
-- `JROC_CHALLENGE` — Fiat–Shamir challenge derivation
-- `JROC_MERKLE` — Merkle root hashing
+- `MFENX_TRANSCRIPT` — transcript hashing
+- `MFENX_ANCHOR` — ledger fold digest
+- `MFENX_CHALLENGE` — Fiat–Shamir challenge derivation
+- `MFENX_MERKLE` — Merkle root hashing
 
 5. Ledger logs and anchors
 --------------------------
@@ -76,12 +76,12 @@ digest = hasher.finalize()
 - When exporting anchors, store the fold digest next to the anchor JSON.
 
 Schema references:
-- Anchor schema: `jrocnet.anchor.v1` (see README)
-- Envelope schema: `jrocnet.envelope.v1` (see README)
+- Anchor schema: `mfenx.powerhouse.anchor.v1` (see README)
+- Envelope schema: `mfenx.powerhouse.envelope.v1` (see README)
 
 6. Deterministic randomness
 ---------------------------
-- Challenge derivation uses BLAKE2b-256 with `JROC_CHALLENGE` domain tag.
+- Challenge derivation uses BLAKE2b-256 with `MFENX_CHALLENGE` domain tag.
 - `simple_prng` is deprecated; `prng.rs` implements the deterministic stream.
 - Current derivation uses `next_u64() % p`. For small primes, use the documented rejection sampler.
 
@@ -93,7 +93,7 @@ Schema references:
 - Evidence is appended to `evidence_outbox.jsonl` and used for slashing/reconciliation.
 - Rollup settlement failures emit `RollupFaultEvidence` and are stored in the same outbox.
 
-8. Network operations (JROC-NET)
+8. Network operations (MFENX Power-House Network)
 --------------------------------
 - Local smoke test: `./scripts/smoke_net.sh` (confirms broadcast + finality under DA gating).
 - Metrics (if enabled): `curl http://<host>:9100`
@@ -108,7 +108,7 @@ Schema references:
 ------------------
 - Missing logs: verify `--log-dir` exists and is writable.
 - DA quorum failures: confirm blobs exist and QC files are written under the blob dir.
-- Rate-limit errors: check `/etc/jrocnet/blob_policy.json` (`max_per_min`).
+- Rate-limit errors: check `/etc/powerhouse/blob_policy.json` (`max_per_min`).
 - Auth failures: verify `--blob-auth-token` and request headers.
 - Anchor divergence: verify the same log files and deterministic keys on each node.
 

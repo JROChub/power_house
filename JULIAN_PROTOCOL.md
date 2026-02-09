@@ -1,4 +1,4 @@
-JROC NET: The JULIAN Protocol Network
+MFENX Power-House Network: The JULIAN Protocol Network
 Version 0.1.54 — February 2026
 
 
@@ -79,7 +79,7 @@ This approach has three properties:
 3. **Append-only anchoring** – Transcript hashes are chained in an ordered vector; removing or reordering
    entries is detectable because the index in the chain no longer matches the statement list.
 
-The BLAKE2b-256 domain tag `JROC_TRANSCRIPT` ensures transcripts, anchor folds, and challenge
+The BLAKE2b-256 domain tag `MFENX_TRANSCRIPT` ensures transcripts, anchor folds, and challenge
 derivations remain distinct contexts while sharing the same primitive.
 
 Every ledger entry also stores a Merkle root computed over its transcript digests. The root is
@@ -196,7 +196,7 @@ per-round timings for each link in the chain.
 To support distributed reconciliation, the crate now ships an optional networking module gated by the
 `net` feature flag:
 
-- `net::schema` – serde-compatible structs for `jrocnet.anchor.v1` and `jrocnet.envelope.v1`, plus
+- `net::schema` – serde-compatible structs for `mfenx.powerhouse.anchor.v1` and `mfenx.powerhouse.envelope.v1`, plus
   conversion helpers to and from `LedgerAnchor`.
 - `net::sign` – ed25519 key loading, deterministic seed derivation, base64 helpers, and signature
   verification (backed by `ed25519-dalek`).
@@ -231,11 +231,11 @@ The networking layer now incorporates several safeguards:
 - **Identity hygiene** – Operators may supply passphrase-protected identity files (`--identity`),
   keeping long-lived signing keys off disk in plaintext while still deriving deterministic peer IDs.
 
-## 12. JROC-NET Public Testnet Plan
+## 12. MFENX Power-House Network Public Testnet Plan
 
 The A2 testnet targets transparent, tamper-evident anchor gossip:
 
-1. **Topics & behaviour** – Gossip on `jrocnet/anchors/v1`, optional ping/peer topics for liveness;
+1. **Topics & behaviour** – Gossip on `mfenx/powerhouse/anchors/v1`, optional ping/peer topics for liveness;
    Kademlia DHT plus Identify for peer metadata.
 2. **Genesis anchoring** – Every broadcast anchor starts with `JULIAN::GENESIS`; the JSON schema
    enforces this invariant alongside the network identifier.
@@ -255,7 +255,7 @@ The A2 testnet targets transparent, tamper-evident anchor gossip:
 
 ## 13. Genesis Commitment
 
-The JROC-NET A2 testnet anchors every ledger to a fixed genesis bundle:
+The MFENX Power-House Network A2 testnet anchors every ledger to a fixed genesis bundle:
 
 - `statement: JULIAN::GENESIS` → `17942395924573474124`
 - `statement: Dense polynomial proof` → `1560461912026565426`
@@ -270,6 +270,6 @@ values above before accepting finality.
 
 The JULIAN Protocol now spans two layers: a dependency-free proof/ledger core and an optional
 libp2p-based networking shell. Deterministic transcripts, append-only anchors, and quorum
-reconciliation continue to guarantee auditability, while the JROC-NET tooling demonstrates how those
+reconciliation continue to guarantee auditability, while the MFENX Power-House Network tooling demonstrates how those
 primitives generalise to a public testnet. Future work will focus on richer observability, stronger
 hash modes, and commitment layers that compress anchor histories even further.

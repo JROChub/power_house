@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SERVICE=${PH_SERVICE_NAME:-powerhouse-boot}
-RELEASE_ROOT=${PH_RELEASE_ROOT:-/opt/jrocnet/releases}
+RELEASE_ROOT=${PH_RELEASE_ROOT:-/opt/powerhouse/releases}
 
 if [[ ! -L "$RELEASE_ROOT/previous" ]]; then
   echo "No previous release found" >&2

@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "power_house"
-version = "0.1.56"
+version = "0.1.57"
 authors = ["mfenx LLC"]
 build = false
 include = [

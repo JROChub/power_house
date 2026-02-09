@@ -1,4 +1,4 @@
 {
   "backend": "stake",
-  "state_path": "/etc/jrocnet/stake_state.json"
+  "state_path": "/etc/powerhouse/stake_state.json"
 }

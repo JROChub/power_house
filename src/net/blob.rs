@@ -7,16 +7,16 @@ use sha2::{Digest, Sha256};
 use std::fmt;
 
 /// Schema identifier for blob payloads.
-pub const SCHEMA_BLOB: &str = "jrocnet.blob.v1";
+pub const SCHEMA_BLOB: &str = "mfenx.powerhouse.blob.v1";
 /// Gossip topic for blob envelopes.
-pub const TOPIC_BLOBS: &str = "jrocnet/blobs/v1";
+pub const TOPIC_BLOBS: &str = "mfenx/powerhouse/blobs/v1";
 
 /// JSON payload representing a submitted blob.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BlobJson {
-    /// Schema identifier (`jrocnet.blob.v1`).
+    /// Schema identifier (`mfenx.powerhouse.blob.v1`).
     pub schema: String,
-    /// Network identifier (`JROC-NET`).
+    /// Network identifier (`MFENX-POWERHOUSE`).
     pub network: String,
     /// Logical namespace for the blob.
     pub namespace: String,
@@ -108,7 +108,7 @@ impl BlobJson {
 /// Signed envelope carrying a blob payload.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BlobEnvelope {
-    /// Schema identifier (`jrocnet.envelope.v1`).
+    /// Schema identifier (`mfenx.powerhouse.envelope.v1`).
     pub schema: String,
     /// Envelope schema version (major).
     #[serde(default = "default_schema_version")]

@@ -37,7 +37,7 @@ use serde::Deserialize;
 #[cfg(feature = "net")]
 use std::collections::HashMap;
 
-const NETWORK_ID: &str = "JROC-NET";
+const NETWORK_ID: &str = "MFENX-POWERHOUSE";
 
 fn fatal(message: &str) -> ! {
     eprintln!("{message}");

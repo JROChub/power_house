@@ -8,7 +8,7 @@ fi
 
 BIN_SRC="$1"
 SERVICE=${PH_SERVICE_NAME:-powerhouse-boot}
-RELEASE_ROOT=${PH_RELEASE_ROOT:-/opt/jrocnet/releases}
+RELEASE_ROOT=${PH_RELEASE_ROOT:-/opt/powerhouse/releases}
 
 if [[ ! -f "$BIN_SRC" ]]; then
   echo "Binary not found: $BIN_SRC" >&2
