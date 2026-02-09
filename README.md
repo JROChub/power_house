@@ -183,14 +183,10 @@ Note: On systemd-managed hosts using the provided template, logs are under `/var
 
 ## License
 
-power_house ships under the Alien Public License 3.0 (APL-3.0):
+power_house is dual-licensed under the MIT License OR the BSD 2-Clause License.
 
-* Keep provenance: ship source, logs, and proof transcripts with every redistribution.
-* Attribute “power_house — JULIAN Protocol” in docs, consoles, and research.
-* Disclose fixes, audits, and benchmark data within 30 days of discovery.
-* Ask first for commercial deployment (SaaS, resale, embedded products).
-
-See `LICENSE` for the full text.
+See `LICENSE` for the combined text, `LICENSES/` for per-license copies, and
+`NOTICE` for project attribution.
 
 ## Overview
 
@@ -230,12 +226,12 @@ Interactive proof techniques underpin modern verifiable compute and consensus. T
 * **Consensus Primitive**
   Quorum-based agreement logic reflecting core BFT ideas.
 
-* **ALIEN Ledger Blueprint**
+* **JULIAN Ledger Blueprint**
   A scaffold that unifies proofs, deterministic randomness, and anchor reconciliation.
 
 ## CLI Workflow
 
-The `julian` binary exposes local ledger tooling and the optional `JROC-NET` networking stack.
+The `julian` binary exposes local ledger tooling and the optional Power-House networking stack.
 
 ### Local ledger (`julian node …`)
 

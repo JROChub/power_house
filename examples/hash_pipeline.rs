@@ -1,7 +1,7 @@
 use blake2::digest::{consts::U32, Digest};
 type Blake2b256 = blake2::Blake2b<U32>;
 use power_house::{
-    alien::{reconcile_anchors, Proof, ProofKind, ProofLedger, Statement},
+    julian::{reconcile_anchors, Proof, ProofKind, ProofLedger, Statement},
     Field, GeneralSumProof, StreamingPolynomial, TranscriptDigest,
 };
 use std::fs;

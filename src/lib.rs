@@ -9,8 +9,8 @@
 //! # power_house
 //!
 //! **Power-House** is a Rust crate that showcases a set of cryptographic
-//! and verification primitives inspired by interactive proof systems, the
-//! sum-check protocol and the ALIEN theorem.  The goal of this crate is to
+//! and verification primitives inspired by interactive proof systems and the
+//! sum-check protocol. The goal of this crate is to
 //! demonstrate how one can build powerful proof systems and consensus logic
 //! with a minimal dependency surface while still leaning on modern hash
 //! primitives for tamper evidence.
@@ -30,12 +30,12 @@
 //!   module provides a trivial consensus primitive that takes a set of binary
 //!   votes and returns whether the threshold has been met.  It is intended as
 //!   a pedagogical example of how one might aggregate prover responses.
-//! * **ALIEN theorem blueprint**: the [`alien`](alien/index.html) module
+//! * **JULIAN protocol blueprint**: the [`julian`](julian/index.html) module
 //!   outlines, through documentation and type stubs, how one could combine
 //!   interactive proofs, VRF randomness, consensus and provability logic
-//!   into a globally verifiable proof ledger.  This module is meant to
-//!   illustrate the ideas described in the ALIEN theorem statement included
-//!   in the problem statement, but it does not implement a full ledger.
+//!   into a globally verifiable proof ledger. This module is meant to
+//!   illustrate a production-ready ledger blueprint, but it does not
+//!   implement a full ledger.
 //!
 //! ## Usage
 //!
@@ -59,12 +59,12 @@
 //! primitives.  It is intentionally minimal and does not offer a complete
 //! blockchain or proof ledger implementation.
 
-pub mod alien;
 pub mod consensus;
 mod data;
 pub mod economics;
 mod field;
 mod io;
+pub mod julian;
 mod log_parser;
 mod merkle;
 mod multilinear;
@@ -77,11 +77,6 @@ mod transcript;
 #[cfg(feature = "net")]
 pub mod net;
 
-pub use alien::{
-    compute_fold_digest, julian_genesis_anchor, julian_genesis_hash, reconcile_anchors,
-    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor, Proof,
-    ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
-};
 pub use consensus::consensus;
 pub use data::{
     compute_digest as transcript_digest, digest_from_hex as transcript_digest_from_hex,
@@ -91,6 +86,11 @@ pub use data::{
 };
 pub use field::Field;
 pub use io::write_text_series;
+pub use julian::{
+    compute_fold_digest, julian_genesis_anchor, julian_genesis_hash, reconcile_anchors,
+    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor, Proof,
+    ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
+};
 pub use log_parser::{parse_log_file, read_fold_digest_hint, LogRecordMetadata, ParsedLogFile};
 pub use merkle::{
     build_proof as build_merkle_proof, merkle_root, verify_proof as verify_merkle_proof,

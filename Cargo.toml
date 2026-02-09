@@ -12,8 +12,8 @@
 [package]
 edition = "2021"
 name = "power_house"
-version = "0.1.54"
-authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
+version = "0.1.56"
+authors = ["mfenx LLC"]
 build = false
 include = [
     "Cargo.toml",
@@ -44,7 +44,7 @@ categories = [
     "algorithms",
     "mathematics",
 ]
-license-file = "LICENSE"
+license = "MIT OR BSD-2-Clause"
 
 [badges.maintenance]
 status = "actively-developed"
