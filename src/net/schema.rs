@@ -1,8 +1,8 @@
 #![cfg(feature = "net")]
 
 use crate::{
-    julian::JULIAN_GENESIS_STATEMENT, compute_fold_digest, data::digest_from_hex,
-    data::digest_to_hex, AnchorMetadata, EntryAnchor, LedgerAnchor,
+    compute_fold_digest, data::digest_from_hex, data::digest_to_hex,
+    julian::JULIAN_GENESIS_STATEMENT, AnchorMetadata, EntryAnchor, LedgerAnchor,
 };
 use serde::{Deserialize, Serialize};
 use std::{env, error::Error, fmt};
