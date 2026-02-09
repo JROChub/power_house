@@ -365,7 +365,7 @@ pub fn settle_rollup_with_rewards(
     let mut reg = crate::net::stake_registry::StakeRegistry::load(registry_path).map_err(|e| {
         build_rollup_fault(&receipt.commitment, &format!("load registry: {e}"), None)
     })?;
-    let operator_share = (fee + 1) / 2;
+    let operator_share = fee.div_ceil(2);
     reg.credit_reward(operator_pk, operator_share);
     if !attesters.is_empty() {
         let per = (fee.saturating_sub(operator_share)) / attesters.len() as u64;

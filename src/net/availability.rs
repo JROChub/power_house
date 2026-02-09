@@ -92,7 +92,7 @@ pub fn pedersen_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
     }
     let mut level: Vec<[u8; 32]> = leaves.iter().map(|leaf| pedersen_leaf(leaf)).collect();
     while level.len() > 1 {
-        let mut next = Vec::with_capacity((level.len() + 1) / 2);
+        let mut next = Vec::with_capacity(level.len().div_ceil(2));
         for chunk in level.chunks(2) {
             if chunk.len() == 1 {
                 next.push(chunk[0]);
@@ -113,7 +113,7 @@ pub fn encode_shares(
 ) -> Result<(Vec<Vec<u8>>, ShareCommitment), String> {
     let rs = ReedSolomon::new(data_shards as usize, parity_shards as usize)
         .map_err(|err| format!("reed-solomon init: {err}"))?;
-    let shard_len = (data.len() + data_shards as usize - 1) / data_shards as usize;
+    let shard_len = data.len().div_ceil(data_shards as usize);
     let mut shards: Vec<Vec<u8>> =
         vec![vec![0u8; shard_len]; (data_shards + parity_shards) as usize];
     for (i, chunk) in data.chunks(shard_len).enumerate() {
@@ -161,7 +161,7 @@ pub fn pedersen_share_proof(share_hashes: &[[u8; 32]], idx: usize) -> Result<Mer
                 left: true,
             });
         }
-        let mut next = Vec::with_capacity((layer.len() + 1) / 2);
+        let mut next = Vec::with_capacity(layer.len().div_ceil(2));
         for chunk in layer.chunks(2) {
             if chunk.len() == 1 {
                 next.push(chunk[0]);

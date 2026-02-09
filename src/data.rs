@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_parse_and_verify() {
-        let lines = vec![
+        let lines = [
             "transcript:10 20".to_string(),
             "round_sums:5 7".to_string(),
             "final:9".to_string(),
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_verify_rejects_tampering() {
-        let lines = vec![
+        let lines = [
             "transcript:1".to_string(),
             "round_sums:2".to_string(),
             "final:3".to_string(),

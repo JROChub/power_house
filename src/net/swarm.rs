@@ -524,7 +524,7 @@ fn sanitize_token(token: &str) -> Option<String> {
     }
 }
 
-fn namespace_rule<'a>(cfg: &'a BlobServiceConfig, namespace: &str) -> Option<NamespaceRule> {
+fn namespace_rule(cfg: &BlobServiceConfig, namespace: &str) -> Option<NamespaceRule> {
     cfg.policies
         .as_ref()
         .and_then(|m| m.get(namespace).cloned())
@@ -1585,6 +1585,7 @@ async fn handle_event(
     invalid_counters: &mut HashMap<libp2p::PeerId, usize>,
     metrics: &Arc<Metrics>,
 ) -> Result<(), NetworkError> {
+    #[allow(clippy::collapsible_match, clippy::single_match)]
     match event {
         SwarmEvent::NewListenAddr { address, .. } => {
             println!("QSYS|mod=NET|evt=LISTEN|addr={address}");
@@ -1958,9 +1959,7 @@ fn save_blob_meta(base: &Path, meta: &BlobMeta) -> Result<(), NetworkError> {
 }
 
 fn evidence_root(blob_dir: &Option<PathBuf>) -> Option<String> {
-    let Some(dir) = blob_dir.as_ref() else {
-        return None;
-    };
+    let dir = blob_dir.as_ref()?;
     let path = dir.join("evidence.jsonl");
     let contents = std::fs::read_to_string(&path).ok()?;
     let mut leaves = Vec::new();
@@ -2029,7 +2028,7 @@ fn latest_da_commitments(blob_dir: &Option<PathBuf>) -> Vec<DaCommitmentJson> {
             }
         }
     }
-    map.into_iter().map(|(_, v)| v.1).collect()
+    map.into_values().map(|v| v.1).collect()
 }
 
 fn lookup_stake(cfg: &NetConfig, pk_b64: &str) -> Option<u64> {
@@ -2134,91 +2133,6 @@ fn record_slash_with_registry(
         }
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::transcript_digest;
-    use std::fs;
-    use std::sync::atomic::Ordering;
-    use std::time::SystemTime;
-
-    fn temp_path(name: &str) -> PathBuf {
-        let mut base = std::env::temp_dir();
-        let nanos = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        base.push(format!("{}_{}", name, nanos));
-        base
-    }
-
-    #[test]
-    fn payload_cache_rejects_duplicates() {
-        let metrics = Arc::new(Metrics::default());
-        let mut cache = PayloadCache::new(metrics.clone());
-        let digest = [1u8; 32];
-        assert!(cache.insert(digest));
-        assert!(!cache.insert(digest));
-    }
-
-    #[test]
-    fn payload_cache_eviction_tracks_metric() {
-        let metrics = Arc::new(Metrics::default());
-        let mut cache = PayloadCache::new(metrics.clone());
-        for i in 0..(SEEN_CACHE_LIMIT + 1) {
-            let mut digest = [0u8; 32];
-            digest[..8].copy_from_slice(&(i as u64).to_le_bytes());
-            cache.insert(digest);
-        }
-        assert!(metrics.lrucache_evictions_total.load(Ordering::Relaxed) >= 1);
-    }
-
-    #[test]
-    fn identical_logs_yield_identical_anchors() {
-        let dir = temp_path("jroc_net_logs");
-        fs::create_dir_all(&dir).unwrap();
-        let log_path = dir.join("ledger_0000.txt");
-        let challenges = vec![1, 2, 3];
-        let round_sums = vec![4, 5, 6];
-        let final_value = 7;
-        let hash = transcript_digest(&challenges, &round_sums, final_value);
-        let content = format!(
-            "statement:Test Statement\ntranscript:{}\nround_sums:{}\nfinal:{}\nhash:{}\n",
-            challenges
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            round_sums
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            final_value,
-            crate::transcript_digest_to_hex(&hash)
-        );
-        fs::write(&log_path, content).unwrap();
-
-        let anchor_a = load_anchor_from_logs(&dir).unwrap();
-        let anchor_b = load_anchor_from_logs(&dir).unwrap();
-        assert_eq!(anchor_a.entries, anchor_b.entries);
-
-        fs::remove_dir_all(&dir).unwrap();
-    }
-
-    #[test]
-    fn tampered_log_is_rejected() {
-        let dir = temp_path("jroc_net_logs_tampered");
-        fs::create_dir_all(&dir).unwrap();
-        let log_path = dir.join("ledger_0000.txt");
-        let content = "statement:Demo\ntranscript:1\nround_sums:2\nfinal:3\nhash:999\n";
-        fs::write(&log_path, content).unwrap();
-        let result = load_anchor_from_logs(&dir);
-        assert!(result.is_err());
-        fs::remove_dir_all(&dir).unwrap();
-    }
-}
-
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
     let mut cutoff: Option<String> = None;
     let mut anchor_from_checkpoint = false;
@@ -2323,4 +2237,89 @@ fn now_millis() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transcript_digest;
+    use std::fs;
+    use std::sync::atomic::Ordering;
+    use std::time::SystemTime;
+
+    fn temp_path(name: &str) -> PathBuf {
+        let mut base = std::env::temp_dir();
+        let nanos = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        base.push(format!("{}_{}", name, nanos));
+        base
+    }
+
+    #[test]
+    fn payload_cache_rejects_duplicates() {
+        let metrics = Arc::new(Metrics::default());
+        let mut cache = PayloadCache::new(metrics.clone());
+        let digest = [1u8; 32];
+        assert!(cache.insert(digest));
+        assert!(!cache.insert(digest));
+    }
+
+    #[test]
+    fn payload_cache_eviction_tracks_metric() {
+        let metrics = Arc::new(Metrics::default());
+        let mut cache = PayloadCache::new(metrics.clone());
+        for i in 0..(SEEN_CACHE_LIMIT + 1) {
+            let mut digest = [0u8; 32];
+            digest[..8].copy_from_slice(&(i as u64).to_le_bytes());
+            cache.insert(digest);
+        }
+        assert!(metrics.lrucache_evictions_total.load(Ordering::Relaxed) >= 1);
+    }
+
+    #[test]
+    fn identical_logs_yield_identical_anchors() {
+        let dir = temp_path("mfenx_powerhouse_logs");
+        fs::create_dir_all(&dir).unwrap();
+        let log_path = dir.join("ledger_0000.txt");
+        let challenges = vec![1, 2, 3];
+        let round_sums = vec![4, 5, 6];
+        let final_value = 7;
+        let hash = transcript_digest(&challenges, &round_sums, final_value);
+        let content = format!(
+            "statement:Test Statement\ntranscript:{}\nround_sums:{}\nfinal:{}\nhash:{}\n",
+            challenges
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            round_sums
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            final_value,
+            crate::transcript_digest_to_hex(&hash)
+        );
+        fs::write(&log_path, content).unwrap();
+
+        let anchor_a = load_anchor_from_logs(&dir).unwrap();
+        let anchor_b = load_anchor_from_logs(&dir).unwrap();
+        assert_eq!(anchor_a.entries, anchor_b.entries);
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn tampered_log_is_rejected() {
+        let dir = temp_path("mfenx_powerhouse_logs_tampered");
+        fs::create_dir_all(&dir).unwrap();
+        let log_path = dir.join("ledger_0000.txt");
+        let content = "statement:Demo\ntranscript:1\nround_sums:2\nfinal:3\nhash:999\n";
+        fs::write(&log_path, content).unwrap();
+        let result = load_anchor_from_logs(&dir);
+        assert!(result.is_err());
+        fs::remove_dir_all(&dir).unwrap();
+    }
 }

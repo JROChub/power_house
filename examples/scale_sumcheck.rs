@@ -23,7 +23,7 @@ fn make_evaluator(num_vars: usize, modulus: u64) -> impl Fn(usize) -> u64 + Send
             acc = (acc + coef) % modulus;
         }
         if num_vars >= 3 {
-            let a = ((idx >> 0) & 1) as u64;
+            let a = (idx & 1) as u64;
             let b = ((idx >> 1) & 1) as u64;
             let c = ((idx >> 2) & 1) as u64;
             if a == 1 && b == 1 && c == 1 {

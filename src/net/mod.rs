@@ -5,8 +5,6 @@
 //! anchors and envelopes, signing helpers, and the libp2p swarm orchestration
 //! that powers the public testnet mode.
 
-#![cfg(feature = "net")]
-
 /// Availability attestations and quorum helpers.
 pub mod attestation;
 /// Erasure coding helpers and commitments.

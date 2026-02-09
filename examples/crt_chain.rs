@@ -56,7 +56,7 @@ fn inv_mod_u64(a: u64, p: u64) -> u64 {
 fn crt3(r1: u64, p1: u64, r2: u64, p2: u64, r3: u64, p3: u64) -> (u128, u128) {
     let (m1, m2, m3) = (p1 as u128, p2 as u128, p3 as u128);
     let (mut x, _r1u, _r2u, _r3u) = (r1 as u128, r1 as u128, r2 as u128, r3 as u128);
-    let inv_m1_p2 = inv_mod_u64((p1 % p2) as u64, p2) as u128;
+    let inv_m1_p2 = inv_mod_u64(p1 % p2, p2) as u128;
     let t2 = ((r2 as u128 + m2 - (x % m2)) % m2) * inv_m1_p2 % m2;
     x += t2 * m1;
     let m12_mod_p3 = ((p1 as u128 % m3) * (p2 as u128 % m3)) % m3;

@@ -170,7 +170,7 @@ impl AnchorJson {
                 hashes: entry
                     .hashes
                     .iter()
-                    .map(|digest| digest_to_hex(digest))
+                    .map(digest_to_hex)
                     .collect(),
                 merkle_root: Some(digest_to_hex(&entry.merkle_root)),
             })
@@ -232,11 +232,13 @@ impl AnchorJson {
                 merkle_root,
             });
         }
-        let mut metadata = AnchorMetadata::default();
-        metadata.challenge_mode = self.challenge_mode;
-        metadata.crate_version = self
-            .crate_version
-            .or_else(|| Some(env!("CARGO_PKG_VERSION").to_string()));
+        let mut metadata = AnchorMetadata {
+            challenge_mode: self.challenge_mode,
+            crate_version: self
+                .crate_version
+                .or_else(|| Some(env!("CARGO_PKG_VERSION").to_string())),
+            ..AnchorMetadata::default()
+        };
         if let Some(fold_hex) = self.fold_digest {
             metadata.fold_digest = Some(
                 digest_from_hex(&fold_hex)
