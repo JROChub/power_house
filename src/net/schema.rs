@@ -8,13 +8,13 @@ use serde::{Deserialize, Serialize};
 use std::{env, error::Error, fmt};
 
 /// Canonical schema identifiers that are embedded inside anchors and envelopes.
-pub const SCHEMA_ANCHOR: &str = "jrocnet.anchor.v1";
+pub const SCHEMA_ANCHOR: &str = "mfenx.powerhouse.anchor.v1";
 /// Schema identifier used for signed network envelopes.
-pub const SCHEMA_ENVELOPE: &str = "jrocnet.envelope.v1";
+pub const SCHEMA_ENVELOPE: &str = "mfenx.powerhouse.envelope.v1";
 /// Current envelope schema major version.
 pub const ENVELOPE_SCHEMA_VERSION: u32 = 1;
-/// Network identifier used across all JULIAN Protocol deployments for JROC-NET.
-pub const NETWORK_ID: &str = "JROC-NET";
+/// Network identifier used across all JULIAN Protocol deployments for MFENX Power-House.
+pub const NETWORK_ID: &str = "MFENX-POWERHOUSE";
 
 /// Machine-readable representation of a single anchor entry.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -31,9 +31,9 @@ pub struct AnchorEntryJson {
 /// Machine-readable representation of a JULIAN ledger anchor.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnchorJson {
-    /// Schema identifier (`jrocnet.anchor.v1`).
+    /// Schema identifier (`mfenx.powerhouse.anchor.v1`).
     pub schema: String,
-    /// Network identifier (`JROC-NET`).
+    /// Network identifier (`MFENX-POWERHOUSE`).
     pub network: String,
     /// Logical node identifier emitting the anchor.
     pub node_id: String,
@@ -81,7 +81,7 @@ pub struct DaCommitmentJson {
 /// Signed envelope broadcast across the gossip layer.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnchorEnvelope {
-    /// Schema identifier (`jrocnet.envelope.v1`).
+    /// Schema identifier (`mfenx.powerhouse.envelope.v1`).
     pub schema: String,
     /// Envelope schema version (major).
     #[serde(default = "default_envelope_version")]

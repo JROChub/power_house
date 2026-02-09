@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const CHECKPOINT_SCHEMA: &str = "jrocnet.checkpoint.v1";
+const CHECKPOINT_SCHEMA: &str = "mfenx.powerhouse.checkpoint.v1";
 
 /// Serialized snapshot describing a quorum-approved anchor state.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnchorCheckpoint {
-    /// Checkpoint schema identifier (`jrocnet.checkpoint.v1`).
+    /// Checkpoint schema identifier (`mfenx.powerhouse.checkpoint.v1`).
     pub schema: String,
     /// Monotonic epoch or broadcast counter for this checkpoint.
     pub epoch: u64,

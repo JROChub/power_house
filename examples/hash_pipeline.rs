@@ -40,7 +40,7 @@ fn constant_polynomial(field: &Field, num_vars: usize, target_sum: u64) -> Strea
 
 fn aggregate_hashes(hashes: &[TranscriptDigest]) -> TranscriptDigest {
     let mut hasher = Blake2b256::new();
-    hasher.update(b"JROC_ANCHOR");
+    hasher.update(b"MFENX_ANCHOR");
     for digest in hashes {
         hasher.update(digest);
     }

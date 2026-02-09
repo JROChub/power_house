@@ -9,7 +9,7 @@ use serde_json::json;
 use crate::data::{digest_from_hex, digest_to_hex};
 use crate::TranscriptDigest;
 
-const MERKLE_DOMAIN: &[u8] = b"JROC_MERKLE";
+const MERKLE_DOMAIN: &[u8] = b"MFENX_MERKLE";
 
 fn hash_pair(left: &TranscriptDigest, right: &TranscriptDigest) -> TranscriptDigest {
     let mut hasher = Blake2b::<U32>::new();

@@ -7,28 +7,28 @@ ssh_port = 22
 # Override per-node if systemd units differ. Fallback: powerhouse-{name}.service
 service = "powerhouse-boot"
 binary_path = "/usr/local/bin/julian"
-config_dir = "/etc/jrocnet"
-log_path = "/var/log/jrocnet.log"
-work_dir = "/var/lib/jrocnet"
+config_dir = "/etc/powerhouse"
+log_path = "/var/log/powerhouse.log"
+work_dir = "/var/lib/powerhouse"
 # Use a custom restart command if systemd is not available:
 # restart_command = "supervisorctl restart julian"
 
 [[node]]
 name = "boot1"
-host = "boot1.jrocnet.com"
+host = "137.184.33.2"
 service = "powerhouse-boot1"
 log_path = "/var/log/powerhouse/powerhouse-boot1-*.log.gz"
-work_dir = "/var/lib/jrocnet/boot1"
+work_dir = "/var/lib/powerhouse/boot1"
 bootstrap = [
-  "/dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd"
+  "/ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd"
 ]
 
 [[node]]
 name = "boot2"
-host = "boot2.jrocnet.com"
+host = "146.190.126.101"
 service = "powerhouse-boot2"
 log_path = "/var/log/powerhouse/powerhouse-boot2-*.log.gz"
-work_dir = "/var/lib/jrocnet/boot2"
+work_dir = "/var/lib/powerhouse/boot2"
 bootstrap = [
-  "/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q"
+  "/ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q"
 ]

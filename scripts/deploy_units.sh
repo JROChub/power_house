@@ -29,7 +29,7 @@ copy_ops() {
   local host="$1"
   echo "-> Deploying ops scripts to $host"
   ssh $SSH_OPTS "$host" 'install -d /usr/local/lib/powerhouse'
-  ssh $SSH_OPTS "$host" 'install -d /var/backups/jrocnet /var/log/powerhouse /var/lib/jrocnet/ops'
+  ssh $SSH_OPTS "$host" 'install -d /var/backups/powerhouse /var/log/powerhouse /var/lib/powerhouse/ops'
   scp $SSH_OPTS "$ROOT/infra/ops/alert.sh" "$host:/usr/local/lib/powerhouse/alert.sh"
   scp $SSH_OPTS "$ROOT/infra/ops/healthcheck.py" "$host:/usr/local/lib/powerhouse/healthcheck.py"
   scp $SSH_OPTS "$ROOT/infra/ops/backup.sh" "$host:/usr/local/lib/powerhouse/backup.sh"

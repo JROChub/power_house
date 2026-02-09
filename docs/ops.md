@@ -34,7 +34,7 @@ Deploy them with:
 scripts/deploy_units.sh root@BOOT1 root@BOOT2
 ```
 
-Environment files (store in `/etc/jrocnet/`):
+Environment files (store in `/etc/powerhouse/`):
 
 - `powerhouse-common.env` (shared settings)
 - `powerhouse-boot1.env` (boot1 node)
@@ -46,7 +46,7 @@ The node wrappers read these files and start `/usr/local/bin/julian` using
 
 Recommended production flags:
 
-- `--blob-dir /var/lib/jrocnet/<node>/blobs`
+- `--blob-dir /var/lib/powerhouse/<node>/blobs`
 - `--blob-listen 0.0.0.0:8181`
 - `--max-blob-bytes <bytes>`
 - `--blob-auth-token <token>` (enforces Authorization or x-api-key)
@@ -123,12 +123,12 @@ Manual backup:
 Restore:
 
 ```bash
-/usr/local/lib/powerhouse/restore.sh /var/backups/jrocnet/<archive>.tar.zst
+/usr/local/lib/powerhouse/restore.sh /var/backups/powerhouse/<archive>.tar.zst
 ```
 
 ## 9. Rollback
 
-Use versioned releases under `/opt/jrocnet/releases`:
+Use versioned releases under `/opt/powerhouse/releases`:
 
 ```bash
 /usr/local/lib/powerhouse/deploy_release.sh /path/to/julian

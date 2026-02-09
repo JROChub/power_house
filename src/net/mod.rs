@@ -1,4 +1,4 @@
-//! Networking primitives for the JULIAN Protocol (JROC-NET).
+//! Networking primitives for the JULIAN Protocol (MFENX Power-House Network).
 //!
 //! These modules are gated behind the `net` Cargo feature and provide the
 //! functionality required by the `julian net` CLI commands: JSON schemas for

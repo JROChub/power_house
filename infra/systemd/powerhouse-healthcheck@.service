@@ -5,6 +5,6 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/jrocnet/powerhouse-common.env
-EnvironmentFile=/etc/jrocnet/powerhouse-%i.env
+EnvironmentFile=/etc/powerhouse/powerhouse-common.env
+EnvironmentFile=/etc/powerhouse/powerhouse-%i.env
 ExecStart=/usr/local/lib/powerhouse/healthcheck.py

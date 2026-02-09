@@ -57,7 +57,7 @@ Instructions: highlight challenge lines, check that each `round_sums` pair colla
 |  | 4 | `7e4f2b81f54654ad` | 226 |
 |  | 5 | `2b026c77c9244f33` | 171 |
 
-*Exercise:* recompute the BLAKE2b-256 state with domain tag `JROC_CHALLENGE`, transcript words, and counter; confirm the reduced challenges match.
+*Exercise:* recompute the BLAKE2b-256 state with domain tag `MFENX_CHALLENGE`, transcript words, and counter; confirm the reduced challenges match.
 
 ## 4. Signature Blocks *(Book refs: Chapter III §97, Chapter V §91, Chapter VIII §§30–35)*
 

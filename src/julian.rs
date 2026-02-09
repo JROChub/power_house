@@ -44,7 +44,7 @@ use crate::{
 use blake2::digest::{consts::U32, Digest};
 use std::{collections::HashMap, path::PathBuf};
 
-const ANCHOR_DOMAIN: &[u8] = b"JROC_ANCHOR";
+const ANCHOR_DOMAIN: &[u8] = b"MFENX_ANCHOR";
 
 /// Represents a statement to be proved.  In a full system this would
 /// encapsulate the input and the specification of the language `L`.

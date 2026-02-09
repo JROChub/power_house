@@ -16,8 +16,8 @@ use blake2::digest::{consts::U32, Digest};
 
 type Blake2b256 = blake2::Blake2b<U32>;
 
-const PRNG_DOMAIN: &[u8] = b"JROC_PRNG";
-const CHALLENGE_DOMAIN: &[u8] = b"JROC_CHALLENGE";
+const PRNG_DOMAIN: &[u8] = b"MFENX_PRNG";
+const CHALLENGE_DOMAIN: &[u8] = b"MFENX_CHALLENGE";
 
 /// A deterministic stream generator derived from BLAKE2b-256.
 #[derive(Debug, Clone)]

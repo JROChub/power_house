@@ -23,17 +23,17 @@ Contents
 Remove governance gating flags from boot nodes so any peer can connect and gossip. Anchor acceptance becomes open; if you later need quorum gating, reintroduce `--policy` with an allowlist or stake descriptor.
 
 Remove the following flags from both boot nodes:
-- `--policy /etc/jrocnet/governance.json`
-- `--policy-allowlist /etc/jrocnet/allow.json`
+- `--policy /etc/powerhouse/governance.json`
+- `--policy-allowlist /etc/powerhouse/allow.json`
 
 The rest of the runtime remains unchanged.
 
 ## Systemd Updates (Boot1 and Boot2)
 Use the templates in `infra/systemd/` plus node env files:
 
-- `/etc/jrocnet/powerhouse-common.env`
-- `/etc/jrocnet/powerhouse-boot1.env`
-- `/etc/jrocnet/powerhouse-boot2.env`
+- `/etc/powerhouse/powerhouse-common.env`
+- `/etc/powerhouse/powerhouse-boot1.env`
+- `/etc/powerhouse/powerhouse-boot2.env`
 
 Those feed `/usr/local/bin/powerhouse-boot.sh` (the shared launcher).
 Copy the example env files from `infra/systemd/` and set:
@@ -54,7 +54,7 @@ systemctl enable --now powerhouse-healthcheck@boot2.timer powerhouse-backup@boot
 
 ## Networking and Discovery
 - Open inbound TCP 7001 (boot1) and 7002 (boot2) in cloud firewall and any host firewall (UFW/iptables).
-- Keep DNS seeds resolving to the public IPs: `boot1.jrocnet.com`, `boot2.jrocnet.com`.
+- Keep DNS seeds resolving to the public IPs: `137.184.33.2`, `146.190.126.101`.
 - Optional: add more geographically distributed boot nodes to improve initial connectivity.
 
 ## Monitoring and Verification
@@ -85,8 +85,8 @@ julian net start \
   --node-id node \
   --log-dir ./logs/node \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /dns4/boot2.jrocnet.com/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
+  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
   --broadcast-interval 5000 \
   --quorum 2 \
   --metrics :9100

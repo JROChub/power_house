@@ -61,8 +61,10 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, Semaphore};
 use tokio::{select, signal, time};
 
-static TOPIC_ANCHORS: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/anchors/v1"));
-static TOPIC_EVIDENCE: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("jrocnet/evidence/v1"));
+static TOPIC_ANCHORS: Lazy<IdentTopic> =
+    Lazy::new(|| IdentTopic::new("mfenx/powerhouse/anchors/v1"));
+static TOPIC_EVIDENCE: Lazy<IdentTopic> =
+    Lazy::new(|| IdentTopic::new("mfenx/powerhouse/evidence/v1"));
 static NO_GOSSIP_PEERS_LOGGED: AtomicBool = AtomicBool::new(false);
 const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
@@ -1264,7 +1266,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                 }
             }
             _ = signal::ctrl_c() => {
-                println!("JROC-NET node shutting down");
+                println!("Power-House node shutting down");
                 return Ok(());
             }
         }
@@ -1314,7 +1316,7 @@ fn build_behaviour(key: &identity::Keypair) -> Result<JrocBehaviour, NetworkErro
         .subscribe(&TOPIC_ANCHORS)
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
 
-    let identify_config = identify::Config::new("jrocnet/1.0.0".into(), key.public())
+    let identify_config = identify::Config::new("mfenx-powerhouse/1.0.0".into(), key.public())
         .with_push_listen_addr_updates(true);
     let identify = identify::Behaviour::new(identify_config);
 

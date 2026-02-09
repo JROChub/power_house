@@ -11,7 +11,7 @@ use blake2::digest::{consts::U32, Digest};
 type Blake2b256 = blake2::Blake2b<U32>;
 
 /// Domain tag applied to every transcript digest.
-const DIGEST_DOMAIN: &[u8] = b"JROC_TRANSCRIPT";
+const DIGEST_DOMAIN: &[u8] = b"MFENX_TRANSCRIPT";
 
 /// Fixed-width transcript digest.
 pub type TranscriptDigest = [u8; 32];

@@ -10,7 +10,7 @@ SERVICE = os.environ.get("PH_SERVICE_NAME", "powerhouse-boot")
 HEALTH_URL = os.environ.get("PH_HEALTH_URL", "http://127.0.0.1:8181/healthz")
 METRICS_URL = os.environ.get("PH_METRICS_URL", "http://127.0.0.1:9100/metrics")
 AUTH_TOKEN = os.environ.get("PH_BLOB_AUTH_TOKEN", "")
-STATE_PATH = os.environ.get("PH_HEALTH_STATE", "/var/lib/jrocnet/ops/health_state.json")
+STATE_PATH = os.environ.get("PH_HEALTH_STATE", "/var/lib/powerhouse/ops/health_state.json")
 STALL_MINUTES = int(os.environ.get("PH_METRICS_STALL_MINUTES", "20"))
 
 ALERT_SCRIPT = os.environ.get("PH_ALERT_SCRIPT", "/usr/local/lib/powerhouse/alert.sh")
