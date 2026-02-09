@@ -13,7 +13,7 @@
 edition = "2021"
 name = "power_house"
 version = "0.1.55"
-authors = ["Julian Christian Sanders <lexluger.dev@proton.me>"]
+authors = ["mfenx LLC"]
 build = false
 include = [
     "Cargo.toml",
