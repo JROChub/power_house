@@ -38,11 +38,12 @@ pub use governance::{
     StaticPolicy,
 };
 pub use policy::{IdentityPolicy, PolicyError};
-pub use schema::{AnchorEnvelope, AnchorJson};
+pub use schema::{AnchorEnvelope, AnchorJson, AnchorVoteJson, SCHEMA_VOTE};
 pub use sign::{
     decode_public_key_base64, decode_signature_base64, encode_public_key_base64,
-    encode_signature_base64, load_encrypted_identity, load_or_derive_keypair, sign_payload,
-    verify_signature, verify_signature_base64, Ed25519KeySource, KeyError, KeyMaterial,
+    encode_signature_base64, encrypt_identity_base64, load_encrypted_identity,
+    load_or_derive_keypair, sign_payload, verify_signature, verify_signature_base64,
+    Ed25519KeySource, KeyError, KeyMaterial,
 };
 pub use stake_registry::StakeRegistry;
 pub use swarm::{run_network, NamespaceRule, NetConfig, NetworkError};

@@ -111,6 +111,9 @@ pub fn encode_shares(
     data_shards: u8,
     parity_shards: u8,
 ) -> Result<(Vec<Vec<u8>>, ShareCommitment), String> {
+    if data.is_empty() {
+        return Err("blob payload is empty".to_string());
+    }
     let rs = ReedSolomon::new(data_shards as usize, parity_shards as usize)
         .map_err(|err| format!("reed-solomon init: {err}"))?;
     let shard_len = data.len().div_ceil(data_shards as usize);

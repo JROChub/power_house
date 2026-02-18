@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "power_house"
-version = "0.1.57"
+version = "0.1.58"
 authors = ["mfenx LLC"]
 build = false
 include = [
@@ -32,6 +32,7 @@ autobenches = false
 description = "power_house provides deterministic sum-check proofs, finite-field arithmetic, transcript logging, and quorum ledger tooling for transparent verification in Rust."
 documentation = "https://docs.rs/power_house"
 readme = "README.md"
+repository = "https://github.com/JROChub/power_house"
 keywords = [
     "cryptography",
     "proofs",
@@ -49,6 +50,10 @@ license = "MIT OR BSD-2-Clause"
 [badges.maintenance]
 status = "actively-developed"
 
+[badges.github-actions]
+repository = "JROChub/power_house"
+workflow = "ci.yml"
+
 [features]
 default = []
 net = [
@@ -58,6 +63,7 @@ net = [
     "dep:libp2p",
     "dep:once_cell",
     "dep:rand_core",
+    "dep:reqwest",
     "dep:rpassword",
     "dep:tokio",
     "dep:thiserror",
@@ -176,6 +182,12 @@ version = "0.8"
 version = "0.6"
 optional = true
 
+[dependencies.reqwest]
+version = "0.11"
+default-features = false
+features = ["json", "rustls-tls"]
+optional = true
+
 [dependencies.reed-solomon-erasure]
 version = "6"
 optional = true
@@ -197,6 +209,9 @@ version = "0.10"
 [dependencies.thiserror]
 version = "1"
 optional = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rayon = "1"
 
 [dependencies.tokio]
 version = "1"

@@ -123,6 +123,17 @@ fn derive_key_from_passphrase(passphrase: &str) -> [u8; SECRET_KEY_LENGTH] {
     key
 }
 
+/// Encrypts the signing key bytes with the passphrase and returns base64.
+pub fn encrypt_identity_base64(signing: &SigningKey, passphrase: &str) -> String {
+    let mask = derive_key_from_passphrase(passphrase);
+    let secret = signing.to_bytes();
+    let mut cipher = [0u8; SECRET_KEY_LENGTH];
+    for (idx, byte) in secret.iter().enumerate() {
+        cipher[idx] = byte ^ mask[idx];
+    }
+    BASE64.encode(cipher)
+}
+
 fn load_key_from_file(path: &Path) -> Result<[u8; SECRET_KEY_LENGTH], KeyError> {
     let contents = fs::read(path).map_err(|err| KeyError::Io(err.to_string()))?;
     if contents.len() == SECRET_KEY_LENGTH {

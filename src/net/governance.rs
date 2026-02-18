@@ -319,19 +319,25 @@ pub struct StakePolicy {
     state_path: PathBuf,
     threshold: usize,
     bond_threshold: u64,
+    slash_pct: u8,
     signers: HashSet<VerifyingKey>,
     state: Mutex<HashMap<Vec<u8>, StakeAccount>>,
 }
 
 impl StakePolicy {
     /// Restores staking state from a JSON registry.
-    pub fn load(path: &Path) -> Result<Self, PolicyUpdateError> {
+    pub fn load(
+        path: &Path,
+        min_stake: Option<u64>,
+        slash_pct: Option<u8>,
+    ) -> Result<Self, PolicyUpdateError> {
         let contents =
             fs::read_to_string(path).map_err(|err| PolicyUpdateError::Io(err.to_string()))?;
         let state: StakeState = serde_json::from_str(&contents)
             .map_err(|err| PolicyUpdateError::Decode(err.to_string()))?;
         let threshold = state.threshold;
-        let bond_threshold = state.bond_threshold;
+        let bond_threshold = min_stake.unwrap_or(state.bond_threshold);
+        let slash_pct = slash_pct.unwrap_or(100).min(100);
         let signers = state
             .signers
             .iter()
@@ -355,9 +361,26 @@ impl StakePolicy {
             state_path: path.to_path_buf(),
             threshold,
             bond_threshold,
+            slash_pct,
             signers,
             state: Mutex::new(registry),
         })
+    }
+
+    fn apply_slash(&self, account: &mut StakeAccount) {
+        if account.bond == 0 {
+            account.slashed = true;
+            return;
+        }
+        let pct = self.slash_pct as u128;
+        if pct == 0 {
+            return;
+        }
+        let slash_amount = ((account.bond as u128) * pct / 100) as u64;
+        account.bond = account.bond.saturating_sub(slash_amount.max(1));
+        if account.bond == 0 {
+            account.slashed = true;
+        }
     }
 
     fn persist(&self, locked: &HashMap<Vec<u8>, StakeAccount>) -> Result<(), PolicyUpdateError> {
@@ -483,8 +506,7 @@ impl MembershipPolicy for StakePolicy {
         for slash in metadata.slashes {
             let vk = decode_public_key(&slash)?;
             guard.entry(vk.to_bytes().to_vec()).and_modify(|account| {
-                account.slashed = true;
-                account.bond = 0;
+                self.apply_slash(account);
             });
         }
         self.persist(&guard)
@@ -499,8 +521,7 @@ impl MembershipPolicy for StakePolicy {
         guard
             .entry(key.to_bytes().to_vec())
             .and_modify(|account| {
-                account.slashed = true;
-                account.bond = 0;
+                self.apply_slash(account);
             })
             .or_insert(StakeAccount {
                 key: *key,

@@ -1,5 +1,17 @@
 ﻿# Release Notes
 
+## v0.1.58 — 2026-02-18
+
+### Added
+- External DA publisher pipeline with receipts (HTTP relay + Ethereum anchoring support).
+- Permissionless join guide, community onboarding, tokenomics, and bounty policy docs.
+- Dockerfile + compose for community node operators.
+
+### Changed
+- Stake governance tuned for 5-of-7 signer threshold; membership expanded for multi-node scale.
+- Shard gossip bridging + quorum/BFT flow tightened for stable finality.
+- Ops references refreshed (mainnet launch guidance + governance policy notes).
+
 ## v0.1.54 — 2026-02-08
 
 ### Changed
