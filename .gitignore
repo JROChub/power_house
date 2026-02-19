@@ -1,16 +1,11 @@
-target/
-**/*.rs.bk
-
-logs/
-powerhouse/
-powerhouse-boot1.service
-powerhouse-boot2.service
-infra/ops_hosts.toml
-blobs/
-sample.bin
-# funding service runtime artifacts
-stake_registry.json
-funding_service/stake_registry.json
-# Local anchor captures copied from production nodes
-boot1.anchor
-boot2.anchor
+/logs/
+/blobs/
+/target/
+/keys/
+*.identity
+/boot*.anchor
+/funding_service/target/
+/infra/systemd/*.service
+/infra/ops_hosts.toml
+/infra/.tmp_*
+/sample.bin

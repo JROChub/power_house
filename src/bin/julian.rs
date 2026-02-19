@@ -6,13 +6,15 @@
 
 #[cfg(feature = "net")]
 use power_house::net::{
-    decode_public_key_base64, load_encrypted_identity, load_or_derive_keypair, run_network,
-    verify_signature_base64, AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy,
-    MultisigPolicy, NamespaceRule, NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
+    decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
+    load_or_derive_keypair, run_network, verify_signature_base64, AnchorEnvelope, AnchorJson,
+    Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule, NetConfig, StakePolicy,
+    StakeRegistry, StaticPolicy,
 };
 use power_house::{
     compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
-    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor,
+    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, Field,
+    GeneralSumProof, LedgerAnchor, ProofStats,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -76,6 +78,13 @@ fn main() {
             });
             handle_node(&sub, args.collect());
         }
+        Some("scale_sumcheck") => {
+            cmd_scale_sumcheck(args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("keygen") => {
+            cmd_keygen(args.collect());
+        }
         #[cfg(feature = "net")]
         Some("net") => {
             let sub = args.next().unwrap_or_else(|| {
@@ -101,7 +110,7 @@ fn main() {
             handle_rollup(&sub, args.collect());
         }
         _ => {
-            eprintln!("Usage: julian <node|net|stake> ...");
+            eprintln!("Usage: julian <node|scale_sumcheck|net|stake|rollup|keygen> ...");
             std::process::exit(1);
         }
     }
@@ -148,6 +157,130 @@ fn handle_node(sub: &str, tail: Vec<String>) {
     }
 }
 
+fn cmd_scale_sumcheck(args: Vec<String>) {
+    let mut max_vars: Option<usize> = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--vars" | "--max-vars" => {
+                let value = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--vars expects a value"));
+                max_vars = Some(
+                    value
+                        .parse()
+                        .unwrap_or_else(|_| fatal("invalid --vars value")),
+                );
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    run_scale_sumcheck(max_vars);
+}
+
+fn run_scale_sumcheck(max_vars: Option<usize>) {
+    let field = Field::new(257);
+    let default_dims = [8usize, 10, 12, 14, 16, 18];
+    let dimensions: Vec<usize> = match max_vars {
+        Some(m) => (8..=m).step_by(2).collect(),
+        None => default_dims.to_vec(),
+    };
+    if dimensions.is_empty() {
+        fatal("No dimensions selected; provide --vars >= 8.");
+    }
+    let mut rows = Vec::new();
+    println!(
+        "{:>5} | {:>10} | {:>10} | {:>10} | {:>12} | {:>12}",
+        "vars", "2^vars", "total(ms)", "avg(ms)", "max_round(ms)", "final_eval"
+    );
+    println!("{}", "-".repeat(70));
+    for &vars in &dimensions {
+        let evaluator = make_scale_evaluator(vars, field.modulus());
+        let (proof, stats) = GeneralSumProof::prove_streaming_with_stats(vars, &field, evaluator);
+        let (total_ms, avg_ms, max_round_ms) = summarize_stats(&stats);
+        let size = 1usize << vars;
+        rows.push((
+            vars,
+            size,
+            total_ms,
+            avg_ms,
+            max_round_ms,
+            proof.final_evaluation,
+        ));
+        println!(
+            "{:>5} | {:>10} | {:>10.3} | {:>10.3} | {:>12.3} | {:>12}",
+            vars, size, total_ms, avg_ms, max_round_ms, proof.final_evaluation
+        );
+    }
+
+    if let Ok(path) = std::env::var("POWER_HOUSE_SCALE_OUT") {
+        let mut file = fs::File::create(&path).expect("create csv output");
+        use std::io::Write;
+        writeln!(
+            file,
+            "vars,size,total_ms,avg_ms,max_round_ms,final_evaluation"
+        )
+        .expect("write csv header");
+        for (vars, size, total_ms, avg_ms, max_round_ms, final_eval) in rows {
+            writeln!(
+                file,
+                "{vars},{size},{total_ms:.6},{avg_ms:.6},{max_round_ms:.6},{final_eval}"
+            )
+            .expect("write csv row");
+        }
+        println!("CSV exported to {path}");
+    }
+}
+
+fn make_scale_evaluator(
+    num_vars: usize,
+    modulus: u64,
+) -> impl Fn(usize) -> u64 + Send + Sync + 'static {
+    move |idx: usize| {
+        let mut acc = (idx as u64) % modulus;
+        for bit in 0..num_vars {
+            let bit_value = ((idx >> bit) & 1) as u64;
+            if bit_value == 0 {
+                continue;
+            }
+            let coef = ((bit as u64 + 3).pow(2)) % modulus;
+            acc = (acc + coef) % modulus;
+        }
+        for bit in 0..num_vars.saturating_sub(1) {
+            let a = ((idx >> bit) & 1) as u64;
+            let b = ((idx >> (bit + 1)) & 1) as u64;
+            if a == 0 || b == 0 {
+                continue;
+            }
+            let coef = (17 + (bit as u64 * 5)) % modulus;
+            acc = (acc + coef) % modulus;
+        }
+        if num_vars >= 3 {
+            let a = (idx & 1) as u64;
+            let b = ((idx >> 1) & 1) as u64;
+            let c = ((idx >> 2) & 1) as u64;
+            if a == 1 && b == 1 && c == 1 {
+                acc = (acc + 29) % modulus;
+            }
+        }
+        acc % modulus
+    }
+}
+
+fn ms(duration: &std::time::Duration) -> f64 {
+    duration.as_secs_f64() * 1_000.0
+}
+
+fn summarize_stats(stats: &ProofStats) -> (f64, f64, f64) {
+    if stats.round_durations.is_empty() {
+        return (0.0, 0.0, 0.0);
+    }
+    let total = ms(&stats.total_duration);
+    let max = stats.round_durations.iter().map(ms).fold(0.0f64, f64::max);
+    let mean = total / (stats.round_durations.len() as f64);
+    (total, mean, max)
+}
+
 #[cfg(feature = "net")]
 fn handle_net(sub: &str, tail: Vec<String>) {
     match sub {
@@ -159,6 +292,47 @@ fn handle_net(sub: &str, tail: Vec<String>) {
             std::process::exit(1);
         }
     }
+}
+
+#[cfg(feature = "net")]
+fn cmd_keygen(args: Vec<String>) {
+    let mut key_spec: Option<String> = None;
+    let mut out_path: Option<PathBuf> = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--out" => {
+                out_path = Some(PathBuf::from(
+                    iter.next().unwrap_or_else(|| fatal("--out expects a value")),
+                ));
+            }
+            value => {
+                if key_spec.is_none() {
+                    key_spec = Some(value.to_string());
+                } else {
+                    fatal(&format!("unknown argument: {value}"));
+                }
+            }
+        }
+    }
+
+    let key_source = Ed25519KeySource::from_spec(key_spec.as_deref());
+    let passphrase = prompt_password("Identity passphrase: ")
+        .unwrap_or_else(|err| fatal(&format!("failed to read passphrase: {err}")));
+    let material = load_or_derive_keypair(&key_source)
+        .unwrap_or_else(|err| fatal(&format!("failed to derive key: {err}")));
+    let encoded = encrypt_identity_base64(&material.signing, &passphrase);
+    let out_path = out_path.unwrap_or_else(|| PathBuf::from("julian.identity"));
+    if let Some(parent) = out_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    fs::write(&out_path, format!("{encoded}\n"))
+        .unwrap_or_else(|err| fatal(&format!("failed to write identity: {err}")));
+    println!(
+        "public_key_b64: {}",
+        power_house::net::encode_public_key_base64(&material.verifying)
+    );
+    println!("identity_path: {}", out_path.display());
 }
 
 #[cfg(feature = "net")]
@@ -701,6 +875,11 @@ fn cmd_net_start(args: Vec<String>) {
     let mut broadcast_ms: u64 = 5_000;
     let mut key_spec: Option<String> = None;
     let mut identity_path: Option<String> = None;
+    let mut anchor_topic_spec: Option<String> = None;
+    let mut gossip_shard_spec: Option<String> = None;
+    let mut gossip_bridge_topics_spec: Option<String> = None;
+    let mut bft_enabled = false;
+    let mut bft_round_ms_spec: Option<String> = None;
     let mut metrics_addr_spec: Option<String> = None;
     let mut policy_allowlist_spec: Option<String> = None;
     let mut policy_spec: Option<String> = None;
@@ -714,6 +893,7 @@ fn cmd_net_start(args: Vec<String>) {
     let mut blob_max_concurrency_spec: Option<String> = None;
     let mut blob_request_timeout_ms_spec: Option<String> = None;
     let mut attestation_quorum_spec: Option<String> = None;
+    let mut tokio_threads_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -748,6 +928,21 @@ fn cmd_net_start(args: Vec<String>) {
                     .unwrap_or_else(|_| fatal("invalid multiaddr for --bootstrap"));
                 bootstraps.push(addr);
             }
+            "--bootnodes" => {
+                let value = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--bootnodes expects a value"));
+                for raw in value.split(',') {
+                    let trimmed = raw.trim();
+                    if trimmed.is_empty() {
+                        continue;
+                    }
+                    let addr: Multiaddr = trimmed
+                        .parse()
+                        .unwrap_or_else(|_| fatal("invalid multiaddr for --bootnodes"));
+                    bootstraps.push(addr);
+                }
+            }
             "--broadcast-interval" => {
                 let value = iter
                     .next()
@@ -772,6 +967,33 @@ fn cmd_net_start(args: Vec<String>) {
                 identity_path = Some(
                     iter.next()
                         .unwrap_or_else(|| fatal("--identity expects a value")),
+                );
+            }
+            "--anchor-topic" => {
+                anchor_topic_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--anchor-topic expects a value")),
+                );
+            }
+            "--gossip-shard" => {
+                gossip_shard_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--gossip-shard expects a value")),
+                );
+            }
+            "--gossip-bridge-topics" => {
+                gossip_bridge_topics_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--gossip-bridge-topics expects a value")),
+                );
+            }
+            "--bft" => {
+                bft_enabled = true;
+            }
+            "--bft-round-ms" => {
+                bft_round_ms_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--bft-round-ms expects a value")),
                 );
             }
             "--metrics" => {
@@ -852,6 +1074,12 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--attestation-quorum expects a value")),
                 );
             }
+            "--tokio-threads" => {
+                tokio_threads_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--tokio-threads expects a value")),
+                );
+            }
             other => fatal(&format!("unknown argument: {other}")),
         }
     }
@@ -918,6 +1146,18 @@ fn cmd_net_start(args: Vec<String>) {
         v.parse::<usize>()
             .unwrap_or_else(|_| fatal("invalid --attestation-quorum"))
     });
+    let anchor_topic = anchor_topic_spec.or_else(|| {
+        gossip_shard_spec.map(|shard| format!("mfenx/powerhouse/anchors/v1/shard/{shard}"))
+    });
+    let gossip_bridge_topics = gossip_bridge_topics_spec.as_deref().map(parse_topic_list);
+    let bft_round_ms = bft_round_ms_spec.map(|v| {
+        v.parse::<u64>()
+            .unwrap_or_else(|_| fatal("invalid --bft-round-ms"))
+    });
+    let tokio_threads = tokio_threads_spec.map(|v| {
+        v.parse::<usize>()
+            .unwrap_or_else(|_| fatal("invalid --tokio-threads"))
+    });
 
     let config = NetConfig::new(
         node_id,
@@ -927,6 +1167,10 @@ fn cmd_net_start(args: Vec<String>) {
         quorum,
         Duration::from_millis(broadcast_ms),
         key_material,
+        anchor_topic,
+        gossip_bridge_topics,
+        bft_enabled,
+        bft_round_ms,
         metrics_addr,
         membership_policy.clone(),
         checkpoint_interval,
@@ -941,7 +1185,13 @@ fn cmd_net_start(args: Vec<String>) {
         attestation_quorum,
     );
 
-    let runtime = tokio::runtime::Runtime::new()
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder.enable_all();
+    if let Some(threads) = tokio_threads {
+        builder.worker_threads(threads);
+    }
+    let runtime = builder
+        .build()
         .unwrap_or_else(|err| fatal(&format!("failed to start runtime: {err}")));
     if let Err(err) = runtime.block_on(run_network(config)) {
         fatal(&format!("network error: {err}"));
@@ -1370,6 +1620,19 @@ fn parse_metrics_addr(spec: &str) -> Option<SocketAddr> {
     }
 }
 
+fn parse_topic_list(spec: &str) -> Vec<String> {
+    spec.split(|c: char| c == ',' || c.is_whitespace())
+        .filter_map(|raw| {
+            let trimmed = raw.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        })
+        .collect()
+}
+
 #[cfg(feature = "net")]
 #[derive(Debug, Deserialize)]
 #[serde(tag = "backend", rename_all = "kebab-case")]
@@ -1377,7 +1640,13 @@ enum GovernanceDescriptor {
     Static { allowlist: Vec<String> },
     StaticFile { path: String },
     Multisig { state_path: String },
-    Stake { state_path: String },
+    Stake {
+        state_path: String,
+        #[serde(default)]
+        min_stake: Option<u64>,
+        #[serde(default)]
+        slash_pct: Option<u8>,
+    },
 }
 
 #[cfg(feature = "net")]
@@ -1407,7 +1676,11 @@ fn load_membership_policy(
                     .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
                     .unwrap_or_else(|err| fatal(&format!("failed to load multisig policy: {err}")))
             }
-            GovernanceDescriptor::Stake { state_path } => StakePolicy::load(Path::new(&state_path))
+            GovernanceDescriptor::Stake {
+                state_path,
+                min_stake,
+                slash_pct,
+            } => StakePolicy::load(Path::new(&state_path), min_stake, slash_pct)
                 .map(|p| Arc::new(p) as Arc<dyn MembershipPolicy>)
                 .unwrap_or_else(|err| fatal(&format!("failed to load stake policy: {err}"))),
         }

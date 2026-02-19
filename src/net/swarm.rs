@@ -14,8 +14,8 @@ use crate::net::{
     },
     governance::MembershipPolicy,
     schema::{
-        AnchorCodecError, AnchorEnvelope, AnchorJson, DaCommitmentJson, ENVELOPE_SCHEMA_VERSION,
-        NETWORK_ID, SCHEMA_ENVELOPE,
+        AnchorCodecError, AnchorEnvelope, AnchorJson, AnchorVoteJson, DaCommitmentJson,
+        ENVELOPE_SCHEMA_VERSION, NETWORK_ID, SCHEMA_ENVELOPE, SCHEMA_VOTE,
     },
     stake_registry::StakeRegistry,
 };
@@ -28,6 +28,7 @@ use crate::{
     },
     AnchorVote, EntryAnchor, LedgerAnchor,
 };
+use crate::julian::anchor_digest;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ed25519_dalek::{Signer, SigningKey};
 use futures::StreamExt;
@@ -36,11 +37,13 @@ use libp2p::{
     gossipsub::{self, IdentTopic, MessageAuthenticity, PublishError, ValidationMode},
     identify, identity,
     kad::{self, store::MemoryStore},
+    multiaddr::Protocol,
     noise,
     swarm::{NetworkBehaviour, Swarm, SwarmEvent},
-    tcp, yamux, Multiaddr, SwarmBuilder,
+    tcp, yamux, Multiaddr, PeerId, SwarmBuilder,
 };
 use once_cell::sync::Lazy;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use sha2::{Digest, Sha256};
@@ -48,6 +51,7 @@ use std::net::SocketAddr;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     env, fs, io,
+    io::Write,
     path::{Path, PathBuf},
     str,
     sync::{
@@ -61,10 +65,10 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, Semaphore};
 use tokio::{select, signal, time};
 
-static TOPIC_ANCHORS: Lazy<IdentTopic> =
-    Lazy::new(|| IdentTopic::new("mfenx/powerhouse/anchors/v1"));
+const DEFAULT_ANCHOR_TOPIC: &str = "mfenx/powerhouse/anchors/v1";
 static TOPIC_EVIDENCE: Lazy<IdentTopic> =
     Lazy::new(|| IdentTopic::new("mfenx/powerhouse/evidence/v1"));
+static TOPIC_VOTES: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("mfenx/powerhouse/votes/v1"));
 static NO_GOSSIP_PEERS_LOGGED: AtomicBool = AtomicBool::new(false);
 const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
@@ -74,6 +78,40 @@ const MAX_HEADER_BYTES: usize = 32 * 1024;
 const DEFAULT_MAX_REQUEST_BYTES: usize = 64 * 1024 * 1024;
 const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 10_000;
 const DEFAULT_BLOB_MAX_CONCURRENCY: usize = 128;
+
+struct BftState {
+    round: u64,
+    votes: HashMap<String, HashSet<Vec<u8>>>,
+}
+
+impl BftState {
+    fn new(bft_round_ms: u64) -> Self {
+        let round = current_round(bft_round_ms);
+        Self {
+            round,
+            votes: HashMap::new(),
+        }
+    }
+
+    fn maybe_advance(&mut self, bft_round_ms: u64) {
+        let now_round = current_round(bft_round_ms);
+        if now_round != self.round {
+            self.round = now_round;
+            self.votes.clear();
+        }
+    }
+
+    fn record_vote(&mut self, anchor_hash: &str, key_bytes: &[u8]) -> usize {
+        let entry = self
+            .votes
+            .entry(anchor_hash.to_string())
+            .or_insert_with(HashSet::new);
+        entry.insert(key_bytes.to_vec());
+        entry.len()
+    }
+
+    // vote_count intentionally omitted to keep the state minimal.
+}
 
 /// Per-namespace limits applied to blob ingestion.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -112,6 +150,14 @@ pub struct NetConfig {
     pub log_dir: PathBuf,
     /// Quorum threshold used when reconciling anchors.
     pub quorum: usize,
+    /// Anchor gossip topic used for load balancing/sharding.
+    pub anchor_topic: IdentTopic,
+    /// Anchor gossip topics used for bridging across shards (includes anchor_topic).
+    pub bridge_topics: Vec<IdentTopic>,
+    /// Enable BFT-style anchor votes before broadcast.
+    pub bft_enabled: bool,
+    /// Round duration (ms) used to align vote rounds.
+    pub bft_round_ms: u64,
     /// Interval between anchor recomputation and gossip broadcasts.
     pub broadcast_interval: Duration,
     /// Signing and libp2p keys backing the node identity.
@@ -155,6 +201,10 @@ impl NetConfig {
         quorum: usize,
         broadcast_interval: Duration,
         key_material: KeyMaterial,
+        anchor_topic: Option<String>,
+        bridge_topics: Option<Vec<String>>,
+        bft_enabled: bool,
+        bft_round_ms: Option<u64>,
         metrics_addr: Option<SocketAddr>,
         membership_policy: Arc<dyn MembershipPolicy>,
         checkpoint_interval: Option<u64>,
@@ -169,10 +219,30 @@ impl NetConfig {
         attestation_quorum: Option<usize>,
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
+        let anchor_topic = IdentTopic::new(
+            anchor_topic.unwrap_or_else(|| DEFAULT_ANCHOR_TOPIC.to_string()),
+        );
+        let mut bridge_topics_vec = Vec::new();
+        let mut seen_topics: HashSet<String> = HashSet::new();
+        let anchor_str = anchor_topic.to_string();
+        seen_topics.insert(anchor_str.clone());
+        bridge_topics_vec.push(anchor_topic.clone());
+        if let Some(topics) = bridge_topics {
+            for topic in topics {
+                let trimmed = topic.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                if seen_topics.insert(trimmed.to_string()) {
+                    bridge_topics_vec.push(IdentTopic::new(trimmed));
+                }
+            }
+        }
         let stake_registry_path = blob_dir.as_ref().map(|dir| dir.join("stake_registry.json"));
         let blob_max_concurrency = blob_max_concurrency.unwrap_or(DEFAULT_BLOB_MAX_CONCURRENCY);
         let blob_request_timeout =
             Duration::from_millis(blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS));
+        let bft_round_ms = bft_round_ms.unwrap_or_else(|| broadcast_interval.as_millis() as u64);
         Self {
             node_id,
             listen_addr,
@@ -181,6 +251,10 @@ impl NetConfig {
             quorum,
             broadcast_interval,
             key_material,
+            anchor_topic,
+            bridge_topics: bridge_topics_vec,
+            bft_enabled,
+            bft_round_ms,
             membership_policy,
             checkpoint_interval,
             blob_dir,
@@ -214,6 +288,19 @@ struct BlobServiceConfig {
     max_concurrency: usize,
     request_timeout: Duration,
     rate_limits: Arc<Mutex<HashMap<String, RateState>>>,
+    da_publish: Option<DaPublishConfig>,
+}
+
+#[derive(Debug, Clone)]
+struct DaPublishConfig {
+    provider: String,
+    endpoint: String,
+    auth_token: Option<String>,
+    timeout: Duration,
+    publish_interval: Duration,
+    inline: bool,
+    prune_after_publish: bool,
+    retry_backoff: Duration,
 }
 
 #[derive(Debug, Clone)]
@@ -261,6 +348,12 @@ async fn run_blob_service(cfg: BlobServiceConfig) {
         return;
     }
     let _retention_days = cfg.retention_days;
+    if let Some(publish_cfg) = cfg.da_publish.clone() {
+        let cfg_clone = cfg.clone();
+        tokio::spawn(async move {
+            da_publisher_loop(cfg_clone, publish_cfg).await;
+        });
+    }
     let listener = match TcpListener::bind(cfg.listen).await {
         Ok(l) => l,
         Err(err) => {
@@ -294,6 +387,234 @@ async fn run_blob_service(cfg: BlobServiceConfig) {
             }
         }
     }
+}
+
+fn parse_env_flag(value: &str) -> bool {
+    matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+}
+
+fn da_publish_config_from_env() -> Option<DaPublishConfig> {
+    let endpoint = env::var("PH_DA_ENDPOINT").ok()?;
+    let provider = env::var("PH_DA_PROVIDER").unwrap_or_else(|_| "generic".to_string());
+    let auth_token = env::var("PH_DA_AUTH_TOKEN").ok();
+    let timeout_ms = env::var("PH_DA_TIMEOUT_MS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(10_000);
+    let publish_interval_ms = env::var("PH_DA_PUBLISH_INTERVAL_MS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(5_000);
+    let retry_backoff_ms = env::var("PH_DA_RETRY_BACKOFF_MS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(60_000);
+    let inline = env::var("PH_DA_PUBLISH_INLINE")
+        .ok()
+        .map(|v| parse_env_flag(&v))
+        .unwrap_or(false);
+    let prune_after_publish = env::var("PH_DA_PRUNE_AFTER_PUBLISH")
+        .ok()
+        .map(|v| parse_env_flag(&v))
+        .unwrap_or(false);
+    Some(DaPublishConfig {
+        provider,
+        endpoint,
+        auth_token,
+        timeout: Duration::from_millis(timeout_ms),
+        publish_interval: Duration::from_millis(publish_interval_ms),
+        inline,
+        prune_after_publish,
+        retry_backoff: Duration::from_millis(retry_backoff_ms),
+    })
+}
+
+fn append_da_outbox(base: &Path, record: &DaOutboxRecord) -> Result<(), String> {
+    let path = base.join("da_outbox.jsonl");
+    let payload = serde_json::to_vec(record).map_err(|e| format!("da outbox encode: {e}"))?;
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+        .map_err(|e| format!("da outbox open: {e}"))?;
+    file.write_all(&payload)
+        .and_then(|_| file.write_all(b"\n"))
+        .map_err(|e| format!("da outbox write: {e}"))?;
+    Ok(())
+}
+
+async fn da_publisher_loop(cfg: BlobServiceConfig, publish: DaPublishConfig) {
+    let client = match Client::builder().timeout(publish.timeout).build() {
+        Ok(c) => c,
+        Err(err) => {
+            eprintln!("da publisher client error: {err}");
+            return;
+        }
+    };
+    loop {
+        if let Err(err) = process_da_outbox(&cfg, &publish, &client).await {
+            eprintln!("da publisher error: {err}");
+        }
+        time::sleep(publish.publish_interval).await;
+    }
+}
+
+async fn process_da_outbox(
+    cfg: &BlobServiceConfig,
+    publish: &DaPublishConfig,
+    client: &Client,
+) -> Result<(), String> {
+    let path = cfg.base_dir.join("da_outbox.jsonl");
+    if !path.exists() {
+        return Ok(());
+    }
+    let contents = fs::read_to_string(&path).map_err(|e| format!("da outbox read: {e}"))?;
+    for line in contents.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let record: DaOutboxRecord =
+            serde_json::from_str(line).map_err(|e| format!("da outbox decode: {e}"))?;
+        let meta_opt = load_blob_meta(&cfg.base_dir, &record.namespace, &record.hash)
+            .map_err(|e| e.to_string())?;
+        let mut meta = match meta_opt {
+            Some(m) => m,
+            None => continue,
+        };
+        if let Some(receipt) = meta.da_receipt.as_ref() {
+            if receipt.status == "ok" {
+                continue;
+            }
+            if receipt.status == "error" {
+                let elapsed = now_millis().saturating_sub(receipt.updated_ms);
+                if elapsed < publish.retry_backoff.as_millis() as u64 {
+                    continue;
+                }
+            }
+        }
+        match publish_da_commitment(client, publish, &record).await {
+            Ok(receipt) => {
+                meta.da_receipt = Some(receipt);
+                save_blob_meta(&cfg.base_dir, &meta).map_err(|e| e.to_string())?;
+                if publish.prune_after_publish {
+                    prune_blob_payload(&cfg.base_dir, &meta);
+                }
+                let _ = append_da_published(&cfg.base_dir, &record);
+            }
+            Err(err) => {
+                meta.da_receipt = Some(DaReceipt {
+                    provider: publish.provider.clone(),
+                    commitment: Some(record.share_root.clone()),
+                    tx_hash: None,
+                    height: None,
+                    status: "error".to_string(),
+                    updated_ms: now_millis(),
+                    response: None,
+                    last_error: Some(err.clone()),
+                });
+                save_blob_meta(&cfg.base_dir, &meta).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn append_da_published(base: &Path, record: &DaOutboxRecord) -> Result<(), String> {
+    let path = base.join("da_published.jsonl");
+    let payload = serde_json::to_vec(record).map_err(|e| format!("da published encode: {e}"))?;
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+        .map_err(|e| format!("da published open: {e}"))?;
+    file.write_all(&payload)
+        .and_then(|_| file.write_all(b"\n"))
+        .map_err(|e| format!("da published write: {e}"))?;
+    Ok(())
+}
+
+async fn publish_da_commitment(
+    client: &Client,
+    publish: &DaPublishConfig,
+    record: &DaOutboxRecord,
+) -> Result<DaReceipt, String> {
+    #[derive(Serialize)]
+    struct DaPayload<'a> {
+        provider: &'a str,
+        namespace: &'a str,
+        blob_hash: &'a str,
+        share_root: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pedersen_root: Option<&'a str>,
+        size: u64,
+        data_shards: u8,
+        parity_shards: u8,
+        ts: u64,
+    }
+    let payload = DaPayload {
+        provider: &publish.provider,
+        namespace: &record.namespace,
+        blob_hash: &record.hash,
+        share_root: &record.share_root,
+        pedersen_root: record.pedersen_root.as_deref(),
+        size: record.size,
+        data_shards: record.data_shards,
+        parity_shards: record.parity_shards,
+        ts: record.ts,
+    };
+    let mut req = client.post(&publish.endpoint).json(&payload);
+    if let Some(token) = publish.auth_token.as_deref() {
+        req = req.bearer_auth(token);
+    }
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("da publish request failed: {e}"))?;
+    let status = resp.status();
+    let text = resp
+        .text()
+        .await
+        .map_err(|e| format!("da publish read failed: {e}"))?;
+    if !status.is_success() {
+        return Err(format!("da publish failed: status={} body={}", status, text));
+    }
+    let parsed: Option<serde_json::Value> = serde_json::from_str(&text).ok();
+    let tx_hash = parsed
+        .as_ref()
+        .and_then(|v| {
+            v.get("tx_hash")
+                .or_else(|| v.get("transaction_hash"))
+                .or_else(|| v.get("hash"))
+        })
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let height = parsed
+        .as_ref()
+        .and_then(|v| v.get("height").or_else(|| v.get("block_height")))
+        .and_then(|v| v.as_u64());
+    let commitment = parsed
+        .as_ref()
+        .and_then(|v| v.get("commitment").or_else(|| v.get("share_root")))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| Some(record.share_root.clone()));
+    Ok(DaReceipt {
+        provider: publish.provider.clone(),
+        commitment,
+        tx_hash,
+        height,
+        status: "ok".to_string(),
+        updated_ms: now_millis(),
+        response: parsed,
+        last_error: None,
+    })
+}
+
+fn prune_blob_payload(base: &Path, meta: &BlobMeta) {
+    let (_, blob_path, share_dir) = blob_paths(base, &meta.namespace, &meta.hash);
+    let _ = fs::remove_file(&blob_path);
+    let _ = fs::remove_dir_all(&share_dir);
 }
 
 async fn handle_blob_connection(stream: &mut TcpStream, cfg: BlobServiceConfig) -> io::Result<()> {
@@ -635,7 +956,7 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
             });
         }
     }
-    let meta = BlobMeta {
+    let mut meta = BlobMeta {
         namespace: namespace.clone(),
         hash: blob.hash.clone(),
         size: blob.size,
@@ -645,6 +966,7 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         pedersen_root: Some(commitment.pedersen_root.clone()),
         attestations,
         publisher_pk,
+        da_receipt: None,
     };
     if let Some(pk) = meta.publisher_pk.as_ref() {
         if let Some(sig) = publisher_sig.as_ref() {
@@ -655,6 +977,47 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         }
     }
     save_blob_meta(&cfg.base_dir, &meta).map_err(|err| err.to_string())?;
+    if let Some(da_cfg) = cfg.da_publish.clone() {
+        let record = DaOutboxRecord {
+            namespace: meta.namespace.clone(),
+            hash: meta.hash.clone(),
+            share_root: meta.share_root.clone(),
+            pedersen_root: meta.pedersen_root.clone(),
+            size: meta.size,
+            data_shards: meta.data_shards,
+            parity_shards: meta.parity_shards,
+            ts: now_millis(),
+        };
+        if let Err(err) = append_da_outbox(&cfg.base_dir, &record) {
+            eprintln!("da outbox append error: {err}");
+        }
+        if da_cfg.inline {
+            if let Ok(client) = Client::builder().timeout(da_cfg.timeout).build() {
+                match publish_da_commitment(&client, &da_cfg, &record).await {
+                    Ok(receipt) => {
+                        meta.da_receipt = Some(receipt);
+                        let _ = save_blob_meta(&cfg.base_dir, &meta);
+                        if da_cfg.prune_after_publish {
+                            prune_blob_payload(&cfg.base_dir, &meta);
+                        }
+                    }
+                    Err(err) => {
+                        meta.da_receipt = Some(DaReceipt {
+                            provider: da_cfg.provider.clone(),
+                            commitment: Some(record.share_root.clone()),
+                            tx_hash: None,
+                            height: None,
+                            status: "error".to_string(),
+                            updated_ms: now_millis(),
+                            response: None,
+                            last_error: Some(err),
+                        });
+                        let _ = save_blob_meta(&cfg.base_dir, &meta);
+                    }
+                }
+            }
+        }
+    }
     // Fees and rewards (split between operator and attestors by stake).
     if let (Some(path), Some(amount)) = (&cfg.stake_registry_path, fee) {
         let payer = meta
@@ -691,6 +1054,11 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         }
     }
 
+    let da_status = meta
+        .da_receipt
+        .as_ref()
+        .map(|r| r.status.clone())
+        .unwrap_or_else(|| if cfg.da_publish.is_some() { "queued".to_string() } else { "disabled".to_string() });
     let response = serde_json::json!({
         "status": "ok",
         "size": blob.size,
@@ -699,6 +1067,7 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         "pedersen_root": meta.pedersen_root,
         "data_shards": data_shards,
         "parity_shards": parity_shards,
+        "da_status": da_status,
     });
     Ok(response.to_string())
 }
@@ -831,6 +1200,7 @@ fn handle_commitment(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<Strin
         "shares": (meta.data_shards as usize + meta.parity_shards as usize),
         "attestations": attestations,
         "publisher_pk": meta.publisher_pk,
+        "da_receipt": meta.da_receipt,
     });
     Ok(body.to_string())
 }
@@ -1188,9 +1558,24 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut swarm = build_swarm(&cfg)?;
     Swarm::listen_on(&mut swarm, cfg.listen_addr.clone())
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
+    let mut bootstrap_peers = 0usize;
     for addr in &cfg.bootstraps {
+        if let Some(peer_id) = extract_peer_id(addr) {
+            swarm
+                .behaviour_mut()
+                .kademlia
+                .add_address(&peer_id, addr.clone());
+            swarm.behaviour_mut().gossipsub.add_explicit_peer(&peer_id);
+            bootstrap_peers += 1;
+        }
         if let Err(err) = Swarm::dial(&mut swarm, addr.clone()) {
             eprintln!("dial {addr} failed: {err}");
+        }
+    }
+    if bootstrap_peers > 0 {
+        match swarm.behaviour_mut().kademlia.bootstrap() {
+            Ok(_) => println!("QSYS|mod=NET|evt=KAD_BOOTSTRAP|peers={bootstrap_peers}"),
+            Err(err) => eprintln!("kademlia bootstrap failed: {err:?}"),
         }
     }
 
@@ -1223,6 +1608,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             max_concurrency: cfg.blob_max_concurrency,
             request_timeout: cfg.blob_request_timeout,
             rate_limits: Arc::new(Mutex::new(HashMap::new())),
+            da_publish: da_publish_config_from_env(),
         };
         tokio::spawn(run_blob_service(blob_cfg));
     }
@@ -1232,36 +1618,68 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut last_payload = Vec::new();
     let mut last_publish: Option<Instant> = None;
     let mut broadcast_counter: u64 = 0;
+    let mut bft_state = BftState::new(cfg.bft_round_ms);
+    let mut anchor_votes: HashMap<[u8; 32], (Instant, HashMap<Vec<u8>, LedgerAnchor>)> =
+        HashMap::new();
 
     let local_peer = cfg.key_material.libp2p.public().to_peer_id();
 
     println!(
-        "QSYS|mod=NET|evt=LISTEN|node={} peer={} addr={}",
-        cfg.node_id, local_peer, cfg.listen_addr
+        "QSYS|mod=NET|evt=LISTEN|node={} peer={} addr={} topic={}",
+        cfg.node_id,
+        local_peer,
+        cfg.listen_addr,
+        cfg.anchor_topic.hash()
     );
 
     loop {
         select! {
             _ = ticker.tick() => {
-                if let Err(err) = broadcast_local_anchor(
-                    &mut swarm,
-                    &cfg,
-                    &mut last_payload,
-                    &mut last_publish,
-                    &mut broadcast_counter,
-                    &metrics,
-                )
-                .await
-                {
-                    metrics.inc_gossipsub_rejects();
-                    eprintln!("broadcast error: {err}");
+                if cfg.bft_enabled {
+                    if let Err(err) = bft_tick(
+                        &mut swarm,
+                        &cfg,
+                        &mut bft_state,
+                        &mut last_payload,
+                        &mut last_publish,
+                        &mut broadcast_counter,
+                        &metrics,
+                    )
+                    .await
+                    {
+                        metrics.inc_gossipsub_rejects();
+                        eprintln!("bft tick error: {err}");
+                    }
+                } else {
+                    if let Err(err) = broadcast_local_anchor(
+                        &mut swarm,
+                        &cfg,
+                        &mut last_payload,
+                        &mut last_publish,
+                        &mut broadcast_counter,
+                        &metrics,
+                    )
+                    .await
+                    {
+                        metrics.inc_gossipsub_rejects();
+                        eprintln!("broadcast error: {err}");
+                    }
                 }
                 if let Err(err) = broadcast_evidence(&mut swarm, &cfg) {
                     eprintln!("evidence broadcast error: {err}");
                 }
             }
             event = swarm.select_next_some() => {
-                if let Err(err) = handle_event(event, &cfg, &mut seen_payloads, &mut invalid_counters, &metrics).await {
+                if let Err(err) = handle_event(
+                    event,
+                    &mut swarm,
+                    &cfg,
+                    &mut seen_payloads,
+                    &mut invalid_counters,
+                    &mut bft_state,
+                    &mut anchor_votes,
+                    &metrics
+                ).await {
                     eprintln!("network error: {err}");
                 }
             }
@@ -1285,7 +1703,7 @@ fn build_swarm(cfg: &NetConfig) -> Result<Swarm<JrocBehaviour>, NetworkError> {
         )
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?
         .with_behaviour(|key| {
-            build_behaviour(key).map_err(|err| {
+            build_behaviour(key, &cfg.bridge_topics).map_err(|err| {
                 let boxed: Box<dyn std::error::Error + Send + Sync> = Box::new(err);
                 boxed
             })
@@ -1296,7 +1714,10 @@ fn build_swarm(cfg: &NetConfig) -> Result<Swarm<JrocBehaviour>, NetworkError> {
     Ok(builder.build())
 }
 
-fn build_behaviour(key: &identity::Keypair) -> Result<JrocBehaviour, NetworkError> {
+fn build_behaviour(
+    key: &identity::Keypair,
+    topics: &[IdentTopic],
+) -> Result<JrocBehaviour, NetworkError> {
     let peer_id = key.public().to_peer_id();
 
     let gossipsub_config = gossipsub::ConfigBuilder::default()
@@ -1312,8 +1733,13 @@ fn build_behaviour(key: &identity::Keypair) -> Result<JrocBehaviour, NetworkErro
     let mut gossipsub =
         gossipsub::Behaviour::new(MessageAuthenticity::Signed(key.clone()), gossipsub_config)
             .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
+    for topic in topics {
+        gossipsub
+            .subscribe(topic)
+            .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
+    }
     gossipsub
-        .subscribe(&TOPIC_ANCHORS)
+        .subscribe(&TOPIC_VOTES)
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
 
     let identify_config = identify::Config::new("mfenx-powerhouse/1.0.0".into(), key.public())
@@ -1386,6 +1812,13 @@ fn broadcast_evidence(
     Ok(())
 }
 
+fn extract_peer_id(addr: &Multiaddr) -> Option<PeerId> {
+    addr.iter().find_map(|proto| match proto {
+        Protocol::P2p(peer_id) => Some(peer_id),
+        _ => None,
+    })
+}
+
 fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkError> {
     // Try to parse signed evidence envelope first.
     if let Ok(env) = serde_json::from_slice::<EvidenceEnvelope>(data) {
@@ -1430,6 +1863,7 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
             pedersen_root: None,
             attestations: Vec::new(),
             publisher_pk: None,
+            da_receipt: None,
         }) {
             record_slash_with_registry(
                 &cfg.membership_policy,
@@ -1463,6 +1897,7 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
             pedersen_root: None,
             attestations: Vec::new(),
             publisher_pk: None,
+            da_receipt: None,
         }) {
             record_slash_with_registry(
                 &cfg.membership_policy,
@@ -1476,22 +1911,35 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
     Ok(())
 }
 
-async fn broadcast_local_anchor(
-    swarm: &mut Swarm<JrocBehaviour>,
+fn handle_vote_message(
     cfg: &NetConfig,
-    last_payload: &mut Vec<u8>,
-    last_publish: &mut Option<Instant>,
-    broadcast_counter: &mut u64,
-    metrics: &Arc<Metrics>,
+    bft_state: &mut BftState,
+    data: &[u8],
 ) -> Result<(), NetworkError> {
-    if !policy_permits(
-        cfg.membership_policy.as_ref(),
-        &cfg.key_material.verifying.to_bytes(),
-    ) {
-        return Err(NetworkError::Key(
-            "local key not permitted by identity policy".to_string(),
-        ));
+    let vote: AnchorVoteJson =
+        serde_json::from_slice(data).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    vote.validate()?;
+    let payload = vote_payload_bytes(vote.round, &vote.anchor_hash);
+    verify_signature_base64(&vote.public_key, &payload, &vote.signature)?;
+    let remote_verifying =
+        decode_public_key_base64(&vote.public_key).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    let remote_key_bytes = remote_verifying.to_bytes();
+    if !policy_permits(cfg.membership_policy.as_ref(), &remote_key_bytes) {
+        return Ok(());
     }
+    bft_state.maybe_advance(cfg.bft_round_ms);
+    if vote.round != bft_state.round {
+        return Ok(());
+    }
+    let total = bft_state.record_vote(&vote.anchor_hash, &remote_key_bytes);
+    println!(
+        "QSYS|mod=BFT|evt=VOTE|round={} votes={}",
+        vote.round, total
+    );
+    Ok(())
+}
+
+fn build_anchor_payload(cfg: &NetConfig) -> Result<(AnchorJson, Vec<u8>, usize), NetworkError> {
     let ledger = load_anchor_from_logs(&cfg.log_dir)?;
     let timestamp_ms = now_millis();
     let anchor_json = AnchorJson::from_ledger(
@@ -1504,6 +1952,20 @@ async fn broadcast_local_anchor(
     )?;
     let payload =
         serde_json::to_vec(&anchor_json).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    Ok((anchor_json, payload, ledger.entries.len()))
+}
+
+async fn publish_anchor_payload(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+    anchor_json: AnchorJson,
+    payload: Vec<u8>,
+    entries_len: usize,
+    last_payload: &mut Vec<u8>,
+    last_publish: &mut Option<Instant>,
+    broadcast_counter: &mut u64,
+    metrics: &Arc<Metrics>,
+) -> Result<(), NetworkError> {
     if *last_payload == payload {
         return Ok(());
     }
@@ -1524,10 +1986,11 @@ async fn broadcast_local_anchor(
     };
     let message =
         serde_json::to_vec(&envelope).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    let message_clone = message.clone();
     match swarm
         .behaviour_mut()
         .gossipsub
-        .publish(TOPIC_ANCHORS.clone(), message)
+        .publish(cfg.anchor_topic.clone(), message)
     {
         Ok(_) => {
             NO_GOSSIP_PEERS_LOGGED.store(false, Ordering::Relaxed);
@@ -1538,16 +2001,20 @@ async fn broadcast_local_anchor(
             }
             return Ok(());
         }
+        Err(PublishError::Duplicate) => {
+            return Ok(());
+        }
         Err(err) => {
             metrics.inc_gossipsub_rejects();
             return Err(NetworkError::Libp2p(err.to_string()));
         }
     }
+    bridge_anchor_message(swarm, cfg, &cfg.anchor_topic.hash(), &message_clone, metrics);
     *last_payload = payload;
     *last_publish = Some(Instant::now());
     println!(
         "QSYS|mod=ANCHOR|evt=BROADCAST|entries={}",
-        ledger.entries.len()
+        entries_len
     );
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
@@ -1569,7 +2036,7 @@ async fn broadcast_local_anchor(
                     println!(
                         "QSYS|mod=CHECKPOINT|evt=RECORDED|epoch={} entries={}",
                         checkpoint.epoch,
-                        ledger.entries.len()
+                        entries_len
                     );
                 }
             }
@@ -1578,11 +2045,135 @@ async fn broadcast_local_anchor(
     Ok(())
 }
 
+async fn broadcast_local_anchor(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+    last_payload: &mut Vec<u8>,
+    last_publish: &mut Option<Instant>,
+    broadcast_counter: &mut u64,
+    metrics: &Arc<Metrics>,
+) -> Result<(), NetworkError> {
+    if !policy_permits(
+        cfg.membership_policy.as_ref(),
+        &cfg.key_material.verifying.to_bytes(),
+    ) {
+        return Err(NetworkError::Key(
+            "local key not permitted by identity policy".to_string(),
+        ));
+    }
+    let (anchor_json, payload, entries_len) = build_anchor_payload(cfg)?;
+    publish_anchor_payload(
+        swarm,
+        cfg,
+        anchor_json,
+        payload,
+        entries_len,
+        last_payload,
+        last_publish,
+        broadcast_counter,
+        metrics,
+    )
+    .await
+}
+
+async fn broadcast_anchor_vote(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+    round: u64,
+    anchor_hash: &str,
+    metrics: &Arc<Metrics>,
+) -> Result<(), NetworkError> {
+    let payload = vote_payload_bytes(round, anchor_hash);
+    let signature = sign_payload(&cfg.key_material.signing, &payload);
+    let signature_b64 = encode_signature_base64(&signature);
+    let vote = AnchorVoteJson {
+        schema: SCHEMA_VOTE.to_string(),
+        network: NETWORK_ID.to_string(),
+        round,
+        anchor_hash: anchor_hash.to_string(),
+        public_key: encode_public_key_base64(&cfg.key_material.verifying),
+        signature: signature_b64,
+    };
+    let message =
+        serde_json::to_vec(&vote).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    match swarm
+        .behaviour_mut()
+        .gossipsub
+        .publish(TOPIC_VOTES.clone(), message)
+    {
+        Ok(_) => Ok(()),
+        Err(PublishError::InsufficientPeers) => Ok(()),
+        Err(PublishError::Duplicate) => Ok(()),
+        Err(err) => {
+            metrics.inc_gossipsub_rejects();
+            Err(NetworkError::Libp2p(err.to_string()))
+        }
+    }
+}
+
+async fn bft_tick(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+    bft_state: &mut BftState,
+    last_payload: &mut Vec<u8>,
+    last_publish: &mut Option<Instant>,
+    broadcast_counter: &mut u64,
+    metrics: &Arc<Metrics>,
+) -> Result<(), NetworkError> {
+    if !policy_permits(
+        cfg.membership_policy.as_ref(),
+        &cfg.key_material.verifying.to_bytes(),
+    ) {
+        return Err(NetworkError::Key(
+            "local key not permitted by identity policy".to_string(),
+        ));
+    }
+    bft_state.maybe_advance(cfg.bft_round_ms);
+    let round = bft_state.round;
+    let (anchor_json, payload, entries_len) = build_anchor_payload(cfg)?;
+    let anchor_hash = anchor_json
+        .fold_digest
+        .clone()
+        .unwrap_or_else(|| anchor_payload_hash(&payload));
+
+    broadcast_anchor_vote(swarm, cfg, round, &anchor_hash, metrics).await?;
+    let local_key = cfg.key_material.verifying.to_bytes();
+    let votes = bft_state.record_vote(&anchor_hash, &local_key);
+
+    if votes >= cfg.quorum {
+        publish_anchor_payload(
+            swarm,
+            cfg,
+            anchor_json,
+            payload,
+            entries_len,
+            last_payload,
+            last_publish,
+            broadcast_counter,
+            metrics,
+        )
+        .await?;
+        println!(
+            "QSYS|mod=BFT|evt=QUORUM|round={} votes={}",
+            round, votes
+        );
+    } else {
+        println!(
+            "QSYS|mod=BFT|evt=WAITING|round={} votes={}/{}",
+            round, votes, cfg.quorum
+        );
+    }
+    Ok(())
+}
+
 async fn handle_event(
     event: SwarmEvent<JrocBehaviourEvent>,
+    swarm: &mut Swarm<JrocBehaviour>,
     cfg: &NetConfig,
     seen_payloads: &mut PayloadCache,
     invalid_counters: &mut HashMap<libp2p::PeerId, usize>,
+    bft_state: &mut BftState,
+    anchor_votes: &mut HashMap<[u8; 32], (Instant, HashMap<Vec<u8>, LedgerAnchor>)>,
     metrics: &Arc<Metrics>,
 ) -> Result<(), NetworkError> {
     #[allow(clippy::collapsible_match, clippy::single_match)]
@@ -1598,6 +2189,15 @@ async fn handle_event(
             } => {
                 if message.topic == TOPIC_EVIDENCE.hash() {
                     handle_evidence_message(cfg, &message.data)?;
+                    return Ok(());
+                }
+                if message.topic == TOPIC_VOTES.hash() {
+                    if cfg.bft_enabled {
+                        handle_vote_message(cfg, bft_state, &message.data)?;
+                    }
+                    return Ok(());
+                }
+                if !is_anchor_topic(cfg, &message.topic) {
                     return Ok(());
                 }
                 metrics.inc_anchors_received();
@@ -1649,16 +2249,19 @@ async fn handle_event(
                     record_invalid(invalid_counters, propagation_source, metrics);
                     return Ok(());
                 }
-                // DA gating: require commitments and verify share roots + attestation QC; require persisted QC.
+                // DA gating: require commitments only after non-genesis entries exist,
+                // then verify share roots + attestation QC; require persisted QC.
                 if anchor_json.da_commitments.is_empty() {
-                    metrics.inc_gossipsub_rejects();
-                    println!(
-                        "rejecting peer {}: missing DA commitments in anchor",
-                        envelope.node_id
-                    );
-                    return Ok(());
-                }
-                if let Some(blob_dir) = cfg.blob_dir.as_ref() {
+                    if anchor_json.entries.len() > 1 {
+                        metrics.inc_gossipsub_rejects();
+                        println!(
+                            "rejecting peer {}: missing DA commitments in anchor (entries={})",
+                            envelope.node_id,
+                            anchor_json.entries.len()
+                        );
+                        return Ok(());
+                    }
+                } else if let Some(blob_dir) = cfg.blob_dir.as_ref() {
                     for da in &anchor_json.da_commitments {
                         let meta = load_blob_meta(blob_dir, &da.namespace, &da.blob_hash)
                             .ok()
@@ -1756,40 +2359,82 @@ async fn handle_event(
                 let remote_anchor = anchor_json.clone().into_ledger()?;
                 let local_anchor = load_anchor_from_logs(&cfg.log_dir)?;
                 let local_key_bytes = cfg.key_material.verifying.to_bytes();
-                let votes = [
-                    AnchorVote {
-                        anchor: &local_anchor,
-                        public_key: &local_key_bytes,
-                    },
-                    AnchorVote {
-                        anchor: &remote_anchor,
-                        public_key: &remote_key_bytes,
-                    },
-                ];
-                match crate::reconcile_anchors_with_quorum(&votes, cfg.quorum) {
-                    Ok(()) => {
-                        metrics.inc_anchors_verified();
-                        metrics.inc_finality_events();
+
+                let remote_digest = anchor_digest(&remote_anchor);
+                let local_digest = anchor_digest(&local_anchor);
+                if remote_digest != local_digest {
+                    println!("anchor divergence with peer {}: digest mismatch", envelope.node_id);
+                    if let Err(slash_err) =
+                        cfg.membership_policy.record_slash(&remote_verifying)
+                    {
+                        eprintln!(
+                            "failed to record slash for {}: {}",
+                            envelope.node_id, slash_err
+                        );
+                    } else {
                         println!(
-                            "QSYS|mod=QUORUM|evt=FINALIZED|peer={} entries={}",
-                            envelope.node_id,
-                            remote_anchor.entries.len()
+                            "peer {} marked as slashed due to conflicting anchor",
+                            envelope.node_id
                         );
                     }
-                    Err(err) => {
-                        println!("anchor divergence with peer {}: {}", envelope.node_id, err);
-                        if let Err(slash_err) =
-                            cfg.membership_policy.record_slash(&remote_verifying)
-                        {
-                            eprintln!(
-                                "failed to record slash for {}: {}",
-                                envelope.node_id, slash_err
-                            );
-                        } else {
+                    return Ok(());
+                }
+                bridge_anchor_message(swarm, cfg, &message.topic, &message.data, metrics);
+
+                if anchor_votes.len() > 64 {
+                    let ttl = Duration::from_secs(300);
+                    anchor_votes.retain(|_, (ts, _)| ts.elapsed() < ttl);
+                }
+
+                let now = Instant::now();
+                let entry = anchor_votes
+                    .entry(remote_digest)
+                    .or_insert_with(|| (now, HashMap::new()));
+                entry.0 = now;
+                entry
+                    .1
+                    .entry(local_key_bytes.to_vec())
+                    .or_insert_with(|| local_anchor.clone());
+                entry
+                    .1
+                    .entry(remote_key_bytes.to_vec())
+                    .or_insert_with(|| remote_anchor.clone());
+
+                if entry.1.len() >= cfg.quorum {
+                    let votes: Vec<AnchorVote<'_>> = entry
+                        .1
+                        .iter()
+                        .map(|(key, anchor)| AnchorVote {
+                            anchor,
+                            public_key: key,
+                        })
+                        .collect();
+                    match crate::reconcile_anchors_with_quorum(&votes, cfg.quorum) {
+                        Ok(()) => {
+                            metrics.inc_anchors_verified();
+                            metrics.inc_finality_events();
                             println!(
-                                "peer {} marked as slashed due to conflicting anchor",
-                                envelope.node_id
+                                "QSYS|mod=QUORUM|evt=FINALIZED|peer={} entries={}",
+                                envelope.node_id,
+                                remote_anchor.entries.len()
                             );
+                            anchor_votes.remove(&remote_digest);
+                        }
+                        Err(err) => {
+                            println!("anchor divergence with peer {}: {}", envelope.node_id, err);
+                            if let Err(slash_err) =
+                                cfg.membership_policy.record_slash(&remote_verifying)
+                            {
+                                eprintln!(
+                                    "failed to record slash for {}: {}",
+                                    envelope.node_id, slash_err
+                                );
+                            } else {
+                                println!(
+                                    "peer {} marked as slashed due to conflicting anchor",
+                                    envelope.node_id
+                                );
+                            }
                         }
                     }
                 }
@@ -1799,6 +2444,42 @@ async fn handle_event(
         _ => {}
     }
     Ok(())
+}
+
+fn is_anchor_topic(cfg: &NetConfig, topic: &gossipsub::TopicHash) -> bool {
+    cfg.bridge_topics
+        .iter()
+        .any(|candidate| candidate.hash() == *topic)
+}
+
+fn bridge_anchor_message(
+    swarm: &mut Swarm<JrocBehaviour>,
+    cfg: &NetConfig,
+    origin: &gossipsub::TopicHash,
+    message: &[u8],
+    metrics: &Arc<Metrics>,
+) {
+    if cfg.bridge_topics.len() <= 1 {
+        return;
+    }
+    for topic in &cfg.bridge_topics {
+        if topic.hash() == *origin {
+            continue;
+        }
+        match swarm
+            .behaviour_mut()
+            .gossipsub
+            .publish(topic.clone(), message.to_vec())
+        {
+            Ok(_) => {}
+            Err(PublishError::InsufficientPeers) => {}
+            Err(PublishError::Duplicate) => {}
+            Err(err) => {
+                metrics.inc_gossipsub_rejects();
+                eprintln!("bridge publish error: {err}");
+            }
+        }
+    }
 }
 
 fn sha256_digest(data: &[u8]) -> [u8; 32] {
@@ -1917,6 +2598,38 @@ struct BlobMeta {
     attestations: Vec<StoredAttestation>,
     #[serde(default)]
     publisher_pk: Option<String>,
+    #[serde(default)]
+    da_receipt: Option<DaReceipt>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DaReceipt {
+    provider: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    commitment: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    tx_hash: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    height: Option<u64>,
+    status: String,
+    updated_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    response: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DaOutboxRecord {
+    namespace: String,
+    hash: String,
+    share_root: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pedersen_root: Option<String>,
+    size: u64,
+    data_shards: u8,
+    parity_shards: u8,
+    ts: u64,
 }
 
 fn blob_paths(base: &Path, namespace: &str, hash: &str) -> (PathBuf, PathBuf, PathBuf) {
@@ -1979,6 +2692,11 @@ fn evidence_root(blob_dir: &Option<PathBuf>) -> Option<String> {
 
 fn latest_da_commitments(blob_dir: &Option<PathBuf>) -> Vec<DaCommitmentJson> {
     let mut map: HashMap<String, (SystemTime, DaCommitmentJson)> = HashMap::new();
+    let min_age_secs = std::env::var("PH_DA_COMMITMENT_MIN_AGE_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(0);
+    let min_age = Duration::from_secs(min_age_secs);
     let Some(dir) = blob_dir.as_ref() else {
         return Vec::new();
     };
@@ -2013,11 +2731,34 @@ fn latest_da_commitments(blob_dir: &Option<PathBuf>) -> Vec<DaCommitmentJson> {
                 .metadata()
                 .and_then(|m| m.modified())
                 .unwrap_or(SystemTime::UNIX_EPOCH);
+            if min_age_secs > 0 {
+                if let Ok(age) = SystemTime::now().duration_since(mtime) {
+                    if age < min_age {
+                        continue;
+                    }
+                }
+            }
+            let (da_provider, da_commitment, da_height, da_status) = meta
+                .da_receipt
+                .as_ref()
+                .map(|r| {
+                    (
+                        Some(r.provider.clone()),
+                        r.commitment.clone().or(r.tx_hash.clone()),
+                        r.height,
+                        Some(r.status.clone()),
+                    )
+                })
+                .unwrap_or((None, None, None, None));
             let dc = DaCommitmentJson {
                 namespace: meta.namespace.clone(),
                 blob_hash: meta.hash.clone(),
                 share_root: meta.share_root.clone(),
                 pedersen_root: meta.pedersen_root.clone(),
+                da_provider,
+                da_commitment,
+                da_height,
+                da_status,
                 attestation_qc: None,
             };
             match map.get(&meta.namespace) {
@@ -2239,6 +2980,18 @@ fn now_millis() -> u64 {
         .as_millis() as u64
 }
 
+fn current_round(bft_round_ms: u64) -> u64 {
+    let round_ms = bft_round_ms.max(1);
+    now_millis() / round_ms
+}
+
+fn anchor_payload_hash(payload: &[u8]) -> String {
+    hex::encode(sha256_digest(payload))
+}
+
+fn vote_payload_bytes(round: u64, anchor_hash: &str) -> Vec<u8> {
+    format!("{NETWORK_ID}:{round}:{anchor_hash}").into_bytes()
+}
 #[cfg(test)]
 mod tests {
     use super::*;

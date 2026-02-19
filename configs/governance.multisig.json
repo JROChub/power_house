@@ -1,0 +1,4 @@
+{
+  "backend": "multisig",
+  "state_path": "./configs/multisig_state.json"
+}

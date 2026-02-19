@@ -16,17 +16,30 @@ Contents
 ## Overview and Principles
 - Zero downtime: restart one boot node at a time.
 - Preserve identities: keep each node’s `--key` seed so Peer IDs remain stable.
-- Open by default: remove policy gating; connections and gossip do not require approval.
+- Policy mode is intentional: open for public testnets, stake‑gated for incentive mainnet.
 - Observability: expose Prometheus metrics on `:9100` (or bind to localhost only if preferred).
 
-## Policy Changes (Open Network)
-Remove governance gating flags from boot nodes so any peer can connect and gossip. Anchor acceptance becomes open; if you later need quorum gating, reintroduce `--policy` with an allowlist or stake descriptor.
+## Policy Mode
+
+### Open Network (public testnet)
+Remove governance gating flags from boot nodes so any peer can connect and gossip. Anchor acceptance becomes open.
 
 Remove the following flags from both boot nodes:
 - `--policy /etc/powerhouse/governance.json`
 - `--policy-allowlist /etc/powerhouse/allow.json`
 
-The rest of the runtime remains unchanged.
+### Stake‑Gated Network (incentive mainnet)
+Keep governance gating enabled to enforce stake‑backed membership.
+
+Set in `/etc/powerhouse/powerhouse-common.env`:
+```
+PH_POLICY=/etc/powerhouse/governance.json
+```
+
+Ensure `/etc/powerhouse/governance.json` points to a stake state file with signer threshold (e.g., 5‑of‑7) and valid member entries:
+```
+{ "backend": "stake", "state_path": "/etc/powerhouse/stake_state.json" }
+```
 
 ## Systemd Updates (Boot1 and Boot2)
 Use the templates in `infra/systemd/` plus node env files:

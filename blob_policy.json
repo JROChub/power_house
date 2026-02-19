@@ -4,7 +4,15 @@
         "max_bytes": 524288,
         "retention_days": 30,
         "max_per_min": 60,
-        "min_fee": 0
+        "min_fee": 0,
+        "operator_reward_bps": 2000
+      },
+      "paid": {
+        "max_bytes": 5242880,
+        "retention_days": 30,
+        "max_per_min": 240,
+        "min_fee": 1,
+        "operator_reward_bps": 2000
       }
     }
   }
