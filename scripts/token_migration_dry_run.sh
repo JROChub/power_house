@@ -43,6 +43,7 @@ echo "[3/8] deterministic claim manifest + proofs"
 ./scripts/build_migration_claims.sh \
   --snapshot "$SNAPSHOT_JSON" \
   --output "$CLAIMS_JSON" \
+  --mode native \
   --amount-source total \
   --conversion-ratio 1
 
@@ -50,7 +51,7 @@ echo "[4/8] governance migration proposal anchor"
 "$CARGO_BIN" run --features net --bin julian --quiet -- \
   governance propose-migration \
     --snapshot-height 1 \
-    --token-contract "0x0000000000000000000000000000000000000001" \
+    --token-contract "native://julian" \
     --conversion-ratio 1 \
     --treasury-mint 0 \
     --log-dir "$LEDGER_DIR" \

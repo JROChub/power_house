@@ -868,7 +868,14 @@ fn namespace_rule(cfg: &BlobServiceConfig, namespace: &str) -> Option<NamespaceR
 }
 
 fn token_mode_enabled(cfg: &BlobServiceConfig) -> bool {
-    cfg.token_mode_contract.is_some() && cfg.token_oracle_rpc.is_some()
+    cfg.token_mode_contract.is_some()
+}
+
+fn token_mode_requires_oracle(cfg: &BlobServiceConfig) -> bool {
+    cfg.token_mode_contract
+        .as_deref()
+        .map(|mode| !mode.eq_ignore_ascii_case("native"))
+        .unwrap_or(false)
 }
 
 fn pubkey_b64_to_migration_address(pk_b64: &str) -> Result<String, String> {
@@ -938,9 +945,7 @@ fn queue_token_burn_intent(
     pk_b64: &str,
     reason: &str,
 ) {
-    let (Some(contract), Some(rpc), Some(reg_path)) =
-        (token_mode_contract, token_oracle_rpc, registry_path)
-    else {
+    let (Some(contract), Some(reg_path)) = (token_mode_contract, registry_path) else {
         return;
     };
     let outbox = reg_path
@@ -957,7 +962,7 @@ fn queue_token_burn_intent(
     let payload = serde_json::json!({
         "schema": "mfenx.powerhouse.token-burn-intent.v1",
         "token_contract": contract,
-        "token_oracle": rpc,
+        "token_oracle": token_oracle_rpc,
         "account": account,
         "pubkey_b64": pk_b64,
         "reason": reason,
@@ -1163,15 +1168,19 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
                 let mut settled_via_registry = true;
                 if let Err(debit_err) = reg.debit_fee(&payer, amount) {
                     if token_mode_enabled(cfg) {
-                        let covered = token_oracle_balance_sufficient(cfg, &payer, amount)
-                            .await
-                            .map_err(|err| format!("token oracle check failed: {err}"))?;
-                        if covered {
-                            settled_via_registry = false;
+                        if token_mode_requires_oracle(cfg) {
+                            let covered = token_oracle_balance_sufficient(cfg, &payer, amount)
+                                .await
+                                .map_err(|err| format!("token oracle check failed: {err}"))?;
+                            if covered {
+                                settled_via_registry = false;
+                            } else {
+                                return Err(format!(
+                                    "fee debit failed and oracle balance insufficient: {debit_err}"
+                                ));
+                            }
                         } else {
-                            return Err(format!(
-                                "fee debit failed and oracle balance insufficient: {debit_err}"
-                            ));
+                            return Err(format!("fee debit failed in native mode: {debit_err}"));
                         }
                     } else {
                         return Err(format!("fee debit failed: {debit_err}"));

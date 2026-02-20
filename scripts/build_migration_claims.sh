@@ -15,6 +15,7 @@ Example:
   scripts/build_migration_claims.sh \
     --snapshot ./migration-snapshot.json \
     --output ./migration-claims.json \
+    --mode native \
     --amount-source total \
     --conversion-ratio 1
 EOF
@@ -22,4 +23,15 @@ EOF
 fi
 
 CARGO_BIN=${CARGO_BIN:-cargo}
-"$CARGO_BIN" run --features net --bin julian --quiet -- stake claims "$@"
+MODE_SET=0
+for arg in "$@"; do
+  if [[ "$arg" == "--mode" ]]; then
+    MODE_SET=1
+    break
+  fi
+done
+if [[ "$MODE_SET" == "1" ]]; then
+  "$CARGO_BIN" run --features net --bin julian --quiet -- stake claims "$@"
+else
+  "$CARGO_BIN" run --features net --bin julian --quiet -- stake claims "$@" --mode native
+fi

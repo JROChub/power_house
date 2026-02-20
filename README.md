@@ -119,6 +119,7 @@ This writes a deterministic, sorted snapshot artifact and embeds an anchor paylo
 julian stake claims \
   --snapshot ./migration-snapshot.json \
   --output ./migration-claims.json \
+  --mode native \
   --amount-source total \
   --conversion-ratio 1
 ```
@@ -126,14 +127,16 @@ julian stake claims \
 This emits:
 - deterministic `claim_id` values
 - per-claim Merkle proofs
-- canonical `merkle_root` for `PowerHouseToken` deployment/claims
+- canonical `merkle_root` for native migration settlement
+
+`--mode erc20` remains available for external EVM bridge flows.
 
 ### 4) Governance proposal anchor for migration
 
 ```bash
 julian governance propose-migration \
   --snapshot-height 12345 \
-  --token-contract 0xYourTokenContract \
+  --token-contract native://julian \
   --conversion-ratio 1 \
   --treasury-mint 0 \
   --log-dir ./logs/nodeA \
@@ -142,11 +145,13 @@ julian governance propose-migration \
   --output ./migration-anchor.json
 ```
 
+If `--token-contract` is omitted, the default token id is `native://julian`.
+
 The output includes:
 - `migration_anchor` (canonical migration payload with `proposal_hash`)
 - `anchor_json` (standard net anchor JSON)
 
-### 5) Compile + deploy `PowerHouseToken`
+### 5) Optional EVM bridge: compile + deploy `PowerHouseToken`
 
 ```bash
 ./scripts/build_powerhouse_token_artifact.sh
@@ -166,10 +171,10 @@ python3 ./scripts/deploy_powerhouse_token.py \
 ### 6) Dual-mode token migration flags (network runtime)
 
 `julian net start` now accepts:
-- `--token-mode <ERC20_ADDRESS>`
-- `--token-oracle <RPC_URL>`
+- `--token-mode <native|TOKEN_ID>`
+- optional `--token-oracle <RPC_URL>` for non-native oracle settlement modes
 
-During transition, fee settlement can fall back to oracle balance checks when registry debit fails.
+During transition, fee settlement can fall back to oracle balance checks when registry debit fails (non-native modes only).
 
 ### 7) Dry-run and smoke coverage
 
