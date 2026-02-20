@@ -15,6 +15,8 @@ pub mod blob;
 pub mod checkpoint;
 /// Governance policy implementations for membership rotation.
 pub mod governance;
+/// Migration mode helpers and feature switches.
+pub mod migration;
 /// Identity admission policy helpers.
 pub mod policy;
 /// Machine-readable schema types shared across the network CLI and swarm.
@@ -34,15 +36,17 @@ pub use checkpoint::{
     CheckpointError, CheckpointSignature,
 };
 pub use governance::{
-    GovernanceUpdate, MembershipPolicy, MultisigPolicy, PolicyUpdateError, StakePolicy,
-    StaticPolicy,
+    GovernanceUpdate, MembershipPolicy, MigrationAnchor, MigrationProposal, MultisigPolicy,
+    PolicyUpdateError, StakePolicy, StaticPolicy,
 };
+pub use migration::{migration_mode_frozen, refresh_migration_mode_from_env};
 pub use policy::{IdentityPolicy, PolicyError};
-pub use schema::{AnchorEnvelope, AnchorJson};
+pub use schema::{AnchorEnvelope, AnchorJson, AnchorVoteJson, SCHEMA_VOTE};
 pub use sign::{
     decode_public_key_base64, decode_signature_base64, encode_public_key_base64,
-    encode_signature_base64, load_encrypted_identity, load_or_derive_keypair, sign_payload,
-    verify_signature, verify_signature_base64, Ed25519KeySource, KeyError, KeyMaterial,
+    encode_signature_base64, encrypt_identity_base64, load_encrypted_identity,
+    load_or_derive_keypair, sign_payload, verify_signature, verify_signature_base64,
+    Ed25519KeySource, KeyError, KeyMaterial,
 };
 pub use stake_registry::StakeRegistry;
 pub use swarm::{run_network, NamespaceRule, NetConfig, NetworkError};

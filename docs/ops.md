@@ -147,6 +147,22 @@ Use versioned releases under `/opt/powerhouse/releases`:
 If `--blob-auth-token` is set, add:
 - `Authorization: Bearer <token>` or `x-api-key: <token>`
 
+## 10.1 External DA publisher (optional)
+
+Power-House can push DA commitments to an external API (Celestia/Ethereum-compatible
+gateway, or a custom relay). Configure via environment:
+
+- `PH_DA_ENDPOINT` (required) — URL to POST commitment JSON
+- `PH_DA_PROVIDER` (default: `generic`)
+- `PH_DA_AUTH_TOKEN` (optional bearer token)
+- `PH_DA_PUBLISH_INTERVAL_MS` (default: `5000`)
+- `PH_DA_PUBLISH_INLINE` (default: `false`) — attempt publish inline on submit
+- `PH_DA_RETRY_BACKOFF_MS` (default: `60000`)
+- `PH_DA_PRUNE_AFTER_PUBLISH` (default: `false`) — removes `.blob` + `shares/` after publish
+
+Outbox file: `da_outbox.jsonl` under the blob dir. Successful publishes append to
+`da_published.jsonl`. The `/commitment` endpoint returns `da_receipt` when present.
+
 ## 11. Namespace policies and rate limits
 
 `blob_policy.json` supports per-namespace guards:

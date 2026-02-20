@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  node:
+    build: .
+    command:
+      [
+        "net", "start",
+        "--node-id", "node3",
+        "--log-dir", "/data/logs",
+        "--listen", "/ip4/0.0.0.0/tcp/7003",
+        "--bootstrap", "/ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q",
+        "--bootstrap", "/ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd",
+        "--broadcast-interval", "1500",
+        "--quorum", "7",
+        "--metrics", ":9100"
+      ]
+    ports:
+      - "7003:7003"
+      - "9103:9100"
+    volumes:
+      - ./docker/node3:/data

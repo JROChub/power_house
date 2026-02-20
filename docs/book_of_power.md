@@ -1,7 +1,7 @@
 Power-House Protocol Manual
 ===========================
-Version: v0.1.54
-Crate: power_house v0.1.54
+Version: v0.1.57
+Crate: power_house v0.1.57
 Scope: deterministic proof ledger, DA commitments, and MFENX Power-House Network operations.
 
 Table of Contents
@@ -19,14 +19,15 @@ Table of Contents
 
 1. Canonical digests and reference commands
 -------------------------------------------
-Reference digests (v0.1.54):
-- Genesis digest: 139f1985df5b36dae23fa509fb53a006ba58e28e6dbb41d6d71cc1e91a82d84a
+Reference digests (v0.1.57):
+- Genesis digest (pinned): cdcc8f36bf3d511f04df86c63bcf580daee73aa67c0cf914483a05c2d289584a
 - Dense polynomial digest: ded75c45b3b7eedd37041aae79713d7382e000eb4d83fab5f6aca6ca4d276e8c
 - Hash anchor proof digest: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 - Fold digest (hash_pipeline): c87282dddb8d85a8b09a9669a1b2d97b30251c05b80eae2671271c432698aabe
 
 Reference commands:
 - `cargo run --example hash_pipeline` must emit the fold digest above and a reduced field value of 219.
+- `julian scale_sumcheck --vars 20` benchmarks streaming sum-check rounds (target: <10ms avg/round).
 - Example logs are staged under `/tmp/power_house_anchor_a` and `/tmp/power_house_anchor_b`.
   On hosts without `/tmp`, set `POWER_HOUSE_TMP=/path/to/workdir`.
 - `julian node anchor /tmp/power_house_anchor_a` should print `MFENX Power-House Network` lines including the genesis digest.
@@ -96,9 +97,11 @@ Schema references:
 8. Network operations (MFENX Power-House Network)
 --------------------------------
 - Local smoke test: `./scripts/smoke_net.sh` (confirms broadcast + finality under DA gating).
+- Fault test (offline share simulation): `./scripts/fault_test.sh` (verifies evidence outbox + slashing path).
 - Metrics (if enabled): `curl http://<host>:9100`
 - Blob health (requires auth token if enabled):
   `curl -H 'Authorization: Bearer <token>' http://<host>:8181/healthz`
+- BFT lane (optional): `julian net start --bft --bft-round-ms 5000` enables vote quorum before anchor broadcast.
 - Log format (journal):
   - `QSYS|mod=ANCHOR|evt=STANDBY`
   - `QSYS|mod=ANCHOR|evt=BROADCAST`

@@ -26,6 +26,8 @@
 
 use crate::{field::Field, prng::derive_many_mod_p};
 use crate::{MultilinearPolynomial, StreamingPolynomial, Transcript};
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -478,6 +480,18 @@ fn prove_streaming_with_stats_inner(
     assert!(num_vars >= 1, "num_vars must be at least 1");
     let p = field.modulus();
     let size = 1usize << num_vars;
+    let field = *field;
+    let use_parallel = {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            const PARALLEL_THRESHOLD: usize = 1 << 16;
+            size >= PARALLEL_THRESHOLD && rayon::current_num_threads() > 1
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            false
+        }
+    };
 
     let mut transcript = Transcript::new(GENERAL_SUMCHECK_DOMAIN);
     transcript.append(p);
@@ -490,16 +504,45 @@ fn prove_streaming_with_stats_inner(
 
     let total_start = Instant::now();
 
-    let mut claimed_sum = 0u64;
-    let mut g0_sum = 0u64;
-    let mut g1_sum = 0u64;
-    for idx in (0..size).step_by(2) {
-        let v0 = evaluator(idx) % p;
-        let v1 = evaluator(idx + 1) % p;
-        g0_sum = field.add(g0_sum, v0);
-        g1_sum = field.add(g1_sum, v1);
-        claimed_sum = field.add(claimed_sum, field.add(v0, v1));
-    }
+    let (claimed_sum, g0_sum, g1_sum) = if use_parallel {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            (0..size / 2)
+                .into_par_iter()
+                .map(|pair| {
+                    let idx = pair * 2;
+                    let v0 = evaluator(idx) % p;
+                    let v1 = evaluator(idx + 1) % p;
+                    (v0, v1, field.add(v0, v1))
+                })
+                .reduce(
+                    || (0u64, 0u64, 0u64),
+                    |acc, (v0, v1, sum)| {
+                        (
+                            field.add(acc.0, v0),
+                            field.add(acc.1, v1),
+                            field.add(acc.2, sum),
+                        )
+                    },
+                )
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            (0u64, 0u64, 0u64)
+        }
+    } else {
+        let mut claimed_sum = 0u64;
+        let mut g0_sum = 0u64;
+        let mut g1_sum = 0u64;
+        for idx in (0..size).step_by(2) {
+            let v0 = evaluator(idx) % p;
+            let v1 = evaluator(idx + 1) % p;
+            g0_sum = field.add(g0_sum, v0);
+            g1_sum = field.add(g1_sum, v1);
+            claimed_sum = field.add(claimed_sum, field.add(v0, v1));
+        }
+        (claimed_sum, g0_sum, g1_sum)
+    };
     transcript.append(claimed_sum);
     round_sums.push(claimed_sum);
 
@@ -509,48 +552,128 @@ fn prove_streaming_with_stats_inner(
     rounds.push((first_a, first_b));
     transcript.append(first_a);
     transcript.append(first_b);
-    let mut r = transcript.challenge(field);
+    let mut r = transcript.challenge(&field);
     challenges.push(r);
 
-    let mut layer = Vec::with_capacity(size / 2);
-    let mut current_sum = 0u64;
-    for idx in (0..size).step_by(2) {
-        let v0 = evaluator(idx) % p;
-        let v1 = evaluator(idx + 1) % p;
-        let diff = field.sub(v1, v0);
-        let val = field.add(field.mul(diff, r), v0);
-        current_sum = field.add(current_sum, val);
-        layer.push(val);
-    }
+    let (mut layer, mut current_sum) = if use_parallel {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let layer: Vec<u64> = (0..size / 2)
+                .into_par_iter()
+                .map(|pair| {
+                    let idx = pair * 2;
+                    let v0 = evaluator(idx) % p;
+                    let v1 = evaluator(idx + 1) % p;
+                    let diff = field.sub(v1, v0);
+                    field.add(field.mul(diff, r), v0)
+                })
+                .collect();
+            let current_sum = layer
+                .par_iter()
+                .cloned()
+                .reduce(|| 0u64, |acc, v| field.add(acc, v));
+            (layer, current_sum)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            (Vec::new(), 0u64)
+        }
+    } else {
+        let mut layer = Vec::with_capacity(size / 2);
+        let mut current_sum = 0u64;
+        for idx in (0..size).step_by(2) {
+            let v0 = evaluator(idx) % p;
+            let v1 = evaluator(idx + 1) % p;
+            let diff = field.sub(v1, v0);
+            let val = field.add(field.mul(diff, r), v0);
+            current_sum = field.add(current_sum, val);
+            layer.push(val);
+        }
+        (layer, current_sum)
+    };
     round_durations.push(round_start.elapsed());
 
     for _round in 1..num_vars {
         round_sums.push(current_sum);
         let round_start = Instant::now();
-        let mut g0_sum = 0u64;
-        let mut g1_sum = 0u64;
-        for chunk in layer.chunks(2) {
-            g0_sum = field.add(g0_sum, chunk[0]);
-            g1_sum = field.add(g1_sum, chunk[1]);
-        }
+        let use_parallel_layer = {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                const PARALLEL_LAYER_THRESHOLD: usize = 1 << 14;
+                use_parallel && layer.len() >= PARALLEL_LAYER_THRESHOLD
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                false
+            }
+        };
+        let (g0_sum, g1_sum) = if use_parallel_layer {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                layer
+                    .par_chunks(2)
+                    .map(|chunk| (chunk[0], chunk[1]))
+                    .reduce(
+                        || (0u64, 0u64),
+                        |acc, (v0, v1)| (field.add(acc.0, v0), field.add(acc.1, v1)),
+                    )
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                (0u64, 0u64)
+            }
+        } else {
+            let mut g0_sum = 0u64;
+            let mut g1_sum = 0u64;
+            for chunk in layer.chunks(2) {
+                g0_sum = field.add(g0_sum, chunk[0]);
+                g1_sum = field.add(g1_sum, chunk[1]);
+            }
+            (g0_sum, g1_sum)
+        };
         let a = field.sub(g1_sum, g0_sum);
         let b = g0_sum;
         rounds.push((a, b));
         transcript.append(a);
         transcript.append(b);
-        r = transcript.challenge(field);
+        r = transcript.challenge(&field);
         challenges.push(r);
 
-        let mut next_layer = Vec::with_capacity(layer.len() / 2);
-        let mut next_sum = 0u64;
-        for chunk in layer.chunks(2) {
-            let v0 = chunk[0];
-            let v1 = chunk[1];
-            let diff = field.sub(v1, v0);
-            let val = field.add(field.mul(diff, r), v0);
-            next_sum = field.add(next_sum, val);
-            next_layer.push(val);
-        }
+        let (next_layer, next_sum) = if use_parallel_layer {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let next_layer: Vec<u64> = layer
+                    .par_chunks(2)
+                    .map(|chunk| {
+                        let v0 = chunk[0];
+                        let v1 = chunk[1];
+                        let diff = field.sub(v1, v0);
+                        field.add(field.mul(diff, r), v0)
+                    })
+                    .collect();
+                let next_sum = next_layer
+                    .par_iter()
+                    .cloned()
+                    .reduce(|| 0u64, |acc, v| field.add(acc, v));
+                (next_layer, next_sum)
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                (Vec::new(), 0u64)
+            }
+        } else {
+            let mut next_layer = Vec::with_capacity(layer.len() / 2);
+            let mut next_sum = 0u64;
+            for chunk in layer.chunks(2) {
+                let v0 = chunk[0];
+                let v1 = chunk[1];
+                let diff = field.sub(v1, v0);
+                let val = field.add(field.mul(diff, r), v0);
+                next_sum = field.add(next_sum, val);
+                next_layer.push(val);
+            }
+            (next_layer, next_sum)
+        };
         layer = next_layer;
         current_sum = next_sum;
         round_durations.push(round_start.elapsed());

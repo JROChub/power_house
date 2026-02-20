@@ -2,6 +2,7 @@
 
 use crate::net::sign::encode_public_key_base64;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use blake2::digest::{consts::U32, Digest};
 use ed25519_dalek::{Signature, VerifyingKey, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -55,6 +56,82 @@ pub struct SignedApproval {
     pub signer: String,
     /// Base64 ed25519 signature over the canonical update payload.
     pub signature: String,
+}
+
+/// Governance proposal that freezes internal staking and maps stake to a public token.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationProposal {
+    /// Ledger height selected for deterministic snapshotting.
+    pub snapshot_height: u64,
+    /// Token contract address used for migration claims.
+    pub token_contract: String,
+    /// Stake-to-token conversion ratio (defaults to 1 when omitted).
+    #[serde(default = "default_conversion_ratio")]
+    pub conversion_ratio: u64,
+    /// Treasury mint amount applied at migration cutover.
+    pub treasury_mint: u64,
+}
+
+/// Canonical migration anchor payload embedded into standard net anchors.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationAnchor {
+    /// Schema identifier for migration anchor payloads.
+    pub schema: String,
+    /// Canonical migration proposal.
+    pub proposal: MigrationProposal,
+    /// BLAKE2b-256 hash of the proposal canonical payload.
+    pub proposal_hash: String,
+    /// Deterministic anchor statement written into ledger entries.
+    pub statement: String,
+}
+
+fn default_conversion_ratio() -> u64 {
+    1
+}
+
+impl MigrationProposal {
+    /// Return canonical JSON bytes for deterministic hashing/anchoring.
+    pub fn canonical_bytes(&self) -> Result<Vec<u8>, PolicyUpdateError> {
+        #[derive(Serialize)]
+        struct Canonical<'a> {
+            snapshot_height: u64,
+            token_contract: &'a str,
+            conversion_ratio: u64,
+            treasury_mint: u64,
+        }
+        let payload = Canonical {
+            snapshot_height: self.snapshot_height,
+            token_contract: &self.token_contract,
+            conversion_ratio: if self.conversion_ratio == 0 {
+                1
+            } else {
+                self.conversion_ratio
+            },
+            treasury_mint: self.treasury_mint,
+        };
+        serde_json::to_vec(&payload).map_err(|err| PolicyUpdateError::Decode(err.to_string()))
+    }
+
+    /// Return the BLAKE2b-256 hash hex of the canonical proposal payload.
+    pub fn proposal_hash_hex(&self) -> Result<String, PolicyUpdateError> {
+        type Blake2b256 = blake2::Blake2b<U32>;
+        let canonical = self.canonical_bytes()?;
+        let mut hasher = Blake2b256::new();
+        hasher.update(b"migration-proposal-v1");
+        hasher.update(canonical);
+        Ok(hex::encode(hasher.finalize()))
+    }
+
+    /// Convert a proposal to a deterministic migration anchor payload.
+    pub fn to_anchor_payload(&self) -> Result<MigrationAnchor, PolicyUpdateError> {
+        let proposal_hash = self.proposal_hash_hex()?;
+        Ok(MigrationAnchor {
+            schema: "mfenx.powerhouse.migration-anchor.v1".to_string(),
+            proposal: self.clone(),
+            statement: format!("migration.proposal.{proposal_hash}"),
+            proposal_hash,
+        })
+    }
 }
 
 /// Errors raised when verifying or applying membership updates.
@@ -319,19 +396,25 @@ pub struct StakePolicy {
     state_path: PathBuf,
     threshold: usize,
     bond_threshold: u64,
+    slash_pct: u8,
     signers: HashSet<VerifyingKey>,
     state: Mutex<HashMap<Vec<u8>, StakeAccount>>,
 }
 
 impl StakePolicy {
     /// Restores staking state from a JSON registry.
-    pub fn load(path: &Path) -> Result<Self, PolicyUpdateError> {
+    pub fn load(
+        path: &Path,
+        min_stake: Option<u64>,
+        slash_pct: Option<u8>,
+    ) -> Result<Self, PolicyUpdateError> {
         let contents =
             fs::read_to_string(path).map_err(|err| PolicyUpdateError::Io(err.to_string()))?;
         let state: StakeState = serde_json::from_str(&contents)
             .map_err(|err| PolicyUpdateError::Decode(err.to_string()))?;
         let threshold = state.threshold;
-        let bond_threshold = state.bond_threshold;
+        let bond_threshold = min_stake.unwrap_or(state.bond_threshold);
+        let slash_pct = slash_pct.unwrap_or(100).min(100);
         let signers = state
             .signers
             .iter()
@@ -355,9 +438,26 @@ impl StakePolicy {
             state_path: path.to_path_buf(),
             threshold,
             bond_threshold,
+            slash_pct,
             signers,
             state: Mutex::new(registry),
         })
+    }
+
+    fn apply_slash(&self, account: &mut StakeAccount) {
+        if account.bond == 0 {
+            account.slashed = true;
+            return;
+        }
+        let pct = self.slash_pct as u128;
+        if pct == 0 {
+            return;
+        }
+        let slash_amount = ((account.bond as u128) * pct / 100) as u64;
+        account.bond = account.bond.saturating_sub(slash_amount.max(1));
+        if account.bond == 0 {
+            account.slashed = true;
+        }
     }
 
     fn persist(&self, locked: &HashMap<Vec<u8>, StakeAccount>) -> Result<(), PolicyUpdateError> {
@@ -483,8 +583,7 @@ impl MembershipPolicy for StakePolicy {
         for slash in metadata.slashes {
             let vk = decode_public_key(&slash)?;
             guard.entry(vk.to_bytes().to_vec()).and_modify(|account| {
-                account.slashed = true;
-                account.bond = 0;
+                self.apply_slash(account);
             });
         }
         self.persist(&guard)
@@ -499,8 +598,7 @@ impl MembershipPolicy for StakePolicy {
         guard
             .entry(key.to_bytes().to_vec())
             .and_modify(|account| {
-                account.slashed = true;
-                account.bond = 0;
+                self.apply_slash(account);
             })
             .or_insert(StakeAccount {
                 key: *key,

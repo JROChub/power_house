@@ -163,9 +163,15 @@ pub struct LedgerAnchor {
 /// Statement string used for the JULIAN genesis anchor.
 pub const JULIAN_GENESIS_STATEMENT: &str = "JULIAN::GENESIS";
 
+/// Pinned digest associated with the JULIAN genesis transcript.
+pub const JULIAN_GENESIS_DIGEST: TranscriptDigest = [
+    0xcd, 0xcc, 0x8f, 0x36, 0xbf, 0x3d, 0x51, 0x1f, 0x04, 0xdf, 0x86, 0xc6, 0x3b, 0xcf, 0x58, 0x0d,
+    0xae, 0xe7, 0x3a, 0xa6, 0x7c, 0x0c, 0xf9, 0x14, 0x48, 0x3a, 0x05, 0xc2, 0xd2, 0x89, 0x58, 0x4a,
+];
+
 /// Returns the digest associated with the JULIAN genesis transcript.
 pub fn julian_genesis_hash() -> TranscriptDigest {
-    transcript_digest(&[], &[], 0)
+    JULIAN_GENESIS_DIGEST
 }
 
 /// Returns the canonical JULIAN genesis anchor.
@@ -463,7 +469,8 @@ pub fn compute_fold_digest(anchor: &LedgerAnchor) -> TranscriptDigest {
     fold_digest_from_entries(&anchor.entries)
 }
 
-fn anchor_digest(anchor: &LedgerAnchor) -> [u8; 32] {
+/// Computes a digest for the anchor contents (entries + statements + hashes).
+pub fn anchor_digest(anchor: &LedgerAnchor) -> [u8; 32] {
     let mut hasher = Blake2b256::new();
     hasher.update(ANCHOR_DOMAIN);
     mix_u64(&mut hasher, anchor.entries.len() as u64);

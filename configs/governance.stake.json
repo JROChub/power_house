@@ -1,0 +1,6 @@
+{
+  "backend": "stake",
+  "state_path": "./configs/stake_state.json",
+  "min_stake": 1000,
+  "slash_pct": 10
+}

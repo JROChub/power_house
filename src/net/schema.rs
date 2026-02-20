@@ -11,6 +11,8 @@ use std::{env, error::Error, fmt};
 pub const SCHEMA_ANCHOR: &str = "mfenx.powerhouse.anchor.v1";
 /// Schema identifier used for signed network envelopes.
 pub const SCHEMA_ENVELOPE: &str = "mfenx.powerhouse.envelope.v1";
+/// Schema identifier used for anchor vote messages.
+pub const SCHEMA_VOTE: &str = "mfenx.powerhouse.vote.v1";
 /// Current envelope schema major version.
 pub const ENVELOPE_SCHEMA_VERSION: u32 = 1;
 /// Network identifier used across all JULIAN Protocol deployments for MFENX Power-House.
@@ -74,6 +76,18 @@ pub struct DaCommitmentJson {
     /// Pedersen share root (hex) for ZK circuits.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pedersen_root: Option<String>,
+    /// Optional external DA provider label.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub da_provider: Option<String>,
+    /// Optional external DA commitment or transaction hash.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub da_commitment: Option<String>,
+    /// Optional external DA block height or slot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub da_height: Option<u64>,
+    /// Optional external DA status string.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub da_status: Option<String>,
     /// Optional attestation QC (stake-weighted) over the share root.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attestation_qc: Option<String>,
@@ -93,6 +107,23 @@ pub struct AnchorEnvelope {
     /// Base64-encoded JSON payload representing [`AnchorJson`].
     pub payload: String,
     /// Base64-encoded ed25519 signature over the payload bytes.
+    pub signature: String,
+}
+
+/// Signed anchor vote used by the BFT lane.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AnchorVoteJson {
+    /// Schema identifier (`mfenx.powerhouse.vote.v1`).
+    pub schema: String,
+    /// Network identifier (`MFENX-POWERHOUSE`).
+    pub network: String,
+    /// Round/epoch identifier.
+    pub round: u64,
+    /// Hex-encoded hash of the anchor payload.
+    pub anchor_hash: String,
+    /// Base64-encoded ed25519 public key for signature verification.
+    pub public_key: String,
+    /// Base64-encoded ed25519 signature over the vote payload bytes.
     pub signature: String,
 }
 
@@ -275,6 +306,32 @@ impl AnchorEnvelope {
             return Err(AnchorCodecError::InvalidSchema {
                 expected: "schema_version <= current",
                 found: format!("{}", self.schema_version),
+            });
+        }
+        Ok(())
+    }
+}
+
+impl AnchorVoteJson {
+    /// Ensures the vote schema field matches the expected identifier.
+    pub fn validate(&self) -> Result<(), AnchorCodecError> {
+        if self.schema != SCHEMA_VOTE {
+            return Err(AnchorCodecError::InvalidSchema {
+                expected: SCHEMA_VOTE,
+                found: self.schema.clone(),
+            });
+        }
+        if self.network != NETWORK_ID {
+            return Err(AnchorCodecError::InvalidNetwork {
+                expected: NETWORK_ID,
+                found: self.network.clone(),
+            });
+        }
+        if self.anchor_hash.len() != 64 || !self.anchor_hash.chars().all(|c| c.is_ascii_hexdigit())
+        {
+            return Err(AnchorCodecError::InvalidDigest {
+                entry: 0,
+                reason: "invalid anchor_hash".to_string(),
             });
         }
         Ok(())
