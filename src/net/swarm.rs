@@ -1,5 +1,6 @@
 #![cfg(feature = "net")]
 
+use crate::julian::anchor_digest;
 use crate::net::sign::{
     decode_public_key_base64, encode_public_key_base64, encode_signature_base64, sign_payload,
     verify_signature_base64, KeyError, KeyMaterial,
@@ -28,8 +29,8 @@ use crate::{
     },
     AnchorVote, EntryAnchor, LedgerAnchor,
 };
-use crate::julian::anchor_digest;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use blake2::digest::{consts::U32, Digest as BlakeDigest};
 use ed25519_dalek::{Signer, SigningKey};
 use futures::StreamExt;
 use hex;
@@ -46,7 +47,7 @@ use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use sha2::{Digest, Sha256};
+use sha2::Sha256;
 use std::net::SocketAddr;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -186,6 +187,10 @@ pub struct NetConfig {
     pub attestation_quorum: usize,
     /// Path to the stake registry used for fees and slashing.
     pub stake_registry_path: Option<PathBuf>,
+    /// Optional public token contract used during migration dual-mode.
+    pub token_mode_contract: Option<String>,
+    /// Optional JSON-RPC endpoint used for token migration oracle checks.
+    pub token_oracle_rpc: Option<String>,
     metrics: Arc<Metrics>,
     metrics_addr: Option<SocketAddr>,
 }
@@ -217,11 +222,12 @@ impl NetConfig {
         blob_max_concurrency: Option<usize>,
         blob_request_timeout_ms: Option<u64>,
         attestation_quorum: Option<usize>,
+        token_mode_contract: Option<String>,
+        token_oracle_rpc: Option<String>,
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
-        let anchor_topic = IdentTopic::new(
-            anchor_topic.unwrap_or_else(|| DEFAULT_ANCHOR_TOPIC.to_string()),
-        );
+        let anchor_topic =
+            IdentTopic::new(anchor_topic.unwrap_or_else(|| DEFAULT_ANCHOR_TOPIC.to_string()));
         let mut bridge_topics_vec = Vec::new();
         let mut seen_topics: HashSet<String> = HashSet::new();
         let anchor_str = anchor_topic.to_string();
@@ -267,6 +273,8 @@ impl NetConfig {
             blob_request_timeout,
             attestation_quorum,
             stake_registry_path,
+            token_mode_contract,
+            token_oracle_rpc,
             metrics: Arc::new(Metrics::default()),
             metrics_addr,
         }
@@ -283,6 +291,8 @@ struct BlobServiceConfig {
     signing: SigningKey,
     verifying_b64: String,
     stake_registry_path: Option<PathBuf>,
+    token_mode_contract: Option<String>,
+    token_oracle_rpc: Option<String>,
     membership_policy: Arc<dyn MembershipPolicy>,
     auth_token: Option<String>,
     max_concurrency: usize,
@@ -390,7 +400,10 @@ async fn run_blob_service(cfg: BlobServiceConfig) {
 }
 
 fn parse_env_flag(value: &str) -> bool {
-    matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+    matches!(
+        value.to_ascii_lowercase().as_str(),
+        "1" | "true" | "yes" | "on"
+    )
 }
 
 fn da_publish_config_from_env() -> Option<DaPublishConfig> {
@@ -577,7 +590,10 @@ async fn publish_da_commitment(
         .await
         .map_err(|e| format!("da publish read failed: {e}"))?;
     if !status.is_success() {
-        return Err(format!("da publish failed: status={} body={}", status, text));
+        return Err(format!(
+            "da publish failed: status={} body={}",
+            status, text
+        ));
     }
     let parsed: Option<serde_json::Value> = serde_json::from_str(&text).ok();
     let tx_hash = parsed
@@ -851,6 +867,121 @@ fn namespace_rule(cfg: &BlobServiceConfig, namespace: &str) -> Option<NamespaceR
         .and_then(|m| m.get(namespace).cloned())
 }
 
+fn token_mode_enabled(cfg: &BlobServiceConfig) -> bool {
+    cfg.token_mode_contract.is_some() && cfg.token_oracle_rpc.is_some()
+}
+
+fn pubkey_b64_to_migration_address(pk_b64: &str) -> Result<String, String> {
+    type Blake2b256 = blake2::Blake2b<U32>;
+    let decoded = BASE64
+        .decode(pk_b64.as_bytes())
+        .map_err(|e| format!("publisher key decode failed: {e}"))?;
+    let mut hasher = Blake2b256::new();
+    hasher.update(b"mfenx-migration-address-v1");
+    hasher.update(decoded);
+    let digest: [u8; 32] = hasher.finalize().into();
+    Ok(format!("0x{}", hex::encode(&digest[12..])))
+}
+
+fn parse_hex_u128(input: &str) -> Result<u128, String> {
+    let raw = input.strip_prefix("0x").unwrap_or(input);
+    u128::from_str_radix(raw, 16).map_err(|e| format!("invalid hex quantity: {e}"))
+}
+
+async fn token_oracle_balance_sufficient(
+    cfg: &BlobServiceConfig,
+    payer_pk_b64: &str,
+    required_amount: u64,
+) -> Result<bool, String> {
+    let rpc = cfg
+        .token_oracle_rpc
+        .as_ref()
+        .ok_or_else(|| "token oracle rpc not configured".to_string())?;
+    let account = pubkey_b64_to_migration_address(payer_pk_b64)?;
+    let payload = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 1u64,
+        "method": "eth_getBalance",
+        "params": [account, "latest"]
+    });
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("token oracle client error: {e}"))?;
+    let resp = client
+        .post(rpc)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("token oracle request failed: {e}"))?;
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("token oracle status {status}: {body}"));
+    }
+    let value: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("token oracle decode failed: {e}"))?;
+    let result_hex = value
+        .get("result")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "token oracle missing result".to_string())?;
+    let balance = parse_hex_u128(result_hex)?;
+    Ok(balance >= required_amount as u128)
+}
+
+fn queue_token_burn_intent(
+    registry_path: &Option<PathBuf>,
+    token_mode_contract: &Option<String>,
+    token_oracle_rpc: &Option<String>,
+    pk_b64: &str,
+    reason: &str,
+) {
+    let (Some(contract), Some(rpc), Some(reg_path)) =
+        (token_mode_contract, token_oracle_rpc, registry_path)
+    else {
+        return;
+    };
+    let outbox = reg_path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join("token_burn_outbox.jsonl");
+    let account = match pubkey_b64_to_migration_address(pk_b64) {
+        Ok(a) => a,
+        Err(err) => {
+            eprintln!("token burn mapping failed for {pk_b64}: {err}");
+            return;
+        }
+    };
+    let payload = serde_json::json!({
+        "schema": "mfenx.powerhouse.token-burn-intent.v1",
+        "token_contract": contract,
+        "token_oracle": rpc,
+        "account": account,
+        "pubkey_b64": pk_b64,
+        "reason": reason,
+        "ts": now_millis(),
+    });
+    if let Some(parent) = outbox.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    match serde_json::to_string(&payload) {
+        Ok(line) => {
+            let line = format!("{line}\n");
+            if let Err(err) = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&outbox)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()))
+            {
+                eprintln!("failed to append token burn intent: {err}");
+            }
+        }
+        Err(err) => eprintln!("failed to encode token burn intent: {err}"),
+    }
+}
+
 fn read_shares(
     base: &Path,
     namespace: &str,
@@ -880,6 +1011,9 @@ fn share_hashes(shares: &[Vec<u8>]) -> Vec<[u8; 32]> {
 }
 
 async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<String, String> {
+    if crate::net::refresh_migration_mode_from_env() {
+        return Err("migration freeze active: blob ingestion disabled".to_string());
+    }
     let namespace = req
         .headers
         .get("x-namespace")
@@ -1026,23 +1160,41 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
             .unwrap_or_else(|| cfg.verifying_b64.clone());
         match StakeRegistry::load(path) {
             Ok(mut reg) => {
-                reg.debit_fee(&payer, amount)
-                    .map_err(|err| format!("fee debit failed: {err}"))?;
-                let ns_rule = namespace_rule(cfg, &namespace).unwrap_or_default();
-                let op_bps = ns_rule.operator_reward_bps.unwrap_or(5000) as u64;
-                let operator_cut = amount.saturating_mul(op_bps).saturating_div(10_000);
-                let attestor_pool = amount.saturating_sub(operator_cut);
-                reg.credit_reward(&cfg.verifying_b64, operator_cut);
-                let attestors = meta.attestations.clone();
-                let total_weight: u64 = attestors.iter().filter_map(|a| reg.stake_for(&a.pk)).sum();
-                if total_weight == 0 {
-                    reg.credit_reward(&cfg.verifying_b64, attestor_pool);
-                } else {
-                    for att in attestors {
-                        if let Some(w) = reg.stake_for(&att.pk) {
-                            let share = attestor_pool.saturating_mul(w) / total_weight;
-                            if share > 0 {
-                                reg.credit_reward(&att.pk, share);
+                let mut settled_via_registry = true;
+                if let Err(debit_err) = reg.debit_fee(&payer, amount) {
+                    if token_mode_enabled(cfg) {
+                        let covered = token_oracle_balance_sufficient(cfg, &payer, amount)
+                            .await
+                            .map_err(|err| format!("token oracle check failed: {err}"))?;
+                        if covered {
+                            settled_via_registry = false;
+                        } else {
+                            return Err(format!(
+                                "fee debit failed and oracle balance insufficient: {debit_err}"
+                            ));
+                        }
+                    } else {
+                        return Err(format!("fee debit failed: {debit_err}"));
+                    }
+                }
+                if settled_via_registry {
+                    let ns_rule = namespace_rule(cfg, &namespace).unwrap_or_default();
+                    let op_bps = ns_rule.operator_reward_bps.unwrap_or(5000) as u64;
+                    let operator_cut = amount.saturating_mul(op_bps).saturating_div(10_000);
+                    let attestor_pool = amount.saturating_sub(operator_cut);
+                    reg.credit_reward(&cfg.verifying_b64, operator_cut);
+                    let attestors = meta.attestations.clone();
+                    let total_weight: u64 =
+                        attestors.iter().filter_map(|a| reg.stake_for(&a.pk)).sum();
+                    if total_weight == 0 {
+                        reg.credit_reward(&cfg.verifying_b64, attestor_pool);
+                    } else {
+                        for att in attestors {
+                            if let Some(w) = reg.stake_for(&att.pk) {
+                                let share = attestor_pool.saturating_mul(w) / total_weight;
+                                if share > 0 {
+                                    reg.credit_reward(&att.pk, share);
+                                }
                             }
                         }
                     }
@@ -1058,7 +1210,13 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         .da_receipt
         .as_ref()
         .map(|r| r.status.clone())
-        .unwrap_or_else(|| if cfg.da_publish.is_some() { "queued".to_string() } else { "disabled".to_string() });
+        .unwrap_or_else(|| {
+            if cfg.da_publish.is_some() {
+                "queued".to_string()
+            } else {
+                "disabled".to_string()
+            }
+        });
     let response = serde_json::json!({
         "status": "ok",
         "size": blob.size,
@@ -1254,6 +1412,8 @@ fn handle_sample(
                 record_slash_with_registry(
                     &cfg.membership_policy,
                     &cfg.stake_registry_path,
+                    &cfg.token_mode_contract,
+                    &cfg.token_oracle_rpc,
                     pk,
                     "blob-missing",
                 );
@@ -1353,6 +1513,8 @@ fn handle_prove_storage(
                 record_slash_with_registry(
                     &cfg.membership_policy,
                     &cfg.stake_registry_path,
+                    &cfg.token_mode_contract,
+                    &cfg.token_oracle_rpc,
                     &pk,
                     "blob-missing",
                 );
@@ -1535,6 +1697,7 @@ struct JrocBehaviour {
 /// for every new anchor. Incoming envelopes are verified and reconciled with
 /// the local ledger according to `cfg.quorum`.
 pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
+    crate::net::refresh_migration_mode_from_env();
     let local_key_bytes = cfg.key_material.verifying.to_bytes();
     if !policy_permits(cfg.membership_policy.as_ref(), &local_key_bytes) {
         return Err(NetworkError::Key(
@@ -1603,6 +1766,8 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             signing: cfg.key_material.signing.clone(),
             verifying_b64: encode_public_key_base64(&cfg.key_material.verifying),
             stake_registry_path: cfg.stake_registry_path.clone(),
+            token_mode_contract: cfg.token_mode_contract.clone(),
+            token_oracle_rpc: cfg.token_oracle_rpc.clone(),
             membership_policy: cfg.membership_policy.clone(),
             auth_token: cfg.blob_auth_token.clone(),
             max_concurrency: cfg.blob_max_concurrency,
@@ -1843,6 +2008,8 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
         record_slash_with_registry(
             &cfg.membership_policy,
             &cfg.stake_registry_path,
+            &cfg.token_mode_contract,
+            &cfg.token_oracle_rpc,
             &env.evidence.pk,
             &env.evidence.reason,
         );
@@ -1868,6 +2035,8 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
             record_slash_with_registry(
                 &cfg.membership_policy,
                 &cfg.stake_registry_path,
+                &cfg.token_mode_contract,
+                &cfg.token_oracle_rpc,
                 &pk,
                 "availability-fault",
             );
@@ -1902,6 +2071,8 @@ fn handle_evidence_message(cfg: &NetConfig, data: &[u8]) -> Result<(), NetworkEr
             record_slash_with_registry(
                 &cfg.membership_policy,
                 &cfg.stake_registry_path,
+                &cfg.token_mode_contract,
+                &cfg.token_oracle_rpc,
                 &pk,
                 "rollup-fault",
             );
@@ -1921,8 +2092,8 @@ fn handle_vote_message(
     vote.validate()?;
     let payload = vote_payload_bytes(vote.round, &vote.anchor_hash);
     verify_signature_base64(&vote.public_key, &payload, &vote.signature)?;
-    let remote_verifying =
-        decode_public_key_base64(&vote.public_key).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    let remote_verifying = decode_public_key_base64(&vote.public_key)
+        .map_err(|err| NetworkError::Codec(err.to_string()))?;
     let remote_key_bytes = remote_verifying.to_bytes();
     if !policy_permits(cfg.membership_policy.as_ref(), &remote_key_bytes) {
         return Ok(());
@@ -1932,10 +2103,7 @@ fn handle_vote_message(
         return Ok(());
     }
     let total = bft_state.record_vote(&vote.anchor_hash, &remote_key_bytes);
-    println!(
-        "QSYS|mod=BFT|evt=VOTE|round={} votes={}",
-        vote.round, total
-    );
+    println!("QSYS|mod=BFT|evt=VOTE|round={} votes={}", vote.round, total);
     Ok(())
 }
 
@@ -2009,13 +2177,16 @@ async fn publish_anchor_payload(
             return Err(NetworkError::Libp2p(err.to_string()));
         }
     }
-    bridge_anchor_message(swarm, cfg, &cfg.anchor_topic.hash(), &message_clone, metrics);
+    bridge_anchor_message(
+        swarm,
+        cfg,
+        &cfg.anchor_topic.hash(),
+        &message_clone,
+        metrics,
+    );
     *last_payload = payload;
     *last_publish = Some(Instant::now());
-    println!(
-        "QSYS|mod=ANCHOR|evt=BROADCAST|entries={}",
-        entries_len
-    );
+    println!("QSYS|mod=ANCHOR|evt=BROADCAST|entries={}", entries_len);
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
             *broadcast_counter = broadcast_counter.saturating_add(1);
@@ -2035,8 +2206,7 @@ async fn publish_anchor_payload(
                 } else {
                     println!(
                         "QSYS|mod=CHECKPOINT|evt=RECORDED|epoch={} entries={}",
-                        checkpoint.epoch,
-                        entries_len
+                        checkpoint.epoch, entries_len
                     );
                 }
             }
@@ -2094,8 +2264,7 @@ async fn broadcast_anchor_vote(
         public_key: encode_public_key_base64(&cfg.key_material.verifying),
         signature: signature_b64,
     };
-    let message =
-        serde_json::to_vec(&vote).map_err(|err| NetworkError::Codec(err.to_string()))?;
+    let message = serde_json::to_vec(&vote).map_err(|err| NetworkError::Codec(err.to_string()))?;
     match swarm
         .behaviour_mut()
         .gossipsub
@@ -2153,10 +2322,7 @@ async fn bft_tick(
             metrics,
         )
         .await?;
-        println!(
-            "QSYS|mod=BFT|evt=QUORUM|round={} votes={}",
-            round, votes
-        );
+        println!("QSYS|mod=BFT|evt=QUORUM|round={} votes={}", round, votes);
     } else {
         println!(
             "QSYS|mod=BFT|evt=WAITING|round={} votes={}/{}",
@@ -2363,10 +2529,11 @@ async fn handle_event(
                 let remote_digest = anchor_digest(&remote_anchor);
                 let local_digest = anchor_digest(&local_anchor);
                 if remote_digest != local_digest {
-                    println!("anchor divergence with peer {}: digest mismatch", envelope.node_id);
-                    if let Err(slash_err) =
-                        cfg.membership_policy.record_slash(&remote_verifying)
-                    {
+                    println!(
+                        "anchor divergence with peer {}: digest mismatch",
+                        envelope.node_id
+                    );
+                    if let Err(slash_err) = cfg.membership_policy.record_slash(&remote_verifying) {
                         eprintln!(
                             "failed to record slash for {}: {}",
                             envelope.node_id, slash_err
@@ -2852,6 +3019,8 @@ fn append_rollup_fault_evidence(path: &Path, ev: &RollupFaultEvidence) {
 fn record_slash_with_registry(
     policy: &Arc<dyn MembershipPolicy>,
     registry_path: &Option<PathBuf>,
+    token_mode_contract: &Option<String>,
+    token_oracle_rpc: &Option<String>,
     pk_b64: &str,
     reason: &str,
 ) {
@@ -2873,6 +3042,13 @@ fn record_slash_with_registry(
             Err(err) => eprintln!("failed to load stake registry for slashing: {err}"),
         }
     }
+    queue_token_burn_intent(
+        registry_path,
+        token_mode_contract,
+        token_oracle_rpc,
+        pk_b64,
+        reason,
+    );
 }
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
     let mut cutoff: Option<String> = None;

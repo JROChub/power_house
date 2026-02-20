@@ -13,6 +13,20 @@ BLOB_DIR="${SMOKE_BLOB_DIR:-./logs/smoke_blob}"
 BLOB_LISTEN_A="${SMOKE_BLOB_LISTEN_A:-127.0.0.1:8891}"
 PORT_A=7211
 PORT_B=7212
+WITH_MIGRATION=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-migration)
+      WITH_MIGRATION=1
+      shift
+      ;;
+    *)
+      echo "unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
 
 cleanup() {
   [[ -n "${PID_A:-}" ]] && kill "$PID_A" 2>/dev/null || true
@@ -25,6 +39,43 @@ trap cleanup EXIT
 
 rm -rf "$LOG_DIR_A" "$LOG_DIR_B" "$BLOB_DIR"
 mkdir -p "$LOG_DIR_A" "$LOG_DIR_B" "$BLOB_DIR"
+
+if [[ "$WITH_MIGRATION" -eq 1 ]]; then
+  MIGRATION_REGISTRY="$BLOB_DIR/migration_registry.json"
+  MIGRATION_SNAPSHOT="$BLOB_DIR/migration_snapshot.json"
+  MIGRATION_ANCHOR="$BLOB_DIR/migration_anchor.json"
+
+  cat >"$MIGRATION_REGISTRY" <<'JSON'
+{
+  "accounts": {
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=": {
+      "balance": 1000,
+      "stake": 250,
+      "slashed": false
+    },
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=": {
+      "balance": 900,
+      "stake": 125,
+      "slashed": false
+    }
+  }
+}
+JSON
+
+  "$CARGO_BIN" run --features net --bin julian --quiet -- \
+    stake snapshot --registry "$MIGRATION_REGISTRY" --height 1 --output "$MIGRATION_SNAPSHOT" >/dev/null
+
+  "$CARGO_BIN" run --features net --bin julian --quiet -- \
+    governance propose-migration \
+      --snapshot-height 1 \
+      --token-contract "0x0000000000000000000000000000000000000001" \
+      --conversion-ratio 1 \
+      --treasury-mint 0 \
+      --log-dir "$LOG_DIR_A" \
+      --node-id "smoke-migration" \
+      --quorum 1 \
+      --output "$MIGRATION_ANCHOR" >/dev/null
+fi
 
 run_node() {
   local node_id=$1
@@ -97,8 +148,8 @@ wait_for_port "$PORT_B" || { echo "port $PORT_B not listening"; tail -n 50 "$TMP
 
 SAMPLE_BLOB="${SMOKE_SAMPLE_BLOB:-$ROOT_DIR/sample.bin}"
 if [[ ! -f "$SAMPLE_BLOB" ]]; then
-  echo "missing sample blob: $SAMPLE_BLOB"
-  exit 1
+  SAMPLE_BLOB="$BLOB_DIR/sample.bin"
+  printf 'power_house smoke sample\n' >"$SAMPLE_BLOB"
 fi
 curl -sS -X POST "http://${BLOB_LISTEN_A}/submit_blob" \
   -H 'X-Namespace: default' \

@@ -74,6 +74,9 @@ mod streaming;
 pub mod sumcheck;
 mod transcript;
 
+/// CLI command helpers for migration and deterministic artifacts.
+#[cfg(feature = "net")]
+pub mod commands;
 #[cfg(feature = "net")]
 pub mod net;
 

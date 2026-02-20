@@ -5,16 +5,18 @@
 //! crate's domain-separated hashing and signature utilities.
 
 #[cfg(feature = "net")]
+use power_house::commands::stake_snapshot::run_snapshot;
+#[cfg(feature = "net")]
 use power_house::net::{
     decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
-    load_or_derive_keypair, run_network, verify_signature_base64, AnchorEnvelope, AnchorJson,
-    Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule, NetConfig, StakePolicy,
-    StakeRegistry, StaticPolicy,
+    load_or_derive_keypair, refresh_migration_mode_from_env, run_network, verify_signature_base64,
+    AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MigrationProposal,
+    MultisigPolicy, NamespaceRule, NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
 };
 use power_house::{
     compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
-    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, Field,
-    GeneralSumProof, LedgerAnchor, ProofStats,
+    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, Field, GeneralSumProof,
+    LedgerAnchor, ProofStats,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -96,10 +98,18 @@ fn main() {
         #[cfg(feature = "net")]
         Some("stake") => {
             let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian stake <show> --stake-registry <path>");
+                eprintln!("Usage: julian stake <show|fund|bond|snapshot|unbond|reward> ...");
                 std::process::exit(1);
             });
             handle_stake(&sub, args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("governance") => {
+            let sub = args.next().unwrap_or_else(|| {
+                eprintln!("Usage: julian governance <propose-migration> ...");
+                std::process::exit(1);
+            });
+            handle_governance(&sub, args.collect());
         }
         #[cfg(feature = "net")]
         Some("rollup") => {
@@ -110,7 +120,7 @@ fn main() {
             handle_rollup(&sub, args.collect());
         }
         _ => {
-            eprintln!("Usage: julian <node|scale_sumcheck|net|stake|rollup|keygen> ...");
+            eprintln!("Usage: julian <node|scale_sumcheck|net|stake|governance|rollup|keygen> ...");
             std::process::exit(1);
         }
     }
@@ -122,10 +132,22 @@ fn handle_stake(sub: &str, tail: Vec<String>) {
         "show" => cmd_stake_show(tail),
         "fund" => cmd_stake_fund(tail),
         "bond" => cmd_stake_bond(tail),
+        "snapshot" => cmd_stake_snapshot(tail),
         "unbond" => cmd_stake_unbond(tail),
         "reward" => cmd_stake_reward(tail),
         _ => {
             eprintln!("Unknown stake subcommand: {sub}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn handle_governance(sub: &str, tail: Vec<String>) {
+    match sub {
+        "propose-migration" => cmd_governance_propose_migration(tail),
+        _ => {
+            eprintln!("Unknown governance subcommand: {sub}");
             std::process::exit(1);
         }
     }
@@ -303,7 +325,8 @@ fn cmd_keygen(args: Vec<String>) {
         match arg.as_str() {
             "--out" => {
                 out_path = Some(PathBuf::from(
-                    iter.next().unwrap_or_else(|| fatal("--out expects a value")),
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--out expects a value")),
                 ));
             }
             value => {
@@ -397,6 +420,10 @@ fn cmd_stake_fund(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_stake_bond(args: Vec<String>) {
+    refresh_migration_mode_from_env();
+    if power_house::net::migration_mode_frozen() {
+        fatal("migration freeze active: stake bonding is disabled");
+    }
     if args.len() < 3 {
         eprintln!("Usage: julian stake bond <registry.json> <pubkey_b64> <amount>");
         std::process::exit(1);
@@ -413,6 +440,185 @@ fn cmd_stake_bond(args: Vec<String>) {
             "bonded {amount} for {pk}, balance={} stake={}",
             acct.balance, acct.stake
         );
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_snapshot(args: Vec<String>) {
+    let mut registry_path: Option<String> = None;
+    let mut height: Option<u64> = None;
+    let mut output: Option<String> = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registry" => {
+                registry_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--registry expects a value")),
+                );
+            }
+            "--height" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--height expects a value"));
+                height = Some(
+                    raw.parse::<u64>()
+                        .unwrap_or_else(|_| fatal("invalid --height")),
+                );
+            }
+            "--output" => {
+                output = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                );
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let registry_path = registry_path.unwrap_or_else(|| fatal("--registry is required"));
+    let height = height.unwrap_or_else(|| fatal("--height is required"));
+    let output = output.unwrap_or_else(|| fatal("--output is required"));
+
+    let root = run_snapshot(&registry_path, height, &output)
+        .unwrap_or_else(|err| fatal(&format!("snapshot failed: {err}")));
+    println!("snapshot root: {root}");
+    println!("artifact: {output}");
+}
+
+#[cfg(feature = "net")]
+fn cmd_governance_propose_migration(args: Vec<String>) {
+    #[derive(serde::Serialize)]
+    struct MigrationProposalArtifact {
+        migration_anchor: power_house::net::MigrationAnchor,
+        anchor_json: AnchorJson,
+    }
+
+    let mut snapshot_height: Option<u64> = None;
+    let mut token_contract: Option<String> = None;
+    let mut conversion_ratio: u64 = 1;
+    let mut treasury_mint: u64 = 0;
+    let mut log_dir: Option<String> = None;
+    let mut node_id: String = "migration-governance".to_string();
+    let mut quorum: usize = 1;
+    let mut output: Option<String> = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--snapshot-height" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--snapshot-height expects a value"));
+                snapshot_height = Some(
+                    raw.parse::<u64>()
+                        .unwrap_or_else(|_| fatal("invalid --snapshot-height")),
+                );
+            }
+            "--token-contract" => {
+                token_contract = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--token-contract expects a value")),
+                );
+            }
+            "--conversion-ratio" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--conversion-ratio expects a value"));
+                conversion_ratio = raw
+                    .parse::<u64>()
+                    .unwrap_or_else(|_| fatal("invalid --conversion-ratio"));
+            }
+            "--treasury-mint" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--treasury-mint expects a value"));
+                treasury_mint = raw
+                    .parse::<u64>()
+                    .unwrap_or_else(|_| fatal("invalid --treasury-mint"));
+            }
+            "--log-dir" => {
+                log_dir = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--log-dir expects a value")),
+                );
+            }
+            "--node-id" => {
+                node_id = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--node-id expects a value"));
+            }
+            "--quorum" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--quorum expects a value"));
+                quorum = raw
+                    .parse::<usize>()
+                    .unwrap_or_else(|_| fatal("invalid --quorum"));
+            }
+            "--output" => {
+                output = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                );
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let snapshot_height = snapshot_height.unwrap_or_else(|| fatal("--snapshot-height is required"));
+    let token_contract = token_contract.unwrap_or_else(|| fatal("--token-contract is required"));
+    let log_dir = log_dir.unwrap_or_else(|| fatal("--log-dir is required"));
+
+    let proposal = MigrationProposal {
+        snapshot_height,
+        token_contract,
+        conversion_ratio: if conversion_ratio == 0 {
+            1
+        } else {
+            conversion_ratio
+        },
+        treasury_mint,
+    };
+    let migration_anchor = proposal
+        .to_anchor_payload()
+        .unwrap_or_else(|err| fatal(&format!("failed to build migration payload: {err}")));
+    let proposal_digest = power_house::transcript_digest_from_hex(&migration_anchor.proposal_hash)
+        .unwrap_or_else(|err| fatal(&format!("invalid proposal hash: {err}")));
+
+    let mut ledger = load_anchor_from_logs(Path::new(&log_dir)).unwrap_or_else(|err| fatal(&err));
+    ledger.entries.push(EntryAnchor {
+        statement: migration_anchor.statement.clone(),
+        merkle_root: power_house::merkle_root(&[proposal_digest]),
+        hashes: vec![proposal_digest],
+    });
+    ledger.metadata.fold_digest = Some(compute_fold_digest(&ledger));
+    ledger
+        .metadata
+        .crate_version
+        .get_or_insert_with(|| env!("CARGO_PKG_VERSION").to_string());
+
+    let anchor_json =
+        AnchorJson::from_ledger(node_id, quorum, &ledger, now_millis(), Vec::new(), None)
+            .unwrap_or_else(|err| fatal(&format!("anchor conversion failed: {err}")));
+
+    let artifact = MigrationProposalArtifact {
+        migration_anchor,
+        anchor_json,
+    };
+    let encoded = serde_json::to_string_pretty(&artifact)
+        .unwrap_or_else(|err| fatal(&format!("failed to encode artifact: {err}")));
+
+    if let Some(path) = output {
+        if let Some(parent) = Path::new(&path).parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        fs::write(&path, &encoded)
+            .unwrap_or_else(|err| fatal(&format!("failed to write {}: {err}", path)));
+        println!("wrote migration proposal artifact to {path}");
+    } else {
+        println!("{encoded}");
     }
 }
 
@@ -867,6 +1073,7 @@ fn cmd_node_verify_proof(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_net_start(args: Vec<String>) {
+    refresh_migration_mode_from_env();
     let mut node_id = None;
     let mut log_dir = None;
     let mut listen = None;
@@ -894,6 +1101,8 @@ fn cmd_net_start(args: Vec<String>) {
     let mut blob_request_timeout_ms_spec: Option<String> = None;
     let mut attestation_quorum_spec: Option<String> = None;
     let mut tokio_threads_spec: Option<String> = None;
+    let mut token_mode_contract_spec: Option<String> = None;
+    let mut token_oracle_rpc_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -1080,6 +1289,18 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--tokio-threads expects a value")),
                 );
             }
+            "--token-mode" => {
+                token_mode_contract_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--token-mode expects a value")),
+                );
+            }
+            "--token-oracle" => {
+                token_oracle_rpc_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--token-oracle expects a value")),
+                );
+            }
             other => fatal(&format!("unknown argument: {other}")),
         }
     }
@@ -1183,6 +1404,8 @@ fn cmd_net_start(args: Vec<String>) {
         blob_max_concurrency,
         blob_request_timeout_ms,
         attestation_quorum,
+        token_mode_contract_spec,
+        token_oracle_rpc_spec,
     );
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
@@ -1620,6 +1843,7 @@ fn parse_metrics_addr(spec: &str) -> Option<SocketAddr> {
     }
 }
 
+#[cfg(feature = "net")]
 fn parse_topic_list(spec: &str) -> Vec<String> {
     spec.split(|c: char| c == ',' || c.is_whitespace())
         .filter_map(|raw| {
@@ -1637,9 +1861,15 @@ fn parse_topic_list(spec: &str) -> Vec<String> {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "backend", rename_all = "kebab-case")]
 enum GovernanceDescriptor {
-    Static { allowlist: Vec<String> },
-    StaticFile { path: String },
-    Multisig { state_path: String },
+    Static {
+        allowlist: Vec<String>,
+    },
+    StaticFile {
+        path: String,
+    },
+    Multisig {
+        state_path: String,
+    },
     Stake {
         state_path: String,
         #[serde(default)]

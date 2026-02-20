@@ -51,6 +51,11 @@ impl StakeRegistry {
         self.accounts.get(pk)
     }
 
+    /// Return the full account map keyed by base64 public key.
+    pub fn accounts(&self) -> &HashMap<String, StakeAccount> {
+        &self.accounts
+    }
+
     /// Return stake weight if not slashed.
     pub fn stake_for(&self, pk: &str) -> Option<u64> {
         self.accounts
