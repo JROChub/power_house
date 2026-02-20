@@ -86,6 +86,67 @@ curl -X POST http://127.0.0.1:8181/submit_blob \
 
 Use `--policy governance.json` for static, stake, or multisig membership. Sample descriptors live in `configs/`. Stake-backed DA attestation and slashing write evidence to `evidence_outbox.jsonl` and update the registry balances.
 
+## Token Migration (v0.2.0)
+
+The migration workflow is additive and keeps existing quorum, anchor, and DA behavior intact.
+
+### 1) Freeze mutable ingress during migration cutover
+
+Set:
+
+```bash
+export PH_MIGRATION_MODE=freeze
+```
+
+When enabled:
+- `julian stake bond ...` is blocked.
+- `POST /submit_blob` ingestion is blocked.
+
+### 2) Deterministic stake snapshot + anchor artifact
+
+```bash
+julian stake snapshot \
+  --registry ./path/to/stake_registry.json \
+  --height 12345 \
+  --output ./migration-snapshot.json
+```
+
+This writes a deterministic, sorted snapshot artifact and embeds an anchor payload via the existing `AnchorJson::from_ledger` flow.
+
+### 3) Governance proposal anchor for migration
+
+```bash
+julian governance propose-migration \
+  --snapshot-height 12345 \
+  --token-contract 0xYourTokenContract \
+  --conversion-ratio 1 \
+  --treasury-mint 0 \
+  --log-dir ./logs/nodeA \
+  --node-id nodeA \
+  --quorum 2 \
+  --output ./migration-anchor.json
+```
+
+The output includes:
+- `migration_anchor` (canonical migration payload with `proposal_hash`)
+- `anchor_json` (standard net anchor JSON)
+
+### 4) Dual-mode token migration flags (network runtime)
+
+`julian net start` now accepts:
+- `--token-mode <ERC20_ADDRESS>`
+- `--token-oracle <RPC_URL>`
+
+During transition, fee settlement can fall back to oracle balance checks when registry debit fails.
+
+### 5) Dry-run and smoke coverage
+
+```bash
+./scripts/token_migration_dry_run.sh
+./scripts/smoke_net.sh --with-migration
+./scripts/verify_migration_contract.sh
+```
+
 ## Operations
 
 The runbook in `docs/ops.md` includes systemd templates, environment layout, health checks, and backup timers. Keep deterministic seeds and unit files in a private infra repo or secrets manager.
