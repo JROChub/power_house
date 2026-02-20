@@ -63,7 +63,7 @@ pub struct SignedApproval {
 pub struct MigrationProposal {
     /// Ledger height selected for deterministic snapshotting.
     pub snapshot_height: u64,
-    /// Token contract address used for migration claims.
+    /// Token identifier used for migration claims (for example `native://julian`).
     pub token_contract: String,
     /// Stake-to-token conversion ratio (defaults to 1 when omitted).
     #[serde(default = "default_conversion_ratio")]

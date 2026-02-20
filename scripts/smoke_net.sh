@@ -53,7 +53,7 @@ if [[ "$WITH_MIGRATION" -eq 1 ]]; then
       "stake": 250,
       "slashed": false
     },
-    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=": {
+    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=": {
       "balance": 900,
       "stake": 125,
       "slashed": false
@@ -68,7 +68,7 @@ JSON
   "$CARGO_BIN" run --features net --bin julian --quiet -- \
     governance propose-migration \
       --snapshot-height 1 \
-      --token-contract "0x0000000000000000000000000000000000000001" \
+      --token-contract "native://julian" \
       --conversion-ratio 1 \
       --treasury-mint 0 \
       --log-dir "$LOG_DIR_A" \

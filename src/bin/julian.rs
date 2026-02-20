@@ -5,7 +5,10 @@
 //! crate's domain-separated hashing and signature utilities.
 
 #[cfg(feature = "net")]
-use power_house::commands::stake_snapshot::run_snapshot;
+use power_house::commands::{
+    migration_claims::{run_build_claims, BuildClaimsOptions},
+    stake_snapshot::run_snapshot,
+};
 #[cfg(feature = "net")]
 use power_house::net::{
     decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
@@ -50,11 +53,14 @@ fn fatal(message: &str) -> ! {
 
 #[cfg(feature = "net")]
 fn print_stake_help() {
-    println!("Usage: julian stake <show|fund|bond|snapshot|unbond|reward> ...");
+    println!("Usage: julian stake <show|fund|bond|snapshot|claims|unbond|reward> ...");
     println!("  show <stake_registry.json>");
     println!("  fund <registry.json> <pubkey_b64> <amount>");
     println!("  bond <registry.json> <pubkey_b64> <amount>");
     println!("  snapshot --registry <path> --height <N> --output <file>");
+    println!(
+        "  claims --snapshot <file> --output <file> [--mode native|erc20] [--amount-source stake|balance|total]"
+    );
     println!("  unbond <registry.json> <pubkey_b64> <amount>");
     println!("  reward <registry.json> <pubkey_b64> <amount>");
 }
@@ -62,7 +68,7 @@ fn print_stake_help() {
 #[cfg(feature = "net")]
 fn print_governance_help() {
     println!("Usage: julian governance <propose-migration> ...");
-    println!("  propose-migration --snapshot-height <N> --token-contract <0x...>");
+    println!("  propose-migration --snapshot-height <N> [--token-contract <id>]");
     println!("    [--conversion-ratio <u64>] [--treasury-mint <u64>]");
     println!("    --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
 }
@@ -126,7 +132,7 @@ fn main() {
         #[cfg(feature = "net")]
         Some("stake") => {
             let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian stake <show|fund|bond|snapshot|unbond|reward> ...");
+                eprintln!("Usage: julian stake <show|fund|bond|snapshot|claims|unbond|reward> ...");
                 std::process::exit(1);
             });
             handle_stake(&sub, args.collect());
@@ -162,6 +168,7 @@ fn handle_stake(sub: &str, tail: Vec<String>) {
         "fund" => cmd_stake_fund(tail),
         "bond" => cmd_stake_bond(tail),
         "snapshot" => cmd_stake_snapshot(tail),
+        "claims" => cmd_stake_claims(tail),
         "unbond" => cmd_stake_unbond(tail),
         "reward" => cmd_stake_reward(tail),
         _ => {
@@ -524,10 +531,109 @@ fn cmd_stake_snapshot(args: Vec<String>) {
 }
 
 #[cfg(feature = "net")]
+fn cmd_stake_claims(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!("Usage: julian stake claims --snapshot <file> --output <file> [options]");
+        println!("  [--mode native|erc20]");
+        println!("  [--amount-source stake|balance|total] [--include-slashed]");
+        println!("  [--conversion-ratio <u64>] [--claim-id-salt <text>]");
+        println!("  [--token-contract <id>] [--snapshot-height <u64>]");
+        return;
+    }
+
+    let mut snapshot: Option<String> = None;
+    let mut output: Option<String> = None;
+    let mut claim_mode = String::from("native");
+    let mut amount_source = String::from("total");
+    let mut include_slashed = false;
+    let mut conversion_ratio: u64 = 1;
+    let mut claim_id_salt = String::from("mfenx-migration-claim-v1");
+    let mut token_contract: Option<String> = None;
+    let mut snapshot_height_override: Option<u64> = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--snapshot" => {
+                snapshot = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--snapshot expects a value")),
+                );
+            }
+            "--output" => {
+                output = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                );
+            }
+            "--mode" => {
+                claim_mode = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--mode expects a value"));
+            }
+            "--amount-source" => {
+                amount_source = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--amount-source expects a value"));
+            }
+            "--include-slashed" => {
+                include_slashed = true;
+            }
+            "--conversion-ratio" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--conversion-ratio expects a value"));
+                conversion_ratio = raw
+                    .parse::<u64>()
+                    .unwrap_or_else(|_| fatal("invalid --conversion-ratio"));
+            }
+            "--claim-id-salt" => {
+                claim_id_salt = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--claim-id-salt expects a value"));
+            }
+            "--token-contract" => {
+                token_contract = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--token-contract expects a value")),
+                );
+            }
+            "--snapshot-height" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--snapshot-height expects a value"));
+                snapshot_height_override = Some(
+                    raw.parse::<u64>()
+                        .unwrap_or_else(|_| fatal("invalid --snapshot-height")),
+                );
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let snapshot = snapshot.unwrap_or_else(|| fatal("--snapshot is required"));
+    let output = output.unwrap_or_else(|| fatal("--output is required"));
+    let opts = BuildClaimsOptions {
+        claim_mode,
+        amount_source,
+        include_slashed,
+        conversion_ratio,
+        claim_id_salt,
+        token_contract,
+        snapshot_height_override,
+    };
+
+    let root = run_build_claims(&snapshot, &output, &opts)
+        .unwrap_or_else(|err| fatal(&format!("claim build failed: {err}")));
+    println!("claims root: {root}");
+    println!("artifact: {output}");
+}
+
+#[cfg(feature = "net")]
 fn cmd_governance_propose_migration(args: Vec<String>) {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         println!("Usage: julian governance propose-migration \\");
-        println!("  --snapshot-height <N> --token-contract <0x...> \\");
+        println!("  --snapshot-height <N> [--token-contract <id>] \\");
         println!("  [--conversion-ratio <u64>] [--treasury-mint <u64>] \\");
         println!("  --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
         return;
@@ -612,7 +718,9 @@ fn cmd_governance_propose_migration(args: Vec<String>) {
     }
 
     let snapshot_height = snapshot_height.unwrap_or_else(|| fatal("--snapshot-height is required"));
-    let token_contract = token_contract.unwrap_or_else(|| fatal("--token-contract is required"));
+    let token_contract = token_contract
+        .or_else(|| std::env::var("PH_MIGRATION_TOKEN_ID").ok())
+        .unwrap_or_else(|| "native://julian".to_string());
     let log_dir = log_dir.unwrap_or_else(|| fatal("--log-dir is required"));
 
     let proposal = MigrationProposal {
@@ -1121,7 +1229,9 @@ fn cmd_net_start(args: Vec<String>) {
         println!(
             "Usage: julian net start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]"
         );
-        println!("  Flags include --token-mode <ERC20_ADDRESS> and --token-oracle <RPC_URL>.");
+        println!(
+            "  Flags include --token-mode <native|TOKEN_ID> and optional --token-oracle <RPC_URL>."
+        );
         return;
     }
 
