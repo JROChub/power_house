@@ -254,11 +254,14 @@ Then add a custom network in MetaMask pointing to `http(s)://<node-host>:8545`.
 To credit a wallet address directly in native mode, fund the stake registry with that `0x...` key:
 
 ```bash
-julian stake fund /var/lib/powerhouse/boot1/stake_registry.json 0xYourWalletAddress 1000
+julian stake fund /var/lib/powerhouse/boot1/blobs/stake_registry.json 0xYourWalletAddress 1000
 ```
 
 RPC balance responses are scaled as 18-decimal native units for wallet display.
-Current RPC scope is wallet-read focused (`eth_chainId`, `eth_getBalance`, block/fee surfaces); raw EVM transaction execution (`eth_sendRawTransaction`) remains intentionally disabled until native nonce/signature execution is finalized.
+`eth_sendRawTransaction` is enabled for type-2 (EIP-1559) native value transfers:
+- chainId must match `--evm-chain-id`
+- value must be 18-decimal aligned (whole native units)
+- contract creation/call-data transactions are rejected in native transfer mode
 
 ### 12) Dry-run and smoke coverage
 

@@ -1,29 +1,38 @@
 #![cfg(feature = "net")]
 
-//! Minimal MetaMask-compatible EVM JSON-RPC facade backed by native stake registry balances.
+//! MetaMask-compatible EVM JSON-RPC facade backed by native stake registry balances.
 
 use crate::net::StakeRegistry;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use blake2::digest::{consts::U32, Digest as BlakeDigest};
-use serde::Deserialize;
+use k256::ecdsa::{RecoveryId, Signature, VerifyingKey};
+use once_cell::sync::Lazy;
+use rlp::{Rlp, RlpStream};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha3::Keccak256;
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::str;
+use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time;
 
 const MAX_HEADER_BYTES: usize = 32 * 1024;
-const MAX_BODY_BYTES: usize = 512 * 1024;
+const MAX_BODY_BYTES: usize = 1024 * 1024;
 const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 10_000;
 const NATIVE_DECIMAL_FACTOR: u128 = 1_000_000_000_000_000_000;
 const DEFAULT_BLOCK_PERIOD_SECS: u64 = 2;
+const DEFAULT_GAS_LIMIT: u64 = 21_000;
+const DEFAULT_GAS_PRICE: u64 = 1_000_000_000;
 
 type Blake2b256 = blake2::Blake2b<U32>;
+
+static TX_WRITE_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[derive(Debug)]
 struct HttpRequest {
@@ -72,6 +81,61 @@ impl RpcError {
     }
 }
 
+#[derive(Debug, Clone)]
+struct ParsedRawTx {
+    hash: String,
+    from: String,
+    to: String,
+    nonce: u64,
+    value_wei: u128,
+    gas_limit: u64,
+    max_fee_per_gas: u128,
+    max_priority_fee_per_gas: u128,
+    input: String,
+    y_parity: u8,
+    r: String,
+    s: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StoredTxRecord {
+    hash: String,
+    from: String,
+    to: String,
+    nonce: u64,
+    value_wei: String,
+    gas_limit: u64,
+    max_fee_per_gas: String,
+    max_priority_fee_per_gas: String,
+    input: String,
+    block_number: u64,
+    transaction_index: u64,
+    y_parity: u8,
+    r: String,
+    s: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StoredReceiptRecord {
+    transaction_hash: String,
+    from: String,
+    to: String,
+    block_number: u64,
+    transaction_index: u64,
+    status: u8,
+    gas_used: u64,
+    cumulative_gas_used: u64,
+    effective_gas_price: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct EvmRpcState {
+    latest_block: u64,
+    nonces: HashMap<String, u64>,
+    txs: HashMap<String, StoredTxRecord>,
+    receipts: HashMap<String, StoredReceiptRecord>,
+}
+
 /// EVM JSON-RPC listener configuration.
 #[derive(Debug, Clone)]
 pub struct EvmRpcConfig {
@@ -79,8 +143,10 @@ pub struct EvmRpcConfig {
     pub listen: SocketAddr,
     /// EVM chain ID exposed to wallets.
     pub chain_id: u64,
-    /// Optional path to the native stake registry for balance lookups.
+    /// Optional path to the native stake registry for balance lookups/transfers.
     pub stake_registry_path: Option<PathBuf>,
+    /// Optional state path used for nonce/receipt persistence.
+    pub state_path: Option<PathBuf>,
     /// Max request read timeout.
     pub request_timeout: Duration,
     /// Approximate block cadence in seconds for synthetic block number responses.
@@ -90,10 +156,14 @@ pub struct EvmRpcConfig {
 impl EvmRpcConfig {
     /// Build a config using sensible defaults.
     pub fn new(listen: SocketAddr, chain_id: u64, stake_registry_path: Option<PathBuf>) -> Self {
+        let state_path = stake_registry_path
+            .as_ref()
+            .map(|path| path.with_file_name("evm_rpc_state.json"));
         Self {
             listen,
             chain_id,
             stake_registry_path,
+            state_path,
             request_timeout: Duration::from_millis(DEFAULT_REQUEST_TIMEOUT_MS),
             block_period_secs: DEFAULT_BLOCK_PERIOD_SECS,
         }
@@ -176,7 +246,6 @@ async fn handle_connection(stream: &mut TcpStream, cfg: &EvmRpcConfig) -> io::Re
         return Ok(());
     }
 
-    // touch headers so the parser keeps ownership meaningful (auth may be layered later)
     let _content_type = req.headers.get("content-type").cloned();
 
     let parsed: JsonRpcRequest = match serde_json::from_slice(&req.body) {
@@ -222,7 +291,7 @@ fn handle_rpc_method(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Result<Value, 
         "eth_blockNumber" => Ok(Value::String(to_quantity_u64(current_block_number(
             cfg.block_period_secs,
         )))),
-        "eth_gasPrice" => Ok(Value::String(to_quantity_u64(1_000_000_000))),
+        "eth_gasPrice" => Ok(Value::String(to_quantity_u64(DEFAULT_GAS_PRICE))),
         "eth_maxPriorityFeePerGas" => Ok(Value::String(to_quantity_u64(100_000_000))),
         "eth_feeHistory" => Ok(handle_fee_history(req, cfg)),
         "eth_getBalance" => {
@@ -232,21 +301,25 @@ fn handle_rpc_method(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Result<Value, 
             let wei = u128::from(units).saturating_mul(NATIVE_DECIMAL_FACTOR);
             Ok(Value::String(to_quantity_u128(wei)))
         }
-        "eth_getTransactionCount" => Ok(Value::String("0x0".to_string())),
-        "eth_estimateGas" => Ok(Value::String("0x5208".to_string())),
+        "eth_getTransactionCount" => {
+            let address = rpc_param_string(&req.params, 0).ok_or_else(|| {
+                RpcError::invalid_params("eth_getTransactionCount expects address param")
+            })?;
+            let nonce = load_nonce_for_address(cfg, &address)?;
+            Ok(Value::String(to_quantity_u64(nonce)))
+        }
+        "eth_estimateGas" => Ok(Value::String(to_quantity_u64(DEFAULT_GAS_LIMIT))),
         "eth_getCode" => Ok(Value::String("0x".to_string())),
         "eth_call" => Ok(Value::String("0x".to_string())),
         "eth_accounts" => Ok(Value::Array(Vec::new())),
         "eth_coinbase" => Ok(Value::String(
             "0x0000000000000000000000000000000000000000".to_string(),
         )),
-        "eth_getBlockByNumber" => Ok(handle_get_block_by_number(req, cfg)),
+        "eth_getBlockByNumber" => Ok(handle_get_block_by_number(req, cfg)?),
         "eth_getBlockByHash" => Ok(Value::Null),
-        "eth_getTransactionByHash" => Ok(Value::Null),
-        "eth_getTransactionReceipt" => Ok(Value::Null),
-        "eth_sendRawTransaction" => Err(RpcError::internal(
-            "native tx execution via raw EVM payload is not enabled yet",
-        )),
+        "eth_getTransactionByHash" => handle_get_transaction_by_hash(req, cfg),
+        "eth_getTransactionReceipt" => handle_get_transaction_receipt(req, cfg),
+        "eth_sendRawTransaction" => handle_send_raw_transaction(req, cfg),
         "rpc_modules" => Ok(json!({
             "eth": "1.0",
             "net": "1.0",
@@ -261,7 +334,7 @@ fn handle_fee_history(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Value {
     let newest = current_block_number(cfg.block_period_secs);
     let mut base_fee_per_gas = Vec::with_capacity(block_count + 1);
     for _ in 0..=block_count {
-        base_fee_per_gas.push(Value::String("0x3b9aca00".to_string()));
+        base_fee_per_gas.push(Value::String(to_quantity_u64(DEFAULT_GAS_PRICE)));
     }
     let gas_used_ratio = vec![Value::from(0.0); block_count];
     json!({
@@ -272,18 +345,30 @@ fn handle_fee_history(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Value {
     })
 }
 
-fn handle_get_block_by_number(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Value {
+fn handle_get_block_by_number(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Result<Value, RpcError> {
     let block = rpc_param_string(&req.params, 0).unwrap_or_else(|| "latest".to_string());
     let include_txs = rpc_param_bool(&req.params, 1).unwrap_or(false);
     let number = parse_block_tag(&block, cfg.block_period_secs);
     let hash = synthetic_block_hash(number);
     let parent_hash = synthetic_block_hash(number.saturating_sub(1));
+    let tx_records = state_transactions_for_block(cfg, number)?;
     let txs = if include_txs {
-        Value::Array(Vec::new())
+        Value::Array(
+            tx_records
+                .iter()
+                .map(|tx| tx_to_rpc_object(tx, true))
+                .collect::<Vec<_>>(),
+        )
     } else {
-        Value::Array(Vec::new())
+        Value::Array(
+            tx_records
+                .iter()
+                .map(|tx| Value::String(tx.hash.clone()))
+                .collect::<Vec<_>>(),
+        )
     };
-    json!({
+
+    Ok(json!({
         "number": to_quantity_u64(number),
         "hash": hash,
         "parentHash": parent_hash,
@@ -298,13 +383,483 @@ fn handle_get_block_by_number(req: &JsonRpcRequest, cfg: &EvmRpcConfig) -> Value
         "totalDifficulty": "0x0",
         "extraData": "0x6d66656e78",
         "size": "0x0",
-        "gasLimit": "0x1c9c380",
-        "gasUsed": "0x0",
+        "gasLimit": to_quantity_u64(30_000_000),
+        "gasUsed": to_quantity_u64((tx_records.len() as u64).saturating_mul(DEFAULT_GAS_LIMIT)),
         "timestamp": to_quantity_u64(now_secs()),
         "transactions": txs,
         "uncles": [],
-        "baseFeePerGas": "0x3b9aca00"
+        "baseFeePerGas": to_quantity_u64(DEFAULT_GAS_PRICE)
+    }))
+}
+
+fn handle_get_transaction_by_hash(
+    req: &JsonRpcRequest,
+    cfg: &EvmRpcConfig,
+) -> Result<Value, RpcError> {
+    let tx_hash = rpc_param_string(&req.params, 0)
+        .ok_or_else(|| RpcError::invalid_params("eth_getTransactionByHash expects tx hash"))?;
+    let state = load_state(cfg.state_path.as_deref())?;
+    if let Some(tx) = state.txs.get(&tx_hash.to_ascii_lowercase()) {
+        return Ok(tx_to_rpc_object(tx, false));
+    }
+    Ok(Value::Null)
+}
+
+fn handle_get_transaction_receipt(
+    req: &JsonRpcRequest,
+    cfg: &EvmRpcConfig,
+) -> Result<Value, RpcError> {
+    let tx_hash = rpc_param_string(&req.params, 0)
+        .ok_or_else(|| RpcError::invalid_params("eth_getTransactionReceipt expects tx hash"))?;
+    let state = load_state(cfg.state_path.as_deref())?;
+    if let Some(receipt) = state.receipts.get(&tx_hash.to_ascii_lowercase()) {
+        let block_hash = synthetic_block_hash(receipt.block_number);
+        return Ok(json!({
+            "transactionHash": receipt.transaction_hash,
+            "transactionIndex": to_quantity_u64(receipt.transaction_index),
+            "blockHash": block_hash,
+            "blockNumber": to_quantity_u64(receipt.block_number),
+            "from": receipt.from,
+            "to": receipt.to,
+            "cumulativeGasUsed": to_quantity_u64(receipt.cumulative_gas_used),
+            "gasUsed": to_quantity_u64(receipt.gas_used),
+            "effectiveGasPrice": receipt.effective_gas_price,
+            "contractAddress": Value::Null,
+            "logs": [],
+            "logsBloom": "0x0",
+            "type": "0x2",
+            "status": to_quantity_u64(receipt.status as u64)
+        }));
+    }
+    Ok(Value::Null)
+}
+
+fn handle_send_raw_transaction(
+    req: &JsonRpcRequest,
+    cfg: &EvmRpcConfig,
+) -> Result<Value, RpcError> {
+    let raw_hex = rpc_param_string(&req.params, 0)
+        .ok_or_else(|| RpcError::invalid_params("eth_sendRawTransaction expects hex payload"))?;
+    let raw = decode_hex_prefixed(&raw_hex)?;
+    let parsed = decode_eip1559_transaction(&raw, cfg.chain_id)?;
+
+    let _guard = TX_WRITE_LOCK
+        .lock()
+        .map_err(|_| RpcError::internal("rpc state lock poisoned"))?;
+
+    let mut state = load_state(cfg.state_path.as_deref())?;
+    if state.txs.contains_key(&parsed.hash) {
+        return Ok(Value::String(parsed.hash));
+    }
+
+    let expected_nonce = state.nonces.get(&parsed.from).copied().unwrap_or(0);
+    if parsed.nonce != expected_nonce {
+        return Err(RpcError::internal(format!(
+            "nonce mismatch: expected {expected_nonce}, got {}",
+            parsed.nonce
+        )));
+    }
+
+    let transfer_units = wei_to_native_units(parsed.value_wei)?;
+    if transfer_units > 0 {
+        apply_native_transfer(
+            cfg.stake_registry_path.as_deref(),
+            &parsed.from,
+            &parsed.to,
+            transfer_units,
+        )?;
+    }
+
+    let next_block =
+        current_block_number(cfg.block_period_secs).max(state.latest_block.saturating_add(1));
+    let tx_index = state
+        .txs
+        .values()
+        .filter(|tx| tx.block_number == next_block)
+        .count() as u64;
+
+    let tx_record = StoredTxRecord {
+        hash: parsed.hash.clone(),
+        from: parsed.from.clone(),
+        to: parsed.to.clone(),
+        nonce: parsed.nonce,
+        value_wei: to_quantity_u128(parsed.value_wei),
+        gas_limit: parsed.gas_limit,
+        max_fee_per_gas: to_quantity_u128(parsed.max_fee_per_gas),
+        max_priority_fee_per_gas: to_quantity_u128(parsed.max_priority_fee_per_gas),
+        input: parsed.input,
+        block_number: next_block,
+        transaction_index: tx_index,
+        y_parity: parsed.y_parity,
+        r: parsed.r,
+        s: parsed.s,
+    };
+
+    let receipt_record = StoredReceiptRecord {
+        transaction_hash: parsed.hash.clone(),
+        from: parsed.from.clone(),
+        to: parsed.to,
+        block_number: next_block,
+        transaction_index: tx_index,
+        status: 1,
+        gas_used: DEFAULT_GAS_LIMIT,
+        cumulative_gas_used: DEFAULT_GAS_LIMIT.saturating_mul(tx_index.saturating_add(1)),
+        effective_gas_price: to_quantity_u64(DEFAULT_GAS_PRICE),
+    };
+
+    state.latest_block = next_block;
+    state
+        .nonces
+        .insert(parsed.from, expected_nonce.saturating_add(1));
+    state.txs.insert(tx_record.hash.clone(), tx_record);
+    state
+        .receipts
+        .insert(receipt_record.transaction_hash.clone(), receipt_record);
+    save_state(cfg.state_path.as_deref(), &state)?;
+
+    Ok(Value::String(parsed.hash))
+}
+
+fn load_nonce_for_address(cfg: &EvmRpcConfig, address: &str) -> Result<u64, RpcError> {
+    let normalized = normalize_evm_address(address)
+        .ok_or_else(|| RpcError::invalid_params("invalid address format"))?;
+    let state = load_state(cfg.state_path.as_deref())?;
+    Ok(state.nonces.get(&normalized).copied().unwrap_or(0))
+}
+
+fn load_state(path: Option<&Path>) -> Result<EvmRpcState, RpcError> {
+    let Some(path) = path else {
+        return Ok(EvmRpcState::default());
+    };
+    if !path.exists() {
+        return Ok(EvmRpcState::default());
+    }
+    let bytes = std::fs::read(path)
+        .map_err(|err| RpcError::internal(format!("failed to read rpc state: {err}")))?;
+    serde_json::from_slice(&bytes)
+        .map_err(|err| RpcError::internal(format!("failed to decode rpc state: {err}")))
+}
+
+fn save_state(path: Option<&Path>, state: &EvmRpcState) -> Result<(), RpcError> {
+    let Some(path) = path else {
+        return Ok(());
+    };
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|err| RpcError::internal(format!("failed to create state dir: {err}")))?;
+    }
+    let bytes = serde_json::to_vec_pretty(state)
+        .map_err(|err| RpcError::internal(format!("failed to encode rpc state: {err}")))?;
+    std::fs::write(path, bytes)
+        .map_err(|err| RpcError::internal(format!("failed to write rpc state: {err}")))
+}
+
+fn state_transactions_for_block(
+    cfg: &EvmRpcConfig,
+    block_number: u64,
+) -> Result<Vec<StoredTxRecord>, RpcError> {
+    let state = load_state(cfg.state_path.as_deref())?;
+    let mut txs = state
+        .txs
+        .values()
+        .filter(|tx| tx.block_number == block_number)
+        .cloned()
+        .collect::<Vec<_>>();
+    txs.sort_by_key(|tx| tx.transaction_index);
+    Ok(txs)
+}
+
+fn tx_to_rpc_object(tx: &StoredTxRecord, include_block: bool) -> Value {
+    let block_hash = synthetic_block_hash(tx.block_number);
+    let mut value = json!({
+        "hash": tx.hash,
+        "nonce": to_quantity_u64(tx.nonce),
+        "from": tx.from,
+        "to": tx.to,
+        "value": tx.value_wei,
+        "gas": to_quantity_u64(tx.gas_limit),
+        "gasPrice": tx.max_fee_per_gas,
+        "maxFeePerGas": tx.max_fee_per_gas,
+        "maxPriorityFeePerGas": tx.max_priority_fee_per_gas,
+        "input": tx.input,
+        "type": "0x2",
+        "v": to_quantity_u64(tx.y_parity as u64),
+        "r": tx.r,
+        "s": tx.s,
+        "transactionIndex": to_quantity_u64(tx.transaction_index)
+    });
+
+    if include_block {
+        value["blockHash"] = Value::String(block_hash);
+        value["blockNumber"] = Value::String(to_quantity_u64(tx.block_number));
+    } else {
+        value["blockHash"] = Value::String(block_hash);
+        value["blockNumber"] = Value::String(to_quantity_u64(tx.block_number));
+    }
+    value
+}
+
+fn decode_eip1559_transaction(raw: &[u8], expected_chain_id: u64) -> Result<ParsedRawTx, RpcError> {
+    if raw.is_empty() {
+        return Err(RpcError::invalid_params("empty raw transaction"));
+    }
+    if raw[0] != 0x02 {
+        return Err(RpcError::invalid_params(
+            "only EIP-1559 (type 0x02) transactions are supported",
+        ));
+    }
+
+    let rlp = Rlp::new(&raw[1..]);
+    if !rlp.is_list() {
+        return Err(RpcError::invalid_params(
+            "typed transaction payload is not an RLP list",
+        ));
+    }
+    let items = rlp
+        .item_count()
+        .map_err(|err| RpcError::invalid_params(format!("invalid rlp item count: {err}")))?;
+    if items != 12 {
+        return Err(RpcError::invalid_params(format!(
+            "expected 12 rlp fields for type-2 tx, found {items}"
+        )));
+    }
+
+    let chain_id = rlp_u64(&rlp, 0)?;
+    if chain_id != expected_chain_id {
+        return Err(RpcError::invalid_params(format!(
+            "chainId mismatch: tx={chain_id} rpc={expected_chain_id}"
+        )));
+    }
+
+    let nonce = rlp_u64(&rlp, 1)?;
+    let max_priority_fee_per_gas = rlp_u128(&rlp, 2)?;
+    let max_fee_per_gas = rlp_u128(&rlp, 3)?;
+    let gas_limit = rlp_u64(&rlp, 4)?;
+    let to_bytes = rlp
+        .at(5)
+        .map_err(|err| RpcError::invalid_params(format!("missing to field: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid to field: {err}")))?;
+    if to_bytes.len() != 20 {
+        return Err(RpcError::invalid_params(
+            "contract creation transactions are not supported",
+        ));
+    }
+    let to = format!("0x{}", hex::encode(to_bytes));
+
+    let value_wei = rlp_u128(&rlp, 6)?;
+    let input_bytes = rlp
+        .at(7)
+        .map_err(|err| RpcError::invalid_params(format!("missing input field: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid input field: {err}")))?;
+    if !input_bytes.is_empty() {
+        return Err(RpcError::invalid_params(
+            "contract call data is not supported for native transfer mode",
+        ));
+    }
+    let input = format!("0x{}", hex::encode(input_bytes));
+
+    let access_list_raw = rlp
+        .at(8)
+        .map_err(|err| RpcError::invalid_params(format!("missing access list: {err}")))?
+        .as_raw()
+        .to_vec();
+    let y_parity = rlp_u64(&rlp, 9)?;
+    if y_parity > 1 {
+        return Err(RpcError::invalid_params("invalid y parity in signature"));
+    }
+
+    let r_raw = rlp
+        .at(10)
+        .map_err(|err| RpcError::invalid_params(format!("missing signature r: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid signature r: {err}")))?;
+    let s_raw = rlp
+        .at(11)
+        .map_err(|err| RpcError::invalid_params(format!("missing signature s: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid signature s: {err}")))?;
+    let r32 = left_pad_32(r_raw)?;
+    let s32 = left_pad_32(s_raw)?;
+
+    let mut sig_stream = RlpStream::new_list(9);
+    sig_stream.append(&chain_id);
+    sig_stream.append(&nonce);
+    sig_stream.append(&max_priority_fee_per_gas);
+    sig_stream.append(&max_fee_per_gas);
+    sig_stream.append(&gas_limit);
+    sig_stream.append(&to_bytes.as_ref());
+    sig_stream.append(&value_wei);
+    sig_stream.append(&input_bytes.as_ref());
+    sig_stream.append_raw(&access_list_raw, 1);
+
+    let encoded_stream = sig_stream.out();
+    let mut signing_payload = Vec::with_capacity(1 + encoded_stream.len());
+    signing_payload.push(0x02);
+    signing_payload.extend_from_slice(encoded_stream.as_ref());
+    let sighash = keccak256(&signing_payload);
+
+    let sig = Signature::from_scalars(r32, s32)
+        .map_err(|err| RpcError::invalid_params(format!("invalid signature scalars: {err}")))?;
+    let recid = RecoveryId::from_byte(y_parity as u8)
+        .ok_or_else(|| RpcError::invalid_params("invalid signature recovery id"))?;
+    let vk = VerifyingKey::recover_from_prehash(&sighash, &sig, recid)
+        .map_err(|err| RpcError::invalid_params(format!("signature recovery failed: {err}")))?;
+
+    let pubkey = vk.to_encoded_point(false);
+    let pub_bytes = pubkey.as_bytes();
+    if pub_bytes.len() != 65 || pub_bytes[0] != 0x04 {
+        return Err(RpcError::internal("unexpected recovered public key format"));
+    }
+    let from_digest = keccak256(&pub_bytes[1..]);
+    let from = format!("0x{}", hex::encode(&from_digest[12..]));
+
+    let tx_hash = format!("0x{}", hex::encode(keccak256(raw)));
+
+    Ok(ParsedRawTx {
+        hash: tx_hash,
+        from,
+        to,
+        nonce,
+        value_wei,
+        gas_limit,
+        max_fee_per_gas,
+        max_priority_fee_per_gas,
+        input,
+        y_parity: y_parity as u8,
+        r: format!("0x{}", hex::encode(r32)),
+        s: format!("0x{}", hex::encode(s32)),
     })
+}
+
+fn rlp_u64(rlp: &Rlp<'_>, index: usize) -> Result<u64, RpcError> {
+    let bytes = rlp
+        .at(index)
+        .map_err(|err| RpcError::invalid_params(format!("missing rlp field {index}: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid rlp field {index}: {err}")))?;
+    u64_from_be_bytes(bytes)
+}
+
+fn rlp_u128(rlp: &Rlp<'_>, index: usize) -> Result<u128, RpcError> {
+    let bytes = rlp
+        .at(index)
+        .map_err(|err| RpcError::invalid_params(format!("missing rlp field {index}: {err}")))?
+        .data()
+        .map_err(|err| RpcError::invalid_params(format!("invalid rlp field {index}: {err}")))?;
+    u128_from_be_bytes(bytes)
+}
+
+fn u64_from_be_bytes(bytes: &[u8]) -> Result<u64, RpcError> {
+    if bytes.len() > 8 {
+        return Err(RpcError::invalid_params("integer overflow (u64)"));
+    }
+    let mut out = 0u64;
+    for byte in bytes {
+        out = (out << 8) | (*byte as u64);
+    }
+    Ok(out)
+}
+
+fn u128_from_be_bytes(bytes: &[u8]) -> Result<u128, RpcError> {
+    if bytes.len() > 16 {
+        return Err(RpcError::invalid_params("integer overflow (u128)"));
+    }
+    let mut out = 0u128;
+    for byte in bytes {
+        out = (out << 8) | (*byte as u128);
+    }
+    Ok(out)
+}
+
+fn left_pad_32(bytes: &[u8]) -> Result<[u8; 32], RpcError> {
+    if bytes.len() > 32 {
+        return Err(RpcError::invalid_params(
+            "signature component exceeds 32 bytes",
+        ));
+    }
+    let mut out = [0u8; 32];
+    let offset = 32usize.saturating_sub(bytes.len());
+    out[offset..].copy_from_slice(bytes);
+    Ok(out)
+}
+
+fn decode_hex_prefixed(input: &str) -> Result<Vec<u8>, RpcError> {
+    let trimmed = input.trim();
+    let raw = trimmed
+        .strip_prefix("0x")
+        .or_else(|| trimmed.strip_prefix("0X"))
+        .ok_or_else(|| RpcError::invalid_params("hex payload must start with 0x"))?;
+    hex::decode(raw).map_err(|err| RpcError::invalid_params(format!("invalid hex payload: {err}")))
+}
+
+fn keccak256(data: &[u8]) -> [u8; 32] {
+    let mut hasher = Keccak256::new();
+    hasher.update(data);
+    let digest = hasher.finalize();
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&digest);
+    out
+}
+
+fn wei_to_native_units(value_wei: u128) -> Result<u64, RpcError> {
+    if value_wei % NATIVE_DECIMAL_FACTOR != 0 {
+        return Err(RpcError::invalid_params(
+            "value must be a whole native token amount (18-decimal aligned)",
+        ));
+    }
+    let units = value_wei / NATIVE_DECIMAL_FACTOR;
+    if units > u64::MAX as u128 {
+        return Err(RpcError::invalid_params(
+            "value exceeds native balance capacity",
+        ));
+    }
+    Ok(units as u64)
+}
+
+fn apply_native_transfer(
+    registry_path: Option<&Path>,
+    from: &str,
+    to: &str,
+    amount: u64,
+) -> Result<(), RpcError> {
+    let path =
+        registry_path.ok_or_else(|| RpcError::internal("stake registry path not configured"))?;
+    let from_norm = normalize_evm_address(from)
+        .ok_or_else(|| RpcError::invalid_params("invalid sender address"))?;
+    let to_norm = normalize_evm_address(to)
+        .ok_or_else(|| RpcError::invalid_params("invalid recipient address"))?;
+
+    let mut registry = StakeRegistry::load(path)
+        .map_err(|err| RpcError::internal(format!("failed to load stake registry: {err}")))?;
+
+    let from_key =
+        find_registry_key_for_address(&registry, &from_norm).unwrap_or(from_norm.clone());
+    let to_key = find_registry_key_for_address(&registry, &to_norm).unwrap_or(to_norm.clone());
+
+    registry
+        .debit_fee(&from_key, amount)
+        .map_err(|err| RpcError::internal(format!("insufficient balance for transfer: {err}")))?;
+    registry.fund_balance(&to_key, amount);
+
+    registry
+        .save(path)
+        .map_err(|err| RpcError::internal(format!("failed to persist stake registry: {err}")))
+}
+
+fn find_registry_key_for_address(registry: &StakeRegistry, address: &str) -> Option<String> {
+    if registry.account(address).is_some() {
+        return Some(address.to_string());
+    }
+    for key in registry.accounts().keys() {
+        if let Some(addr) = normalize_evm_address(key) {
+            if addr == address {
+                return Some(key.clone());
+            }
+        }
+    }
+    None
 }
 
 fn lookup_native_balance(registry_path: Option<&Path>, address: &str) -> Result<u64, RpcError> {
@@ -549,7 +1104,8 @@ fn build_preflight_response() -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        derive_address_from_pubkey, lookup_native_balance, normalize_evm_address, to_quantity_u128,
+        decode_hex_prefixed, derive_address_from_pubkey, lookup_native_balance,
+        normalize_evm_address, to_quantity_u128, wei_to_native_units,
     };
     use crate::net::StakeRegistry;
     use std::fs;
@@ -597,5 +1153,17 @@ mod tests {
         assert_eq!(got, 77);
 
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn wei_alignment_enforced() {
+        assert!(wei_to_native_units(1).is_err());
+        assert_eq!(wei_to_native_units(1_000_000_000_000_000_000).unwrap(), 1);
+    }
+
+    #[test]
+    fn decode_hex_requires_prefix() {
+        assert!(decode_hex_prefixed("abcd").is_err());
+        assert_eq!(decode_hex_prefixed("0x").unwrap(), Vec::<u8>::new());
     }
 }
