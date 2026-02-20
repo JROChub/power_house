@@ -144,6 +144,7 @@ During transition, fee settlement can fall back to oracle balance checks when re
 ```bash
 ./scripts/token_migration_dry_run.sh
 ./scripts/smoke_net.sh --with-migration
+./scripts/verify_migration_contract.sh
 ```
 
 ## Operations

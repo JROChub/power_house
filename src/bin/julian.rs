@@ -49,6 +49,34 @@ fn fatal(message: &str) -> ! {
 }
 
 #[cfg(feature = "net")]
+fn print_stake_help() {
+    println!("Usage: julian stake <show|fund|bond|snapshot|unbond|reward> ...");
+    println!("  show <stake_registry.json>");
+    println!("  fund <registry.json> <pubkey_b64> <amount>");
+    println!("  bond <registry.json> <pubkey_b64> <amount>");
+    println!("  snapshot --registry <path> --height <N> --output <file>");
+    println!("  unbond <registry.json> <pubkey_b64> <amount>");
+    println!("  reward <registry.json> <pubkey_b64> <amount>");
+}
+
+#[cfg(feature = "net")]
+fn print_governance_help() {
+    println!("Usage: julian governance <propose-migration> ...");
+    println!("  propose-migration --snapshot-height <N> --token-contract <0x...>");
+    println!("    [--conversion-ratio <u64>] [--treasury-mint <u64>]");
+    println!("    --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
+}
+
+#[cfg(feature = "net")]
+fn print_net_help() {
+    println!("Usage: julian net <start|anchor|verify-envelope> ...");
+    println!("  start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]");
+    println!("  anchor --log-dir <dir> [--node-id <id>] [--quorum <N>]");
+    println!("         (compat: julian net anchor <log_dir>)");
+    println!("  verify-envelope --file <anchor.json> --log-dir <dir> [--quorum <N>]");
+}
+
+#[cfg(feature = "net")]
 fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -129,6 +157,7 @@ fn main() {
 #[cfg(feature = "net")]
 fn handle_stake(sub: &str, tail: Vec<String>) {
     match sub {
+        "-h" | "--help" => print_stake_help(),
         "show" => cmd_stake_show(tail),
         "fund" => cmd_stake_fund(tail),
         "bond" => cmd_stake_bond(tail),
@@ -145,6 +174,7 @@ fn handle_stake(sub: &str, tail: Vec<String>) {
 #[cfg(feature = "net")]
 fn handle_governance(sub: &str, tail: Vec<String>) {
     match sub {
+        "-h" | "--help" => print_governance_help(),
         "propose-migration" => cmd_governance_propose_migration(tail),
         _ => {
             eprintln!("Unknown governance subcommand: {sub}");
@@ -306,6 +336,7 @@ fn summarize_stats(stats: &ProofStats) -> (f64, f64, f64) {
 #[cfg(feature = "net")]
 fn handle_net(sub: &str, tail: Vec<String>) {
     match sub {
+        "-h" | "--help" => print_net_help(),
         "start" => cmd_net_start(tail),
         "anchor" => cmd_net_anchor(tail),
         "verify-envelope" => cmd_net_verify_envelope(tail),
@@ -445,6 +476,11 @@ fn cmd_stake_bond(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_stake_snapshot(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!("Usage: julian stake snapshot --registry <path> --height <N> --output <file>");
+        return;
+    }
+
     let mut registry_path: Option<String> = None;
     let mut height: Option<u64> = None;
     let mut output: Option<String> = None;
@@ -489,6 +525,14 @@ fn cmd_stake_snapshot(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_governance_propose_migration(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!("Usage: julian governance propose-migration \\");
+        println!("  --snapshot-height <N> --token-contract <0x...> \\");
+        println!("  [--conversion-ratio <u64>] [--treasury-mint <u64>] \\");
+        println!("  --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
+        return;
+    }
+
     #[derive(serde::Serialize)]
     struct MigrationProposalArtifact {
         migration_anchor: power_house::net::MigrationAnchor,
@@ -1073,6 +1117,14 @@ fn cmd_node_verify_proof(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_net_start(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!(
+            "Usage: julian net start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]"
+        );
+        println!("  Flags include --token-mode <ERC20_ADDRESS> and --token-oracle <RPC_URL>.");
+        return;
+    }
+
     refresh_migration_mode_from_env();
     let mut node_id = None;
     let mut log_dir = None;
@@ -1423,6 +1475,12 @@ fn cmd_net_start(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_net_anchor(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!("Usage: julian net anchor --log-dir <dir> [--node-id <id>] [--quorum <N>]");
+        println!("Compat: julian net anchor <log_dir> [--node-id <id>] [--quorum <N>]");
+        return;
+    }
+
     let mut log_dir = None;
     let mut node_id = String::from("unknown-node");
     let mut quorum: usize = 1;
@@ -1447,7 +1505,16 @@ fn cmd_net_anchor(args: Vec<String>) {
                     .unwrap_or_else(|| fatal("--quorum expects a value"));
                 quorum = value.parse().unwrap_or_else(|_| fatal("invalid --quorum"));
             }
-            other => fatal(&format!("unknown argument: {other}")),
+            other => {
+                if other.starts_with("--") {
+                    fatal(&format!("unknown argument: {other}"));
+                }
+                if log_dir.is_none() {
+                    log_dir = Some(other.to_string());
+                } else {
+                    fatal(&format!("unexpected positional argument: {other}"));
+                }
+            }
         }
     }
 
@@ -1464,6 +1531,13 @@ fn cmd_net_anchor(args: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_net_verify_envelope(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!(
+            "Usage: julian net verify-envelope --file <anchor.json> --log-dir <dir> [--quorum <N>]"
+        );
+        return;
+    }
+
     let mut file = None;
     let mut log_dir = None;
     let mut quorum: usize = 1;
