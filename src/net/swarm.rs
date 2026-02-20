@@ -14,6 +14,7 @@ use crate::net::{
         CheckpointSignature,
     },
     governance::MembershipPolicy,
+    rpc::{run_evm_rpc_server, EvmRpcConfig},
     schema::{
         AnchorCodecError, AnchorEnvelope, AnchorJson, AnchorVoteJson, DaCommitmentJson,
         ENVELOPE_SCHEMA_VERSION, NETWORK_ID, SCHEMA_ENVELOPE, SCHEMA_VOTE,
@@ -191,6 +192,10 @@ pub struct NetConfig {
     pub token_mode_contract: Option<String>,
     /// Optional JSON-RPC endpoint used for token migration oracle checks.
     pub token_oracle_rpc: Option<String>,
+    /// Optional EVM JSON-RPC listen socket for MetaMask-compatible native balance reads.
+    pub evm_rpc_listen: Option<SocketAddr>,
+    /// EVM chain ID exposed by the RPC facade.
+    pub evm_chain_id: u64,
     metrics: Arc<Metrics>,
     metrics_addr: Option<SocketAddr>,
 }
@@ -224,6 +229,8 @@ impl NetConfig {
         attestation_quorum: Option<usize>,
         token_mode_contract: Option<String>,
         token_oracle_rpc: Option<String>,
+        evm_rpc_listen: Option<SocketAddr>,
+        evm_chain_id: Option<u64>,
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
         let anchor_topic =
@@ -275,6 +282,8 @@ impl NetConfig {
             stake_registry_path,
             token_mode_contract,
             token_oracle_rpc,
+            evm_rpc_listen,
+            evm_chain_id: evm_chain_id.unwrap_or(177155),
             metrics: Arc::new(Metrics::default()),
             metrics_addr,
         }
@@ -1771,6 +1780,15 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             }
         });
         println!("QSYS|mod=METRICS|evt=LISTEN|addr={addr}");
+    }
+
+    if let Some(addr) = cfg.evm_rpc_listen {
+        let rpc_cfg = EvmRpcConfig::new(addr, cfg.evm_chain_id, cfg.stake_registry_path.clone());
+        tokio::spawn(async move {
+            if let Err(err) = run_evm_rpc_server(rpc_cfg).await {
+                eprintln!("evm rpc server error: {err}");
+            }
+        });
     }
 
     if let (Some(blob_dir), Some(blob_listen)) = (cfg.blob_dir.clone(), cfg.blob_listen) {

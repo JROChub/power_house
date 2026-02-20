@@ -229,10 +229,41 @@ python3 ./scripts/deploy_powerhouse_token.py \
 `julian net start` now accepts:
 - `--token-mode <native|TOKEN_ID>`
 - optional `--token-oracle <RPC_URL>` for non-native oracle settlement modes
+- optional native wallet facade flags:
+  - `--evm-rpc-listen <host:port>`
+  - `--evm-chain-id <u64>`
 
 During transition, fee settlement can fall back to oracle balance checks when registry debit fails (non-native modes only).
 
-### 11) Dry-run and smoke coverage
+### 11) Native token visibility in MetaMask (no ERC-20 required)
+
+To expose native `native://julian` balances to wallets, run the built-in RPC facade:
+
+```bash
+julian net start \
+  --node-id boot1 \
+  --log-dir /var/lib/powerhouse/boot1/logs \
+  --listen /ip4/0.0.0.0/tcp/7001 \
+  --blob-dir /var/lib/powerhouse/boot1 \
+  --evm-rpc-listen 0.0.0.0:8545 \
+  --evm-chain-id 177155
+```
+
+Then add a custom network in MetaMask pointing to `http(s)://<node-host>:8545`.
+
+To credit a wallet address directly in native mode, fund the stake registry with that `0x...` key:
+
+```bash
+julian stake fund /var/lib/powerhouse/boot1/blobs/stake_registry.json 0xYourWalletAddress 1000
+```
+
+RPC balance responses are scaled as 18-decimal native units for wallet display.
+`eth_sendRawTransaction` is enabled for type-2 (EIP-1559) native value transfers:
+- chainId must match `--evm-chain-id`
+- value must be 18-decimal aligned (whole native units)
+- contract creation/call-data transactions are rejected in native transfer mode
+
+### 12) Dry-run and smoke coverage
 
 ```bash
 ./scripts/token_migration_dry_run.sh

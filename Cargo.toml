@@ -60,10 +60,12 @@ net = [
     "dep:base64",
     "dep:ed25519-dalek",
     "dep:futures",
+    "dep:k256",
     "dep:libp2p",
     "dep:once_cell",
     "dep:rand_core",
     "dep:reqwest",
+    "dep:rlp",
     "dep:rpassword",
     "dep:tokio",
     "dep:thiserror",
@@ -156,6 +158,11 @@ optional = true
 [dependencies.hex]
 version = "0.4"
 
+[dependencies.k256]
+version = "0.13"
+features = ["ecdsa"]
+optional = true
+
 [dependencies.libp2p]
 version = "0.53"
 features = [
@@ -180,6 +187,10 @@ version = "0.8"
 
 [dependencies.rand_core]
 version = "0.6"
+optional = true
+
+[dependencies.rlp]
+version = "0.5"
 optional = true
 
 [dependencies.reqwest]

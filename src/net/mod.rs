@@ -19,6 +19,8 @@ pub mod governance;
 pub mod migration;
 /// Identity admission policy helpers.
 pub mod policy;
+/// MetaMask-compatible EVM JSON-RPC facade for native token balances.
+pub mod rpc;
 /// Machine-readable schema types shared across the network CLI and swarm.
 pub mod schema;
 /// Deterministic key derivation and ed25519 signing helpers.
@@ -41,6 +43,7 @@ pub use governance::{
 };
 pub use migration::{migration_mode_frozen, refresh_migration_mode_from_env};
 pub use policy::{IdentityPolicy, PolicyError};
+pub use rpc::{run_evm_rpc_server, EvmRpcConfig};
 pub use schema::{AnchorEnvelope, AnchorJson, AnchorVoteJson, SCHEMA_VOTE};
 pub use sign::{
     decode_public_key_base64, decode_signature_base64, encode_public_key_base64,

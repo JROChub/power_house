@@ -100,6 +100,7 @@ fn print_migration_help() {
 fn print_net_help() {
     println!("Usage: julian net <start|anchor|verify-envelope> ...");
     println!("  start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]");
+    println!("        [--evm-rpc-listen <host:port>] [--evm-chain-id <u64>]");
     println!("  anchor --log-dir <dir> [--node-id <id>] [--quorum <N>]");
     println!("         (compat: julian net anchor <log_dir>)");
     println!("  verify-envelope --file <anchor.json> --log-dir <dir> [--quorum <N>]");
@@ -1576,6 +1577,7 @@ fn cmd_net_start(args: Vec<String>) {
         println!(
             "  Flags include --token-mode <native|TOKEN_ID> and optional --token-oracle <RPC_URL>."
         );
+        println!("  Optional wallet RPC flags: --evm-rpc-listen <host:port> --evm-chain-id <u64>.");
         return;
     }
 
@@ -1609,6 +1611,8 @@ fn cmd_net_start(args: Vec<String>) {
     let mut tokio_threads_spec: Option<String> = None;
     let mut token_mode_contract_spec: Option<String> = None;
     let mut token_oracle_rpc_spec: Option<String> = None;
+    let mut evm_rpc_listen_spec: Option<String> = None;
+    let mut evm_chain_id_spec: Option<String> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -1807,6 +1811,18 @@ fn cmd_net_start(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--token-oracle expects a value")),
                 );
             }
+            "--evm-rpc-listen" => {
+                evm_rpc_listen_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--evm-rpc-listen expects a value")),
+                );
+            }
+            "--evm-chain-id" => {
+                evm_chain_id_spec = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--evm-chain-id expects a value")),
+                );
+            }
             other => fatal(&format!("unknown argument: {other}")),
         }
     }
@@ -1885,6 +1901,14 @@ fn cmd_net_start(args: Vec<String>) {
         v.parse::<usize>()
             .unwrap_or_else(|_| fatal("invalid --tokio-threads"))
     });
+    let evm_rpc_listen = evm_rpc_listen_spec
+        .as_deref()
+        .map(parse_metrics_addr)
+        .unwrap_or(None);
+    let evm_chain_id = evm_chain_id_spec.map(|v| {
+        v.parse::<u64>()
+            .unwrap_or_else(|_| fatal("invalid --evm-chain-id"))
+    });
 
     let config = NetConfig::new(
         node_id,
@@ -1912,6 +1936,8 @@ fn cmd_net_start(args: Vec<String>) {
         attestation_quorum,
         token_mode_contract_spec,
         token_oracle_rpc_spec,
+        evm_rpc_listen,
+        evm_chain_id,
     );
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
