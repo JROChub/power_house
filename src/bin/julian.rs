@@ -7,15 +7,19 @@
 #[cfg(feature = "net")]
 use power_house::commands::{
     migration_apply_claims::{run_apply_claims, ApplyClaimsOptions},
+    migration_burn_executor::{run_execute_burn_intents, ExecuteBurnOptions},
     migration_claims::{run_build_claims, BuildClaimsOptions},
+    migration_finalize::{run_finalize_migration, FinalizeMigrationOptions},
+    migration_proposal::{run_propose_migration, ProposeMigrationOptions},
+    migration_verify_state::{run_verify_state, VerifyStateOptions},
     stake_snapshot::run_snapshot,
 };
 #[cfg(feature = "net")]
 use power_house::net::{
     decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
     load_or_derive_keypair, refresh_migration_mode_from_env, run_network, verify_signature_base64,
-    AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MigrationProposal,
-    MultisigPolicy, NamespaceRule, NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
+    AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule,
+    NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
 };
 use power_house::{
     compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
@@ -73,6 +77,23 @@ fn print_governance_help() {
     println!("  propose-migration --snapshot-height <N> [--token-contract <id>]");
     println!("    [--conversion-ratio <u64>] [--treasury-mint <u64>]");
     println!("    --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
+}
+
+#[cfg(feature = "net")]
+fn print_migration_help() {
+    println!("Usage: julian migration <finalize|verify-state|execute-burn-intents> ...");
+    println!("  finalize --registry <file> --height <N> --log-dir <dir> --output-dir <dir>");
+    println!(
+        "           [--token-contract <id>] [--conversion-ratio <u64>] [--treasury-mint <u64>]"
+    );
+    println!("           [--amount-source stake|balance|total] [--include-slashed]");
+    println!("           [--claim-id-salt <text>] [--node-id <id>] [--quorum <N>]");
+    println!("           [--apply-state <file>] [--allow-unfrozen] [--force]");
+    println!("  verify-state --registry <file> --claims <file> --state <file>");
+    println!("               [--require-complete] [--skip-balance-floor]");
+    println!(
+        "  execute-burn-intents --registry <file> [--outbox <file>] [--state <file>] [--dry-run]"
+    );
 }
 
 #[cfg(feature = "net")]
@@ -148,6 +169,16 @@ fn main() {
             handle_governance(&sub, args.collect());
         }
         #[cfg(feature = "net")]
+        Some("migration") => {
+            let sub = args.next().unwrap_or_else(|| {
+                eprintln!(
+                    "Usage: julian migration <finalize|verify-state|execute-burn-intents> ..."
+                );
+                std::process::exit(1);
+            });
+            handle_migration(&sub, args.collect());
+        }
+        #[cfg(feature = "net")]
         Some("rollup") => {
             let sub = args.next().unwrap_or_else(|| {
                 eprintln!("Usage: julian rollup <settle> ...");
@@ -156,7 +187,9 @@ fn main() {
             handle_rollup(&sub, args.collect());
         }
         _ => {
-            eprintln!("Usage: julian <node|scale_sumcheck|net|stake|governance|rollup|keygen> ...");
+            eprintln!(
+                "Usage: julian <node|scale_sumcheck|net|stake|governance|migration|rollup|keygen> ..."
+            );
             std::process::exit(1);
         }
     }
@@ -188,6 +221,20 @@ fn handle_governance(sub: &str, tail: Vec<String>) {
         "propose-migration" => cmd_governance_propose_migration(tail),
         _ => {
             eprintln!("Unknown governance subcommand: {sub}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn handle_migration(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_migration_help(),
+        "finalize" => cmd_migration_finalize(tail),
+        "verify-state" => cmd_migration_verify_state(tail),
+        "execute-burn-intents" => cmd_migration_execute_burn_intents(tail),
+        _ => {
+            eprintln!("Unknown migration subcommand: {sub}");
             std::process::exit(1);
         }
     }
@@ -692,6 +739,279 @@ fn cmd_stake_apply_claims(args: Vec<String>) {
 }
 
 #[cfg(feature = "net")]
+fn cmd_migration_finalize(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        print_migration_help();
+        return;
+    }
+
+    let mut registry_path: Option<String> = None;
+    let mut snapshot_height: Option<u64> = None;
+    let mut log_dir: Option<String> = None;
+    let mut output_dir: Option<String> = None;
+    let mut token_contract = String::from("native://julian");
+    let mut conversion_ratio: u64 = 1;
+    let mut treasury_mint: u64 = 0;
+    let mut amount_source = String::from("total");
+    let mut include_slashed = false;
+    let mut claim_id_salt = String::from("mfenx-migration-claim-v1");
+    let mut node_id = String::from("migration-finalize");
+    let mut quorum: usize = 1;
+    let mut apply_state_path: Option<String> = None;
+    let mut allow_unfrozen = false;
+    let mut force = false;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registry" => {
+                registry_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--registry expects a value")),
+                );
+            }
+            "--height" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--height expects a value"));
+                snapshot_height = Some(raw.parse().unwrap_or_else(|_| fatal("invalid --height")));
+            }
+            "--log-dir" => {
+                log_dir = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--log-dir expects a value")),
+                );
+            }
+            "--output-dir" => {
+                output_dir = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output-dir expects a value")),
+                );
+            }
+            "--token-contract" => {
+                token_contract = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--token-contract expects a value"));
+            }
+            "--conversion-ratio" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--conversion-ratio expects a value"));
+                conversion_ratio = raw
+                    .parse::<u64>()
+                    .unwrap_or_else(|_| fatal("invalid --conversion-ratio"));
+            }
+            "--treasury-mint" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--treasury-mint expects a value"));
+                treasury_mint = raw
+                    .parse::<u64>()
+                    .unwrap_or_else(|_| fatal("invalid --treasury-mint"));
+            }
+            "--amount-source" => {
+                amount_source = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--amount-source expects a value"));
+            }
+            "--include-slashed" => {
+                include_slashed = true;
+            }
+            "--claim-id-salt" => {
+                claim_id_salt = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--claim-id-salt expects a value"));
+            }
+            "--node-id" => {
+                node_id = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--node-id expects a value"));
+            }
+            "--quorum" => {
+                let raw = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--quorum expects a value"));
+                quorum = raw
+                    .parse::<usize>()
+                    .unwrap_or_else(|_| fatal("invalid --quorum"));
+            }
+            "--apply-state" => {
+                apply_state_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--apply-state expects a value")),
+                );
+            }
+            "--allow-unfrozen" => {
+                allow_unfrozen = true;
+            }
+            "--force" => {
+                force = true;
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let opts = FinalizeMigrationOptions {
+        registry_path: registry_path.unwrap_or_else(|| fatal("--registry is required")),
+        snapshot_height: snapshot_height.unwrap_or_else(|| fatal("--height is required")),
+        log_dir: log_dir.unwrap_or_else(|| fatal("--log-dir is required")),
+        output_dir: output_dir.unwrap_or_else(|| fatal("--output-dir is required")),
+        token_contract,
+        conversion_ratio,
+        treasury_mint,
+        amount_source,
+        include_slashed,
+        claim_id_salt,
+        node_id,
+        quorum,
+        apply_state_path,
+        allow_unfrozen,
+        force,
+    };
+
+    let summary = run_finalize_migration(&opts)
+        .unwrap_or_else(|err| fatal(&format!("migration finalize failed: {err}")));
+    println!("snapshot_root: {}", summary.snapshot_root);
+    println!("claims_root: {}", summary.claims_root);
+    println!("applied_claims: {}", summary.applied_claims);
+    println!("skipped_claims: {}", summary.skipped_claims);
+    println!("snapshot: {}", summary.snapshot_path);
+    println!("claims: {}", summary.claims_path);
+    println!("apply_state: {}", summary.apply_state_path);
+    println!("proposal: {}", summary.proposal_path);
+}
+
+#[cfg(feature = "net")]
+fn cmd_migration_verify_state(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        print_migration_help();
+        return;
+    }
+
+    let mut registry: Option<String> = None;
+    let mut claims: Option<String> = None;
+    let mut state: Option<String> = None;
+    let mut require_complete = false;
+    let mut enforce_balance_floor = true;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registry" => {
+                registry = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--registry expects a value")),
+                );
+            }
+            "--claims" => {
+                claims = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--claims expects a value")),
+                );
+            }
+            "--state" => {
+                state = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--state expects a value")),
+                );
+            }
+            "--require-complete" => {
+                require_complete = true;
+            }
+            "--skip-balance-floor" => {
+                enforce_balance_floor = false;
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let summary = run_verify_state(
+        &registry.unwrap_or_else(|| fatal("--registry is required")),
+        &claims.unwrap_or_else(|| fatal("--claims is required")),
+        &state.unwrap_or_else(|| fatal("--state is required")),
+        &VerifyStateOptions {
+            require_complete,
+            enforce_balance_floor,
+        },
+    )
+    .unwrap_or_else(|err| fatal(&format!("migration verify-state failed: {err}")));
+
+    println!("claim_count: {}", summary.claim_count);
+    println!("applied_count: {}", summary.applied_count);
+    println!("missing_count: {}", summary.missing_count);
+    println!("unknown_count: {}", summary.unknown_count);
+    println!("applied_total_mint: {}", summary.applied_total_mint);
+}
+
+#[cfg(feature = "net")]
+fn cmd_migration_execute_burn_intents(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        print_migration_help();
+        return;
+    }
+
+    let mut registry: Option<String> = None;
+    let mut outbox: Option<String> = None;
+    let mut state: Option<String> = None;
+    let mut dry_run = false;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registry" => {
+                registry = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--registry expects a value")),
+                );
+            }
+            "--outbox" => {
+                outbox = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--outbox expects a value")),
+                );
+            }
+            "--state" => {
+                state = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--state expects a value")),
+                );
+            }
+            "--dry-run" => {
+                dry_run = true;
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let registry = registry.unwrap_or_else(|| fatal("--registry is required"));
+    let outbox = outbox.unwrap_or_else(|| {
+        let parent = Path::new(&registry)
+            .parent()
+            .unwrap_or_else(|| Path::new("."));
+        parent.join("token_burn_outbox.jsonl").display().to_string()
+    });
+
+    let summary = run_execute_burn_intents(
+        &registry,
+        &outbox,
+        &ExecuteBurnOptions {
+            state_path: state,
+            dry_run,
+        },
+    )
+    .unwrap_or_else(|err| fatal(&format!("migration execute-burn-intents failed: {err}")));
+
+    println!("processed: {}", summary.processed);
+    println!("skipped: {}", summary.skipped);
+    println!("native_executed: {}", summary.native_executed);
+    println!("unsupported_mode: {}", summary.unsupported_mode);
+    println!("state: {}", summary.state_path);
+    if dry_run {
+        println!("dry_run: true");
+    }
+}
+
+#[cfg(feature = "net")]
 fn cmd_governance_propose_migration(args: Vec<String>) {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         println!("Usage: julian governance propose-migration \\");
@@ -699,12 +1019,6 @@ fn cmd_governance_propose_migration(args: Vec<String>) {
         println!("  [--conversion-ratio <u64>] [--treasury-mint <u64>] \\");
         println!("  --log-dir <dir> [--node-id <id>] [--quorum <N>] [--output <file>]");
         return;
-    }
-
-    #[derive(serde::Serialize)]
-    struct MigrationProposalArtifact {
-        migration_anchor: power_house::net::MigrationAnchor,
-        anchor_json: AnchorJson,
     }
 
     let mut snapshot_height: Option<u64> = None;
@@ -785,51 +1099,19 @@ fn cmd_governance_propose_migration(args: Vec<String>) {
         .unwrap_or_else(|| "native://julian".to_string());
     let log_dir = log_dir.unwrap_or_else(|| fatal("--log-dir is required"));
 
-    let proposal = MigrationProposal {
+    let encoded = run_propose_migration(&ProposeMigrationOptions {
         snapshot_height,
         token_contract,
-        conversion_ratio: if conversion_ratio == 0 {
-            1
-        } else {
-            conversion_ratio
-        },
+        conversion_ratio,
         treasury_mint,
-    };
-    let migration_anchor = proposal
-        .to_anchor_payload()
-        .unwrap_or_else(|err| fatal(&format!("failed to build migration payload: {err}")));
-    let proposal_digest = power_house::transcript_digest_from_hex(&migration_anchor.proposal_hash)
-        .unwrap_or_else(|err| fatal(&format!("invalid proposal hash: {err}")));
-
-    let mut ledger = load_anchor_from_logs(Path::new(&log_dir)).unwrap_or_else(|err| fatal(&err));
-    ledger.entries.push(EntryAnchor {
-        statement: migration_anchor.statement.clone(),
-        merkle_root: power_house::merkle_root(&[proposal_digest]),
-        hashes: vec![proposal_digest],
-    });
-    ledger.metadata.fold_digest = Some(compute_fold_digest(&ledger));
-    ledger
-        .metadata
-        .crate_version
-        .get_or_insert_with(|| env!("CARGO_PKG_VERSION").to_string());
-
-    let anchor_json =
-        AnchorJson::from_ledger(node_id, quorum, &ledger, now_millis(), Vec::new(), None)
-            .unwrap_or_else(|err| fatal(&format!("anchor conversion failed: {err}")));
-
-    let artifact = MigrationProposalArtifact {
-        migration_anchor,
-        anchor_json,
-    };
-    let encoded = serde_json::to_string_pretty(&artifact)
-        .unwrap_or_else(|err| fatal(&format!("failed to encode artifact: {err}")));
+        log_dir,
+        node_id,
+        quorum,
+        output: output.clone(),
+    })
+    .unwrap_or_else(|err| fatal(&format!("propose-migration failed: {err}")));
 
     if let Some(path) = output {
-        if let Some(parent) = Path::new(&path).parent() {
-            let _ = fs::create_dir_all(parent);
-        }
-        fs::write(&path, &encoded)
-            .unwrap_or_else(|err| fatal(&format!("failed to write {}: {err}", path)));
         println!("wrote migration proposal artifact to {path}");
     } else {
         println!("{encoded}");

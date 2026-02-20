@@ -102,7 +102,27 @@ When enabled:
 - `julian stake bond ...` is blocked.
 - `POST /submit_blob` ingestion is blocked.
 
-### 2) Deterministic stake snapshot + anchor artifact
+### 2) One-shot deterministic finalize (recommended)
+
+```bash
+julian migration finalize \
+  --registry ./path/to/stake_registry.json \
+  --height 12345 \
+  --log-dir ./logs/nodeA \
+  --output-dir ./migration-out \
+  --token-contract native://julian \
+  --conversion-ratio 1 \
+  --treasury-mint 0 \
+  --amount-source total
+```
+
+This runs the full native finalize pipeline in order:
+- snapshot artifact
+- claim manifest
+- idempotent claim application
+- migration proposal anchor artifact
+
+### 3) Deterministic stake snapshot + anchor artifact
 
 ```bash
 julian stake snapshot \
@@ -113,7 +133,7 @@ julian stake snapshot \
 
 This writes a deterministic, sorted snapshot artifact and embeds an anchor payload via the existing `AnchorJson::from_ledger` flow.
 
-### 3) Deterministic migration claim manifest + proofs
+### 4) Deterministic migration claim manifest + proofs
 
 ```bash
 julian stake claims \
@@ -131,7 +151,7 @@ This emits:
 
 `--mode erc20` remains available for external EVM bridge flows.
 
-### 3b) Apply native claims into registry (idempotent)
+### 5) Apply native claims into registry (idempotent)
 
 ```bash
 julian stake apply-claims \
@@ -142,7 +162,32 @@ julian stake apply-claims \
 
 `apply-claims` only accepts `claim_mode: native` artifacts and records applied `claim_id`s in a state file so reruns do not double-credit balances.
 
-### 4) Governance proposal anchor for migration
+### 6) Verify apply-state + registry integrity
+
+```bash
+julian migration verify-state \
+  --registry ./path/to/stake_registry.json \
+  --claims ./migration-claims.json \
+  --state ./migration-apply-state.json \
+  --require-complete
+```
+
+By default this enforces:
+- all state claim IDs must exist in claims artifact
+- registry balances must be at least minted totals per account
+
+### 7) Execute native burn intents (slashing executor)
+
+```bash
+julian migration execute-burn-intents \
+  --registry ./path/to/stake_registry.json \
+  --outbox ./token_burn_outbox.jsonl \
+  --state ./token_burn_exec_state.json
+```
+
+`execute-burn-intents` is idempotent and applies native-mode intents by slashing registry stake.
+
+### 8) Governance proposal anchor for migration
 
 ```bash
 julian governance propose-migration \
@@ -162,7 +207,7 @@ The output includes:
 - `migration_anchor` (canonical migration payload with `proposal_hash`)
 - `anchor_json` (standard net anchor JSON)
 
-### 5) Optional EVM bridge: compile + deploy `PowerHouseToken`
+### 9) Optional EVM bridge: compile + deploy `PowerHouseToken`
 
 ```bash
 ./scripts/build_powerhouse_token_artifact.sh
@@ -179,7 +224,7 @@ python3 ./scripts/deploy_powerhouse_token.py \
   --output ./deployment/powerhouse-token-receipt.json
 ```
 
-### 6) Dual-mode token migration flags (network runtime)
+### 10) Dual-mode token migration flags (network runtime)
 
 `julian net start` now accepts:
 - `--token-mode <native|TOKEN_ID>`
@@ -187,7 +232,7 @@ python3 ./scripts/deploy_powerhouse_token.py \
 
 During transition, fee settlement can fall back to oracle balance checks when registry debit fails (non-native modes only).
 
-### 7) Dry-run and smoke coverage
+### 11) Dry-run and smoke coverage
 
 ```bash
 ./scripts/token_migration_dry_run.sh
