@@ -206,6 +206,9 @@ version = "1"
 [dependencies.sha2]
 version = "0.10"
 
+[dependencies.sha3]
+version = "0.10"
+
 [dependencies.thiserror]
 version = "1"
 optional = true

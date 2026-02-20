@@ -53,7 +53,7 @@ if [[ "$WITH_MIGRATION" -eq 1 ]]; then
       "stake": 250,
       "slashed": false
     },
-    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=": {
+    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=": {
       "balance": 900,
       "stake": 125,
       "slashed": false

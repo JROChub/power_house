@@ -6,13 +6,16 @@ cd "$ROOT_DIR"
 
 CARGO_BIN=${CARGO_BIN:-cargo}
 RUN_NET_SMOKE=${RUN_NET_SMOKE:-1}
+RUN_TOKEN_BUILD=${RUN_TOKEN_BUILD:-0}
 WORK_DIR=${MIGRATION_DRY_RUN_DIR:-"$ROOT_DIR/logs/token_migration_dry_run"}
 
 rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR"
 REGISTRY_JSON="$WORK_DIR/stake_registry.json"
 SNAPSHOT_JSON="$WORK_DIR/migration_snapshot.json"
+CLAIMS_JSON="$WORK_DIR/migration_claims.json"
 MIGRATION_ANCHOR_JSON="$WORK_DIR/migration_anchor.json"
+TOKEN_ARTIFACT_JSON="$WORK_DIR/PowerHouseToken.json"
 LEDGER_DIR="$WORK_DIR/ledger"
 ANCHOR_TXT="$WORK_DIR/anchor.txt"
 PROOF_JSON="$WORK_DIR/proof.json"
@@ -23,20 +26,27 @@ cat >"$REGISTRY_JSON" <<'JSON'
 {
   "accounts": {
     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=": {"balance": 1000, "stake": 250, "slashed": false},
-    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=": {"balance": 750, "stake": 200, "slashed": false},
-    "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=": {"balance": 300, "stake": 40, "slashed": true}
+    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=": {"balance": 750, "stake": 200, "slashed": false},
+    "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=": {"balance": 300, "stake": 40, "slashed": true}
   }
 }
 JSON
 
-echo "[1/6] build + tests"
+echo "[1/8] build + tests"
 "$CARGO_BIN" test
 
-echo "[2/6] deterministic stake snapshot"
+echo "[2/8] deterministic stake snapshot"
 "$CARGO_BIN" run --features net --bin julian --quiet -- \
   stake snapshot --registry "$REGISTRY_JSON" --height 1 --output "$SNAPSHOT_JSON"
 
-echo "[3/6] governance migration proposal anchor"
+echo "[3/8] deterministic claim manifest + proofs"
+./scripts/build_migration_claims.sh \
+  --snapshot "$SNAPSHOT_JSON" \
+  --output "$CLAIMS_JSON" \
+  --amount-source total \
+  --conversion-ratio 1
+
+echo "[4/8] governance migration proposal anchor"
 "$CARGO_BIN" run --features net --bin julian --quiet -- \
   governance propose-migration \
     --snapshot-height 1 \
@@ -48,14 +58,21 @@ echo "[3/6] governance migration proposal anchor"
     --quorum 1 \
     --output "$MIGRATION_ANCHOR_JSON"
 
-echo "[4/6] produce baseline ledger anchor + proof"
+echo "[5/8] produce baseline ledger anchor + proof"
 "$CARGO_BIN" run --bin julian --quiet -- node run dry-run "$LEDGER_DIR" "$ANCHOR_TXT"
 "$CARGO_BIN" run --bin julian --quiet -- node prove "$LEDGER_DIR" 0 0 "$PROOF_JSON"
 
-echo "[5/6] verify anchor proof"
+echo "[6/8] verify anchor proof"
 "$CARGO_BIN" run --bin julian --quiet -- node verify-proof "$ANCHOR_TXT" "$PROOF_JSON"
 
-echo "[6/6] optional smoke net (--with-migration)"
+echo "[7/8] optional token artifact build (RUN_TOKEN_BUILD=1)"
+if [[ "$RUN_TOKEN_BUILD" == "1" ]]; then
+  OUT_FILE="$TOKEN_ARTIFACT_JSON" ./scripts/build_powerhouse_token_artifact.sh
+else
+  echo "RUN_TOKEN_BUILD=0, skipping solidity compile"
+fi
+
+echo "[8/8] optional smoke net (--with-migration)"
 if [[ "$RUN_NET_SMOKE" == "1" ]]; then
   ./scripts/smoke_net.sh --with-migration
 else
@@ -65,4 +82,8 @@ fi
 echo "token_migration_dry_run: PASS"
 echo "artifacts:"
 echo "  snapshot: $SNAPSHOT_JSON"
+echo "  claims: $CLAIMS_JSON"
 echo "  migration_anchor: $MIGRATION_ANCHOR_JSON"
+if [[ "$RUN_TOKEN_BUILD" == "1" ]]; then
+  echo "  token_artifact: $TOKEN_ARTIFACT_JSON"
+fi

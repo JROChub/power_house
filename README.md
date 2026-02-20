@@ -113,7 +113,22 @@ julian stake snapshot \
 
 This writes a deterministic, sorted snapshot artifact and embeds an anchor payload via the existing `AnchorJson::from_ledger` flow.
 
-### 3) Governance proposal anchor for migration
+### 3) Deterministic migration claim manifest + proofs
+
+```bash
+julian stake claims \
+  --snapshot ./migration-snapshot.json \
+  --output ./migration-claims.json \
+  --amount-source total \
+  --conversion-ratio 1
+```
+
+This emits:
+- deterministic `claim_id` values
+- per-claim Merkle proofs
+- canonical `merkle_root` for `PowerHouseToken` deployment/claims
+
+### 4) Governance proposal anchor for migration
 
 ```bash
 julian governance propose-migration \
@@ -131,7 +146,24 @@ The output includes:
 - `migration_anchor` (canonical migration payload with `proposal_hash`)
 - `anchor_json` (standard net anchor JSON)
 
-### 4) Dual-mode token migration flags (network runtime)
+### 5) Compile + deploy `PowerHouseToken`
+
+```bash
+./scripts/build_powerhouse_token_artifact.sh
+
+python3 ./scripts/deploy_powerhouse_token.py \
+  --rpc-url "$RPC_URL" \
+  --private-key "$DEPLOYER_PRIVATE_KEY" \
+  --artifact ./artifacts/PowerHouseToken.json \
+  --owner 0xYourOwnerAddress \
+  --snapshot-height 12345 \
+  --conversion-ratio 1 \
+  --treasury-mint 0 \
+  --migration-root 0x<root_from_migration_claims_json> \
+  --output ./deployment/powerhouse-token-receipt.json
+```
+
+### 6) Dual-mode token migration flags (network runtime)
 
 `julian net start` now accepts:
 - `--token-mode <ERC20_ADDRESS>`
@@ -139,7 +171,7 @@ The output includes:
 
 During transition, fee settlement can fall back to oracle balance checks when registry debit fails.
 
-### 5) Dry-run and smoke coverage
+### 7) Dry-run and smoke coverage
 
 ```bash
 ./scripts/token_migration_dry_run.sh

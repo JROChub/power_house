@@ -9,3 +9,5 @@
 /infra/ops_hosts.toml
 /infra/.tmp_*
 /sample.bin
+/.soldeps/
+/artifacts/
