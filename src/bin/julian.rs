@@ -6,6 +6,7 @@
 
 #[cfg(feature = "net")]
 use power_house::commands::{
+    migration_apply_claims::{run_apply_claims, ApplyClaimsOptions},
     migration_claims::{run_build_claims, BuildClaimsOptions},
     stake_snapshot::run_snapshot,
 };
@@ -53,7 +54,7 @@ fn fatal(message: &str) -> ! {
 
 #[cfg(feature = "net")]
 fn print_stake_help() {
-    println!("Usage: julian stake <show|fund|bond|snapshot|claims|unbond|reward> ...");
+    println!("Usage: julian stake <show|fund|bond|snapshot|claims|apply-claims|unbond|reward> ...");
     println!("  show <stake_registry.json>");
     println!("  fund <registry.json> <pubkey_b64> <amount>");
     println!("  bond <registry.json> <pubkey_b64> <amount>");
@@ -61,6 +62,7 @@ fn print_stake_help() {
     println!(
         "  claims --snapshot <file> --output <file> [--mode native|erc20] [--amount-source stake|balance|total]"
     );
+    println!("  apply-claims --registry <file> --claims <file> [--state <file>] [--dry-run]");
     println!("  unbond <registry.json> <pubkey_b64> <amount>");
     println!("  reward <registry.json> <pubkey_b64> <amount>");
 }
@@ -132,7 +134,7 @@ fn main() {
         #[cfg(feature = "net")]
         Some("stake") => {
             let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian stake <show|fund|bond|snapshot|claims|unbond|reward> ...");
+                eprintln!("Usage: julian stake <show|fund|bond|snapshot|claims|apply-claims|unbond|reward> ...");
                 std::process::exit(1);
             });
             handle_stake(&sub, args.collect());
@@ -169,6 +171,7 @@ fn handle_stake(sub: &str, tail: Vec<String>) {
         "bond" => cmd_stake_bond(tail),
         "snapshot" => cmd_stake_snapshot(tail),
         "claims" => cmd_stake_claims(tail),
+        "apply-claims" => cmd_stake_apply_claims(tail),
         "unbond" => cmd_stake_unbond(tail),
         "reward" => cmd_stake_reward(tail),
         _ => {
@@ -627,6 +630,65 @@ fn cmd_stake_claims(args: Vec<String>) {
         .unwrap_or_else(|err| fatal(&format!("claim build failed: {err}")));
     println!("claims root: {root}");
     println!("artifact: {output}");
+}
+
+#[cfg(feature = "net")]
+fn cmd_stake_apply_claims(args: Vec<String>) {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!("Usage: julian stake apply-claims --registry <file> --claims <file> [options]");
+        println!("  [--state <file>] [--dry-run]");
+        return;
+    }
+
+    let mut registry: Option<String> = None;
+    let mut claims: Option<String> = None;
+    let mut state_path: Option<String> = None;
+    let mut dry_run = false;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registry" => {
+                registry = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--registry expects a value")),
+                );
+            }
+            "--claims" => {
+                claims = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--claims expects a value")),
+                );
+            }
+            "--state" => {
+                state_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--state expects a value")),
+                );
+            }
+            "--dry-run" => {
+                dry_run = true;
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+
+    let registry = registry.unwrap_or_else(|| fatal("--registry is required"));
+    let claims = claims.unwrap_or_else(|| fatal("--claims is required"));
+    let opts = ApplyClaimsOptions {
+        state_path,
+        dry_run,
+    };
+
+    let summary = run_apply_claims(&registry, &claims, &opts)
+        .unwrap_or_else(|err| fatal(&format!("apply-claims failed: {err}")));
+    println!("applied: {}", summary.applied);
+    println!("skipped: {}", summary.skipped);
+    println!("total_mint_amount: {}", summary.total_mint_amount);
+    println!("state: {}", summary.state_path);
+    if dry_run {
+        println!("dry_run: true");
+    }
 }
 
 #[cfg(feature = "net")]

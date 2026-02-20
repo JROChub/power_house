@@ -131,6 +131,17 @@ This emits:
 
 `--mode erc20` remains available for external EVM bridge flows.
 
+### 3b) Apply native claims into registry (idempotent)
+
+```bash
+julian stake apply-claims \
+  --registry ./path/to/stake_registry.json \
+  --claims ./migration-claims.json \
+  --state ./migration-apply-state.json
+```
+
+`apply-claims` only accepts `claim_mode: native` artifacts and records applied `claim_id`s in a state file so reruns do not double-credit balances.
+
 ### 4) Governance proposal anchor for migration
 
 ```bash
