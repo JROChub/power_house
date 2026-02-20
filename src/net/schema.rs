@@ -327,8 +327,7 @@ impl AnchorVoteJson {
                 found: self.network.clone(),
             });
         }
-        if self.anchor_hash.len() != 64
-            || !self.anchor_hash.chars().all(|c| c.is_ascii_hexdigit())
+        if self.anchor_hash.len() != 64 || !self.anchor_hash.chars().all(|c| c.is_ascii_hexdigit())
         {
             return Err(AnchorCodecError::InvalidDigest {
                 entry: 0,

@@ -26,10 +26,10 @@
 
 use crate::{field::Field, prng::derive_many_mod_p};
 use crate::{MultilinearPolynomial, StreamingPolynomial, Transcript};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 #[cfg(not(target_arch = "wasm32"))]
 use rayon::prelude::*;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 /// Evaluates the demo polynomial `f(x₁, x₂) = x₁ + x₂ + 2·x₁·x₂ (mod p)`.
 ///
