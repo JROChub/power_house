@@ -3168,7 +3168,6 @@ fn anchor_payload_hash(payload: &[u8]) -> String {
 fn vote_payload_bytes(round: u64, anchor_hash: &str) -> Vec<u8> {
     format!("{NETWORK_ID}:{round}:{anchor_hash}").into_bytes()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
