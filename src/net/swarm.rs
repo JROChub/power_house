@@ -867,14 +867,22 @@ fn namespace_rule(cfg: &BlobServiceConfig, namespace: &str) -> Option<NamespaceR
         .and_then(|m| m.get(namespace).cloned())
 }
 
+fn token_mode_is_native(mode: &str) -> bool {
+    let trimmed = mode.trim();
+    trimmed.eq_ignore_ascii_case("native") || trimmed.to_ascii_lowercase().starts_with("native://")
+}
+
 fn token_mode_enabled(cfg: &BlobServiceConfig) -> bool {
-    cfg.token_mode_contract.is_some()
+    cfg.token_mode_contract
+        .as_deref()
+        .map(|mode| !mode.trim().is_empty())
+        .unwrap_or(false)
 }
 
 fn token_mode_requires_oracle(cfg: &BlobServiceConfig) -> bool {
     cfg.token_mode_contract
         .as_deref()
-        .map(|mode| !mode.eq_ignore_ascii_case("native"))
+        .map(|mode| !token_mode_is_native(mode))
         .unwrap_or(false)
 }
 
@@ -3259,5 +3267,16 @@ mod tests {
         let result = load_anchor_from_logs(&dir);
         assert!(result.is_err());
         fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn token_mode_native_identifiers_are_detected() {
+        assert!(token_mode_is_native("native"));
+        assert!(token_mode_is_native("NATIVE"));
+        assert!(token_mode_is_native("native://julian"));
+        assert!(token_mode_is_native("NATIVE://JULIAN"));
+        assert!(!token_mode_is_native(
+            "0x0000000000000000000000000000000000000001"
+        ));
     }
 }
