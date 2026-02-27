@@ -8,7 +8,7 @@
 
 `power_house` is a Rust protocol stack for deterministic proof generation, quorum state reconciliation, and stake-aware settlement.
 
-Maintainer: **MFENX LLC**
+Maintainer: **MFENX**
 
 ## What It Delivers
 
