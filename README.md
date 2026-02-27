@@ -152,11 +152,6 @@ Run packaged checks:
 - `docs/community_onboarding.md`
 - `docs/tokenomics.md`
 
-## Notes On Freshness
-
-This README intentionally avoids hard-coded release/version statements that go stale.
-Use Git tags, the releases page, and CI status for current build/version truth.
-
 ## License
 
 `power_house` is dual-licensed under MIT OR BSD-2-Clause. See `LICENSE`.
