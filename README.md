@@ -1,55 +1,100 @@
 # power_house
 
-[![git](https://img.shields.io/badge/git-power__house-6f2da8?logo=github&logoColor=white)](https://github.com/JROChub/power_house)
-[![tests](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?label=tests&logo=github&logoColor=white&color=39ff14)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/power_house?label=crates.io&color=blue)](https://crates.io/crates/power_house)
-[![docs.rs](https://img.shields.io/docsrs/power_house?label=docs.rs)](https://docs.rs/power_house)
-[![license](https://img.shields.io/crates/l/power_house?label=license)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?branch=main&label=CI)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/power_house)](https://crates.io/crates/power_house)
+[![docs.rs](https://img.shields.io/docsrs/power_house)](https://docs.rs/power_house)
+[![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
-`power_house` is a Rust protocol stack for deterministic proof generation, quorum state reconciliation, and stake-aware settlement.
+`power_house` is a Rust verification stack for deterministic sum-check proofs,
+commitment-bound sparse workloads, transcript anchoring, and optional quorum
+networking.
 
-Maintainer: **MFENX**
+## Verified Scale
 
-## What It Delivers
+The repository contains four reproducible proof modes:
 
-- Deterministic multilinear sum-check proofs with transcript hashing.
-- Quorum finality and anchor reconciliation for auditable state progression.
-- Optional P2P networking via `julian net ...` with policy gates.
-- DA commitments with `share_root` and `pedersen_root` support.
-- Stake registry, slashing evidence, and fee distribution controls.
+| Mode | Public domain | Verifier work | Command |
+| --- | ---: | ---: | --- |
+| Constant polynomial | `2^70` points | `O(70)` | `cargo run --release --example sextillion_verify` |
+| Seeded affine polynomial | `2^4096` points | `O(4096)` | `cargo run --release --example hyperscale_affine` |
+| Seeded sparse polynomial | `2^1,000,000` points | `O(n + I log n)` | `cargo run --release --example sparse_record` |
+| External committed sparse polynomial | `2^1,000,000` points | `O(n + I log n)` | `cargo run --release --example committed_workload` |
 
-## Live References
+Here `n` is the number of variables and `I` is the number of nonzero variable
+incidences. None of these modes allocates the expanded Boolean hypercube.
 
-- Website: https://mfenx.com
-- Repository: https://github.com/JROChub/power_house
-- Protocol spec: `JULIAN_PROTOCOL.md`
-- Operations runbook: `docs/ops.md`
-- Launch guidance: `docs/mainnet_launch.md`
+The external workflow stores the polynomial and proof separately:
+
+- `PHSMv1`: canonical sparse polynomial
+- `PHCPv1`: proof containing a domain-separated BLAKE2b-256 commitment
+
+Verification requires both files and rejects workload substitution.
+
+These results demonstrate verification over enormous implicit domains. They do
+not establish that arbitrary sextillion-step computations can be verified, do
+not replace a quantum computer, and are not currently claimed as a world first.
+See [Research Claim Standard](docs/research_claim.md).
 
 ## Install
 
 ```bash
-cargo install power_house
+cargo add power_house
 cargo install power_house --features net
 ```
 
-## Build And Test
+## Reproduce
 
 ```bash
-cargo test
-cargo test --features net
+cargo test --all-targets
+cargo test --all-targets --features net
+
+cargo run --release --example sextillion_verify
+cargo run --release --example hyperscale_affine
+cargo run --release --example sparse_record
+cargo run --release --example committed_workload
+
+python3 scripts/verify_sparse_certificate.py \
+  target/power_house_sparse_record.phsp
+
+python3 scripts/verify_sparse_certificate.py \
+  target/external_interaction_model.phcp \
+  --polynomial target/external_interaction_model.phsm
 ```
 
-## Local Quick Start
+The full procedure, formats, expected outputs, and failure tests are in
+[Verification Guide](docs/verification_guide.md).
 
-```bash
-cargo run --example demo
-cargo run --example scale_sumcheck
+## Library
+
+```rust
+use power_house::{Field, GeneralSumProof};
+
+let field = Field::new(1_000_000_007);
+let proof = GeneralSumProof::prove_seeded_affine(
+    4096,
+    &field,
+    b"public reproducible workload",
+);
+
+assert!(proof.verify_seeded_affine(
+    &field,
+    b"public reproducible workload",
+));
 ```
 
-## Network Mode (`--features net`)
+Primary APIs:
 
-Generate an identity and start a node:
+- `GeneralSumProof`: dense, streaming, constant, and seeded-affine sum-check
+- `SeededSparseProof`: stable `PHSPv1` seeded sparse certificates
+- `CommittedSparsePolynomial`: canonical external sparse workloads
+- `CommittedSparseProof`: stable `PHCPv1` commitment-bound certificates
+- `ProofLedger`: transcript logs, anchors, and quorum reconciliation
+
+## Network
+
+The `net` feature enables the `julian` CLI, libp2p transport, signed envelopes,
+data availability endpoints, governance policies, stake accounting, and token
+migration commands.
 
 ```bash
 julian keygen ed25519://<seed> --out ./keys/node.identity
@@ -58,100 +103,25 @@ julian net start \
   --node-id <node_id> \
   --log-dir ./logs/<node_id> \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/mfenx.com/tcp/7002/p2p/<BOOTSTRAP_PEER_ID> \
-  --broadcast-interval 5000 \
+  --bootstrap /dns4/mfenx.com/tcp/7002/p2p/<PEER_ID> \
   --quorum 2 \
   --key ed25519://<seed>
 ```
 
-Common flags:
-
-- `--metrics :9100`
-- `--policy configs/governance.stake.json`
-- `--policy-allowlist configs/governance.multisig.json`
-- `--allow-open-membership`
-- `--gossip-shard 1`
-- `--bft --bft-round-ms 5000`
-- `--token-mode <native|TOKEN_ID>`
-- `--token-oracle <RPC_URL>`
-
-## DA HTTP API
-
-Endpoints:
-
-- `POST /submit_blob`
-- `GET /commitment/<namespace>/<hash>`
-- `GET /sample/<namespace>/<hash>?count=N`
-- `GET /prove_storage/<namespace>/<hash>/<idx>`
-
-Example:
-
-```bash
-curl -X POST http://127.0.0.1:8181/submit_blob \
-  -H 'X-Namespace: default' \
-  -H 'X-Fee: 10' \
-  --data-binary @file.bin
-```
-
-## Governance And Staking
-
-Use explicit governance policy files under `configs/`.
-
-- Stake-backed DA attestation and slashing write evidence to `evidence_outbox.jsonl`.
-- Stake registry balances are updated deterministically by command handlers.
-- Open membership is opt-in (`--allow-open-membership`).
-
-## Token Migration Workflow
-
-The migration workflow is deterministic and idempotent.
-
-Freeze mutable ingress during migration:
-
-```bash
-export PH_MIGRATION_MODE=freeze
-```
-
-Run finalize pipeline:
-
-```bash
-julian migration finalize \
-  --registry ./path/to/stake_registry.json \
-  --height 12345 \
-  --log-dir ./logs/nodeA \
-  --output-dir ./migration-out \
-  --token-contract native://julian \
-  --conversion-ratio 1 \
-  --treasury-mint 0 \
-  --amount-source total
-```
-
-Validate state:
-
-```bash
-julian migration verify-state \
-  --registry ./path/to/stake_registry.json \
-  --claims ./migration-out/migration_claims.json \
-  --state ./migration-out/migration_apply_state.json \
-  --require-complete
-```
-
-Run packaged checks:
-
-```bash
-./scripts/token_migration_dry_run.sh
-./scripts/verify_migration_contract.sh
-./scripts/smoke_net.sh --with-migration
-```
+Operations and migration procedures are documented in
+[Operations](docs/ops.md) and [Mainnet Launch](docs/mainnet_launch.md).
 
 ## Documentation
 
-- `JULIAN_PROTOCOL.md`
-- `docs/book_of_power.md`
-- `docs/ops.md`
-- `docs/permissionless_join.md`
-- `docs/community_onboarding.md`
-- `docs/tokenomics.md`
+- [Verification Guide](docs/verification_guide.md)
+- [JULIAN Protocol](JULIAN_PROTOCOL.md)
+- [Committed Workload Format](docs/committed_workload.md)
+- [Million-Round Sparse Certificate](docs/sparse_record.md)
+- [Hyperscale Seeded-Affine Proof](docs/hyperscale_proof.md)
+- [Research Claim Standard](docs/research_claim.md)
+- [Orbital Observatory](docs/orbital_observatory.md)
+- [Operations](docs/ops.md)
 
 ## License
 
-`power_house` is dual-licensed under MIT OR BSD-2-Clause. See `LICENSE`.
+MIT OR BSD-2-Clause.

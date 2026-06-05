@@ -151,7 +151,7 @@ pub fn pedersen_share_proof(share_hashes: &[[u8; 32]], idx: usize) -> Result<Mer
     let mut i = idx;
     let mut path = Vec::new();
     while layer.len() > 1 {
-        if i % 2 == 0 {
+        if i.is_multiple_of(2) {
             if i + 1 < layer.len() {
                 path.push(MerkleProofNode {
                     sibling: layer[i + 1],

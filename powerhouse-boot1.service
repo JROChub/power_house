@@ -1,0 +1,25 @@
+[Unit]
+Description=JROC-NET Boot1 (julian)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/lib/jrocnet/boot1
+ExecStart=/usr/local/bin/julian net start \
+  --node-id boot1 \
+  --log-dir /var/lib/jrocnet/boot1/logs \
+  --listen /ip4/0.0.0.0/tcp/7001 \
+  --bootstrap /ip4/<boot2-ip>/tcp/7002/p2p/<boot2-peer-id> \
+  --broadcast-interval 5000 \
+  --quorum 2 \
+  --key /etc/jrocnet/boot1.ed25519 \
+  --policy /etc/jrocnet/governance.json \
+  --checkpoint-interval 60
+Restart=always
+RestartSec=3
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target

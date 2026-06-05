@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.1.54 — February 2026
+Version 0.2.1 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -140,6 +140,10 @@ library, the protocol remains lightweight and deterministic across platforms.
 - **Examples**:
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
+  - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.
+  - `hyperscale_affine`: seeded affine certificate over a default `2^4096` Boolean domain.
+  - `sparse_record`: portable million-round certificate for a seeded sparse polynomial.
+  - `committed_workload`: separate external polynomial and commitment-bound certificate files.
   - `verify_logs`: CLI to validate stored transcripts.
 
 ## 7. Performance Evaluation
@@ -157,6 +161,36 @@ library, the protocol remains lightweight and deterministic across platforms.
 The streaming prover scales linearly with the number of points, proving viability for large
 polynomials. The `mega_sumcheck` example demonstrates chained proofs (10 → 6 → 5 variables) and logs
 per-round timings for each link in the chain.
+
+For a domain-scale certificate, run `cargo run --example sextillion_verify`. It verifies a
+constant multilinear sum-check over `2^70 = 1,180,591,620,717,411,303,424` Boolean points with a
+70-round certificate and one final evaluation. This example proves the sextillion-domain verifier
+path without pretending that the general streaming prover can enumerate a sextillion-point table.
+
+For a far-beyond-sextillion structured computation, run `cargo run --example hyperscale_affine`.
+The default certificate uses a public seed to define a non-constant affine multilinear polynomial
+over `2^4096` Boolean points, roughly `1e1233` evaluations. The verifier derives the coefficients
+from the seed, checks all 4096 sum-check rounds, and evaluates one final challenge point. This is an
+`O(n)` verifier for the seeded affine family; it is not a claim that arbitrary `2^4096` tables can be
+verified without a polynomial commitment, oracle, or compact algebraic description.
+
+For the public sparse computation artifact, run `cargo run --release --example sparse_record`.
+The default polynomial has one million variables, 8,192 nonzero monomials, and maximum degree 12.
+Its `PHSPv1` certificate is then replayed by an independent standard-library implementation with:
+
+```bash
+python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
+```
+
+The artifact specification and benchmark manifest are in `docs/sparse_record.md` and
+`artifacts/sparse_record_v1.json`. The claim policy in `docs/research_claim.md` deliberately separates
+this reproducible engineering result from an unsupported world-first cryptographic claim.
+
+The next layer is available through `cargo run --release --example committed_workload -- all`.
+It creates a canonical external `PHSMv1` sparse polynomial and a separate `PHCPv1` certificate
+containing its domain-separated BLAKE2b-256 commitment. Rust and Python require both files and reject
+workload substitution. This is binding for public external data, but it is not yet a succinct
+multilinear polynomial commitment or a hidden-witness argument.
 
 ## 8. Security Considerations
 
@@ -203,7 +237,7 @@ To support distributed reconciliation, the crate now ships an optional networkin
 - `net::swarm` – libp2p stack (TCP + Noise + Yamux) with Gossipsub gossip, Kademlia discovery, and
   Identify metadata. Nodes recompute anchors from local logs, sign them, broadcast envelopes, and run
   quorum reconciliation upon receipt. Envelope handling now enforces schema/network identifiers,
-  caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and fumes
+  caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and flags
   invalid senders after repeated mistakes.
 - `net::governance` – membership policy trait plus static, multisig, and stake-backed implementations
   (`--policy`).
@@ -266,7 +300,7 @@ their libp2p Peer IDs remain constant across restarts. Operators joining the net
 their local anchor via `julian node run` and compare the resulting statements/digests against the
 values above before accepting finality.
 
-## 13. Conclusion
+## 14. Conclusion
 
 The JULIAN Protocol now spans two layers: a dependency-free proof/ledger core and an optional
 libp2p-based networking shell. Deterministic transcripts, append-only anchors, and quorum

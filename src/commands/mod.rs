@@ -1,5 +1,3 @@
-#![cfg(feature = "net")]
-
 /// Native claim-application helpers for migration settlement.
 pub mod migration_apply_claims;
 /// Native slashing executor for migration burn intent outboxes.

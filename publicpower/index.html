@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020607">
+  <meta name="description" content="MFENX Power House orbital proof observatory: live world time, published proof artifacts, and reproducible large-domain verification.">
+  <meta property="og:title" content="MFENX Power House">
+  <meta property="og:description" content="An orbital observatory for reproducible verification over enormous implicit domains.">
+  <meta property="og:image" content="https://mfenx.com/assets/earth-day.jpg">
+  <title>MFENX Power House | Orbital Proof Observatory</title>
+  <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin>
+  <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="orbital-canvas" aria-label="Interactive Earth showing world time and proof orbits"></canvas>
+    <div class="scan-grid" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="MFENX Power House home">
+        <img src="assets/powerhouse-logo.png" alt="">
+        <span>
+          <strong>MFENX</strong>
+          <small>POWER HOUSE / ORBITAL OBSERVATORY</small>
+        </span>
+      </a>
+
+      <div class="mission-clock" aria-label="Coordinated Universal Time">
+        <span class="signal-dot"></span>
+        <span id="utc-date">JUN 05 2026</span>
+        <strong id="utc-time">00:00:00</strong>
+        <span>UTC</span>
+      </div>
+
+      <nav class="top-actions" aria-label="Project links">
+        <a href="https://docs.rs/power_house" title="Rust API documentation">API</a>
+        <a href="https://crates.io/crates/power_house" title="power_house on crates.io">CRATE</a>
+        <a href="https://github.com/JROChub/power_house" title="Source repository">SOURCE</a>
+        <a href="https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/" title="NASA Earth imagery">NASA</a>
+      </nav>
+    </header>
+
+    <aside class="proof-rail" aria-label="Proof modes">
+      <div class="rail-heading">
+        <span>PROOF ORBITS</span>
+        <b>04</b>
+      </div>
+      <div id="proof-modes" class="proof-modes">
+        <button class="proof-mode active" data-mode="constant">
+          <span class="mode-index">01</span>
+          <span class="mode-copy"><b>SEXTILLION</b><small>CONSTANT / 70 ROUNDS</small></span>
+          <i></i>
+        </button>
+        <button class="proof-mode" data-mode="affine">
+          <span class="mode-index">02</span>
+          <span class="mode-copy"><b>HYPERSCALE</b><small>SEEDED AFFINE / 4096</small></span>
+          <i></i>
+        </button>
+        <button class="proof-mode" data-mode="sparse">
+          <span class="mode-index">03</span>
+          <span class="mode-copy"><b>MEGAROUND</b><small>SPARSE / 1,000,000</small></span>
+          <i></i>
+        </button>
+        <button class="proof-mode" data-mode="committed">
+          <span class="mode-index">04</span>
+          <span class="mode-copy"><b>COMMITTED</b><small>EXTERNAL PHSM + PHCP</small></span>
+          <i></i>
+        </button>
+      </div>
+
+      <div class="scale-readout">
+        <span>IMPLICIT DOMAIN</span>
+        <strong id="domain-label">2<sup>70</sup></strong>
+        <small id="domain-detail">1,180,591,620,717,411,303,424 points</small>
+      </div>
+
+      <div class="rail-links">
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/research_claim.md">CLAIM STANDARD</a>
+      </div>
+    </aside>
+
+    <main class="center-stage">
+      <div class="stage-label">
+        <span id="stage-city">GREENWICH</span>
+        <strong id="stage-time">00:00:00</strong>
+        <small id="stage-zone">EUROPE/LONDON</small>
+      </div>
+
+      <div class="scale-axis" aria-hidden="true">
+        <span>FINITE FIELD</span>
+        <i></i>
+        <b>1,000,000,007</b>
+      </div>
+
+      <div class="orbit-caption">
+        <span id="orbit-kicker">CLOSED-FORM SUM-CHECK</span>
+        <h1>POWER HOUSE</h1>
+        <p id="orbit-description">Seventy verifier rounds close a domain larger than one sextillion Boolean points without enumerating it.</p>
+      </div>
+    </main>
+
+    <aside class="clock-rail" aria-label="World clocks">
+      <div class="rail-heading">
+        <span>WORLD CLOCK</span>
+        <b>LIVE</b>
+      </div>
+      <div id="city-list" class="city-list"></div>
+      <div class="solar-readout">
+        <span>SUBSOLAR POSITION</span>
+        <b id="solar-position">0.0 N / 0.0 E</b>
+        <small>TERMINATOR UPDATED LIVE</small>
+      </div>
+    </aside>
+
+    <section class="verification-dock" aria-label="Verification console">
+      <div class="dock-primary">
+        <div class="status-seal" id="status-seal">
+          <span>READY</span>
+          <b id="seal-value">70</b>
+          <small>ROUNDS</small>
+        </div>
+
+        <div class="verification-copy">
+          <span id="verification-status">LOCAL VERIFIER READY</span>
+          <strong id="verification-title">Run the 70-round browser proof</strong>
+          <div class="progress-track"><i id="progress-bar"></i></div>
+          <p id="verification-detail">The browser checks every round equation over the field and computes a certificate SHA-256 digest.</p>
+        </div>
+
+        <button id="verify-button" class="verify-button">
+          <span>RUN PROOF</span>
+          <b>ENTER</b>
+        </button>
+      </div>
+
+      <div class="telemetry">
+        <div><span>ROUND</span><b id="round-value">0 / 70</b></div>
+        <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
+        <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
+        <div><span>RELEASE</span><b>v0.2.1</b></div>
+        <div><span>ENGINE</span><b>RUST + PYTHON</b></div>
+      </div>
+    </section>
+
+    <button id="sound-toggle" class="icon-button sound-toggle" aria-label="Toggle interface sound" title="Toggle interface sound">
+      <span aria-hidden="true">◖</span>
+    </button>
+
+    <button id="motion-toggle" class="icon-button motion-toggle" aria-label="Pause orbital motion" title="Pause orbital motion">
+      <span aria-hidden="true">Ⅱ</span>
+    </button>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <noscript>This observatory requires JavaScript for the globe and verifier.</noscript>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
