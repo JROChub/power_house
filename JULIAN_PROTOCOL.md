@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.2.1 - June 2026
+Version 0.2.2 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -183,9 +183,8 @@ implementation with:
 python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
 ```
 
-The artifact specification and benchmark manifest are in `docs/sparse_record.md` and
-`artifacts/sparse_record_v1.json`. The claim policy in `docs/research_claim.md` deliberately separates
-this reproducible engineering result from an unsupported world-first cryptographic claim.
+The artifact specification and benchmark manifest are in
+`docs/sparse_record.md` and `artifacts/sparse_record_v1.json`.
 
 The next layer is available through `cargo run --release --example committed_workload -- all`.
 It creates a canonical external `PHSMv1` sparse polynomial and a separate `PHCPv1` certificate

@@ -30,18 +30,6 @@ The external workflow stores the polynomial and proof separately:
 
 Verification requires both files and rejects workload substitution.
 
-These results demonstrate verification over enormous implicit domains. They do
-not establish that arbitrary sextillion-step computations can be verified, do
-not replace a quantum computer, and are not currently claimed as a world first.
-See [Research Claim Standard](docs/research_claim.md).
-
-The v1 sparse workflow is specifically a deterministic conformance artifact:
-the verifier reads the public sparse polynomial and recomputes the expected
-transcript. Because this polynomial family also has a closed-form Boolean sum,
-v1 is not a succinct delegated-computation result. The formal boundary and v2
-research target are documented in [Security Model](docs/security_model.md) and
-[Research Protocol](docs/research_protocol.md).
-
 ## Install
 
 ```bash
@@ -131,7 +119,6 @@ Operations and migration procedures are documented in
 - [Committed Workload Format](docs/committed_workload.md)
 - [Million-Round Sparse Certificate](docs/sparse_record.md)
 - [Hyperscale Seeded-Affine Proof](docs/hyperscale_proof.md)
-- [Research Claim Standard](docs/research_claim.md)
 - [Prior-Art Review](docs/prior_art_review.md)
 - [Sparse Certificate Security Model](docs/security_model.md)
 - [Research Protocol](docs/research_protocol.md)
