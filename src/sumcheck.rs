@@ -188,7 +188,7 @@ impl SumClaim {
 }
 
 /// Domain tag used for the generalized sum-check Fiat–Shamir transcript.
-const GENERAL_SUMCHECK_DOMAIN: &[u8] = b"power_house:v2:sumcheck";
+pub(crate) const GENERAL_SUMCHECK_DOMAIN: &[u8] = b"power_house:v2:sumcheck";
 
 /// Generalized non-interactive sum-check claim for multilinear polynomials.
 #[derive(Debug, Clone)]
@@ -271,6 +271,14 @@ impl GeneralSumClaim {
         GeneralSumProof::prove_streaming_poly(poly, field).claim
     }
 
+    /// Constructs a closed-form proof for a constant multilinear polynomial.
+    ///
+    /// This is intended for very large hypercubes where materialising or even
+    /// streaming all `2^num_vars` Boolean points would be infeasible.
+    pub fn prove_constant(num_vars: usize, field: &Field, value: u64) -> Self {
+        GeneralSumProof::prove_constant(num_vars, field, value).claim
+    }
+
     /// Proves the sum alongside transcript metadata.
     pub fn prove_with_trace(poly: &MultilinearPolynomial, field: &Field) -> GeneralSumProof {
         GeneralSumProof::prove(poly, field)
@@ -303,6 +311,16 @@ impl GeneralSumClaim {
     ) -> Option<GeneralSumTrace> {
         verify_general_sum_streaming(self, poly, field)
     }
+
+    /// Verifies a closed-form proof for a constant multilinear polynomial.
+    pub fn verify_constant_with_trace(&self, field: &Field, value: u64) -> Option<GeneralSumTrace> {
+        verify_constant_sum(self, field, value)
+    }
+
+    /// Returns true when a closed-form constant-polynomial proof verifies.
+    pub fn verify_constant(&self, field: &Field, value: u64) -> bool {
+        self.verify_constant_with_trace(field, value).is_some()
+    }
 }
 
 impl GeneralSumProof {
@@ -322,6 +340,15 @@ impl GeneralSumProof {
     /// Streaming variant that reuses an existing streaming polynomial.
     pub fn prove_streaming_poly(poly: &StreamingPolynomial, field: &Field) -> Self {
         Self::prove_streaming_with_stats_poly(poly, field).0
+    }
+
+    /// Produces a closed-form proof for a constant multilinear polynomial.
+    ///
+    /// The proof size is `O(num_vars)` and the implementation never iterates
+    /// over the Boolean hypercube. For `num_vars = 70`, the underlying domain is
+    /// `2^70 = 1,180,591,620,717,411,303,424` points.
+    pub fn prove_constant(num_vars: usize, field: &Field, value: u64) -> Self {
+        prove_constant_inner(num_vars, field, value)
     }
 
     /// Produces a proof together with per-round timing information.
@@ -469,6 +496,69 @@ impl GeneralSumProof {
             return None;
         }
         Some(trace)
+    }
+
+    /// Verifies a closed-form proof for a constant multilinear polynomial.
+    pub fn verify_constant_with_trace(&self, field: &Field, value: u64) -> Option<GeneralSumTrace> {
+        let trace = self.claim.verify_constant_with_trace(field, value)?;
+        if trace.challenges != self.challenges
+            || trace.round_sums != self.round_sums
+            || trace.final_evaluation != self.final_evaluation
+        {
+            return None;
+        }
+        Some(trace)
+    }
+
+    /// Returns true when a closed-form constant-polynomial proof verifies.
+    pub fn verify_constant(&self, field: &Field, value: u64) -> bool {
+        self.verify_constant_with_trace(field, value).is_some()
+    }
+}
+
+fn prove_constant_inner(num_vars: usize, field: &Field, value: u64) -> GeneralSumProof {
+    assert!(num_vars >= 1, "num_vars must be at least 1");
+    let num_vars_word = u64::try_from(num_vars).expect("num_vars must fit in transcript word");
+    let p = field.modulus();
+    let constant = value % p;
+    let claimed_sum = field.mul(constant, field.pow(2, num_vars_word));
+
+    let mut transcript = Transcript::new(GENERAL_SUMCHECK_DOMAIN);
+    transcript.append(p);
+    transcript.append(num_vars_word);
+    transcript.append(claimed_sum);
+
+    let mut rounds = Vec::with_capacity(num_vars);
+    let mut challenges = Vec::with_capacity(num_vars);
+    let mut round_sums = Vec::with_capacity(num_vars);
+    let mut running_sum = claimed_sum;
+
+    for remaining in (1..=num_vars).rev() {
+        round_sums.push(running_sum);
+        let b = field.mul(constant, field.pow(2, (remaining - 1) as u64));
+        let a = 0;
+        rounds.push((a, b));
+
+        transcript.append(a);
+        transcript.append(b);
+        challenges.push(transcript.challenge(field));
+        running_sum = b;
+    }
+
+    debug_assert_eq!(running_sum, constant);
+
+    let claim = GeneralSumClaim {
+        p,
+        num_vars,
+        claimed_sum,
+        rounds,
+    };
+
+    GeneralSumProof {
+        claim,
+        challenges,
+        round_sums,
+        final_evaluation: constant,
     }
 }
 
@@ -980,6 +1070,60 @@ fn verify_general_sum_streaming(
     })
 }
 
+fn verify_constant_sum(
+    claim: &GeneralSumClaim,
+    field: &Field,
+    value: u64,
+) -> Option<GeneralSumTrace> {
+    if claim.p != field.modulus() || claim.rounds.len() != claim.num_vars || claim.num_vars == 0 {
+        return None;
+    }
+
+    let p = claim.p;
+    let num_vars_word = u64::try_from(claim.num_vars).ok()?;
+    let constant = value % p;
+    let mut running_claim = field.mul(constant, field.pow(2, num_vars_word));
+    if claim.claimed_sum != running_claim {
+        return None;
+    }
+
+    let mut transcript = Transcript::new(GENERAL_SUMCHECK_DOMAIN);
+    transcript.append(p);
+    transcript.append(num_vars_word);
+    transcript.append(claim.claimed_sum);
+
+    let mut challenges = Vec::with_capacity(claim.num_vars);
+    let mut round_sums = Vec::with_capacity(claim.num_vars);
+
+    for (round_idx, &(a, b)) in claim.rounds.iter().enumerate() {
+        let remaining = claim.num_vars - round_idx;
+        let expected_b = field.mul(constant, field.pow(2, (remaining - 1) as u64));
+        round_sums.push(running_claim);
+
+        if a % p != 0 || b % p != expected_b {
+            return None;
+        }
+        if field.add(b, field.add(a, b)) != running_claim {
+            return None;
+        }
+
+        transcript.append(a);
+        transcript.append(b);
+        challenges.push(transcript.challenge(field));
+        running_claim = b % p;
+    }
+
+    if running_claim != constant {
+        return None;
+    }
+
+    Some(GeneralSumTrace {
+        challenges,
+        round_sums,
+        final_evaluation: constant,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1103,6 +1247,33 @@ mod tests {
         assert_eq!(streaming.claim.rounds, standard.claim.rounds);
         assert_eq!(streaming.final_evaluation, standard.final_evaluation);
         assert!(streaming.verify_streaming(&streaming_poly, &field));
+    }
+
+    #[test]
+    fn test_constant_sumcheck_verifies_sextillion_domain() {
+        let field = Field::new(1_000_000_007);
+        let num_vars = 70;
+        let constant = 173;
+        let domain_size = 1u128 << num_vars;
+        assert!(domain_size > 1_000_000_000_000_000_000_000u128);
+
+        let proof = GeneralSumProof::prove_constant(num_vars, &field, constant);
+        assert_eq!(proof.claim.num_vars, num_vars);
+        assert_eq!(proof.claim.rounds.len(), 70);
+        assert!(proof.verify_constant(&field, constant));
+
+        let expected_sum = field.mul(constant, field.pow(2, num_vars as u64));
+        assert_eq!(proof.claim.claimed_sum, expected_sum);
+    }
+
+    #[test]
+    fn test_constant_sumcheck_rejects_tampering() {
+        let field = Field::new(1_000_000_007);
+        let mut proof = GeneralSumProof::prove_constant(70, &field, 173);
+        assert!(proof.verify_constant(&field, 173));
+
+        proof.claim.rounds[12].1 = field.add(proof.claim.rounds[12].1, 1);
+        assert!(!proof.verify_constant(&field, 173));
     }
 
     fn sample_poly_highdim(field: &Field) -> MultilinearPolynomial {

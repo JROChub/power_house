@@ -11,3 +11,10 @@
 /sample.bin
 /.soldeps/
 /artifacts/
+powerhouse/
+powerhouse-boot1.service
+powerhouse-boot2.service
+boot1.anchor
+boot2.anchor
+*.ed25519
+*.key

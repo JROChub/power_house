@@ -140,6 +140,7 @@ library, the protocol remains lightweight and deterministic across platforms.
 - **Examples**:
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
+  - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.
   - `verify_logs`: CLI to validate stored transcripts.
 
 ## 7. Performance Evaluation
@@ -157,6 +158,11 @@ library, the protocol remains lightweight and deterministic across platforms.
 The streaming prover scales linearly with the number of points, proving viability for large
 polynomials. The `mega_sumcheck` example demonstrates chained proofs (10 → 6 → 5 variables) and logs
 per-round timings for each link in the chain.
+
+For a domain-scale certificate, run `cargo run --example sextillion_verify`. It verifies a
+constant multilinear sum-check over `2^70 = 1,180,591,620,717,411,303,424` Boolean points with a
+70-round certificate and one final evaluation. This example proves the sextillion-domain verifier
+path without pretending that the general streaming prover can enumerate a sextillion-point table.
 
 ## 8. Security Considerations
 
