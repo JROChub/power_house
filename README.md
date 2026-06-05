@@ -11,7 +11,7 @@ Badges
 Author: lexluger
 Email:  [lexluger.dev@proton.me](mailto:lexluger.dev@proton.me)
 Site:   [https://jrocnet.com](https://jrocnet.com)
-Last update: 11/11/2025
+Last update: 2026-06-05
 
 Need the full operations guide?
 Read the “Book of Power — Condensed Graviton Edition” (docs/book_of_power.md) and the VPS/network runbook (docs/ops.md).
@@ -66,6 +66,16 @@ julian net start --identity /path/to/file
 
 You’ll be prompted for the passphrase at startup.
 
+## Scale Certificates
+
+`cargo run --example sextillion_verify` proves and verifies a closed-form
+sum-check certificate over `2^70` Boolean points:
+`1,180,591,620,717,411,303,424` evaluations, greater than one sextillion,
+using 70 verifier rounds and no domain enumeration.
+
+The scientific note is in `docs/sextillion_proof.md`, and the launchable
+interactive game/presentation for `mfenx.com` is in `publicpower/index.html`.
+
 Bootstrap multiaddrs:
 
 * `/dns4/boot1.jrocnet.com/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q`
@@ -95,7 +105,7 @@ statement: Dense polynomial proof   hash: ded75c45b3b7eedd37041aae79713d7382e000
 statement: Hash anchor proof        hash: c72413466b2f76f1471f2e7160dadcbf912a4f8bc80ef1f2ffdb54ecb2bb2114
 ```
 
-Boot nodes run with deterministic seeds (`ed25519://boot1-seed`, `ed25519://boot2-seed`) so libp2p Peer IDs remain constant.
+Boot nodes should run with operator-controlled key files or private deterministic seeds so their libp2p Peer IDs remain constant without publishing live secrets.
 
 ## Verify Your Anchor
 
@@ -495,6 +505,16 @@ cargo run --example scale_sumcheck
 ```
 
 Prints a timing table for increasing numbers of variables; set `POWER_HOUSE_SCALE_OUT=/path/to/results.csv` to emit machine-readable timing data.
+
+Sextillion-scale constant proof
+
+```bash
+cargo run --example sextillion_verify
+```
+
+Replays a 70-round verifier certificate for a constant multilinear polynomial
+over `2^70` Boolean points. This demonstrates a real sextillion-domain claim
+without enumerating the domain.
 
 Transcript hash verification
 

@@ -5,8 +5,6 @@
 //! anchors and envelopes, signing helpers, and the libp2p swarm orchestration
 //! that powers the public testnet mode.
 
-#![cfg(feature = "net")]
-
 /// Anchor checkpoint helpers for fast sync.
 pub mod checkpoint;
 /// Governance policy implementations for membership rotation.

@@ -47,22 +47,22 @@ infra repo or secrets manager—do not ship live IPs or seeds in the public tree
 
 ```ini
 [Unit]
-Description=JULIAN bootstrap node (%i)
+Description=JULIAN bootstrap node
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=root
-WorkingDirectory=/var/lib/jrocnet/%i
+WorkingDirectory=/var/lib/jrocnet/<node-id>
 ExecStart=/usr/local/bin/julian net start \
-  --node-id %i \
-  --log-dir /var/lib/jrocnet/%i \
-  --listen /ip4/0.0.0.0/tcp/700%I \
+  --node-id <node-id> \
+  --log-dir /var/lib/jrocnet/<node-id>/logs \
+  --listen /ip4/0.0.0.0/tcp/<listen-port> \
   --bootstrap /ip4/<peer-ip>/tcp/<peer-port>/p2p/<peer-id> \
   --quorum 2 \
   --broadcast-interval 5000 \
   --policy /etc/jrocnet/governance.json \
-  --key ed25519://boot%I-seed
+  --key /etc/jrocnet/<node-id>.ed25519
 Restart=always
 RestartSec=2
 Environment=RUST_LOG=info

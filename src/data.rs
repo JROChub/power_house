@@ -38,7 +38,7 @@ fn encode_hex(bytes: &[u8]) -> String {
 }
 
 fn decode_hex(input: &str) -> Result<Vec<u8>, String> {
-    if input.len() % 2 != 0 {
+    if !input.len().is_multiple_of(2) {
         return Err("hex digest must contain an even number of characters".to_string());
     }
     let mut out = Vec::with_capacity(input.len() / 2);
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_parse_and_verify() {
-        let lines = vec![
+        let lines = [
             "transcript:10 20".to_string(),
             "round_sums:5 7".to_string(),
             "final:9".to_string(),
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_verify_rejects_tampering() {
-        let lines = vec![
+        let lines = [
             "transcript:1".to_string(),
             "round_sums:2".to_string(),
             "final:3".to_string(),

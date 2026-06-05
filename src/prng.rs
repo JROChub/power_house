@@ -52,7 +52,7 @@ impl SimplePrng {
     fn refill(&mut self) {
         let mut hasher = Blake2b256::new();
         hasher.update(PRNG_DOMAIN);
-        hasher.update(&self.seed);
+        hasher.update(self.seed);
         hasher.update(self.counter.to_be_bytes());
         self.buffer.copy_from_slice(&hasher.finalize());
         self.counter = self.counter.wrapping_add(1);

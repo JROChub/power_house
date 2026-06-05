@@ -34,7 +34,6 @@ use libp2p::Multiaddr;
 use rpassword::prompt_password;
 #[cfg(feature = "net")]
 use serde::Deserialize;
-use serde_json;
 
 const NETWORK_ID: &str = "JROC-NET";
 
@@ -200,7 +199,7 @@ fn cmd_node_prove(args: Vec<String>) {
     let leaf_index: usize = args[2]
         .parse()
         .unwrap_or_else(|_| fatal("invalid leaf index"));
-    let anchor = load_anchor_from_logs(log_dir).unwrap_or_else(|err| fatal(&format!("{err}")));
+    let anchor = load_anchor_from_logs(log_dir).unwrap_or_else(|err| fatal(&err));
     let entry = anchor
         .entries
         .get(entry_index)
@@ -691,7 +690,7 @@ fn anchor_to_string(anchor: &LedgerAnchor) -> String {
         let hash_list = entry
             .hashes
             .iter()
-            .map(|h| power_house::transcript_digest_to_hex(h))
+            .map(power_house::transcript_digest_to_hex)
             .collect::<Vec<_>>()
             .join(",");
         lines.push(format!(
@@ -815,7 +814,7 @@ fn format_anchor(anchor: &LedgerAnchor) -> String {
         let hashes = entry
             .hashes
             .iter()
-            .map(|h| power_house::transcript_digest_to_hex(h))
+            .map(power_house::transcript_digest_to_hex)
             .collect::<Vec<_>>()
             .join(", ");
         lines.push(format!(

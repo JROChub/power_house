@@ -23,7 +23,14 @@ include = [
   "LICENSE",
   "README.md",
   "JULIAN_PROTOCOL.md",
+  "docs/ops.md",
   "docs/book_of_power.md",
+  "docs/sextillion_proof.md",
+  "assets/**",
+  "publicpower/**",
+  "infra/ops_hosts.example.toml",
+  "scripts/netctl.py",
+  "scripts/smoke_net.sh",
   "src/**",
   "examples/**"
 ]
@@ -52,7 +59,7 @@ blake2 = "0.10"
 base64 = { version = "0.21", optional = true }
 ed25519-dalek = { version = "2", features = ["rand_core"], optional = true }
 futures = { version = "0.3", optional = true }
-libp2p = { version = "0.53", default-features = false, features = [
+libp2p = { version = "0.56", default-features = false, features = [
     "gossipsub",
     "identify",
     "kad",

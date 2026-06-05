@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="MFENX Powerhouse Sextillion Proof Arena: an interactive scientific verifier game for a 2^70 point sum-check certificate.">
+  <meta property="og:title" content="MFENX Powerhouse Sextillion Proof Arena">
+  <meta property="og:description" content="Play through a 70-round proof over 1.18 sextillion Boolean points.">
+  <meta property="og:image" content="assets/powerhouse-logo.png">
+  <title>MFENX Powerhouse | Sextillion Proof Arena</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4efe5;
+      --muted: #b9b2a6;
+      --black: #050505;
+      --panel: rgba(16, 15, 13, 0.84);
+      --panel-strong: rgba(5, 5, 5, 0.92);
+      --line: rgba(244, 239, 229, 0.16);
+      --cyan: #00d9ff;
+      --green: #39ff88;
+      --amber: #ffce45;
+      --pink: #ff4d8d;
+      --red: #ff5a4f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--black);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--ink);
+      background: rgba(244, 239, 229, 0.08);
+      border: 1px solid rgba(244, 239, 229, 0.12);
+      border-radius: 4px;
+      padding: 0.08rem 0.25rem;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: rgba(244, 239, 229, 0.08);
+      min-height: 44px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(0, 217, 255, 0.62);
+      background: rgba(0, 217, 255, 0.12);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .arena {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 217, 255, 0.18), transparent 24rem),
+        radial-gradient(circle at 85% 15%, rgba(255, 206, 69, 0.16), transparent 20rem),
+        linear-gradient(135deg, #050505 0%, #11100d 45%, #050505 100%);
+    }
+
+    #proofCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .brand-mark {
+      position: absolute;
+      width: 26rem;
+      max-width: 62vw;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.22;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 2;
+      width: min(118rem, calc(100% - 2rem));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 1rem 0 1.25rem;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem;
+    }
+
+    .topbar,
+    .dock,
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+      border-radius: 8px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(17rem, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.8rem 0.9rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 0.75rem;
+    }
+
+    .brand img {
+      width: 3rem;
+      height: 3rem;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(244, 239, 229, 0.18);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      line-height: 1.1;
+      font-weight: 760;
+    }
+
+    .brand p,
+    .micro {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(7.5rem, 1fr));
+      gap: 0.55rem;
+    }
+
+    .metric {
+      border-left: 2px solid var(--cyan);
+      padding: 0.35rem 0.65rem;
+      background: rgba(244, 239, 229, 0.045);
+      min-width: 0;
+    }
+
+    .metric:nth-child(2) {
+      border-left-color: var(--green);
+    }
+
+    .metric:nth-child(3) {
+      border-left-color: var(--amber);
+    }
+
+    .metric:nth-child(4) {
+      border-left-color: var(--pink);
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .value {
+      margin-top: 0.15rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(20rem, 0.95fr) minmax(28rem, 1.4fr) minmax(20rem, 0.95fr);
+      gap: 1rem;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    .panel {
+      padding: 1rem;
+      min-height: 0;
+    }
+
+    .panel h2,
+    .panel h3 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .panel h2 {
+      font-size: 1.22rem;
+    }
+
+    .copy {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .mission-list {
+      display: grid;
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .mission {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.75rem;
+      background: rgba(244, 239, 229, 0.045);
+    }
+
+    .mission strong {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem;
+      min-height: 0;
+    }
+
+    .proof-readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .readout {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.75rem;
+      background: rgba(5, 5, 5, 0.48);
+      min-width: 0;
+    }
+
+    .readout .value {
+      font-size: 1.1rem;
+      color: var(--green);
+    }
+
+    .gate-strip {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 0.28rem;
+      align-content: start;
+    }
+
+    .gate {
+      height: 0.55rem;
+      border-radius: 2px;
+      background: rgba(244, 239, 229, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(244, 239, 229, 0.07);
+    }
+
+    .gate.live {
+      background: var(--amber);
+    }
+
+    .gate.pass {
+      background: var(--green);
+    }
+
+    .gate.fail {
+      background: var(--red);
+    }
+
+    .dock {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.85rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .primary {
+      border-color: rgba(57, 255, 136, 0.72);
+      background: linear-gradient(135deg, rgba(57, 255, 136, 0.22), rgba(0, 217, 255, 0.12));
+      font-weight: 760;
+      min-width: 9.5rem;
+    }
+
+    .danger.active {
+      border-color: rgba(255, 90, 79, 0.9);
+      background: rgba(255, 90, 79, 0.2);
+      color: #ffd8d4;
+    }
+
+    .log {
+      height: 18rem;
+      overflow: auto;
+      padding: 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.62);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .log div {
+      margin: 0 0 0.2rem;
+      color: var(--muted);
+    }
+
+    .log .ok {
+      color: var(--green);
+    }
+
+    .log .bad {
+      color: var(--red);
+    }
+
+    .lab {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 5rem 1fr 4.2rem;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.82rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    .probability {
+      border: 1px solid rgba(57, 255, 136, 0.28);
+      border-radius: 6px;
+      padding: 0.85rem;
+      background: rgba(57, 255, 136, 0.07);
+    }
+
+    .probability .value {
+      font-size: 1.45rem;
+      color: var(--green);
+      white-space: normal;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.35rem;
+      margin: 0.8rem 0;
+    }
+
+    .tab.active {
+      border-color: rgba(255, 206, 69, 0.75);
+      background: rgba(255, 206, 69, 0.14);
+    }
+
+    .deck-body {
+      min-height: 12rem;
+      border-top: 1px solid var(--line);
+      padding-top: 0.8rem;
+    }
+
+    .certificate {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: 0.8rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 1180px) {
+      .topbar,
+      .dock,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .shell {
+        min-height: auto;
+      }
+
+      .arena {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 0.75rem, 118rem);
+        padding-top: 0.4rem;
+      }
+
+      .brand h1 {
+        font-size: 1.05rem;
+      }
+
+      .brand img {
+        width: 2.35rem;
+        height: 2.35rem;
+      }
+
+      .scoreboard,
+      .proof-readout,
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .log {
+        height: 14rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="arena">
+    <canvas id="proofCanvas" aria-label="Animated 70-round proof field"></canvas>
+    <img class="brand-mark" src="assets/powerhouse-logo.png" alt="">
+
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="assets/powerhouse-logo.png" alt="Powerhouse mark">
+          <div>
+            <h1>MFENX Powerhouse: Sextillion Proof Arena</h1>
+            <p>Scientific game launch for a <code>2^70</code> sum-check certificate.</p>
+          </div>
+        </div>
+        <div class="scoreboard" aria-live="polite">
+          <div class="metric"><div class="label">Domain</div><div id="domainMetric" class="value">2^70</div></div>
+          <div class="metric"><div class="label">Points</div><div id="pointMetric" class="value">1.18 sextillion</div></div>
+          <div class="metric"><div class="label">Rounds</div><div id="roundMetric" class="value">0 / 70</div></div>
+          <div class="metric"><div class="label">State</div><div id="stateMetric" class="value">READY</div></div>
+        </div>
+      </header>
+
+      <section class="main-grid" aria-label="Playable verifier">
+        <aside class="panel">
+          <h2>Scientific Deck</h2>
+          <p class="copy">The verifier does not touch every point. It replays one algebraic gate per variable, then checks the final evaluation.</p>
+          <div class="tabs" role="tablist" aria-label="Deck levels">
+            <button class="tab active" data-deck="domain">Domain</button>
+            <button class="tab" data-deck="proof">Proof</button>
+            <button class="tab" data-deck="closure">Closure</button>
+            <button class="tab" data-deck="launch">Launch</button>
+          </div>
+          <div id="deckBody" class="deck-body copy"></div>
+          <div class="mission-list" aria-label="Mission invariants">
+            <div class="mission"><strong>Invariant A</strong><span>Every gate must satisfy <code>g(0)+g(1)=claim</code>.</span></div>
+            <div class="mission"><strong>Invariant B</strong><span>The final fold must equal <code>173</code> in <code>F_1000000007</code>.</span></div>
+            <div class="mission"><strong>Invariant C</strong><span>Tamper mode must fail before certificate export.</span></div>
+          </div>
+        </aside>
+
+        <section class="panel stage">
+          <div>
+            <h2>Live Sum-Check Replay</h2>
+            <p class="copy">A constant multilinear polynomial over <code>1,180,591,620,717,411,303,424</code> Boolean points.</p>
+          </div>
+          <div class="proof-readout">
+            <div class="readout"><div class="label">Claimed Sum</div><div id="sumMetric" class="value">...</div></div>
+            <div class="readout"><div class="label">Final Eval</div><div id="evalMetric" class="value">...</div></div>
+            <div class="readout"><div class="label">Failed Gate</div><div id="failMetric" class="value">none</div></div>
+            <div class="readout"><div class="label">Digest</div><div id="digestMetric" class="value">pending</div></div>
+          </div>
+          <div id="gateStrip" class="gate-strip" aria-label="70 verification gates"></div>
+          <div id="proofLog" class="log" aria-live="polite"></div>
+        </section>
+
+        <aside class="panel">
+          <h2>Closure Lab</h2>
+          <p class="copy">This panel ports the log-space closure idea from the verifier prototypes: independent checks compound without enumerating the world.</p>
+          <div class="lab">
+            <label class="slider-row"><span>k</span><input id="kSlider" type="range" min="10" max="160" step="1" value="80"><span id="kValue">80</span></label>
+            <label class="slider-row"><span>p</span><input id="pSlider" type="range" min="0.10" max="0.99" step="0.01" value="0.60"><span id="pValue">0.60</span></label>
+            <label class="slider-row"><span>q</span><input id="qSlider" type="range" min="0" max="12" step="1" value="5"><span id="qValue">5</span></label>
+            <label class="slider-row"><span>r</span><input id="rSlider" type="range" min="1" max="24" step="1" value="6"><span id="rValue">6</span></label>
+            <div class="probability">
+              <div class="label">Finalize Probability</div>
+              <div id="probabilityMetric" class="value">...</div>
+              <p id="roundsNeeded" class="micro"></p>
+            </div>
+          </div>
+          <div class="certificate" id="certificateBox"></div>
+        </aside>
+      </section>
+
+      <footer class="dock">
+        <div class="micro">Canonical Rust proof: <code>cargo run --example sextillion_verify</code> • public target: <code>mfenx.com</code></div>
+        <div class="actions">
+          <button id="runButton" class="primary" type="button">▶ Verify 2^70</button>
+          <button id="tamperButton" class="danger" type="button">✕ Tamper</button>
+          <button id="resetButton" type="button">↺ Reset</button>
+          <button id="exportButton" type="button" disabled>⇩ Certificate</button>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    const P = 1000000007n;
+    const N = 70;
+    const C = 173n;
+    const SEXTILLION = 1000000000000000000000n;
+    const domainPoints = 1n << BigInt(N);
+    const tamperIndex = 36;
+
+    const state = {
+      running: false,
+      tamper: false,
+      activeGate: -1,
+      passed: new Set(),
+      failed: -1,
+      digest: '',
+      certificate: null,
+      particles: []
+    };
+
+    const els = {
+      canvas: document.getElementById('proofCanvas'),
+      domainMetric: document.getElementById('domainMetric'),
+      pointMetric: document.getElementById('pointMetric'),
+      roundMetric: document.getElementById('roundMetric'),
+      stateMetric: document.getElementById('stateMetric'),
+      sumMetric: document.getElementById('sumMetric'),
+      evalMetric: document.getElementById('evalMetric'),
+      failMetric: document.getElementById('failMetric'),
+      digestMetric: document.getElementById('digestMetric'),
+      gateStrip: document.getElementById('gateStrip'),
+      proofLog: document.getElementById('proofLog'),
+      runButton: document.getElementById('runButton'),
+      tamperButton: document.getElementById('tamperButton'),
+      resetButton: document.getElementById('resetButton'),
+      exportButton: document.getElementById('exportButton'),
+      certificateBox: document.getElementById('certificateBox'),
+      deckBody: document.getElementById('deckBody')
+    };
+
+    const ctx = els.canvas.getContext('2d');
+
+    function mod(value) {
+      const x = value % P;
+      return x < 0n ? x + P : x;
+    }
+
+    function modPow(base, exp) {
+      let result = 1n;
+      let b = mod(base);
+      let e = BigInt(exp);
+      while (e > 0n) {
+        if (e & 1n) result = mod(result * b);
+        b = mod(b * b);
+        e >>= 1n;
+      }
+      return result;
+    }
+
+    function formatBig(value) {
+      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function shortDigest(hex) {
+      return hex ? `${hex.slice(0, 12)}...${hex.slice(-8)}` : 'pending';
+    }
+
+    function buildProof() {
+      const claimed = mod(C * modPow(2n, N));
+      const rounds = [];
+      let running = claimed;
+      for (let remaining = N; remaining >= 1; remaining--) {
+        const gate = N - remaining;
+        let b = mod(C * modPow(2n, remaining - 1));
+        if (state.tamper && gate === tamperIndex) b = mod(b + 1n);
+        rounds.push({ gate, remaining, a: 0n, b, running });
+        running = b;
+      }
+      return { claimed, rounds, finalEvaluation: C };
+    }
+
+    async function sha256Hex(text) {
+      if (!crypto.subtle) {
+        let h = 2166136261;
+        for (let i = 0; i < text.length; i++) {
+          h ^= text.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return `fnv-${(h >>> 0).toString(16).padStart(8, '0')}`;
+      }
+      const bytes = new TextEncoder().encode(text);
+      const hash = await crypto.subtle.digest('SHA-256', bytes);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function canonicalCertificate(proof, ok) {
+      return {
+        project: 'MFENX Powerhouse Sextillion Proof Arena',
+        domain_variables: N,
+        domain_points: domainPoints.toString(),
+        domain_exceeds_sextillion: domainPoints > SEXTILLION,
+        field_modulus: P.toString(),
+        constant_polynomial_value: C.toString(),
+        claimed_sum_mod_field: proof.claimed.toString(),
+        proof_rounds: proof.rounds.length,
+        verified: ok,
+        failed_gate: state.failed,
+        final_evaluation: ok ? C.toString() : 'rejected',
+        browser_digest_sha256: state.digest
+      };
+    }
+
+    function logLine(text, kind = '') {
+      const line = document.createElement('div');
+      if (kind) line.className = kind;
+      line.textContent = text;
+      els.proofLog.appendChild(line);
+      els.proofLog.scrollTop = els.proofLog.scrollHeight;
+    }
+
+    function setGate(index, cls) {
+      const gate = els.gateStrip.children[index];
+      if (!gate) return;
+      gate.className = `gate ${cls}`;
+    }
+
+    function resetProofUi() {
+      state.activeGate = -1;
+      state.passed.clear();
+      state.failed = -1;
+      state.digest = '';
+      els.proofLog.textContent = '';
+      els.exportButton.disabled = true;
+      els.stateMetric.textContent = 'READY';
+      els.roundMetric.textContent = '0 / 70';
+      els.failMetric.textContent = 'none';
+      els.digestMetric.textContent = 'pending';
+      els.evalMetric.textContent = '...';
+      state.certificate = null;
+      [...els.gateStrip.children].forEach(gate => { gate.className = 'gate'; });
+      updateCertificate(null, false);
+    }
+
+    async function runVerifier() {
+      if (state.running) return;
+      state.running = true;
+      resetProofUi();
+      els.runButton.disabled = true;
+      els.tamperButton.disabled = true;
+
+      const proof = buildProof();
+      els.sumMetric.textContent = proof.claimed.toString();
+      els.stateMetric.textContent = state.tamper ? 'TAMPER TEST' : 'VERIFYING';
+      logLine(`[domain] 2^70 = ${formatBig(domainPoints)} points`);
+      logLine(`[claim] sum = ${proof.claimed} mod ${P}`);
+
+      let ok = true;
+      for (const round of proof.rounds) {
+        state.activeGate = round.gate;
+        setGate(round.gate, 'live');
+        els.roundMetric.textContent = `${round.gate + 1} / ${N}`;
+        await new Promise(resolve => setTimeout(resolve, 28));
+
+        const expectedB = mod(C * modPow(2n, round.remaining - 1));
+        const check = mod(round.b + round.a + round.b);
+        if (round.a !== 0n || round.b !== expectedB || check !== round.running) {
+          ok = false;
+          state.failed = round.gate + 1;
+          setGate(round.gate, 'fail');
+          els.failMetric.textContent = String(state.failed);
+          els.stateMetric.textContent = 'REJECTED';
+          logLine(`[gate ${round.gate + 1}] rejected: g(0)+g(1)=${check}, claim=${round.running}`, 'bad');
+          break;
+        }
+
+        state.passed.add(round.gate);
+        setGate(round.gate, 'pass');
+        logLine(`[gate ${round.gate + 1}] pass  b=${round.b}  next=${round.b}`, 'ok');
+      }
+
+      if (ok) {
+        els.evalMetric.textContent = C.toString();
+        els.failMetric.textContent = 'none';
+        els.stateMetric.textContent = 'VERIFIED';
+        logLine(`[final] evaluation=${C}; certificate accepted`, 'ok');
+      }
+
+      const raw = JSON.stringify({
+        n: N,
+        p: P.toString(),
+        c: C.toString(),
+        claimed: proof.claimed.toString(),
+        rounds: proof.rounds.map(r => [r.a.toString(), r.b.toString(), r.running.toString()]),
+        ok
+      });
+      state.digest = await sha256Hex(raw);
+      els.digestMetric.textContent = shortDigest(state.digest);
+      updateCertificate(proof, ok);
+      els.exportButton.disabled = !ok;
+      els.runButton.disabled = false;
+      els.tamperButton.disabled = false;
+      state.running = false;
+    }
+
+    function updateCertificate(proof, ok) {
+      if (!proof) {
+        els.certificateBox.innerHTML = '<span>Certificate appears here after a clean replay.</span>';
+        return;
+      }
+      const cert = canonicalCertificate(proof, ok);
+      state.certificate = ok ? cert : null;
+      els.certificateBox.innerHTML = Object.entries(cert)
+        .map(([key, value]) => `<span>${key}: ${value}</span>`)
+        .join('');
+    }
+
+    function exportCertificate() {
+      if (!state.certificate) return;
+      const cert = state.certificate;
+      const blob = new Blob([JSON.stringify(cert, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'mfenx-powerhouse-sextillion-certificate.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function closureProbability(k, p, q, r) {
+      const participant = 1 - Math.pow(1 - p, q + 1);
+      const perRound = Math.pow(participant, k);
+      const logFail = r * Math.log1p(-perRound);
+      return -Math.expm1(logFail);
+    }
+
+    function requiredRounds(target, k, p, q) {
+      for (let r = 1; r <= 2000; r++) {
+        if (closureProbability(k, p, q, r) >= target) return r;
+      }
+      return 2000;
+    }
+
+    function updateClosure() {
+      const k = Number(document.getElementById('kSlider').value);
+      const p = Number(document.getElementById('pSlider').value);
+      const q = Number(document.getElementById('qSlider').value);
+      const r = Number(document.getElementById('rSlider').value);
+      document.getElementById('kValue').textContent = k;
+      document.getElementById('pValue').textContent = p.toFixed(2);
+      document.getElementById('qValue').textContent = q;
+      document.getElementById('rValue').textContent = r;
+      const probability = closureProbability(k, p, q, r);
+      document.getElementById('probabilityMetric').textContent = `${(probability * 100).toFixed(6)}%`;
+      document.getElementById('roundsNeeded').textContent = `Rounds for 99.9999%: ${requiredRounds(0.999999, k, p, q)}`;
+    }
+
+    const deckText = {
+      domain: '<strong>Domain.</strong> <code>2^70</code> Boolean assignments create <code>1.18</code> sextillion possible evaluations. The game renders them as a field, but the verifier only needs the proof.',
+      proof: '<strong>Proof.</strong> The constant polynomial has a closed-form round message. Each gate checks <code>g(0)+g(1)</code> against the running claim.',
+      closure: '<strong>Closure.</strong> Independent checks compound in log-space, the same idea explored in the verifier prototypes scanned from GitHub.',
+      launch: '<strong>Launch.</strong> This folder is static and includes `CNAME=mfenx.com`; it can be shipped by any static host or verifiable deployer.'
+    };
+
+    function setDeck(name) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.deck === name);
+      });
+      els.deckBody.innerHTML = deckText[name];
+    }
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      els.canvas.width = Math.floor(window.innerWidth * ratio);
+      els.canvas.height = Math.floor(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function seedParticles() {
+      state.particles = Array.from({ length: 140 }, (_, i) => ({
+        angle: i * 0.41,
+        radius: 44 + (i % 35) * 9,
+        speed: 0.0016 + (i % 9) * 0.00025,
+        hue: i % 3
+      }));
+    }
+
+    function draw(t) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w * 0.5;
+      const cy = h * 0.52;
+      const maxR = Math.min(w, h) * 0.46;
+
+      ctx.save();
+      ctx.globalAlpha = 0.72;
+      for (const p of state.particles) {
+        const a = p.angle + t * p.speed;
+        const r = Math.min(maxR, p.radius + Math.sin(t * 0.001 + p.angle) * 8);
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a * 1.7) * r * 0.48;
+        ctx.fillStyle = p.hue === 0 ? '#00d9ff' : p.hue === 1 ? '#39ff88' : '#ffce45';
+        ctx.beginPath();
+        ctx.arc(x, y, p.hue === 1 ? 1.7 : 1.25, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.strokeStyle = 'rgba(244,239,229,0.12)';
+      ctx.lineWidth = 1;
+      for (let ring = 1; ring <= 5; ring++) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, maxR * ring / 5, maxR * ring / 9, t * 0.00012 * ring, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const gateAngle = state.activeGate >= 0 ? state.activeGate / N * Math.PI * 2 : t * 0.00025;
+      const gx = Math.cos(gateAngle) * maxR * 0.72;
+      const gy = Math.sin(gateAngle * 1.7) * maxR * 0.34;
+      ctx.fillStyle = state.failed > 0 ? '#ff5a4f' : state.activeGate >= 0 ? '#39ff88' : '#00d9ff';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(gx, gy, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      requestAnimationFrame(draw);
+    }
+
+    function init() {
+      els.domainMetric.textContent = '2^70';
+      els.pointMetric.textContent = `${(Number(domainPoints) / 1e21).toFixed(2)} sextillion`;
+      els.sumMetric.textContent = mod(C * modPow(2n, N)).toString();
+      els.evalMetric.textContent = '...';
+      for (let i = 0; i < N; i++) {
+        const gate = document.createElement('div');
+        gate.className = 'gate';
+        gate.title = `Gate ${i + 1}`;
+        els.gateStrip.appendChild(gate);
+      }
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => setDeck(tab.dataset.deck));
+      });
+      ['kSlider', 'pSlider', 'qSlider', 'rSlider'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateClosure);
+      });
+      els.runButton.addEventListener('click', runVerifier);
+      els.tamperButton.addEventListener('click', () => {
+        state.tamper = !state.tamper;
+        els.tamperButton.classList.toggle('active', state.tamper);
+        els.stateMetric.textContent = state.tamper ? 'TAMPER ARMED' : 'READY';
+      });
+      els.resetButton.addEventListener('click', resetProofUi);
+      els.exportButton.addEventListener('click', exportCertificate);
+      setDeck('domain');
+      updateClosure();
+      resetProofUi();
+      resizeCanvas();
+      seedParticles();
+      requestAnimationFrame(draw);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tamper') === '1') {
+        state.tamper = true;
+        els.tamperButton.classList.add('active');
+      }
+      if (params.get('autorun') === '1') {
+        window.setTimeout(runVerifier, 250);
+      }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    init();
+  </script>
+</body>
+</html>

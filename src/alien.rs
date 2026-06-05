@@ -45,6 +45,7 @@ use blake2::digest::{consts::U32, Digest};
 use std::{collections::HashMap, path::PathBuf};
 
 const ANCHOR_DOMAIN: &[u8] = b"JROC_ANCHOR";
+type Blake2b256 = blake2::Blake2b<U32>;
 
 /// Represents a statement to be proved.  In a full system this would
 /// encapsulate the input and the specification of the language `L`.
@@ -183,6 +184,12 @@ pub fn julian_genesis_anchor() -> LedgerAnchor {
             fold_digest: Some(fold_digest_from_hashes(&hashes)),
             ..AnchorMetadata::default()
         },
+    }
+}
+
+impl Default for ProofLedger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -385,9 +392,10 @@ impl ProofLedger {
 
     /// Ensures the JULIAN genesis anchor is present at the head of the ledger.
     pub fn ensure_genesis(&mut self) {
-        let needs_genesis = self.entries.first().map_or(true, |entry| {
-            entry.statement.description != JULIAN_GENESIS_STATEMENT
-        });
+        let needs_genesis = self
+            .entries
+            .first()
+            .is_none_or(|entry| entry.statement.description != JULIAN_GENESIS_STATEMENT);
         if needs_genesis {
             let genesis_entry = LedgerEntry {
                 statement: Statement {
@@ -525,7 +533,7 @@ pub fn reconcile_anchors_with_quorum(
             return Err("vote missing public key bytes".to_string());
         }
         let digest = anchor_digest(vote.anchor);
-        let entry = groups.entry(digest).or_insert_with(HashMap::new);
+        let entry = groups.entry(digest).or_default();
         entry
             .entry(vote.public_key.to_vec())
             .or_insert_with(|| vote.anchor.clone());
@@ -533,11 +541,7 @@ pub fn reconcile_anchors_with_quorum(
     let mut best: Option<(HashMap<Vec<u8>, LedgerAnchor>, usize)> = None;
     for identity_map in groups.into_values() {
         let count = identity_map.len();
-        if best
-            .as_ref()
-            .map(|(_, best_len)| count > *best_len)
-            .unwrap_or(true)
-        {
+        if best.as_ref().is_none_or(|(_, best_len)| count > *best_len) {
             best = Some((identity_map, count));
         }
     }
@@ -879,4 +883,3 @@ mod tests {
         assert!(reconcile_anchors_with_quorum(&votes, 2).is_err());
     }
 }
-type Blake2b256 = blake2::Blake2b<U32>;

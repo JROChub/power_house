@@ -444,7 +444,7 @@ async fn broadcast_local_anchor(
         Ok(_) => {
             NO_GOSSIP_PEERS_LOGGED.store(false, Ordering::Relaxed);
         }
-        Err(PublishError::InsufficientPeers) => {
+        Err(PublishError::NoPeersSubscribedToTopic) => {
             if !NO_GOSSIP_PEERS_LOGGED.swap(true, Ordering::Relaxed) {
                 println!("waiting for gossip peers before broadcasting anchor");
             }
@@ -464,7 +464,7 @@ async fn broadcast_local_anchor(
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
             *broadcast_counter = broadcast_counter.saturating_add(1);
-            if *broadcast_counter % interval == 0 {
+            if (*broadcast_counter).is_multiple_of(interval) {
                 let checkpoint = AnchorCheckpoint::new(
                     *broadcast_counter,
                     anchor_json.clone(),
@@ -501,104 +501,99 @@ async fn handle_event(
         SwarmEvent::NewListenAddr { address, .. } => {
             println!("listening on {address}");
         }
-        SwarmEvent::Behaviour(JrocBehaviourEvent::Gossipsub(event)) => match event {
-            gossipsub::Event::Message {
-                propagation_source,
-                message,
-                ..
-            } => {
-                metrics.inc_anchors_received();
-                if message.data.len() > MAX_ENVELOPE_BYTES {
-                    metrics.inc_gossipsub_rejects();
-                    record_invalid(invalid_counters, propagation_source, metrics);
-                    return Ok(());
-                }
-                let digest = sha256_digest(&message.data);
-                if !seen_payloads.insert(digest) {
-                    metrics.inc_gossipsub_rejects();
-                    return Ok(());
-                }
-                let envelope: AnchorEnvelope = serde_json::from_slice(&message.data)
-                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
-                envelope.validate()?;
-                let payload = BASE64
-                    .decode(envelope.payload.as_bytes())
-                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
-                if payload.len() > MAX_ENVELOPE_BYTES {
-                    metrics.inc_gossipsub_rejects();
-                    record_invalid(invalid_counters, propagation_source, metrics);
-                    return Ok(());
-                }
-                verify_signature_base64(&envelope.public_key, &payload, &envelope.signature)?;
-                let remote_verifying = decode_public_key_base64(&envelope.public_key)
-                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
-                let remote_key_bytes = remote_verifying.to_bytes();
-                if !policy_permits(cfg.membership_policy.as_ref(), &remote_key_bytes) {
-                    metrics.inc_gossipsub_rejects();
-                    record_invalid(invalid_counters, propagation_source, metrics);
+        SwarmEvent::Behaviour(JrocBehaviourEvent::Gossipsub(gossipsub::Event::Message {
+            propagation_source,
+            message,
+            ..
+        })) => {
+            metrics.inc_anchors_received();
+            if message.data.len() > MAX_ENVELOPE_BYTES {
+                metrics.inc_gossipsub_rejects();
+                record_invalid(invalid_counters, propagation_source, metrics);
+                return Ok(());
+            }
+            let digest = sha256_digest(&message.data);
+            if !seen_payloads.insert(digest) {
+                metrics.inc_gossipsub_rejects();
+                return Ok(());
+            }
+            let envelope: AnchorEnvelope = serde_json::from_slice(&message.data)
+                .map_err(|err| NetworkError::Codec(err.to_string()))?;
+            envelope.validate()?;
+            let payload = BASE64
+                .decode(envelope.payload.as_bytes())
+                .map_err(|err| NetworkError::Codec(err.to_string()))?;
+            if payload.len() > MAX_ENVELOPE_BYTES {
+                metrics.inc_gossipsub_rejects();
+                record_invalid(invalid_counters, propagation_source, metrics);
+                return Ok(());
+            }
+            verify_signature_base64(&envelope.public_key, &payload, &envelope.signature)?;
+            let remote_verifying = decode_public_key_base64(&envelope.public_key)
+                .map_err(|err| NetworkError::Codec(err.to_string()))?;
+            let remote_key_bytes = remote_verifying.to_bytes();
+            if !policy_permits(cfg.membership_policy.as_ref(), &remote_key_bytes) {
+                metrics.inc_gossipsub_rejects();
+                record_invalid(invalid_counters, propagation_source, metrics);
+                println!(
+                    "rejecting peer {}: identity not permitted by policy",
+                    envelope.node_id
+                );
+                return Ok(());
+            }
+            let payload_str = std::str::from_utf8(&payload)
+                .map_err(|err| NetworkError::Codec(err.to_string()))?;
+            let anchor_json = AnchorJson::from_json_str(payload_str)
+                .map_err(|err| NetworkError::Codec(err.to_string()))?;
+            if anchor_json.network != NETWORK_ID {
+                metrics.inc_gossipsub_rejects();
+                record_invalid(invalid_counters, propagation_source, metrics);
+                return Ok(());
+            }
+            if anchor_json.entries.len() > MAX_ANCHOR_ENTRIES {
+                metrics.inc_gossipsub_rejects();
+                record_invalid(invalid_counters, propagation_source, metrics);
+                return Ok(());
+            }
+            let remote_anchor = anchor_json.clone().into_ledger()?;
+            let local_anchor = load_anchor_from_logs(&cfg.log_dir)?;
+            let local_key_bytes = cfg.key_material.verifying.to_bytes();
+            let votes = [
+                AnchorVote {
+                    anchor: &local_anchor,
+                    public_key: &local_key_bytes,
+                },
+                AnchorVote {
+                    anchor: &remote_anchor,
+                    public_key: &remote_key_bytes,
+                },
+            ];
+            match crate::reconcile_anchors_with_quorum(&votes, cfg.quorum) {
+                Ok(()) => {
+                    metrics.inc_anchors_verified();
+                    metrics.inc_finality_events();
                     println!(
-                        "rejecting peer {}: identity not permitted by policy",
-                        envelope.node_id
+                        "finality reached with peer {} :: entries={}",
+                        envelope.node_id,
+                        remote_anchor.entries.len()
                     );
-                    return Ok(());
                 }
-                let payload_str = std::str::from_utf8(&payload)
-                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
-                let anchor_json = AnchorJson::from_json_str(payload_str)
-                    .map_err(|err| NetworkError::Codec(err.to_string()))?;
-                if anchor_json.network != NETWORK_ID {
-                    metrics.inc_gossipsub_rejects();
-                    record_invalid(invalid_counters, propagation_source, metrics);
-                    return Ok(());
-                }
-                if anchor_json.entries.len() > MAX_ANCHOR_ENTRIES {
-                    metrics.inc_gossipsub_rejects();
-                    record_invalid(invalid_counters, propagation_source, metrics);
-                    return Ok(());
-                }
-                let remote_anchor = anchor_json.clone().into_ledger()?;
-                let local_anchor = load_anchor_from_logs(&cfg.log_dir)?;
-                let local_key_bytes = cfg.key_material.verifying.to_bytes();
-                let votes = [
-                    AnchorVote {
-                        anchor: &local_anchor,
-                        public_key: &local_key_bytes,
-                    },
-                    AnchorVote {
-                        anchor: &remote_anchor,
-                        public_key: &remote_key_bytes,
-                    },
-                ];
-                match crate::reconcile_anchors_with_quorum(&votes, cfg.quorum) {
-                    Ok(()) => {
-                        metrics.inc_anchors_verified();
-                        metrics.inc_finality_events();
-                        println!(
-                            "finality reached with peer {} :: entries={}",
-                            envelope.node_id,
-                            remote_anchor.entries.len()
+                Err(err) => {
+                    println!("anchor divergence with peer {}: {}", envelope.node_id, err);
+                    if let Err(slash_err) = cfg.membership_policy.record_slash(&remote_verifying) {
+                        eprintln!(
+                            "failed to record slash for {}: {}",
+                            envelope.node_id, slash_err
                         );
-                    }
-                    Err(err) => {
-                        println!("anchor divergence with peer {}: {}", envelope.node_id, err);
-                        if let Err(slash_err) =
-                            cfg.membership_policy.record_slash(&remote_verifying)
-                        {
-                            eprintln!(
-                                "failed to record slash for {}: {}",
-                                envelope.node_id, slash_err
-                            );
-                        } else {
-                            println!(
-                                "peer {} marked as slashed due to conflicting anchor",
-                                envelope.node_id
-                            );
-                        }
+                    } else {
+                        println!(
+                            "peer {} marked as slashed due to conflicting anchor",
+                            envelope.node_id
+                        );
                     }
                 }
             }
-            _ => {}
-        },
+        }
         _ => {}
     }
     Ok(())
@@ -686,90 +681,6 @@ async fn respond_with_metrics(
     );
     stream.write_all(response.as_bytes()).await?;
     stream.shutdown().await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-    use std::sync::atomic::Ordering;
-    use std::time::SystemTime;
-
-    fn temp_path(name: &str) -> PathBuf {
-        let mut base = std::env::temp_dir();
-        let nanos = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        base.push(format!("{}_{}", name, nanos));
-        base
-    }
-
-    #[test]
-    fn payload_cache_rejects_duplicates() {
-        let metrics = Arc::new(Metrics::default());
-        let mut cache = PayloadCache::new(metrics.clone());
-        let digest = [1u8; 32];
-        assert!(cache.insert(digest));
-        assert!(!cache.insert(digest));
-    }
-
-    #[test]
-    fn payload_cache_eviction_tracks_metric() {
-        let metrics = Arc::new(Metrics::default());
-        let mut cache = PayloadCache::new(metrics.clone());
-        for i in 0..(SEEN_CACHE_LIMIT + 1) {
-            let mut digest = [0u8; 32];
-            digest[..8].copy_from_slice(&(i as u64).to_le_bytes());
-            cache.insert(digest);
-        }
-        assert!(metrics.lrucache_evictions_total.load(Ordering::Relaxed) >= 1);
-    }
-
-    #[test]
-    fn identical_logs_yield_identical_anchors() {
-        let dir = temp_path("jroc_net_logs");
-        fs::create_dir_all(&dir).unwrap();
-        let log_path = dir.join("ledger_0000.txt");
-        let challenges = vec![1, 2, 3];
-        let round_sums = vec![4, 5, 6];
-        let final_value = 7;
-        let hash = transcript_digest(&challenges, &round_sums, final_value);
-        let content = format!(
-            "statement:Test Statement\ntranscript:{}\nround_sums:{}\nfinal:{}\nhash:{}\n",
-            challenges
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            round_sums
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            final_value,
-            crate::transcript_digest_to_hex(&hash)
-        );
-        fs::write(&log_path, content).unwrap();
-
-        let anchor_a = load_anchor_from_logs(&dir).unwrap();
-        let anchor_b = load_anchor_from_logs(&dir).unwrap();
-        assert_eq!(anchor_a.entries, anchor_b.entries);
-
-        fs::remove_dir_all(&dir).unwrap();
-    }
-
-    #[test]
-    fn tampered_log_is_rejected() {
-        let dir = temp_path("jroc_net_logs_tampered");
-        fs::create_dir_all(&dir).unwrap();
-        let log_path = dir.join("ledger_0000.txt");
-        let content = "statement:Demo\ntranscript:1\nround_sums:2\nfinal:3\nhash:999\n";
-        fs::write(&log_path, content).unwrap();
-        let result = load_anchor_from_logs(&dir);
-        assert!(result.is_err());
-        fs::remove_dir_all(&dir).unwrap();
-    }
 }
 
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
@@ -876,4 +787,88 @@ fn now_millis() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::sync::atomic::Ordering;
+    use std::time::SystemTime;
+
+    fn temp_path(name: &str) -> PathBuf {
+        let mut base = std::env::temp_dir();
+        let nanos = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        base.push(format!("{}_{}", name, nanos));
+        base
+    }
+
+    #[test]
+    fn payload_cache_rejects_duplicates() {
+        let metrics = Arc::new(Metrics::default());
+        let mut cache = PayloadCache::new(metrics.clone());
+        let digest = [1u8; 32];
+        assert!(cache.insert(digest));
+        assert!(!cache.insert(digest));
+    }
+
+    #[test]
+    fn payload_cache_eviction_tracks_metric() {
+        let metrics = Arc::new(Metrics::default());
+        let mut cache = PayloadCache::new(metrics.clone());
+        for i in 0..(SEEN_CACHE_LIMIT + 1) {
+            let mut digest = [0u8; 32];
+            digest[..8].copy_from_slice(&(i as u64).to_le_bytes());
+            cache.insert(digest);
+        }
+        assert!(metrics.lrucache_evictions_total.load(Ordering::Relaxed) >= 1);
+    }
+
+    #[test]
+    fn identical_logs_yield_identical_anchors() {
+        let dir = temp_path("jroc_net_logs");
+        fs::create_dir_all(&dir).unwrap();
+        let log_path = dir.join("ledger_0000.txt");
+        let challenges = vec![1, 2, 3];
+        let round_sums = vec![4, 5, 6];
+        let final_value = 7;
+        let hash = transcript_digest(&challenges, &round_sums, final_value);
+        let content = format!(
+            "statement:Test Statement\ntranscript:{}\nround_sums:{}\nfinal:{}\nhash:{}\n",
+            challenges
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            round_sums
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            final_value,
+            crate::transcript_digest_to_hex(&hash)
+        );
+        fs::write(&log_path, content).unwrap();
+
+        let anchor_a = load_anchor_from_logs(&dir).unwrap();
+        let anchor_b = load_anchor_from_logs(&dir).unwrap();
+        assert_eq!(anchor_a.entries, anchor_b.entries);
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn tampered_log_is_rejected() {
+        let dir = temp_path("jroc_net_logs_tampered");
+        fs::create_dir_all(&dir).unwrap();
+        let log_path = dir.join("ledger_0000.txt");
+        let content = "statement:Demo\ntranscript:1\nround_sums:2\nfinal:3\nhash:999\n";
+        fs::write(&log_path, content).unwrap();
+        let result = load_anchor_from_logs(&dir);
+        assert!(result.is_err());
+        fs::remove_dir_all(&dir).unwrap();
+    }
 }

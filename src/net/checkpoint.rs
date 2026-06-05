@@ -149,10 +149,8 @@ pub fn latest_log_cutoff(log_dir: &Path) -> Option<String> {
                 continue;
             }
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with("ledger_") {
-                    if best.as_ref().map(|b| name > b.as_str()).unwrap_or(true) {
-                        best = Some(name.to_string());
-                    }
+                if name.starts_with("ledger_") && best.as_ref().is_none_or(|b| name > b.as_str()) {
+                    best = Some(name.to_string());
                 }
             }
         }
