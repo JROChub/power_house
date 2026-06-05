@@ -87,4 +87,12 @@ if [[ -n "${PH_ATTESTATION_QUORUM:-}" ]]; then
   ARGS+=(--attestation-quorum "$PH_ATTESTATION_QUORUM")
 fi
 
+if [[ -n "${PH_EVM_RPC_LISTEN:-}" ]]; then
+  ARGS+=(--evm-rpc-listen "$PH_EVM_RPC_LISTEN")
+fi
+
+if [[ -n "${PH_EVM_CHAIN_ID:-}" ]]; then
+  ARGS+=(--evm-chain-id "$PH_EVM_CHAIN_ID")
+fi
+
 exec /usr/local/bin/julian net start "${ARGS[@]}"

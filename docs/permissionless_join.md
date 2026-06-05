@@ -22,8 +22,8 @@ julian net start \
   --node-id node \
   --log-dir ./logs/node \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap <BOOTSTRAP_MULTIADDR_1> \
+  --bootstrap <BOOTSTRAP_MULTIADDR_2> \
   --broadcast-interval 1500 \
   --quorum 7 \
   --metrics :9100
@@ -33,8 +33,8 @@ julian net start \
 Use DNS seed records so community nodes can join without hard-coded IPs.
 Example seed format:
 ```
-/dns/boot.mfenx.com/tcp/7001/p2p/<peer-id>
-/dns/boot.mfenx.com/tcp/7002/p2p/<peer-id>
+/dns4/boot1.mfenx.com/tcp/7001/p2p/<peer-id>
+/dns4/boot2.mfenx.com/tcp/7002/p2p/<peer-id>
 ```
 
 ## Stake-Gated Mode (Incentive Mainnet)

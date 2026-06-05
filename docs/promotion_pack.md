@@ -9,7 +9,7 @@ Body:
 Power-House is opening permissionless node joins. Run a node, keep it up, and help test quorum finality. Join guide and bootstraps below.
 
 Join:
-- `julian net start --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd`
+- `julian net start --bootstrap <BOOTSTRAP_MULTIADDR_1> --bootstrap <BOOTSTRAP_MULTIADDR_2>`
 
 ## Forum Announcement (Long)
 Title: Join the MFENX Power-House Network (Permissionless)
@@ -28,8 +28,8 @@ julian net start \
   --node-id node \
   --log-dir ./logs/node \
   --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap <BOOTSTRAP_MULTIADDR_1> \
+  --bootstrap <BOOTSTRAP_MULTIADDR_2> \
   --broadcast-interval 1500 \
   --quorum 7 \
   --metrics :9100

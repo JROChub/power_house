@@ -109,6 +109,25 @@ julian net start \
   --key ed25519://<seed>
 ```
 
+The native wallet lane accepts signed EIP-1559 transfers and exposes only
+quorum-finalized blocks, balances, nonces, transactions, and receipts:
+
+```bash
+julian net start \
+  --node-id <node_id> \
+  --log-dir ./logs/<node_id> \
+  --blob-dir ./data/<node_id> \
+  --listen /ip4/0.0.0.0/tcp/7001 \
+  --policy ./config/native-validators.json \
+  --quorum 2 \
+  --evm-chain-id 177155 \
+  --evm-rpc-listen 127.0.0.1:8545 \
+  --key ed25519://<seed>
+```
+
+Run `scripts/test_native_rpc_cluster.sh` to verify three independent replicas
+produce the same finalized block hash, state root, balances, and receipt.
+
 Operations and migration procedures are documented in
 [Operations](docs/ops.md) and [Mainnet Launch](docs/mainnet_launch.md).
 
@@ -124,6 +143,7 @@ Operations and migration procedures are documented in
 - [Research Protocol](docs/research_protocol.md)
 - [Orbital Observatory](docs/orbital_observatory.md)
 - [Operations](docs/ops.md)
+- [RPC Operations](docs/rpc_operations.md)
 
 ## License
 

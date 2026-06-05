@@ -14,6 +14,11 @@ use crate::net::{
         CheckpointSignature,
     },
     governance::MembershipPolicy,
+    native_chain::{
+        NativeChainCommand, NativeChainMessage, NativeChainMessagePayload, NativeChainRuntime,
+        NativeChainState, NATIVE_CHAIN_TOPIC,
+    },
+    rpc::{run_evm_rpc_server, EvmRpcConfig},
     schema::{
         AnchorCodecError, AnchorEnvelope, AnchorJson, AnchorVoteJson, DaCommitmentJson,
         ENVELOPE_SCHEMA_VERSION, NETWORK_ID, SCHEMA_ENVELOPE, SCHEMA_VOTE,
@@ -63,15 +68,17 @@ use std::{
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::{mpsc, Mutex, RwLock, Semaphore};
 use tokio::{select, signal, time};
 
 const DEFAULT_ANCHOR_TOPIC: &str = "mfenx/powerhouse/anchors/v1";
 static TOPIC_EVIDENCE: Lazy<IdentTopic> =
     Lazy::new(|| IdentTopic::new("mfenx/powerhouse/evidence/v1"));
 static TOPIC_VOTES: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new("mfenx/powerhouse/votes/v1"));
+static TOPIC_NATIVE_CHAIN: Lazy<IdentTopic> = Lazy::new(|| IdentTopic::new(NATIVE_CHAIN_TOPIC));
 static NO_GOSSIP_PEERS_LOGGED: AtomicBool = AtomicBool::new(false);
 const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
+const MAX_NATIVE_MESSAGE_BYTES: usize = 512 * 1024;
 const MAX_ANCHOR_ENTRIES: usize = 10_000;
 const SEEN_CACHE_LIMIT: usize = 2048;
 const INVALID_THRESHOLD: usize = 5;
@@ -190,6 +197,12 @@ pub struct NetConfig {
     pub token_mode_contract: Option<String>,
     /// Optional JSON-RPC endpoint used for token migration oracle checks.
     pub token_oracle_rpc: Option<String>,
+    /// Optional EVM JSON-RPC listen socket for MetaMask-compatible native balance reads.
+    pub evm_rpc_listen: Option<SocketAddr>,
+    /// EVM chain ID exposed by the RPC facade.
+    pub evm_chain_id: u64,
+    /// Whether this node participates in native-chain transaction finality.
+    pub native_chain_enabled: bool,
     metrics: Arc<Metrics>,
     metrics_addr: Option<SocketAddr>,
 }
@@ -223,6 +236,8 @@ impl NetConfig {
         attestation_quorum: Option<usize>,
         token_mode_contract: Option<String>,
         token_oracle_rpc: Option<String>,
+        evm_rpc_listen: Option<SocketAddr>,
+        evm_chain_id: Option<u64>,
     ) -> Self {
         let attestation_quorum = attestation_quorum.unwrap_or(quorum);
         let anchor_topic =
@@ -248,6 +263,7 @@ impl NetConfig {
         let blob_request_timeout =
             Duration::from_millis(blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS));
         let bft_round_ms = bft_round_ms.unwrap_or(broadcast_interval.as_millis() as u64);
+        let native_chain_enabled = evm_rpc_listen.is_some() || evm_chain_id.is_some();
         Self {
             node_id,
             listen_addr,
@@ -274,6 +290,9 @@ impl NetConfig {
             stake_registry_path,
             token_mode_contract,
             token_oracle_rpc,
+            evm_rpc_listen,
+            evm_chain_id: evm_chain_id.unwrap_or(177155),
+            native_chain_enabled,
             metrics: Arc::new(Metrics::default()),
             metrics_addr,
         }
@@ -1637,6 +1656,9 @@ struct Metrics {
     lrucache_evictions_total: AtomicU64,
     finality_events_total: AtomicU64,
     gossipsub_rejects_total: AtomicU64,
+    native_transactions_accepted_total: AtomicU64,
+    native_blocks_finalized_total: AtomicU64,
+    native_sync_blocks_applied_total: AtomicU64,
 }
 
 impl Metrics {
@@ -1665,6 +1687,21 @@ impl Metrics {
         self.gossipsub_rejects_total.fetch_add(1, Ordering::Relaxed);
     }
 
+    fn inc_native_transactions_accepted(&self) {
+        self.native_transactions_accepted_total
+            .fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn inc_native_blocks_finalized(&self) {
+        self.native_blocks_finalized_total
+            .fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn inc_native_sync_blocks_applied(&self) {
+        self.native_sync_blocks_applied_total
+            .fetch_add(1, Ordering::Relaxed);
+    }
+
     fn render(&self) -> String {
         format!(
             "# TYPE anchors_received_total counter\nanchors_received_total {}\n\
@@ -1672,13 +1709,21 @@ impl Metrics {
 # TYPE invalid_envelopes_total counter\ninvalid_envelopes_total {}\n\
 # TYPE lrucache_evictions_total counter\nlrucache_evictions_total {}\n\
 # TYPE finality_events_total counter\nfinality_events_total {}\n\
-# TYPE gossipsub_rejects_total counter\ngossipsub_rejects_total {}\n",
+# TYPE gossipsub_rejects_total counter\ngossipsub_rejects_total {}\n\
+# TYPE native_transactions_accepted_total counter\nnative_transactions_accepted_total {}\n\
+# TYPE native_blocks_finalized_total counter\nnative_blocks_finalized_total {}\n\
+# TYPE native_sync_blocks_applied_total counter\nnative_sync_blocks_applied_total {}\n",
             self.anchors_received_total.load(Ordering::Relaxed),
             self.anchors_verified_total.load(Ordering::Relaxed),
             self.invalid_envelopes_total.load(Ordering::Relaxed),
             self.lrucache_evictions_total.load(Ordering::Relaxed),
             self.finality_events_total.load(Ordering::Relaxed),
             self.gossipsub_rejects_total.load(Ordering::Relaxed),
+            self.native_transactions_accepted_total
+                .load(Ordering::Relaxed),
+            self.native_blocks_finalized_total.load(Ordering::Relaxed),
+            self.native_sync_blocks_applied_total
+                .load(Ordering::Relaxed),
         )
     }
 }
@@ -1806,6 +1851,67 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
         println!("QSYS|mod=METRICS|evt=LISTEN|addr={addr}");
     }
 
+    let (native_command_sender, mut native_command_receiver) =
+        mpsc::channel::<NativeChainCommand>(1024);
+    let mut native_runtime = None;
+    if cfg.native_chain_enabled {
+        let local_validator = encode_public_key_base64(&cfg.key_material.verifying);
+        let mut validators = cfg
+            .membership_policy
+            .current_members()
+            .into_iter()
+            .map(|key| encode_public_key_base64(&key))
+            .collect::<Vec<_>>();
+        if validators.is_empty() {
+            if cfg.quorum != 1 {
+                return Err(NetworkError::Policy(
+                    "native chain quorum greater than one requires an explicit membership policy"
+                        .to_string(),
+                ));
+            }
+            validators.push(local_validator);
+        }
+        let state_base = cfg.blob_dir.as_ref().unwrap_or(&cfg.log_dir);
+        let state_path = state_base.join("native_chain_state.json");
+        let state = NativeChainState::load_or_initialize(
+            &state_path,
+            cfg.evm_chain_id,
+            cfg.stake_registry_path.as_deref(),
+            validators.clone(),
+            cfg.quorum,
+        )
+        .map_err(NetworkError::Codec)?;
+        let shared_state = Arc::new(RwLock::new(state));
+        native_runtime = Some(
+            NativeChainRuntime::new(
+                shared_state.clone(),
+                state_path,
+                validators,
+                cfg.quorum,
+                &cfg.key_material.signing,
+            )
+            .await
+            .map_err(NetworkError::Policy)?,
+        );
+        if let Some(addr) = cfg.evm_rpc_listen {
+            let rpc_cfg = EvmRpcConfig::new(
+                addr,
+                cfg.evm_chain_id,
+                shared_state,
+                native_command_sender.clone(),
+            );
+            tokio::spawn(async move {
+                if let Err(err) = run_evm_rpc_server(rpc_cfg).await {
+                    eprintln!("evm rpc server error: {err}");
+                }
+            });
+        }
+        println!(
+            "QSYS|mod=NATIVE_CHAIN|evt=READY|chain_id={}|quorum={}",
+            cfg.evm_chain_id, cfg.quorum
+        );
+    }
+
     if let (Some(blob_dir), Some(blob_listen)) = (cfg.blob_dir.clone(), cfg.blob_listen) {
         let blob_cfg = BlobServiceConfig {
             base_dir: blob_dir,
@@ -1836,6 +1942,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut broadcast_counter: u64 = 0;
     let mut bft_state = BftState::new(cfg.bft_round_ms);
     let mut anchor_votes = AnchorVotes::new();
+    let mut last_native_tip: Option<Instant> = None;
 
     let local_peer = cfg.key_material.libp2p.public().to_peer_id();
 
@@ -1881,6 +1988,47 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                 if let Err(err) = broadcast_evidence(&mut swarm, &cfg) {
                     eprintln!("evidence broadcast error: {err}");
                 }
+                if let Some(runtime) = native_runtime.as_mut() {
+                    match runtime.propose(&cfg.key_material.signing).await {
+                        Ok(Some(proposal)) => {
+                            let message = NativeChainMessage::new(
+                                NativeChainMessagePayload::Proposal(proposal)
+                            );
+                            if let Err(err) = publish_native_message(
+                                &mut swarm,
+                                runtime,
+                                &cfg.key_material.signing,
+                                message,
+                                true,
+                                true,
+                                &metrics,
+                            ).await {
+                                eprintln!("native chain proposal error: {err}");
+                            }
+                        }
+                        Ok(None) => {}
+                        Err(err) => eprintln!("native chain proposal error: {err}"),
+                    }
+                    if last_native_tip
+                        .map(|published| published.elapsed() >= Duration::from_secs(5))
+                        .unwrap_or(true)
+                    {
+                        let message = runtime.tip_message().await;
+                        if let Err(err) = publish_native_message(
+                            &mut swarm,
+                            runtime,
+                            &cfg.key_material.signing,
+                            message,
+                            false,
+                            true,
+                            &metrics,
+                        ).await {
+                            eprintln!("native chain tip error: {err}");
+                        } else {
+                            last_native_tip = Some(Instant::now());
+                        }
+                    }
+                }
             }
             event = swarm.select_next_some() => {
                 if let Err(err) = handle_event(
@@ -1891,9 +2039,41 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                     &mut invalid_counters,
                     &mut bft_state,
                     &mut anchor_votes,
-                    &metrics
+                    &metrics,
+                    &mut native_runtime,
                 ).await {
                     eprintln!("network error: {err}");
+                }
+            }
+            command = native_command_receiver.recv(), if native_runtime.is_some() => {
+                if let Some(command) = command {
+                    let runtime = native_runtime.as_mut().expect("guarded native runtime");
+                    let hash = command.transaction.hash.clone();
+                    match runtime.accept_transaction(command.transaction.clone()).await {
+                        Ok(accepted) => {
+                            let _ = command.response.send(Ok(hash));
+                            if accepted {
+                                metrics.inc_native_transactions_accepted();
+                                let message = NativeChainMessage::new(
+                                    NativeChainMessagePayload::Transaction(command.transaction)
+                                );
+                                if let Err(err) = publish_native_message(
+                                    &mut swarm,
+                                    runtime,
+                                    &cfg.key_material.signing,
+                                    message,
+                                    false,
+                                    true,
+                                    &metrics,
+                                ).await {
+                                    eprintln!("native transaction gossip error: {err}");
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            let _ = command.response.send(Err(err));
+                        }
+                    }
                 }
             }
             _ = signal::ctrl_c() => {
@@ -1916,7 +2096,7 @@ fn build_swarm(cfg: &NetConfig) -> Result<Swarm<JrocBehaviour>, NetworkError> {
         )
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?
         .with_behaviour(|key| {
-            build_behaviour(key, &cfg.bridge_topics).map_err(|err| {
+            build_behaviour(key, &cfg.bridge_topics, cfg.native_chain_enabled).map_err(|err| {
                 let boxed: Box<dyn std::error::Error + Send + Sync> = Box::new(err);
                 boxed
             })
@@ -1930,6 +2110,7 @@ fn build_swarm(cfg: &NetConfig) -> Result<Swarm<JrocBehaviour>, NetworkError> {
 fn build_behaviour(
     key: &identity::Keypair,
     topics: &[IdentTopic],
+    native_chain_enabled: bool,
 ) -> Result<JrocBehaviour, NetworkError> {
     let peer_id = key.public().to_peer_id();
 
@@ -1954,6 +2135,11 @@ fn build_behaviour(
     gossipsub
         .subscribe(&TOPIC_VOTES)
         .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
+    if native_chain_enabled {
+        gossipsub
+            .subscribe(&TOPIC_NATIVE_CHAIN)
+            .map_err(|err| NetworkError::Libp2p(format!("{err:?}")))?;
+    }
 
     let identify_config = identify::Config::new("mfenx-powerhouse/1.0.0".into(), key.public())
         .with_push_listen_addr_updates(true);
@@ -2391,6 +2577,7 @@ async fn handle_event(
     bft_state: &mut BftState,
     anchor_votes: &mut AnchorVotes,
     metrics: &Arc<Metrics>,
+    native_runtime: &mut Option<NativeChainRuntime>,
 ) -> Result<(), NetworkError> {
     #[allow(clippy::collapsible_match, clippy::single_match)]
     match event {
@@ -2403,6 +2590,29 @@ async fn handle_event(
                 message,
                 ..
             } => {
+                if message.topic == TOPIC_NATIVE_CHAIN.hash() {
+                    if message.data.len() > MAX_NATIVE_MESSAGE_BYTES {
+                        metrics.inc_gossipsub_rejects();
+                        record_invalid(invalid_counters, propagation_source, metrics);
+                        return Ok(());
+                    }
+                    let Some(runtime) = native_runtime.as_mut() else {
+                        return Ok(());
+                    };
+                    let native_message: NativeChainMessage = serde_json::from_slice(&message.data)
+                        .map_err(|err| NetworkError::Codec(err.to_string()))?;
+                    publish_native_message(
+                        swarm,
+                        runtime,
+                        &cfg.key_material.signing,
+                        native_message,
+                        true,
+                        false,
+                        metrics,
+                    )
+                    .await?;
+                    return Ok(());
+                }
                 if message.topic == TOPIC_EVIDENCE.hash() {
                     handle_evidence_message(cfg, &message.data)?;
                     return Ok(());
@@ -2659,6 +2869,61 @@ async fn handle_event(
             _ => {}
         },
         _ => {}
+    }
+    Ok(())
+}
+
+async fn publish_native_message(
+    swarm: &mut Swarm<JrocBehaviour>,
+    runtime: &mut NativeChainRuntime,
+    signing: &SigningKey,
+    message: NativeChainMessage,
+    process_local: bool,
+    publish_initial: bool,
+    metrics: &Arc<Metrics>,
+) -> Result<(), NetworkError> {
+    let mut queue = VecDeque::from([(message, process_local, publish_initial)]);
+    while let Some((message, process, publish)) = queue.pop_front() {
+        if process {
+            let before = runtime.state.read().await.latest_number();
+            let sync_response =
+                matches!(&message.payload, NativeChainMessagePayload::SyncResponse(_));
+            let generated = runtime
+                .handle_message(message.clone(), signing)
+                .await
+                .map_err(NetworkError::Codec)?;
+            for next in generated {
+                queue.push_back((next, true, true));
+            }
+            let after = runtime.state.read().await.latest_number();
+            if after > before {
+                metrics.inc_native_blocks_finalized();
+                if sync_response {
+                    metrics.inc_native_sync_blocks_applied();
+                }
+            }
+        }
+        if publish {
+            if let NativeChainMessagePayload::Finalized(block) = &message.payload {
+                println!(
+                    "QSYS|mod=NATIVE_CHAIN|evt=FINALIZED|height={}|hash={}|txs={}|votes={}",
+                    block.proposal.number,
+                    block.proposal.hash,
+                    block.proposal.transactions.len(),
+                    block.votes.len()
+                );
+            }
+            let bytes =
+                serde_json::to_vec(&message).map_err(|err| NetworkError::Codec(err.to_string()))?;
+            match swarm
+                .behaviour_mut()
+                .gossipsub
+                .publish(TOPIC_NATIVE_CHAIN.clone(), bytes)
+            {
+                Ok(_) | Err(PublishError::InsufficientPeers) | Err(PublishError::Duplicate) => {}
+                Err(err) => return Err(NetworkError::Libp2p(err.to_string())),
+            }
+        }
     }
     Ok(())
 }

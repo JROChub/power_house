@@ -1,9 +1,69 @@
 # Power-House RPC Operations
 
-An RPC URL is ready for public wallets only when it serves canonical state from
-the same finalized network observed by every public node. A process that invents
-block numbers, stores balances only on one host, or acknowledges transfers
-before network finality must not be advertised as the chain RPC.
+Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
+state are finalized by the configured validator quorum. Chain ID `177155` is
+the default production identity.
+
+## Consensus deployment
+
+Use the same static membership policy, quorum, chain ID, and initial registry
+on every validator. The quorum must be a strict majority. The first start
+commits these values and the initial balances into
+`native_chain_state.json`.
+
+```bash
+julian net start \
+  --node-id validator-1 \
+  --log-dir /var/lib/powerhouse/validator-1/logs \
+  --blob-dir /var/lib/powerhouse/validator-1 \
+  --listen /ip4/0.0.0.0/tcp/7001 \
+  --policy /etc/powerhouse/native-validators.json \
+  --quorum 2 \
+  --evm-chain-id 177155 \
+  --evm-rpc-listen 127.0.0.1:8545 \
+  --key /etc/powerhouse/validator-1.key
+```
+
+Omit `--evm-rpc-listen` on validators that do not serve HTTP. Keep
+`--evm-chain-id 177155` so they subscribe, validate, vote, and persist the
+same finalized chain.
+
+Native transfers currently support EIP-1559 type `0x02`, direct addresses,
+empty calldata, and whole-token values. Contract creation and contract calls
+return an explicit unsupported-operation error. Native transfer execution is
+currently fee-free, so RPC gas price and effective gas price are zero.
+`eth_sendRawTransaction` confirms mempool acceptance;
+`eth_getTransactionReceipt` remains `null` until the block has a valid quorum
+certificate.
+
+## Genesis and recovery
+
+Fund `stake_registry.json` before the first native-chain start. After
+`native_chain_state.json` exists, that file is authoritative for RPC balances.
+Do not independently delete or regenerate it on one replica.
+
+At startup each node:
+
+- verifies the genesis commitment
+- replays every signed transaction
+- verifies proposer and quorum signatures
+- recomputes every state root
+- rejects validator, quorum, chain ID, sequence, or account-state mismatch
+
+Back up `native_chain_state.json` with the node identity and policy. Restore the
+same finalized file to a replacement replica before exposing its RPC.
+
+## Replica test
+
+The repository includes a three-process transaction test:
+
+```bash
+scripts/test_native_rpc_cluster.sh
+```
+
+It submits a signed transfer with two validators, starts a third replica after
+finality, and requires live catch-up plus identical block hash, state root,
+balances, and successful receipt.
 
 ## Publication gate
 
@@ -27,18 +87,15 @@ The command fails on:
 Run the probe after every RPC deployment and continuously from external
 monitoring. Do not update ChainList until it passes.
 
-## Consensus requirements
-
-A production RPC adapter must read finalized blocks, account state, and
-transaction results from Power-House consensus. Every write must enter the
-network transaction path, survive validation and quorum finality, and return
-the same receipt from multiple RPC replicas. Contract methods must either have
-a real execution engine or return a standards-compliant unsupported-method
-error; fabricated success responses are not acceptable.
+Place TLS and request controls in a reverse proxy in front of
+`127.0.0.1:8545`. Monitor `/healthz`, finalized height, finalized hash, process
+restarts, disk durability, and agreement between at least two RPC replicas.
+Prometheus exports `native_transactions_accepted_total`,
+`native_blocks_finalized_total`, and `native_sync_blocks_applied_total`.
 
 ## Incident response
 
 If the probe fails, remove the endpoint from public discovery or return a clear
 maintenance response. Preserve node and reverse-proxy logs, compare finalized
-anchor IDs across replicas, and restore service only after DNS, TLS, chain ID,
-latest block, and replica state agree.
+block hashes and state roots across replicas, and restore service only after
+DNS, TLS, chain ID, latest block, and replica state agree.

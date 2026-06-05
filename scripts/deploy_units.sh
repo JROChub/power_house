@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Deploy known-good systemd unit files for boot1 and boot2, then reload and restart.
 # Usage:
-#   scripts/deploy_units.sh root@137.184.33.2 root@146.190.126.101
+#   scripts/deploy_units.sh root@boot1.example.net root@boot2.example.net
 # Optional env:
 #   SSH_OPTS="-o StrictHostKeyChecking=accept-new" ./scripts/deploy_units.sh root@boot1 root@boot2
 
