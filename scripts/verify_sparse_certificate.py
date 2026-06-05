@@ -11,8 +11,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-MAGIC = b"PHSPv1\0\0"
+SEEDED_MAGIC = b"PHSPv1\0\0"
+POLYNOMIAL_MAGIC = b"PHSMv1\0\0"
+COMMITTED_MAGIC = b"PHCPv1\0\0"
 POLYNOMIAL_DOMAIN = b"power_house:v1:seeded-sparse-polynomial"
+COMMITTED_POLYNOMIAL_DOMAIN = b"power_house:v1:committed-sparse-polynomial"
 TRANSCRIPT_DOMAIN = b"power_house:v1:sparse-sumcheck-transcript"
 CHALLENGE_DOMAIN = b"power_house:v1:sparse-sumcheck-challenge"
 RESPONSE_DOMAIN = b"power_house:v1:sparse-sumcheck-response"
@@ -178,19 +181,53 @@ def transcript_round(
     return response_hasher.digest(), challenge
 
 
-def verify(path: Path) -> dict[str, int | str]:
-    reader = Reader(path.read_bytes())
-    if reader.take(8) != MAGIC:
-        raise CertificateError("bad certificate magic")
-    p = reader.u64()
+def committed_polynomial(path: Path) -> tuple[int, list[Term], bytes]:
+    data = path.read_bytes()
+    reader = Reader(data)
+    if reader.take(8) != POLYNOMIAL_MAGIC:
+        raise CertificateError("bad polynomial magic")
     num_vars = reader.u64()
     num_terms = reader.u64()
-    max_degree = reader.u64()
-    seed = reader.take(reader.u64())
-    stored_claimed_sum = reader.u64()
-    stored_polynomial_digest = reader.take(32)
-    round_count = reader.u64()
+    if num_vars == 0 or num_terms == 0:
+        raise CertificateError("invalid polynomial parameters")
+    if num_terms > (len(data) - reader.offset) // 24:
+        raise CertificateError("polynomial term count exceeds input size")
+    terms: list[Term] = []
+    for _ in range(num_terms):
+        coefficient = reader.u64()
+        degree = reader.u64()
+        variables = [reader.u64() for _ in range(degree)]
+        if coefficient == 0 or degree == 0:
+            raise CertificateError("invalid polynomial term")
+        if variables != sorted(set(variables)):
+            raise CertificateError("polynomial variables are not canonical")
+        if variables[-1] >= num_vars:
+            raise CertificateError("polynomial variable outside domain")
+        terms.append(Term(coefficient, variables))
+    if reader.offset != len(data):
+        raise CertificateError("trailing polynomial bytes")
+    return num_vars, terms, data
 
+
+def committed_digest(data: bytes) -> bytes:
+    hasher = hashlib.blake2b(digest_size=32)
+    absorb_bytes(hasher, COMMITTED_POLYNOMIAL_DOMAIN)
+    absorb_bytes(hasher, data)
+    return hasher.digest()
+
+
+def replay(
+    reader: Reader,
+    *,
+    p: int,
+    num_vars: int,
+    num_terms: int,
+    max_degree: int,
+    stored_claimed_sum: int,
+    polynomial_digest: bytes,
+    terms: list[Term],
+    round_count: int,
+) -> dict[str, int | str]:
     if (
         p < 3
         or p % 2 == 0
@@ -199,21 +236,18 @@ def verify(path: Path) -> dict[str, int | str]:
         or max_degree == 0
         or max_degree > num_vars
         or round_count != num_vars
+        or len(terms) != num_terms
     ):
         raise CertificateError("invalid certificate parameters")
-
-    terms = derive_terms(p, num_vars, num_terms, max_degree, seed)
-    polynomial_digest = digest_terms(
-        num_vars, num_terms, max_degree, seed, terms
-    )
-    if polynomial_digest != stored_polynomial_digest:
-        raise CertificateError("polynomial digest mismatch")
 
     events: list[tuple[int, int]] = []
     states: list[TermState] = []
     claimed_sum = 0
     for term_id, term in enumerate(terms):
-        contribution = term.coefficient * pow(2, num_vars - len(term.variables), p) % p
+        coefficient = term.coefficient % p
+        if coefficient == 0:
+            raise CertificateError("polynomial coefficient is zero in field")
+        contribution = coefficient * pow(2, num_vars - len(term.variables), p) % p
         claimed_sum = (claimed_sum + contribution) % p
         states.append(TermState(contribution, 0))
         events.extend((variable, term_id) for variable in term.variables)
@@ -295,12 +329,107 @@ def verify(path: Path) -> dict[str, int | str]:
     }
 
 
+def verify_seeded(data: bytes) -> dict[str, int | str]:
+    reader = Reader(data)
+    if reader.take(8) != SEEDED_MAGIC:
+        raise CertificateError("bad seeded certificate magic")
+    p = reader.u64()
+    num_vars = reader.u64()
+    num_terms = reader.u64()
+    max_degree = reader.u64()
+    seed = reader.take(reader.u64())
+    stored_claimed_sum = reader.u64()
+    stored_polynomial_digest = reader.take(32)
+    round_count = reader.u64()
+    if round_count != num_vars or round_count > (len(data) - reader.offset - 40) // 16:
+        raise CertificateError("round count exceeds input size")
+
+    terms = derive_terms(p, num_vars, num_terms, max_degree, seed)
+    polynomial_digest = digest_terms(
+        num_vars, num_terms, max_degree, seed, terms
+    )
+    if polynomial_digest != stored_polynomial_digest:
+        raise CertificateError("polynomial digest mismatch")
+
+    return replay(
+        reader,
+        p=p,
+        num_vars=num_vars,
+        num_terms=num_terms,
+        max_degree=max_degree,
+        stored_claimed_sum=stored_claimed_sum,
+        polynomial_digest=polynomial_digest,
+        terms=terms,
+        round_count=round_count,
+    )
+
+
+def verify_committed(data: bytes, polynomial_path: Path) -> dict[str, int | str]:
+    reader = Reader(data)
+    if reader.take(8) != COMMITTED_MAGIC:
+        raise CertificateError("bad committed certificate magic")
+    p = reader.u64()
+    num_vars = reader.u64()
+    num_terms = reader.u64()
+    max_degree = reader.u64()
+    stored_commitment = reader.take(32)
+    stored_claimed_sum = reader.u64()
+    round_count = reader.u64()
+    if round_count != num_vars or round_count > (len(data) - reader.offset - 40) // 16:
+        raise CertificateError("committed round count exceeds input size")
+
+    polynomial_num_vars, terms, polynomial_bytes = committed_polynomial(
+        polynomial_path
+    )
+    if polynomial_num_vars != num_vars or len(terms) != num_terms:
+        raise CertificateError("committed polynomial metadata mismatch")
+    actual_max_degree = max(len(term.variables) for term in terms)
+    if actual_max_degree != max_degree:
+        raise CertificateError("committed polynomial degree mismatch")
+    commitment = committed_digest(polynomial_bytes)
+    if commitment != stored_commitment:
+        raise CertificateError("committed polynomial digest mismatch")
+
+    return replay(
+        reader,
+        p=p,
+        num_vars=num_vars,
+        num_terms=num_terms,
+        max_degree=max_degree,
+        stored_claimed_sum=stored_claimed_sum,
+        polynomial_digest=commitment,
+        terms=terms,
+        round_count=round_count,
+    )
+
+
+def verify(path: Path, polynomial_path: Path | None) -> dict[str, int | str]:
+    data = path.read_bytes()
+    magic = data[:8]
+    if magic == SEEDED_MAGIC:
+        if polynomial_path is not None:
+            raise CertificateError("seeded certificate does not use --polynomial")
+        return verify_seeded(data)
+    if magic == COMMITTED_MAGIC:
+        if polynomial_path is None:
+            raise CertificateError("committed certificate requires --polynomial")
+        return verify_committed(data, polynomial_path)
+    raise CertificateError("unknown certificate magic")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("certificate", type=Path)
+    parser.add_argument("--polynomial", type=Path)
     args = parser.parse_args()
     try:
-        print(json.dumps(verify(args.certificate), indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                verify(args.certificate, args.polynomial),
+                indent=2,
+                sort_keys=True,
+            )
+        )
     except (CertificateError, OSError) as error:
         print(f"verification failed: {error}", file=sys.stderr)
         return 1

@@ -103,7 +103,8 @@ pub use merkle::{
 pub use multilinear::MultilinearPolynomial;
 pub use prng::SimplePrng;
 pub use sparse_sumcheck::{
-    SeededSparseProof, SeededSparseSpec, SparseProofError, SparseVerificationReport,
+    CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,
+    SparseMonomial, SparseProofError, SparseVerificationReport,
 };
 pub use streaming::StreamingPolynomial;
 pub use sumcheck::{ChainedSumProof, GeneralSumClaim, GeneralSumProof, ProofStats, SumClaim};
