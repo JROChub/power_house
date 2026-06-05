@@ -189,6 +189,7 @@ impl SumClaim {
 
 /// Domain tag used for the generalized sum-check Fiat–Shamir transcript.
 pub(crate) const GENERAL_SUMCHECK_DOMAIN: &[u8] = b"power_house:v2:sumcheck";
+const SEEDED_AFFINE_DOMAIN: &[u8] = b"power_house:v1:seeded-affine";
 
 /// Generalized non-interactive sum-check claim for multilinear polynomials.
 #[derive(Debug, Clone)]
@@ -279,6 +280,14 @@ impl GeneralSumClaim {
         GeneralSumProof::prove_constant(num_vars, field, value).claim
     }
 
+    /// Constructs a closed-form proof for a seeded affine multilinear polynomial.
+    ///
+    /// The public seed deterministically defines `f(x) = c + sum(a_i * x_i)`,
+    /// allowing verifier work to scale with `num_vars` rather than `2^num_vars`.
+    pub fn prove_seeded_affine(num_vars: usize, field: &Field, seed: &[u8]) -> Self {
+        GeneralSumProof::prove_seeded_affine(num_vars, field, seed).claim
+    }
+
     /// Proves the sum alongside transcript metadata.
     pub fn prove_with_trace(poly: &MultilinearPolynomial, field: &Field) -> GeneralSumProof {
         GeneralSumProof::prove(poly, field)
@@ -321,6 +330,20 @@ impl GeneralSumClaim {
     pub fn verify_constant(&self, field: &Field, value: u64) -> bool {
         self.verify_constant_with_trace(field, value).is_some()
     }
+
+    /// Verifies a closed-form proof for a public seeded affine polynomial.
+    pub fn verify_seeded_affine_with_trace(
+        &self,
+        field: &Field,
+        seed: &[u8],
+    ) -> Option<GeneralSumTrace> {
+        verify_seeded_affine_sum(self, field, seed)
+    }
+
+    /// Returns true when a seeded affine proof verifies.
+    pub fn verify_seeded_affine(&self, field: &Field, seed: &[u8]) -> bool {
+        self.verify_seeded_affine_with_trace(field, seed).is_some()
+    }
 }
 
 impl GeneralSumProof {
@@ -349,6 +372,16 @@ impl GeneralSumProof {
     /// `2^70 = 1,180,591,620,717,411,303,424` points.
     pub fn prove_constant(num_vars: usize, field: &Field, value: u64) -> Self {
         prove_constant_inner(num_vars, field, value)
+    }
+
+    /// Produces a closed-form proof for a seeded affine multilinear polynomial.
+    ///
+    /// The public seed expands into a constant term and one coefficient per
+    /// variable. The prover and verifier both derive those coefficients, so
+    /// the proof commits to a non-constant `num_vars`-variate polynomial
+    /// without storing a `2^num_vars` evaluation table.
+    pub fn prove_seeded_affine(num_vars: usize, field: &Field, seed: &[u8]) -> Self {
+        prove_seeded_affine_inner(num_vars, field, seed)
     }
 
     /// Produces a proof together with per-round timing information.
@@ -514,6 +547,27 @@ impl GeneralSumProof {
     pub fn verify_constant(&self, field: &Field, value: u64) -> bool {
         self.verify_constant_with_trace(field, value).is_some()
     }
+
+    /// Verifies a closed-form proof for a public seeded affine polynomial.
+    pub fn verify_seeded_affine_with_trace(
+        &self,
+        field: &Field,
+        seed: &[u8],
+    ) -> Option<GeneralSumTrace> {
+        let trace = self.claim.verify_seeded_affine_with_trace(field, seed)?;
+        if trace.challenges != self.challenges
+            || trace.round_sums != self.round_sums
+            || trace.final_evaluation != self.final_evaluation
+        {
+            return None;
+        }
+        Some(trace)
+    }
+
+    /// Returns true when a seeded affine proof verifies.
+    pub fn verify_seeded_affine(&self, field: &Field, seed: &[u8]) -> bool {
+        self.verify_seeded_affine_with_trace(field, seed).is_some()
+    }
 }
 
 fn prove_constant_inner(num_vars: usize, field: &Field, value: u64) -> GeneralSumProof {
@@ -560,6 +614,120 @@ fn prove_constant_inner(num_vars: usize, field: &Field, value: u64) -> GeneralSu
         round_sums,
         final_evaluation: constant,
     }
+}
+
+fn prove_seeded_affine_inner(num_vars: usize, field: &Field, seed: &[u8]) -> GeneralSumProof {
+    assert!(num_vars >= 1, "num_vars must be at least 1");
+    let num_vars_word = u64::try_from(num_vars).expect("num_vars must fit in transcript word");
+    let p = field.modulus();
+    let parameters = derive_seeded_affine_parameters(num_vars, field, seed);
+    let constant = parameters[0];
+    let coefficients = &parameters[1..];
+    let claimed_sum = seeded_affine_claimed_sum(num_vars, field, constant, coefficients);
+
+    let mut transcript = Transcript::new(GENERAL_SUMCHECK_DOMAIN);
+    transcript.append(p);
+    transcript.append(num_vars_word);
+    transcript.append(claimed_sum);
+
+    let mut rounds = Vec::with_capacity(num_vars);
+    let mut challenges = Vec::with_capacity(num_vars);
+    let mut round_sums = Vec::with_capacity(num_vars);
+    let mut running_sum = claimed_sum;
+    let mut prefix_evaluation = constant;
+    let mut suffix_sum = coefficients
+        .iter()
+        .fold(0u64, |acc, &coefficient| field.add(acc, coefficient));
+
+    for (round_idx, &coefficient) in coefficients.iter().enumerate() {
+        round_sums.push(running_sum);
+        suffix_sum = field.sub(suffix_sum, coefficient);
+        let remaining_after = num_vars - round_idx - 1;
+        let (a, b) = seeded_affine_round(
+            field,
+            prefix_evaluation,
+            coefficient,
+            suffix_sum,
+            remaining_after,
+        );
+        debug_assert_eq!(field.add(b, field.add(a, b)), running_sum);
+        rounds.push((a, b));
+
+        transcript.append(a);
+        transcript.append(b);
+        let challenge = transcript.challenge(field);
+        challenges.push(challenge);
+        prefix_evaluation = field.add(prefix_evaluation, field.mul(coefficient, challenge));
+        running_sum = field.add(field.mul(a, challenge), b);
+    }
+
+    debug_assert_eq!(running_sum, prefix_evaluation);
+
+    let claim = GeneralSumClaim {
+        p,
+        num_vars,
+        claimed_sum,
+        rounds,
+    };
+
+    GeneralSumProof {
+        claim,
+        challenges,
+        round_sums,
+        final_evaluation: prefix_evaluation,
+    }
+}
+
+fn seed_to_transcript_words(seed: &[u8]) -> Vec<u64> {
+    let mut words = Vec::with_capacity(1 + seed.len().div_ceil(8));
+    let seed_len = u64::try_from(seed.len()).expect("seed length must fit in transcript word");
+    words.push(seed_len);
+    for chunk in seed.chunks(8) {
+        let mut word = [0u8; 8];
+        word[..chunk.len()].copy_from_slice(chunk);
+        words.push(u64::from_be_bytes(word));
+    }
+    words
+}
+
+fn derive_seeded_affine_parameters(num_vars: usize, field: &Field, seed: &[u8]) -> Vec<u64> {
+    let mut words = seed_to_transcript_words(seed);
+    words.push(u64::try_from(num_vars).expect("num_vars must fit in transcript word"));
+    derive_many_mod_p(field.modulus(), SEEDED_AFFINE_DOMAIN, &words, num_vars + 1)
+}
+
+fn seeded_affine_claimed_sum(
+    num_vars: usize,
+    field: &Field,
+    constant: u64,
+    coefficients: &[u64],
+) -> u64 {
+    debug_assert_eq!(coefficients.len(), num_vars);
+    let num_vars_word = u64::try_from(num_vars).expect("num_vars must fit in transcript word");
+    let coefficient_sum = coefficients
+        .iter()
+        .fold(0u64, |acc, &coefficient| field.add(acc, coefficient));
+    let constant_term = field.mul(constant, field.pow(2, num_vars_word));
+    let linear_term = field.mul(coefficient_sum, field.pow(2, num_vars_word - 1));
+    field.add(constant_term, linear_term)
+}
+
+fn seeded_affine_round(
+    field: &Field,
+    prefix_evaluation: u64,
+    coefficient: u64,
+    suffix_sum: u64,
+    remaining_after: usize,
+) -> (u64, u64) {
+    let scale = field.pow(2, remaining_after as u64);
+    let a = field.mul(coefficient, scale);
+    let base_term = field.mul(prefix_evaluation, scale);
+    let later_term = if remaining_after == 0 {
+        0
+    } else {
+        field.mul(suffix_sum, field.pow(2, (remaining_after - 1) as u64))
+    };
+    (a, field.add(base_term, later_term))
 }
 
 fn prove_streaming_with_stats_inner(
@@ -1124,6 +1292,76 @@ fn verify_constant_sum(
     })
 }
 
+fn verify_seeded_affine_sum(
+    claim: &GeneralSumClaim,
+    field: &Field,
+    seed: &[u8],
+) -> Option<GeneralSumTrace> {
+    if claim.p != field.modulus() || claim.rounds.len() != claim.num_vars || claim.num_vars == 0 {
+        return None;
+    }
+
+    let p = claim.p;
+    let num_vars = claim.num_vars;
+    let num_vars_word = u64::try_from(num_vars).ok()?;
+    let parameters = derive_seeded_affine_parameters(num_vars, field, seed);
+    let constant = parameters[0];
+    let coefficients = &parameters[1..];
+    let mut running_claim = seeded_affine_claimed_sum(num_vars, field, constant, coefficients);
+    if claim.claimed_sum != running_claim {
+        return None;
+    }
+
+    let mut transcript = Transcript::new(GENERAL_SUMCHECK_DOMAIN);
+    transcript.append(p);
+    transcript.append(num_vars_word);
+    transcript.append(claim.claimed_sum);
+
+    let mut challenges = Vec::with_capacity(num_vars);
+    let mut round_sums = Vec::with_capacity(num_vars);
+    let mut prefix_evaluation = constant;
+    let mut suffix_sum = coefficients
+        .iter()
+        .fold(0u64, |acc, &coefficient| field.add(acc, coefficient));
+
+    for (round_idx, (&(a, b), &coefficient)) in claim.rounds.iter().zip(coefficients).enumerate() {
+        round_sums.push(running_claim);
+        suffix_sum = field.sub(suffix_sum, coefficient);
+        let remaining_after = num_vars - round_idx - 1;
+        let (expected_a, expected_b) = seeded_affine_round(
+            field,
+            prefix_evaluation,
+            coefficient,
+            suffix_sum,
+            remaining_after,
+        );
+
+        if a % p != expected_a || b % p != expected_b {
+            return None;
+        }
+        if field.add(b, field.add(a, b)) != running_claim {
+            return None;
+        }
+
+        transcript.append(a);
+        transcript.append(b);
+        let challenge = transcript.challenge(field);
+        challenges.push(challenge);
+        prefix_evaluation = field.add(prefix_evaluation, field.mul(coefficient, challenge));
+        running_claim = field.add(field.mul(a, challenge), b);
+    }
+
+    if running_claim != prefix_evaluation {
+        return None;
+    }
+
+    Some(GeneralSumTrace {
+        challenges,
+        round_sums,
+        final_evaluation: prefix_evaluation,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1274,6 +1512,70 @@ mod tests {
 
         proof.claim.rounds[12].1 = field.add(proof.claim.rounds[12].1, 1);
         assert!(!proof.verify_constant(&field, 173));
+    }
+
+    fn dense_seeded_affine(num_vars: usize, field: &Field, seed: &[u8]) -> MultilinearPolynomial {
+        let parameters = derive_seeded_affine_parameters(num_vars, field, seed);
+        let constant = parameters[0];
+        let coefficients = &parameters[1..];
+        let mut evaluations = Vec::with_capacity(1usize << num_vars);
+        for idx in 0..(1usize << num_vars) {
+            let mut value = constant;
+            for (bit, &coefficient) in coefficients.iter().enumerate() {
+                if (idx >> bit) & 1 == 1 {
+                    value = field.add(value, coefficient);
+                }
+            }
+            evaluations.push(value);
+        }
+        MultilinearPolynomial::from_evaluations(num_vars, evaluations)
+    }
+
+    #[test]
+    fn test_seeded_affine_sumcheck_matches_dense_prover() {
+        let field = Field::new(1_000_000_007);
+        let seed = b"power-house seeded affine equivalence test";
+        let dense = dense_seeded_affine(5, &field, seed);
+        let dense_proof = GeneralSumProof::prove(&dense, &field);
+        let affine_proof = GeneralSumProof::prove_seeded_affine(5, &field, seed);
+
+        assert_eq!(
+            affine_proof.claim.claimed_sum,
+            dense_proof.claim.claimed_sum
+        );
+        assert_eq!(affine_proof.claim.rounds, dense_proof.claim.rounds);
+        assert_eq!(affine_proof.challenges, dense_proof.challenges);
+        assert_eq!(affine_proof.final_evaluation, dense_proof.final_evaluation);
+        assert!(affine_proof.verify_seeded_affine(&field, seed));
+    }
+
+    #[test]
+    fn test_seeded_affine_sumcheck_verifies_astronomical_domain() {
+        let field = Field::new(1_000_000_007);
+        let seed = b"power-house 2^1024 seeded affine certificate";
+        let proof = GeneralSumProof::prove_seeded_affine(1024, &field, seed);
+        let trace = proof
+            .verify_seeded_affine_with_trace(&field, seed)
+            .expect("seeded affine proof must verify");
+
+        assert_eq!(proof.claim.num_vars, 1024);
+        assert_eq!(proof.claim.rounds.len(), 1024);
+        assert_eq!(trace.challenges.len(), 1024);
+        assert!(proof.claim.rounds.iter().any(|&(a, _)| a != 0));
+    }
+
+    #[test]
+    fn test_seeded_affine_sumcheck_rejects_wrong_seed_and_tampering() {
+        let field = Field::new(1_000_000_007);
+        let seed = b"power-house seeded affine tamper test";
+        let proof = GeneralSumProof::prove_seeded_affine(128, &field, seed);
+
+        assert!(proof.verify_seeded_affine(&field, seed));
+        assert!(!proof.verify_seeded_affine(&field, b"wrong public seed"));
+
+        let mut tampered = proof.clone();
+        tampered.claim.rounds[37].0 = field.add(tampered.claim.rounds[37].0, 1);
+        assert!(!tampered.verify_seeded_affine(&field, seed));
     }
 
     fn sample_poly_highdim(field: &Field) -> MultilinearPolynomial {
