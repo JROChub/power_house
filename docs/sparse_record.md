@@ -60,7 +60,7 @@ python3 scripts/verify_sparse_certificate.py \
   target/power_house_sparse_record.phsp
 ```
 
-The Python verifier independently:
+The separately implemented Python verifier:
 
 1. decodes the stable `PHSPv1` binary format,
 2. derives the sparse polynomial from the public seed,

@@ -35,6 +35,13 @@ not establish that arbitrary sextillion-step computations can be verified, do
 not replace a quantum computer, and are not currently claimed as a world first.
 See [Research Claim Standard](docs/research_claim.md).
 
+The v1 sparse workflow is specifically a deterministic conformance artifact:
+the verifier reads the public sparse polynomial and recomputes the expected
+transcript. Because this polynomial family also has a closed-form Boolean sum,
+v1 is not a succinct delegated-computation result. The formal boundary and v2
+research target are documented in [Security Model](docs/security_model.md) and
+[Research Protocol](docs/research_protocol.md).
+
 ## Install
 
 ```bash
@@ -59,10 +66,16 @@ python3 scripts/verify_sparse_certificate.py \
 python3 scripts/verify_sparse_certificate.py \
   target/external_interaction_model.phcp \
   --polynomial target/external_interaction_model.phsm
+
+python3 scripts/test_sparse_verifier.py
+python3 scripts/soundness_budget.py
 ```
 
 The full procedure, formats, expected outputs, and failure tests are in
 [Verification Guide](docs/verification_guide.md).
+
+Small canonical files in `conformance/v1` are checked by both languages. Every
+single-byte XOR mutation of each vector must reject.
 
 ## Library
 
@@ -119,6 +132,9 @@ Operations and migration procedures are documented in
 - [Million-Round Sparse Certificate](docs/sparse_record.md)
 - [Hyperscale Seeded-Affine Proof](docs/hyperscale_proof.md)
 - [Research Claim Standard](docs/research_claim.md)
+- [Prior-Art Review](docs/prior_art_review.md)
+- [Sparse Certificate Security Model](docs/security_model.md)
+- [Research Protocol](docs/research_protocol.md)
 - [Orbital Observatory](docs/orbital_observatory.md)
 - [Operations](docs/ops.md)
 

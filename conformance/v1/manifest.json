@@ -1,0 +1,29 @@
+{
+  "committed": {
+    "claimed_sum": 890880,
+    "final_evaluation": 13487675,
+    "maximum_degree": 5,
+    "polynomial_commitment": "88efabb63c2c7280be47386afb8b6f862972a01e58d90d3d2a29f31bce0554b8",
+    "polynomial_file": "committed-valid.phsm",
+    "polynomial_sha256": "254a0ae17d9cd2477770dc091e450a42df5a03e97c9569f561a845331cb47754",
+    "proof_file": "committed-valid.phcp",
+    "proof_sha256": "f097fb37298e51370516b41957e2e2a689eb5f40443ef1863017de9f3444642f",
+    "terms": 4,
+    "transcript_digest": "871a0763797cfe8f2e3376f62afad37b2ecc38ea95051530399a86e25ba4d5ca",
+    "variables": 16
+  },
+  "field_modulus": 1000000007,
+  "mutation_rule": "xor each byte with 0x01; every single-byte mutation must reject",
+  "schema": "power-house-sparse-conformance-v1",
+  "seeded": {
+    "claimed_sum": 173856083,
+    "file": "seeded-valid.phsp",
+    "final_evaluation": 130873495,
+    "maximum_degree": 6,
+    "polynomial_digest": "8fcda483c138a9511b62f924af5dc7daf813cfdc16847790e8a96f3dddcdc8db",
+    "sha256": "6717cab7f034df3a6f4ee13c2cc68f802139a58dff928d60dc6e2f52fd0a9853",
+    "terms": 20,
+    "transcript_digest": "a0cae3dca2136090b9e03dc162a429f19f7fd7b41a77a4a695eda829a2c9cd02",
+    "variables": 32
+  }
+}

@@ -20,10 +20,46 @@ TRANSCRIPT_DOMAIN = b"power_house:v1:sparse-sumcheck-transcript"
 CHALLENGE_DOMAIN = b"power_house:v1:sparse-sumcheck-challenge"
 RESPONSE_DOMAIN = b"power_house:v1:sparse-sumcheck-response"
 PRNG_DOMAIN = b"JROC_PRNG"
+MAX_DECODED_VARIABLES = 16_000_000
+MAX_DECODED_TERMS = 1_000_000
+MAX_DECODED_DEGREE = 1_000_000
+MAX_DECODED_SEED_BYTES = 1_048_576
+MAX_DECODED_INCIDENCES = 64_000_000
 
 
 class CertificateError(ValueError):
     pass
+
+
+def is_prime_u64(value: int) -> bool:
+    if value < 2:
+        return False
+    for prime in (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37):
+        if value == prime:
+            return True
+        if value % prime == 0:
+            return False
+
+    odd_part = value - 1
+    shifts = 0
+    while odd_part % 2 == 0:
+        shifts += 1
+        odd_part //= 2
+
+    for base in (2, 325, 9_375, 28_178, 450_775, 9_780_504, 1_795_265_022):
+        base %= value
+        if base == 0:
+            continue
+        witness = pow(base, odd_part, value)
+        if witness in (1, value - 1):
+            continue
+        for _ in range(1, shifts):
+            witness = witness * witness % value
+            if witness == value - 1:
+                break
+        else:
+            return False
+    return True
 
 
 class Reader:
@@ -188,16 +224,32 @@ def committed_polynomial(path: Path) -> tuple[int, list[Term], bytes]:
         raise CertificateError("bad polynomial magic")
     num_vars = reader.u64()
     num_terms = reader.u64()
-    if num_vars == 0 or num_terms == 0:
-        raise CertificateError("invalid polynomial parameters")
+    if (
+        num_vars == 0
+        or num_vars > MAX_DECODED_VARIABLES
+        or num_terms == 0
+        or num_terms > MAX_DECODED_TERMS
+    ):
+        raise CertificateError("polynomial dimensions exceed decoder limits")
     if num_terms > (len(data) - reader.offset) // 24:
         raise CertificateError("polynomial term count exceeds input size")
     terms: list[Term] = []
+    total_incidences = 0
     for _ in range(num_terms):
         coefficient = reader.u64()
         degree = reader.u64()
+        if (
+            degree == 0
+            or degree > num_vars
+            or degree > MAX_DECODED_DEGREE
+            or degree > (len(data) - reader.offset) // 8
+        ):
+            raise CertificateError("polynomial degree exceeds input or domain size")
+        total_incidences += degree
+        if total_incidences > MAX_DECODED_INCIDENCES:
+            raise CertificateError("polynomial incidence count exceeds decoder limit")
         variables = [reader.u64() for _ in range(degree)]
-        if coefficient == 0 or degree == 0:
+        if coefficient == 0:
             raise CertificateError("invalid polynomial term")
         if variables != sorted(set(variables)):
             raise CertificateError("polynomial variables are not canonical")
@@ -231,6 +283,7 @@ def replay(
     if (
         p < 3
         or p % 2 == 0
+        or not is_prime_u64(p)
         or num_vars == 0
         or num_terms == 0
         or max_degree == 0
@@ -337,11 +390,25 @@ def verify_seeded(data: bytes) -> dict[str, int | str]:
     num_vars = reader.u64()
     num_terms = reader.u64()
     max_degree = reader.u64()
-    seed = reader.take(reader.u64())
+    seed_length = reader.u64()
+    if seed_length > MAX_DECODED_SEED_BYTES:
+        raise CertificateError("seed length exceeds decoder limit")
+    seed = reader.take(seed_length)
     stored_claimed_sum = reader.u64()
     stored_polynomial_digest = reader.take(32)
     round_count = reader.u64()
-    if round_count != num_vars or round_count > (len(data) - reader.offset - 40) // 16:
+    if (
+        num_vars == 0
+        or num_vars > MAX_DECODED_VARIABLES
+        or num_terms == 0
+        or num_terms > MAX_DECODED_TERMS
+        or max_degree == 0
+        or max_degree > num_vars
+        or max_degree > MAX_DECODED_DEGREE
+        or num_terms * max_degree > MAX_DECODED_INCIDENCES
+        or round_count != num_vars
+        or round_count > (len(data) - reader.offset - 40) // 16
+    ):
         raise CertificateError("round count exceeds input size")
 
     terms = derive_terms(p, num_vars, num_terms, max_degree, seed)
@@ -375,7 +442,18 @@ def verify_committed(data: bytes, polynomial_path: Path) -> dict[str, int | str]
     stored_commitment = reader.take(32)
     stored_claimed_sum = reader.u64()
     round_count = reader.u64()
-    if round_count != num_vars or round_count > (len(data) - reader.offset - 40) // 16:
+    if (
+        num_vars == 0
+        or num_vars > MAX_DECODED_VARIABLES
+        or num_terms == 0
+        or num_terms > MAX_DECODED_TERMS
+        or max_degree == 0
+        or max_degree > num_vars
+        or max_degree > MAX_DECODED_DEGREE
+        or num_terms * max_degree > MAX_DECODED_INCIDENCES
+        or round_count != num_vars
+        or round_count > (len(data) - reader.offset - 40) // 16
+    ):
         raise CertificateError("committed round count exceeds input size")
 
     polynomial_num_vars, terms, polynomial_bytes = committed_polynomial(

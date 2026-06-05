@@ -5,7 +5,7 @@ This guide reproduces every large-domain claim in `power_house` v0.2.1.
 ## Requirements
 
 - Rust stable with Cargo
-- Python 3.10 or newer for the independent verifier
+- Python 3.10 or newer for the cross-language verifier
 - approximately 100 MB of free disk space for generated certificates
 
 Run all commands from the repository root.
@@ -17,6 +17,7 @@ cargo fmt --check
 cargo test --all-targets --locked
 cargo test --all-targets --features net --locked
 cargo clippy --all-targets --all-features -- -D warnings
+python3 -m py_compile scripts/*.py
 ```
 
 ## 2. Verify more than one sextillion points
@@ -65,6 +66,16 @@ python3 scripts/verify_sparse_certificate.py \
 The `PHCPv1` proof commits to the separate `PHSMv1` workload. The Rust and
 Python verifiers both require the exact workload bytes.
 
+Run the differential mutation suite after generating both million-round
+artifacts:
+
+```bash
+python3 scripts/test_sparse_verifier.py
+```
+
+The test consumes the canonical `conformance/v1` files, validates their
+manifest, and requires rejection after XOR-mutating every individual byte.
+
 ## 6. Confirm tamper rejection
 
 ```bash
@@ -92,6 +103,16 @@ For `n` variables and `I` sparse term incidences:
 The current external-data commitment is public and non-hiding. Verification
 reads the complete sparse workload. It is not a succinct polynomial opening,
 general virtual-machine proof, or hidden-witness argument.
+
+The v1 verifier also recomputes every expected round from the public sparse
+polynomial. This is deterministic conformance replay, not a conventional
+probabilistic sum-check verifier. The current field and one-million-round count
+would provide only approximately 9.97 bits under the classical one-repetition
+`n/|F|` soundness bound:
+
+```bash
+python3 scripts/soundness_budget.py
+```
 
 ## Reporting results
 
