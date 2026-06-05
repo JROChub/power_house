@@ -33,6 +33,12 @@ jobs:
       - name: Test network targets
         run: cargo test --all-targets --features net --locked
 
+      - name: CLI contract tests
+        run: bash scripts/test_cli.sh
+
+      - name: RPC publication-gate tests
+        run: python3 scripts/test_rpc_check.py
+
       - name: Reproduce sparse conformance vectors
         run: |
           cargo run --example conformance_vectors

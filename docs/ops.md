@@ -44,6 +44,10 @@ Copy the examples from `infra/systemd/` and fill in real values.
 The node wrappers read these files and start `/usr/local/bin/julian` using
 `/usr/local/bin/powerhouse-boot.sh`.
 
+The deployment script installs refreshed `.env.example` files but refuses to
+start a node until the two live environment files already exist. This prevents
+an upgrade from silently replacing identities, peer addresses, or secrets.
+
 Recommended production flags:
 
 - `--blob-dir /var/lib/powerhouse/<node>/blobs`
@@ -138,7 +142,7 @@ Use versioned releases under `/opt/powerhouse/releases`:
 ## 10. Blob/DA endpoints
 
 - Health: `curl http://<host>:8181/healthz`
-- Submit: `curl -X POST http://<host>:8181/submit_blob -H 'X-Namespace: default' -H 'X-Fee: 10' --data-binary @file.bin`
+- Submit: `curl -X POST http://<host>:8181/submit_blob -H 'X-Namespace: default' -H 'X-Fee: 0' --data-binary @file.bin`
 - Commitment: `curl http://<host>:8181/commitment/default/<hash>`
 - Sample: `curl "http://<host>:8181/sample/default/<hash>?count=2"`
 - Prove storage: `curl http://<host>:8181/prove_storage/default/<hash>/0`
@@ -147,7 +151,23 @@ Use versioned releases under `/opt/powerhouse/releases`:
 If `--blob-auth-token` is set, add:
 - `Authorization: Bearer <token>` or `x-api-key: <token>`
 
-## 10.1 External DA publisher (optional)
+Nonzero fees require a funded `X-Publisher` account and its matching
+`X-Publisher-Sig`; use the stake CLI to provision balances before testing fees.
+
+## 10.1 JSON-RPC publication gate
+
+Before publishing an EVM-compatible endpoint in ChainList, run:
+
+```bash
+python3 scripts/check_rpc.py https://rpc.example.org --expected-chain-id 177155 --require-cors
+```
+
+The probe requires working DNS/TLS, consistent `eth_chainId` and
+`net_version`, a valid latest block response, and browser CORS when requested.
+It is an endpoint integrity check, not a substitute for consensus-state audits.
+See `docs/rpc_operations.md`.
+
+## 10.2 External DA publisher (optional)
 
 Power-House can push DA commitments to an external API (Celestia/Ethereum-compatible
 gateway, or a custom relay). Configure via environment:

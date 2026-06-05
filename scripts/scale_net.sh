@@ -4,7 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 cd "$ROOT_DIR"
 
-JULIAN_BIN="${JULIAN_BIN:-$ROOT_DIR/target/release/julian}"
+CARGO_BIN="${CARGO_BIN:-cargo}"
+if [[ -n "${JULIAN_BIN:-}" ]]; then
+  if [[ ! -x "$JULIAN_BIN" ]]; then
+    echo "JULIAN_BIN is not executable: $JULIAN_BIN" >&2
+    exit 1
+  fi
+else
+  "$CARGO_BIN" build --release --features net --bin julian
+  JULIAN_BIN="$ROOT_DIR/target/release/julian"
+fi
 NODES="${NODES:-10}"
 BASE_PORT="${BASE_PORT:-7001}"
 BLOB_BASE_PORT="${BLOB_BASE_PORT:-8181}"
@@ -21,11 +30,6 @@ BFT_ROUND_MS="${BFT_ROUND_MS:-}"
 DETACH="${DETACH:-0}"
 BLOB_MAX_CONCURRENCY="${BLOB_MAX_CONCURRENCY:-}"
 BLOB_REQUEST_TIMEOUT_MS="${BLOB_REQUEST_TIMEOUT_MS:-}"
-
-if [[ ! -x "$JULIAN_BIN" ]]; then
-  echo "julian binary not found at $JULIAN_BIN; building release with net feature..."
-  cargo +stable build --release --features net
-fi
 
 if [[ "$NODES" -lt 1 ]]; then
   echo "NODES must be >= 1"
@@ -132,19 +136,21 @@ start_node() {
   local listen_addr="${info##*|}"
   local multiaddr="${listen_addr}/p2p/${peer_id}"
 
-  printf '%s|%s|%s|%s|%s|%s\n' \
+  STARTED_NODE_INFO=$(printf '%s|%s|%s|%s|%s|%s' \
     "$node_id" \
     "$peer_id" \
     "$listen_addr" \
     "$multiaddr" \
     "${LISTEN_HOST}:${metrics_port}" \
-    "${LISTEN_HOST}:${blob_port}"
+    "${LISTEN_HOST}:${blob_port}")
 }
 
 echo "starting ${NODES} local nodes (quorum=${QUORUM}, attestation_quorum=${ATT_Q})"
 
 node_info=()
-node_info+=( "$(start_node 0)" )
+STARTED_NODE_INFO=""
+start_node 0
+node_info+=("$STARTED_NODE_INFO")
 
 if [[ -z "$BOOTNODES" ]]; then
   local_bootnode_multiaddr="$(echo "${node_info[0]}" | cut -d'|' -f4)"
@@ -152,7 +158,8 @@ if [[ -z "$BOOTNODES" ]]; then
 fi
 
 for i in $(seq 1 $((NODES - 1))); do
-  node_info+=( "$(start_node "$i")" )
+  start_node "$i"
+  node_info+=("$STARTED_NODE_INFO")
 done
 
 {

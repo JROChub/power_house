@@ -43,6 +43,23 @@ copy_ops() {
   ssh $SSH_OPTS "$host" 'chmod +x /usr/local/bin/powerhouse-boot.sh'
 }
 
+copy_environment_templates() {
+  local host="$1"
+  local node="$2"
+  echo "-> Installing environment templates on $host"
+  ssh $SSH_OPTS "$host" 'install -d -m 0750 /etc/powerhouse'
+  scp $SSH_OPTS "$ROOT/infra/systemd/powerhouse-common.env.example" \
+    "$host:/etc/powerhouse/powerhouse-common.env.example"
+  scp $SSH_OPTS "$ROOT/infra/systemd/powerhouse-${node}.env.example" \
+    "$host:/etc/powerhouse/powerhouse-${node}.env.example"
+  ssh $SSH_OPTS "$host" \
+    "test -r /etc/powerhouse/powerhouse-common.env && test -r /etc/powerhouse/powerhouse-${node}.env" || {
+      echo "Missing live environment files on $host." >&2
+      echo "Create /etc/powerhouse/powerhouse-common.env and powerhouse-${node}.env from the installed templates." >&2
+      exit 1
+    }
+}
+
 copy_timers() {
   local host="$1"
   echo "-> Deploying timers to $host"
@@ -60,6 +77,7 @@ echo "-> Copying unit to $BOOT1"
 scp $SSH_OPTS "$ROOT/infra/systemd/powerhouse-boot1.service" "$BOOT1:/etc/systemd/system/powerhouse-boot1.service"
 copy_ops "$BOOT1"
 copy_timers "$BOOT1"
+copy_environment_templates "$BOOT1" boot1
 echo "-> Reloading and restarting on $BOOT1"
 ssh $SSH_OPTS "$BOOT1" 'systemctl daemon-reload; systemctl reset-failed powerhouse-boot1.service || true; systemctl enable --now powerhouse-boot1.service; systemctl enable --now powerhouse-healthcheck@boot1.timer powerhouse-backup@boot1.timer powerhouse-log-export@boot1.timer powerhouse-metrics@boot1.timer; systemd-analyze verify /etc/systemd/system/powerhouse-boot1.service || true; systemctl status --no-pager -l powerhouse-boot1.service | sed -n "1,40p"'
 
@@ -67,6 +85,7 @@ echo "-> Copying unit to $BOOT2"
 scp $SSH_OPTS "$ROOT/infra/systemd/powerhouse-boot2.service" "$BOOT2:/etc/systemd/system/powerhouse-boot2.service"
 copy_ops "$BOOT2"
 copy_timers "$BOOT2"
+copy_environment_templates "$BOOT2" boot2
 echo "-> Reloading and restarting on $BOOT2"
 ssh $SSH_OPTS "$BOOT2" 'systemctl daemon-reload; systemctl reset-failed powerhouse-boot2.service || true; systemctl enable --now powerhouse-boot2.service; systemctl enable --now powerhouse-healthcheck@boot2.timer powerhouse-backup@boot2.timer powerhouse-log-export@boot2.timer powerhouse-metrics@boot2.timer; systemd-analyze verify /etc/systemd/system/powerhouse-boot2.service || true; systemctl status --no-pager -l powerhouse-boot2.service | sed -n "1,40p"'
 

@@ -56,6 +56,42 @@ fn fatal(message: &str) -> ! {
     std::process::exit(1);
 }
 
+fn print_cli_help() {
+    println!("Power-House JULIAN {}", env!("CARGO_PKG_VERSION"));
+    println!("Usage: julian <command> [options]");
+    println!();
+    println!("Core commands:");
+    println!("  node             Replay logs, derive anchors, and verify Merkle proofs");
+    println!("  scale_sumcheck   Benchmark streaming sum-check verification");
+    #[cfg(feature = "net")]
+    {
+        println!();
+        println!("Network commands:");
+        println!("  net, network     Start and inspect the peer-to-peer network");
+        println!("  stake            Manage the stake registry and migration claims");
+        println!("  governance       Build governance proposals");
+        println!("  migration        Finalize and verify migrations");
+        println!("  rollup           Settle rollup requests");
+        println!("  keygen           Create an encrypted network identity");
+    }
+    println!();
+    println!("Use 'julian <command> --help' for command details.");
+}
+
+fn print_node_help() {
+    println!("Usage: julian node <run|anchor|reconcile|prove|verify-proof> ...");
+    println!("  run <node_id> <log_dir> <output_anchor>");
+    println!("  anchor <log_dir>");
+    println!("  reconcile <log_dir> <peer_anchor> <quorum>");
+    println!("  prove <log_dir> <entry_index> <leaf_index> [output.json]");
+    println!("  verify-proof <anchor_file> <proof_file>");
+}
+
+fn print_scale_help() {
+    println!("Usage: julian scale_sumcheck [--vars <N>]");
+    println!("  Runs deterministic streaming sum-check benchmarks through N variables.");
+}
+
 #[cfg(feature = "net")]
 fn print_stake_help() {
     println!("Usage: julian stake <show|fund|bond|snapshot|claims|apply-claims|unbond|reward> ...");
@@ -106,6 +142,57 @@ fn print_net_help() {
 }
 
 #[cfg(feature = "net")]
+fn print_net_start_help() {
+    println!("Usage: julian net start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]");
+    println!();
+    println!("Identity and peers:");
+    println!("  --key <spec>                     Seed, file, or key specification");
+    println!("  --identity <file>                Encrypted identity file");
+    println!("  --bootstrap <multiaddr>          Bootstrap peer; repeatable");
+    println!("  --bootnodes <csv>                Comma-separated bootstrap peers");
+    println!();
+    println!("Consensus and gossip:");
+    println!("  --quorum <N>                     Anchor finality quorum");
+    println!("  --attestation-quorum <N>         Blob attestation quorum");
+    println!("  --broadcast-interval <ms>        Anchor broadcast interval");
+    println!("  --checkpoint-interval <N>        Checkpoint interval");
+    println!("  --anchor-topic <topic>           Explicit anchor gossip topic");
+    println!("  --gossip-shard <name>            Select a derived shard topic");
+    println!("  --gossip-bridge-topics <csv>     Additional bridge topics");
+    println!("  --bft                            Enable BFT finality rounds");
+    println!("  --bft-round-ms <ms>              BFT round duration");
+    println!();
+    println!("Policy, storage, and runtime:");
+    println!("  --policy <file>                  Membership policy");
+    println!("  --policy-allowlist <file>        Static peer allowlist");
+    println!("  --metrics <host:port>            Prometheus listener");
+    println!("  --blob-dir <dir>                 Blob data directory");
+    println!("  --blob-listen <host:port>        Blob HTTP listener");
+    println!("  --blob-policy <file>             Namespace policy file");
+    println!("  --blob-auth-token <token>        Blob API bearer/API key");
+    println!("  --max-blob-bytes <N>             Maximum submitted blob size");
+    println!("  --blob-retention-days <N>        Blob retention period");
+    println!("  --blob-max-concurrency <N>       Concurrent blob requests");
+    println!("  --blob-request-timeout-ms <ms>   Blob request timeout");
+    println!("  --tokio-threads <N>              Async worker thread count");
+    println!("  --token-mode <native|TOKEN_ID>   Settlement token mode");
+    println!("  --token-oracle <RPC_URL>         Token oracle endpoint");
+}
+
+#[cfg(feature = "net")]
+fn print_rollup_help() {
+    println!("Usage: julian rollup <settle|settle-file> ...");
+    println!("  settle <registry.json> <namespace> <share_root> <payer_b64> <fee> [options]");
+    println!("  settle-file <registry.json> <request.json> [--outbox <path>]");
+}
+
+#[cfg(feature = "net")]
+fn print_keygen_help() {
+    println!("Usage: julian keygen [key-spec] [--out <identity-file>]");
+    println!("  Creates an encrypted Ed25519 identity and prints its public key.");
+}
+
+#[cfg(feature = "net")]
 fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -130,12 +217,16 @@ fn main() {
     let mut args = env::args().skip(1);
     let command = args.next();
     match command.as_deref() {
+        None | Some("-h") | Some("--help") | Some("help") => print_cli_help(),
+        Some("-V") | Some("--version") | Some("version") => {
+            println!("julian {}", env!("CARGO_PKG_VERSION"));
+        }
         Some("node") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian node <run|anchor|reconcile> ...");
-                std::process::exit(1);
-            });
-            handle_node(&sub, args.collect());
+            if let Some(sub) = args.next() {
+                handle_node(&sub, args.collect());
+            } else {
+                print_node_help();
+            }
         }
         Some("scale_sumcheck") => {
             cmd_scale_sumcheck(args.collect());
@@ -145,51 +236,48 @@ fn main() {
             cmd_keygen(args.collect());
         }
         #[cfg(feature = "net")]
-        Some("net") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian net <start|anchor|verify-envelope> ...");
-                std::process::exit(1);
-            });
-            handle_net(&sub, args.collect());
+        Some("net") | Some("network") => {
+            if let Some(sub) = args.next() {
+                handle_net(&sub, args.collect());
+            } else {
+                print_net_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("stake") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian stake <show|fund|bond|snapshot|claims|apply-claims|unbond|reward> ...");
-                std::process::exit(1);
-            });
-            handle_stake(&sub, args.collect());
+            if let Some(sub) = args.next() {
+                handle_stake(&sub, args.collect());
+            } else {
+                print_stake_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("governance") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian governance <propose-migration> ...");
-                std::process::exit(1);
-            });
-            handle_governance(&sub, args.collect());
+            if let Some(sub) = args.next() {
+                handle_governance(&sub, args.collect());
+            } else {
+                print_governance_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("migration") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!(
-                    "Usage: julian migration <finalize|verify-state|execute-burn-intents> ..."
-                );
-                std::process::exit(1);
-            });
-            handle_migration(&sub, args.collect());
+            if let Some(sub) = args.next() {
+                handle_migration(&sub, args.collect());
+            } else {
+                print_migration_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("rollup") => {
-            let sub = args.next().unwrap_or_else(|| {
-                eprintln!("Usage: julian rollup <settle> ...");
-                std::process::exit(1);
-            });
-            handle_rollup(&sub, args.collect());
+            if let Some(sub) = args.next() {
+                handle_rollup(&sub, args.collect());
+            } else {
+                print_rollup_help();
+            }
         }
         _ => {
-            eprintln!(
-                "Usage: julian <node|scale_sumcheck|net|stake|governance|migration|rollup|keygen> ..."
-            );
+            eprintln!("Unknown command: {}", command.unwrap_or_default());
+            eprintln!("Run 'julian --help' for usage.");
             std::process::exit(1);
         }
     }
@@ -243,6 +331,7 @@ fn handle_migration(sub: &str, tail: Vec<String>) {
 #[cfg(feature = "net")]
 fn handle_rollup(sub: &str, tail: Vec<String>) {
     match sub {
+        "-h" | "--help" => print_rollup_help(),
         "settle" => cmd_rollup_settle(tail),
         "settle-file" => cmd_rollup_settle_file(tail),
         _ => {
@@ -254,6 +343,7 @@ fn handle_rollup(sub: &str, tail: Vec<String>) {
 
 fn handle_node(sub: &str, tail: Vec<String>) {
     match sub {
+        "-h" | "--help" => print_node_help(),
         "run" => cmd_node_run(tail),
         "anchor" => cmd_node_anchor(tail),
         "reconcile" => cmd_node_reconcile(tail),
@@ -267,6 +357,11 @@ fn handle_node(sub: &str, tail: Vec<String>) {
 }
 
 fn cmd_scale_sumcheck(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_scale_help();
+        return;
+    }
+
     let mut max_vars: Option<usize> = None;
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -406,6 +501,11 @@ fn handle_net(sub: &str, tail: Vec<String>) {
 
 #[cfg(feature = "net")]
 fn cmd_keygen(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_keygen_help();
+        return;
+    }
+
     let mut key_spec: Option<String> = None;
     let mut out_path: Option<PathBuf> = None;
     let mut iter = args.into_iter();
@@ -1570,12 +1670,7 @@ fn cmd_node_verify_proof(args: Vec<String>) {
 #[cfg(feature = "net")]
 fn cmd_net_start(args: Vec<String>) {
     if args.iter().any(|a| a == "-h" || a == "--help") {
-        println!(
-            "Usage: julian net start --node-id <id> --log-dir <dir> --listen <multiaddr> [flags]"
-        );
-        println!(
-            "  Flags include --token-mode <native|TOKEN_ID> and optional --token-oracle <RPC_URL>."
-        );
+        print_net_start_help();
         return;
     }
 
