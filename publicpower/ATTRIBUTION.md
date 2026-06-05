@@ -6,3 +6,5 @@
   https://github.com/mrdoob/three.js
 - Lucide 1.17.0 is distributed under the ISC License.
   https://github.com/lucide-icons/lucide
+- `assets/proof-lattice.webp` was generated specifically for MFENX Power House
+  with OpenAI image generation and optimized locally for the web.

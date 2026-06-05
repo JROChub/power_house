@@ -28,6 +28,12 @@
   shareable browser verification results.
 - Added responsive NASA Earth textures, optimized visual assets, mobile
   observatory controls, WebGL fallback, and reduced-memory artifact hashing.
+- Rebuilt the public experience as a full-screen proof instrument with a
+  generated computational lattice, proof-reactive WebGL geometry, a technical
+  evaluation intake, and a responsive verification transcript.
+- Added local `PHSPv1` and paired `PHSMv1`/`PHCPv1` release verification.
+- Fixed gzip-expanded artifact streaming by validating canonical uncompressed
+  sizes instead of allocating from the HTTP `Content-Length` header.
 
 ## v0.2.1 - 2026-06-05
 

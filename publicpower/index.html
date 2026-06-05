@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#020607">
-  <meta name="description" content="MFENX Power House orbital proof observatory: live Earth telemetry, world time, published proof artifacts, and reproducible large-domain verification.">
+  <meta name="theme-color" content="#010405">
+  <meta name="description" content="MFENX Power House: a live planetary instrument for reproducible large-domain proof verification.">
   <meta property="og:title" content="MFENX Power House">
-  <meta property="og:description" content="A live planetary observatory for reproducible proof verification.">
-  <meta property="og:image" content="https://mfenx.com/assets/earth-day.jpg">
-  <title>MFENX Power House | Orbital Proof Observatory</title>
+  <meta property="og:description" content="Run public proofs across sextillion-scale and million-variable implicit domains.">
+  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
+  <title>MFENX Power House | Proof Singularity</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/proof-lattice.webp" as="image">
   <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
   <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
   <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
@@ -18,96 +19,88 @@
 </head>
 <body>
   <div id="boot-screen" class="boot-screen" aria-live="polite">
-    <img src="assets/powerhouse-logo.png" alt="">
-    <span>INITIALIZING ORBITAL OBSERVATORY</span>
-    <i><b id="boot-progress"></b></i>
+    <div class="boot-mark">
+      <img src="assets/powerhouse-logo.png" alt="">
+      <i></i>
+    </div>
+    <strong>POWER HOUSE</strong>
+    <span>CALIBRATING PUBLIC VERIFICATION FIELD</span>
+    <div class="boot-track"><b id="boot-progress"></b></div>
   </div>
 
   <div id="app">
-    <canvas id="orbital-canvas" tabindex="0" aria-label="Interactive Earth. Drag to rotate, scroll to zoom, or select a glowing city marker."></canvas>
+    <canvas id="orbital-canvas" tabindex="0" aria-label="Interactive Earth proof field. Drag to rotate, scroll to zoom, or select a city marker."></canvas>
+    <div class="lattice-field" aria-hidden="true"></div>
     <div class="scan-grid" aria-hidden="true"></div>
     <div class="edge-vignette" aria-hidden="true"></div>
+    <div class="proof-flash" aria-hidden="true"></div>
 
     <header class="topbar">
       <a class="brand" href="/" aria-label="MFENX Power House home">
         <img src="assets/powerhouse-logo.png" alt="">
         <span>
           <strong>MFENX</strong>
-          <small>POWER HOUSE / ORBITAL OBSERVATORY</small>
+          <small>POWER HOUSE / PUBLIC PROOF INSTRUMENT</small>
         </span>
       </a>
 
       <div class="mission-clock" aria-label="Observatory time">
         <span class="signal-dot"></span>
-        <span id="mission-state">LIVE ORBIT</span>
+        <span id="mission-state">LIVE FIELD</span>
         <span id="utc-date">JUN 05 2026</span>
         <strong id="utc-time">00:00:00</strong>
         <span>UTC</span>
       </div>
 
-      <nav class="top-actions" aria-label="Project links">
+      <nav class="top-actions" aria-label="Project and instrument controls">
         <a href="https://docs.rs/power_house" title="Rust API documentation">
           <span data-icon="book-open"></span><b>API</b>
-        </a>
-        <a href="https://crates.io/crates/power_house" title="power_house on crates.io">
-          <span data-icon="package"></span><b>CRATE</b>
         </a>
         <a href="https://github.com/JROChub/power_house" title="Source repository">
           <span data-icon="code"></span><b>SOURCE</b>
         </a>
-        <button id="observatory-toggle" class="mobile-observatory-toggle" type="button" aria-label="Open world observatory" title="World observatory">
-          <span data-icon="globe"></span>
+        <button id="observatory-toggle" type="button" aria-label="Open world observatory" title="World observatory">
+          <span data-icon="globe"></span><b>EARTH</b>
+        </button>
+        <button id="evaluation-toggle" class="evaluation-toggle" type="button">
+          <span data-icon="building-2"></span><b>EVALUATE</b>
         </button>
       </nav>
     </header>
 
     <aside class="proof-rail" aria-label="Proof modes">
       <div class="rail-heading">
-        <span>PROOF ORBITS</span>
-        <b>04 ACTIVE</b>
+        <span>PUBLIC PROOF ARRAY</span>
+        <b>04</b>
       </div>
 
       <div id="proof-modes" class="proof-modes">
         <button class="proof-mode active" data-mode="constant" type="button" aria-pressed="true">
           <span class="mode-index">01</span>
-          <span class="mode-copy"><b>SEXTILLION</b><small>CONSTANT / 70 ROUNDS</small></span>
+          <span class="mode-copy"><b>SEXTILLION</b><small>70 ROUNDS</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="affine" type="button" aria-pressed="false">
           <span class="mode-index">02</span>
-          <span class="mode-copy"><b>HYPERSCALE</b><small>SEEDED AFFINE / 4,096</small></span>
+          <span class="mode-copy"><b>HYPERSCALE</b><small>4,096 ROUNDS</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="sparse" type="button" aria-pressed="false">
           <span class="mode-index">03</span>
-          <span class="mode-copy"><b>MEGAROUND</b><small>SPARSE / 1,000,000</small></span>
+          <span class="mode-copy"><b>MEGAROUND</b><small>PHSP / 1,000,000</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="committed" type="button" aria-pressed="false">
           <span class="mode-index">04</span>
-          <span class="mode-copy"><b>COMMITTED</b><small>EXTERNAL PHSM + PHCP</small></span>
+          <span class="mode-copy"><b>COMMITTED</b><small>PHSM + PHCP</small></span>
           <i></i>
         </button>
       </div>
 
-      <div class="scale-readout">
-        <span>IMPLICIT DOMAIN</span>
-        <strong id="domain-label">2<sup>70</sup></strong>
-        <small id="domain-detail">1,180,591,620,717,411,303,424 points</small>
-      </div>
-
       <button id="install-command" class="install-command" type="button" title="Copy install command">
-        <span>
-          <small>INSTALL</small>
-          <code>cargo add power_house</code>
-        </span>
+        <span><small>RUST</small><code>cargo add power_house</code></span>
         <span data-icon="copy"></span>
       </button>
-
-      <div class="rail-links">
-        <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
-        <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY</a>
-      </div>
     </aside>
 
     <main class="center-stage">
@@ -118,28 +111,44 @@
       </div>
 
       <div class="target-reticle" aria-hidden="true"><i></i><i></i></div>
-
-      <div class="scale-axis" aria-hidden="true">
-        <span>FINITE FIELD</span>
-        <i></i>
-        <b>1,000,000,007</b>
-      </div>
-
       <div id="globe-tooltip" class="globe-tooltip" role="status"></div>
 
-      <div class="orbit-caption">
+      <section class="proof-monument" aria-label="Selected proof scale">
         <span id="orbit-kicker">CLOSED-FORM SUM-CHECK</span>
         <h1>POWER HOUSE</h1>
+        <div class="domain-equation">
+          <small>IMPLICIT DOMAIN</small>
+          <strong id="domain-label">2<sup>70</sup></strong>
+        </div>
         <p id="orbit-description">Seventy verifier rounds close a domain larger than one sextillion Boolean points without enumerating it.</p>
+        <div class="mode-metrics">
+          <div><span>PUBLIC SCALE</span><b id="domain-detail">1.18 SEXTILLION POINTS</b></div>
+          <div><span>VERIFIER PATH</span><b id="verifier-path">70 FIELD EQUATIONS</b></div>
+          <div><span>EXPANDED DOMAIN</span><b id="allocation-value">NEVER ALLOCATED</b></div>
+        </div>
+      </section>
+
+      <div class="proof-event" aria-live="polite">
+        <span id="event-phase">FIELD ARMED</span>
+        <b id="event-value">PRESS RUN</b>
       </div>
     </main>
 
-    <aside id="observatory-rail" class="clock-rail" aria-label="World observatory">
-      <div class="observatory-heading">
-        <div>
-          <span>WORLD OBSERVATORY</span>
-          <b id="observatory-mode">LIVE</b>
-        </div>
+    <div class="scene-controls" aria-label="Scene controls">
+      <button id="focus-toggle" class="icon-button" type="button" aria-label="Focus selected city" title="Focus selected city">
+        <span data-icon="crosshair"></span>
+      </button>
+      <button id="sound-toggle" class="icon-button" type="button" aria-label="Enable interface sound" title="Toggle interface sound">
+        <span data-icon="volume-x"></span>
+      </button>
+      <button id="motion-toggle" class="icon-button" type="button" aria-label="Pause orbital motion" title="Pause orbital motion">
+        <span data-icon="pause"></span>
+      </button>
+    </div>
+
+    <aside id="observatory-rail" class="instrument-drawer observatory-drawer" aria-label="World observatory">
+      <div class="drawer-heading">
+        <div><span>WORLD OBSERVATORY</span><b id="observatory-mode">LIVE</b></div>
         <button id="observatory-close" type="button" aria-label="Close world observatory" title="Close">
           <span data-icon="x"></span>
         </button>
@@ -191,45 +200,71 @@
       </section>
     </aside>
 
-    <div class="scene-controls" aria-label="Scene controls">
-      <button id="focus-toggle" class="icon-button" type="button" aria-label="Focus selected city" title="Focus selected city">
-        <span data-icon="crosshair"></span>
-      </button>
-      <button id="sound-toggle" class="icon-button" type="button" aria-label="Enable interface sound" title="Toggle interface sound">
-        <span data-icon="volume-x"></span>
-      </button>
-      <button id="motion-toggle" class="icon-button" type="button" aria-label="Pause orbital motion" title="Pause orbital motion">
-        <span data-icon="pause"></span>
-      </button>
-    </div>
+    <aside id="evaluation-panel" class="instrument-drawer evaluation-drawer" aria-label="Technical evaluation">
+      <div class="drawer-heading">
+        <div><span>TECHNICAL EVALUATION</span><b>OPEN</b></div>
+        <button id="evaluation-close" type="button" aria-label="Close technical evaluation" title="Close">
+          <span data-icon="x"></span>
+        </button>
+      </div>
+
+      <div class="evaluation-lead">
+        <span>FOR RESEARCH / INFRASTRUCTURE / AUDIT</span>
+        <strong>Bring the workload that should not fit.</strong>
+        <p>Define the statement, domain, trust boundary, and rejection criteria. Power House turns the evaluation into a reproducible verifier path.</p>
+      </div>
+
+      <dl class="evaluation-spec">
+        <div><dt>SELECTED ARRAY</dt><dd id="dossier-mode">SEXTILLION</dd></div>
+        <div><dt>DOMAIN</dt><dd id="dossier-domain">2^70</dd></div>
+        <div><dt>VERIFIER WORK</dt><dd id="dossier-work">70 ROUNDS</dd></div>
+        <div><dt>PUBLIC ARTIFACT</dt><dd id="dossier-artifact">BROWSER TRACE</dd></div>
+      </dl>
+
+      <a class="evaluation-primary" href="https://github.com/JROChub/power_house/issues/new?template=technical-evaluation.yml">
+        <span>OPEN TECHNICAL EVALUATION</span>
+        <span data-icon="building-2"></span>
+      </a>
+      <div class="evaluation-links">
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
+        <a href="https://crates.io/crates/power_house">CRATE v0.2.2</a>
+      </div>
+    </aside>
 
     <section class="verification-dock" aria-label="Verification console">
-      <div class="dock-primary">
-        <div class="status-seal" id="status-seal">
-          <span>READY</span>
-          <b id="seal-value">70</b>
-          <small>ROUNDS</small>
-        </div>
+      <div class="trace-header">
+        <span id="verification-status">LOCAL VERIFIER READY</span>
+        <b id="verification-title">Run the 70-round browser proof</b>
+        <p id="verification-detail">Every round equation is checked over the field before the certificate digest is accepted.</p>
+      </div>
 
-        <div class="verification-copy">
-          <span id="verification-status">LOCAL VERIFIER READY</span>
-          <strong id="verification-title">Run the 70-round browser proof</strong>
-          <div class="progress-track"><i id="progress-bar"></i></div>
-          <p id="verification-detail">The browser checks every round equation over the field and computes a certificate SHA-256 digest.</p>
-        </div>
+      <div class="trace-runway">
+        <div id="proof-trace" class="proof-trace" aria-hidden="true"></div>
+        <div class="progress-track"><i id="progress-bar"></i></div>
+      </div>
 
-        <div class="verification-actions">
-          <button id="share-button" class="share-button" type="button" disabled title="Share verification result">
-            <span data-icon="share-2"></span>
-          </button>
-          <button id="verify-button" class="verify-button" type="button">
-            <span>RUN PROOF</span>
-            <b>ENTER</b>
-          </button>
-        </div>
+      <div class="verification-actions">
+        <input id="artifact-input" type="file" multiple hidden accept=".phsp,.phsm,.phcp">
+        <button id="artifact-button" class="artifact-button" type="button" title="Verify local artifact files">
+          <span data-icon="upload"></span><b>LOCAL FILE</b>
+        </button>
+        <a id="download-button" class="download-button" href="artifacts/power_house_sparse_record.phsp" download title="Download selected public artifact">
+          <span data-icon="download"></span>
+        </a>
+        <button id="share-button" class="share-button" type="button" disabled title="Share verification result">
+          <span data-icon="share-2"></span>
+        </button>
+        <button id="verify-button" class="verify-button" type="button">
+          <span>RUN PROOF</span>
+          <b>ENTER</b>
+        </button>
       </div>
 
       <div class="telemetry">
+        <div class="status-seal" id="status-seal">
+          <span>READY</span><b id="seal-value">70</b><small>ROUNDS</small>
+        </div>
         <div><span>ROUND</span><b id="round-value">0 / 70</b></div>
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
@@ -241,7 +276,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <noscript>This observatory requires JavaScript for the globe and verifier.</noscript>
+  <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script type="module" src="app.js"></script>
 </body>
 </html>

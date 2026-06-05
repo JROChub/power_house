@@ -1,17 +1,20 @@
 import * as THREE from "./vendor/three.module.min.js";
+import { StreamBuffer } from "./stream-buffer.js";
 import BookOpen from "./vendor/lucide/book-open.mjs";
+import Building2 from "./vendor/lucide/building-2.mjs";
 import ChevronLeft from "./vendor/lucide/chevron-left.mjs";
 import ChevronRight from "./vendor/lucide/chevron-right.mjs";
 import Code from "./vendor/lucide/code.mjs";
 import Copy from "./vendor/lucide/copy.mjs";
 import Crosshair from "./vendor/lucide/crosshair.mjs";
+import Download from "./vendor/lucide/download.mjs";
 import Globe from "./vendor/lucide/globe.mjs";
-import Package from "./vendor/lucide/package.mjs";
 import Pause from "./vendor/lucide/pause.mjs";
 import Play from "./vendor/lucide/play.mjs";
 import RotateCcw from "./vendor/lucide/rotate-ccw.mjs";
 import Search from "./vendor/lucide/search.mjs";
 import Share2 from "./vendor/lucide/share-2.mjs";
+import Upload from "./vendor/lucide/upload.mjs";
 import Volume2 from "./vendor/lucide/volume-2.mjs";
 import VolumeX from "./vendor/lucide/volume-x.mjs";
 import X from "./vendor/lucide/x.mjs";
@@ -22,18 +25,20 @@ const EARTH_RADIUS = 1.36;
 const DEG = Math.PI / 180;
 const iconLibrary = {
   "book-open": BookOpen,
+  "building-2": Building2,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   code: Code,
   copy: Copy,
   crosshair: Crosshair,
+  download: Download,
   globe: Globe,
-  package: Package,
   pause: Pause,
   play: Play,
   "rotate-ccw": RotateCcw,
   search: Search,
   "share-2": Share2,
+  upload: Upload,
   "volume-2": Volume2,
   "volume-x": VolumeX,
   x: X,
@@ -42,7 +47,10 @@ const iconLibrary = {
 const modes = {
   constant: {
     exponent: 70,
-    domain: "1,180,591,620,717,411,303,424 points",
+    domain: "1.18 SEXTILLION POINTS",
+    verifierPath: "70 FIELD EQUATIONS",
+    allocation: "NEVER ALLOCATED",
+    dossierArtifact: "BROWSER TRANSCRIPT",
     kicker: "CLOSED-FORM SUM-CHECK",
     description:
       "Seventy verifier rounds close a domain larger than one sextillion Boolean points without enumerating it.",
@@ -51,12 +59,17 @@ const modes = {
       "The browser checks every round equation over the field and computes a certificate SHA-256 digest.",
     button: "RUN PROOF",
     status: "LOCAL VERIFIER READY",
+    downloadHref:
+      "https://github.com/JROChub/power_house/blob/main/examples/sextillion_verify.rs",
     color: 0xb9ff3d,
     action: runConstantProof,
   },
   affine: {
     exponent: 4096,
-    domain: "1,234 decimal digits in the implicit domain",
+    domain: "1,234-DIGIT DOMAIN",
+    verifierPath: "4,096 FIELD ROUNDS",
+    allocation: "NEVER ALLOCATED",
+    dossierArtifact: "SEEDED AFFINE TRACE",
     kicker: "SEEDED NON-CONSTANT MODEL",
     description:
       "A public seed defines 4,096 affine coefficients. The canonical Rust verifier replays one round per variable.",
@@ -65,12 +78,17 @@ const modes = {
       "This browser replay checks the affine recurrence; the release implementation uses BLAKE2b Fiat-Shamir challenges in Rust.",
     button: "RUN REPLAY",
     status: "BROWSER MODEL READY",
+    downloadHref:
+      "https://github.com/JROChub/power_house/blob/main/examples/hyperscale_affine.rs",
     color: 0x45ddd2,
     action: runAffineReplay,
   },
   sparse: {
     exponent: 1_000_000,
-    domain: "301,030 decimal digits in the implicit domain",
+    domain: "301,030-DIGIT DOMAIN",
+    verifierPath: "1,000,000 ROUNDS",
+    allocation: "SPARSE INCIDENCES ONLY",
+    dossierArtifact: "PHSPv1 / 16,000,171 B",
     kicker: "MILLION-ROUND CERTIFICATE",
     description:
       "A stable 16 MB PHSPv1 certificate covers a seeded sparse polynomial over one million Boolean variables.",
@@ -79,12 +97,17 @@ const modes = {
       "Downloads the immutable release asset and checks its full SHA-256 digest in this browser.",
     button: "VERIFY HASH",
     status: "RELEASE ARTIFACT READY",
+    downloadHref: "artifacts/power_house_sparse_record.phsp",
+    downloadName: "power_house_sparse_record.phsp",
     color: 0xffc14d,
     action: () => verifyReleaseArtifacts("sparse"),
   },
   committed: {
     exponent: 1_000_000,
-    domain: "301,030 decimal digits in the implicit domain",
+    domain: "301,030-DIGIT DOMAIN",
+    verifierPath: "1,000,000 ROUNDS",
+    allocation: "EXTERNAL WORKLOAD",
+    dossierArtifact: "PHSMv1 + PHCPv1",
     kicker: "EXTERNAL WORKLOAD BINDING",
     description:
       "The PHCPv1 proof binds a separate PHSMv1 sparse workload through a domain-separated BLAKE2b-256 commitment.",
@@ -93,8 +116,28 @@ const modes = {
       "Downloads the external workload and million-round certificate, then checks both SHA-256 digests.",
     button: "VERIFY BOTH",
     status: "TWO-FILE BINDING READY",
+    downloadHref: "artifacts/external_interaction_model.phcp",
+    downloadName: "external_interaction_model.phcp",
     color: 0xff7167,
     action: () => verifyReleaseArtifacts("committed"),
+  },
+};
+
+const knownArtifacts = {
+  phsp: {
+    size: 16_000_171,
+    hash: "2b219ba189c3a38f1073c7797629e9aaf44a36820abb64c7628129480eb43f3b",
+    label: "PHSPv1",
+  },
+  phsm: {
+    size: 591_464,
+    hash: "c8376831f47a50a7423be6412776382bc23618b037e9fdd163594d389d68864d",
+    label: "PHSMv1",
+  },
+  phcp: {
+    size: 16_000_128,
+    hash: "82045e6eb851991e08d9c4cd782abff3bb06cb8ec5f149e7c2d4287113e6a54a",
+    label: "PHCPv1",
   },
 };
 
@@ -148,15 +191,29 @@ const el = Object.fromEntries(
     "time-forward",
     "observatory-toggle",
     "observatory-close",
+    "evaluation-toggle",
+    "evaluation-close",
     "domain-label",
     "domain-detail",
+    "verifier-path",
+    "allocation-value",
     "orbit-kicker",
     "orbit-description",
+    "event-phase",
+    "event-value",
+    "dossier-mode",
+    "dossier-domain",
+    "dossier-work",
+    "dossier-artifact",
     "verification-status",
     "verification-title",
     "verification-detail",
     "verify-button",
+    "artifact-button",
+    "artifact-input",
+    "download-button",
     "share-button",
+    "proof-trace",
     "progress-bar",
     "round-value",
     "claim-value",
@@ -189,6 +246,7 @@ const state = {
   proofProgress: 0,
   lastResult: null,
   pointerDown: null,
+  userInteracted: false,
 };
 
 const formatterCache = new Map();
@@ -210,9 +268,13 @@ let orbitGroup;
 let moon;
 let moonOrbit;
 let subsolarMarker;
+let proofShell;
+let proofShellMaterial;
+let proofRingGroup;
 let animationFrame;
 let audioContext;
 let latestSolar = null;
+let autoProofTimer = 0;
 
 function camelCase(value) {
   return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -801,6 +863,38 @@ function createOrbits() {
   scene.add(orbitGroup);
 }
 
+function createProofField() {
+  proofShellMaterial = new THREE.MeshBasicMaterial({
+    color: modes[state.mode].color,
+    transparent: true,
+    opacity: 0.04,
+    wireframe: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  proofShell = new THREE.Mesh(
+    new THREE.SphereGeometry(EARTH_RADIUS + 0.2, 32, 20),
+    proofShellMaterial,
+  );
+
+  proofRingGroup = new THREE.Group();
+  [1.62, 1.78, 1.96].forEach((radius, index) => {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.004 + index * 0.001, 5, 180),
+      new THREE.MeshBasicMaterial({
+        color: modes[state.mode].color,
+        transparent: true,
+        opacity: 0.08,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    ring.rotation.set(0.38 + index * 0.48, index * 0.36, -0.24 + index * 0.42);
+    proofRingGroup.add(ring);
+  });
+  scene.add(proofShell, proofRingGroup);
+}
+
 function createMoon() {
   moonOrbit = new THREE.Group();
   const material = new THREE.MeshStandardMaterial({
@@ -822,13 +916,14 @@ async function initScene() {
     renderer = new THREE.WebGLRenderer({
       canvas: el.canvas,
       antialias: true,
-      alpha: false,
+      alpha: true,
       powerPreference: "high-performance",
     });
   } catch {
     document.body.classList.add("webgl-fallback");
     finishBoot();
     showToast("WebGL is unavailable; proof controls remain active.");
+    scheduleAutoProof();
     return;
   }
   renderer.setPixelRatio(
@@ -838,15 +933,16 @@ async function initScene() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.13;
+  renderer.setClearColor(0x010405, 0.42);
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x020607);
   scene.fog = new THREE.FogExp2(0x020607, 0.022);
   camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, state.zoom);
 
   createStars();
   createOrbits();
+  createProofField();
   createMoon();
   try {
     await createEarth();
@@ -860,6 +956,7 @@ async function initScene() {
   setBootProgress(90);
   animate();
   finishBoot();
+  scheduleAutoProof();
 }
 
 function pointerPosition(event) {
@@ -1006,6 +1103,20 @@ function animate(time = 0) {
   if (subsolarMarker) {
     subsolarMarker.scale.setScalar(1 + Math.sin(seconds * 3) * 0.12);
   }
+  if (proofShell && proofRingGroup) {
+    const activity = state.running ? 0.12 + state.proofProgress * 0.34 : state.lastResult ? 0.13 : 0.035;
+    proofShellMaterial.opacity = activity + (state.running ? Math.sin(seconds * 7) * 0.025 : 0);
+    proofShellMaterial.color.setHex(modes[state.mode].color);
+    proofShell.scale.setScalar(1 + state.proofProgress * 0.18);
+    proofShell.rotation.y = seconds * 0.035;
+    proofShell.rotation.x = seconds * -0.018;
+    proofRingGroup.children.forEach((ring, index) => {
+      ring.material.color.setHex(modes[state.mode].color);
+      ring.material.opacity = activity * (0.8 - index * 0.12);
+      ring.rotation.y += state.motion ? 0.0008 * (index + 1) : 0;
+      ring.rotation.z += state.motion ? 0.00045 * (index % 2 ? -1 : 1) : 0;
+    });
+  }
   if (moon) moon.rotation.y += state.motion ? 0.0015 : 0;
   camera.position.z += (state.zoom - camera.position.z) * 0.06;
   renderer.render(scene, camera);
@@ -1030,10 +1141,34 @@ function updateOrbitSelection() {
   });
 }
 
+function buildProofTrace() {
+  const fragment = document.createDocumentFragment();
+  for (let index = 0; index < 96; index += 1) {
+    const segment = document.createElement("i");
+    const height = 18 + ((index * 37 + index * index * 11) % 78);
+    segment.style.setProperty("--height", `${height}%`);
+    fragment.append(segment);
+  }
+  el.proofTrace.append(fragment);
+}
+
+function updateProofTrace(percent) {
+  const activeCount = Math.round((percent / 100) * el.proofTrace.children.length);
+  [...el.proofTrace.children].forEach((segment, index) => {
+    segment.classList.toggle("active", index < activeCount && !state.lastResult);
+    segment.classList.toggle("complete", index < activeCount && Boolean(state.lastResult));
+  });
+}
+
 function setProgress(percent) {
   const bounded = Math.max(0, Math.min(100, percent));
   state.proofProgress = bounded / 100;
   el.progressBar.style.width = `${bounded}%`;
+  updateProofTrace(bounded);
+  if (state.running) {
+    el.eventPhase.textContent = `VERIFYING ${state.mode.toUpperCase()}`;
+    el.eventValue.textContent = `${Math.round(bounded)}% CLOSED`;
+  }
 }
 
 function selectMode(name, withTone = true) {
@@ -1048,6 +1183,8 @@ function selectMode(name, withTone = true) {
   });
   el.domainLabel.innerHTML = `2<sup>${mode.exponent.toLocaleString()}</sup>`;
   el.domainDetail.textContent = mode.domain;
+  el.verifierPath.textContent = mode.verifierPath;
+  el.allocationValue.textContent = mode.allocation;
   el.orbitKicker.textContent = mode.kicker;
   el.orbitDescription.textContent = mode.description;
   el.verificationStatus.textContent = mode.status;
@@ -1060,8 +1197,19 @@ function selectMode(name, withTone = true) {
   el.claimValue.textContent = "WAITING";
   el.digestValue.textContent = "PENDING";
   el.modeValue.textContent = name.toUpperCase();
+  el.dossierMode.textContent = name.toUpperCase();
+  el.dossierDomain.textContent = `2^${mode.exponent.toLocaleString()}`;
+  el.dossierWork.textContent = mode.verifierPath;
+  el.dossierArtifact.textContent = mode.dossierArtifact;
+  el.downloadButton.href = mode.downloadHref;
+  el.downloadButton.target = mode.downloadName ? "" : "_blank";
+  if (mode.downloadName) el.downloadButton.setAttribute("download", mode.downloadName);
+  else el.downloadButton.removeAttribute("download");
   el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
+  el.eventPhase.textContent = "FIELD ARMED";
+  el.eventValue.textContent = `${mode.exponent.toLocaleString()} ROUNDS READY`;
+  document.body.classList.remove("proof-running", "proof-verified");
   setProgress(0);
   updateOrbitSelection();
   if (withTone) tone(420, 0.035);
@@ -1100,6 +1248,8 @@ function sleep(milliseconds) {
 function beginRun() {
   state.running = true;
   state.lastResult = null;
+  document.body.classList.add("proof-running");
+  document.body.classList.remove("proof-verified");
   el.verifyButton.disabled = true;
   el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
@@ -1121,16 +1271,23 @@ function completeRun(digest, claim = "VERIFIED") {
   el.claimValue.textContent = claim;
   el.statusSeal.classList.add("verified");
   el.verificationStatus.textContent = "VERIFICATION COMPLETE";
+  el.eventPhase.textContent = "CERTIFICATE ACCEPTED";
+  el.eventValue.textContent = digest.slice(0, 16).toUpperCase();
+  document.body.classList.remove("proof-running");
+  document.body.classList.add("proof-verified");
   setProgress(100);
   tone(760, 0.12);
 }
 
 function failRun(message) {
   state.running = false;
+  document.body.classList.remove("proof-running", "proof-verified");
   el.verifyButton.disabled = false;
   el.verificationStatus.textContent = "VERIFICATION STOPPED";
   el.claimValue.textContent = "FAILED";
   el.digestValue.textContent = "REJECTED";
+  el.eventPhase.textContent = "VERIFICATION REJECTED";
+  el.eventValue.textContent = "INSPECT FAILURE";
   showToast(message);
   tone(180, 0.14);
 }
@@ -1236,35 +1393,33 @@ async function runAffineReplay() {
     "Use the Rust example for the canonical BLAKE2b Fiat-Shamir proof and exact release digest.";
 }
 
-async function fetchWithProgress(url, progressStart, progressSpan) {
+async function fetchWithProgress(url, expectedLength, progressStart, progressSpan) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Download failed with HTTP ${response.status}`);
-  const total = Number(response.headers.get("content-length")) || 0;
-  if (!response.body) return new Uint8Array(await response.arrayBuffer());
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.length !== expectedLength) {
+      throw new Error(
+        `Artifact length mismatch: expected ${expectedLength}, received ${bytes.length}`,
+      );
+    }
+    return bytes;
+  }
   const reader = response.body.getReader();
-  const output = total ? new Uint8Array(total) : null;
-  const chunks = [];
+  const stream = new StreamBuffer(expectedLength);
   let received = 0;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    if (output) output.set(value, received);
-    else chunks.push(value);
+    stream.append(value);
     received += value.length;
-    const ratio = total ? received / total : Math.min(received / 16_000_000, 0.95);
+    const ratio = Math.min(received / expectedLength, 0.99);
     setProgress(progressStart + ratio * progressSpan);
     el.verificationDetail.textContent = `${(received / 1_000_000).toFixed(
       1,
     )} MB streamed for SHA-256`;
   }
-  if (output) return received === output.length ? output : output.slice(0, received);
-  const bytes = new Uint8Array(received);
-  let offset = 0;
-  chunks.forEach((chunk) => {
-    bytes.set(chunk, offset);
-    offset += chunk.length;
-  });
-  return bytes;
+  return stream.finish();
 }
 
 async function verifyReleaseArtifacts(kind) {
@@ -1272,42 +1427,42 @@ async function verifyReleaseArtifacts(kind) {
   try {
     if (kind === "sparse") {
       el.verificationStatus.textContent = "DOWNLOADING PHSPv1 RELEASE";
-      const expected = "2b219ba189c3a38f1073c7797629e9aaf44a36820abb64c7628129480eb43f3b";
       const bytes = await fetchWithProgress(
         "artifacts/power_house_sparse_record.phsp",
+        knownArtifacts.phsp.size,
         0,
         78,
       );
       el.verificationStatus.textContent = "COMPUTING FULL SHA-256";
       const digest = await sha256Hex(bytes);
-      if (digest !== expected) throw new Error("PHSPv1 SHA-256 mismatch");
+      if (digest !== knownArtifacts.phsp.hash) throw new Error("PHSPv1 SHA-256 mismatch");
       el.roundValue.textContent = "1,000,000 / 1,000,000";
       completeRun(digest, "PHSPv1 OK");
       el.verificationTitle.textContent = "Published 16 MB certificate is authentic";
       el.verificationDetail.textContent =
         "Algebraic replay remains reproducible with the bundled Rust and Python verifiers.";
     } else {
-      const workloadExpected =
-        "c8376831f47a50a7423be6412776382bc23618b037e9fdd163594d389d68864d";
-      const proofExpected =
-        "82045e6eb851991e08d9c4cd782abff3bb06cb8ec5f149e7c2d4287113e6a54a";
       el.verificationStatus.textContent = "DOWNLOADING PHSMv1 WORKLOAD";
       const workload = await fetchWithProgress(
         "artifacts/external_interaction_model.phsm",
+        knownArtifacts.phsm.size,
         0,
         12,
       );
       const workloadDigest = await sha256Hex(workload);
-      if (workloadDigest !== workloadExpected) throw new Error("PHSMv1 SHA-256 mismatch");
+      if (workloadDigest !== knownArtifacts.phsm.hash) {
+        throw new Error("PHSMv1 SHA-256 mismatch");
+      }
 
       el.verificationStatus.textContent = "DOWNLOADING PHCPv1 PROOF";
       const proof = await fetchWithProgress(
         "artifacts/external_interaction_model.phcp",
+        knownArtifacts.phcp.size,
         14,
         72,
       );
       const proofDigest = await sha256Hex(proof);
-      if (proofDigest !== proofExpected) throw new Error("PHCPv1 SHA-256 mismatch");
+      if (proofDigest !== knownArtifacts.phcp.hash) throw new Error("PHCPv1 SHA-256 mismatch");
       el.roundValue.textContent = "1,000,000 / 1,000,000";
       completeRun(proofDigest, "BOTH FILES OK");
       el.verificationTitle.textContent = "Workload and certificate hashes accepted";
@@ -1317,6 +1472,91 @@ async function verifyReleaseArtifacts(kind) {
   } catch (error) {
     failRun(`${error.message}. The release files remain available from GitHub.`);
   }
+}
+
+function artifactType(file) {
+  return file.name.toLowerCase().split(".").pop();
+}
+
+async function readLocalFile(file, start, span) {
+  const expected = knownArtifacts[artifactType(file)];
+  if (!expected) throw new Error(`Unsupported artifact: ${file.name}`);
+  if (file.size !== expected.size) {
+    throw new Error(
+      `${expected.label} length mismatch: expected ${expected.size}, received ${file.size}`,
+    );
+  }
+  if (!file.stream) return new Uint8Array(await file.arrayBuffer());
+  const reader = file.stream().getReader();
+  const stream = new StreamBuffer(expected.size);
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    stream.append(value);
+    received += value.length;
+    setProgress(start + (received / expected.size) * span);
+    el.verificationDetail.textContent = `${expected.label}: ${(
+      received / 1_000_000
+    ).toFixed(1)} MB read locally`;
+  }
+  return stream.finish();
+}
+
+async function verifyLocalArtifacts(fileList) {
+  const files = [...fileList];
+  const byType = new Map(files.map((file) => [artifactType(file), file]));
+  const committed = byType.has("phsm") || byType.has("phcp");
+  const required = committed ? ["phsm", "phcp"] : ["phsp"];
+  const missing = required.filter((type) => !byType.has(type));
+  if (missing.length) {
+    showToast(`Select ${missing.map((type) => type.toUpperCase()).join(" + ")} together.`);
+    return;
+  }
+
+  selectMode(committed ? "committed" : "sparse");
+  beginRun();
+  try {
+    let finalDigest = "";
+    for (let index = 0; index < required.length; index += 1) {
+      const type = required[index];
+      const artifact = knownArtifacts[type];
+      const start = (index / required.length) * 90;
+      const span = 90 / required.length;
+      el.verificationStatus.textContent = `HASHING LOCAL ${artifact.label}`;
+      const bytes = await readLocalFile(byType.get(type), start, span);
+      const digest = await sha256Hex(bytes);
+      if (digest !== artifact.hash) throw new Error(`${artifact.label} SHA-256 mismatch`);
+      finalDigest = digest;
+    }
+    el.roundValue.textContent = "LOCAL BYTES / ACCEPTED";
+    completeRun(finalDigest, committed ? "LOCAL PAIR OK" : "LOCAL PHSP OK");
+    el.verificationTitle.textContent = committed
+      ? "Local workload and certificate match the release"
+      : "Local certificate matches the published release";
+    el.verificationDetail.textContent =
+      "The selected bytes were hashed locally and matched the immutable release digest.";
+  } catch (error) {
+    failRun(error.message);
+  } finally {
+    el.artifactInput.value = "";
+  }
+}
+
+function scheduleAutoProof() {
+  window.clearTimeout(autoProofTimer);
+  autoProofTimer = window.setTimeout(() => {
+    autoProofTimer = 0;
+    if (!state.userInteracted && !state.running && state.mode === "constant") {
+      runConstantProof();
+    }
+  }, 2400);
+}
+
+function cancelAutoProof() {
+  state.userInteracted = true;
+  window.clearTimeout(autoProofTimer);
+  autoProofTimer = 0;
 }
 
 function tone(frequency, duration) {
@@ -1402,22 +1642,39 @@ function setSound(enabled) {
 }
 
 function bindInterface() {
+  document.addEventListener(
+    "pointerdown",
+    cancelAutoProof,
+    { capture: true, once: true },
+  );
   document.querySelectorAll(".proof-mode").forEach((button) => {
     button.addEventListener("click", () => selectMode(button.dataset.mode));
   });
   el.verifyButton.addEventListener("click", () => {
     if (!state.running) modes[state.mode].action();
   });
+  el.artifactButton.addEventListener("click", () => el.artifactInput.click());
+  el.artifactInput.addEventListener("change", () => {
+    if (el.artifactInput.files.length) verifyLocalArtifacts(el.artifactInput.files);
+  });
   el.shareButton.addEventListener("click", shareVerification);
   el.installCommand.addEventListener("click", () =>
     copyText("cargo add power_house", "Install command copied"),
   );
   el.citySearch.addEventListener("input", (event) => filterCities(event.target.value));
-  el.observatoryToggle.addEventListener("click", () =>
-    document.body.classList.add("observatory-open"),
-  );
+  el.observatoryToggle.addEventListener("click", () => {
+    document.body.classList.remove("evaluation-open");
+    document.body.classList.add("observatory-open");
+  });
   el.observatoryClose.addEventListener("click", () =>
     document.body.classList.remove("observatory-open"),
+  );
+  el.evaluationToggle.addEventListener("click", () => {
+    document.body.classList.remove("observatory-open");
+    document.body.classList.add("evaluation-open");
+  });
+  el.evaluationClose.addEventListener("click", () =>
+    document.body.classList.remove("evaluation-open"),
   );
   el.timeSlider.addEventListener("input", (event) => setTimeOffset(event.target.value));
   el.timeBack.addEventListener("click", () => setTimeOffset(state.timeOffsetHours - 1));
@@ -1434,13 +1691,14 @@ function bindInterface() {
     state.visible = !document.hidden;
   });
   window.addEventListener("keydown", (event) => {
+    cancelAutoProof();
     const target = event.target;
     const typing =
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement;
     if (event.key === "Escape") {
-      document.body.classList.remove("observatory-open");
+      document.body.classList.remove("observatory-open", "evaluation-open");
       hideGlobeTooltip();
       return;
     }
@@ -1466,6 +1724,7 @@ function bindInterface() {
 function init() {
   mountIcons();
   setBootProgress(22);
+  buildProofTrace();
   buildCityList();
   bindInterface();
   selectMode("constant", false);
@@ -1477,6 +1736,7 @@ function init() {
 }
 
 window.addEventListener("beforeunload", () => {
+  window.clearTimeout(autoProofTimer);
   if (animationFrame) cancelAnimationFrame(animationFrame);
 });
 

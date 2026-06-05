@@ -55,6 +55,9 @@ jobs:
       - name: Sparse verifier conformance and mutation tests
         run: python3 scripts/test_sparse_verifier.py
 
+      - name: Browser artifact stream regression
+        run: node scripts/test_observatory_stream.mjs
+
       - name: Soundness budget checks
         run: |
           python3 scripts/soundness_budget.py

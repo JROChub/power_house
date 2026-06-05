@@ -37,7 +37,10 @@ The four orbit tracks map to the public verification modes:
 
 Proof progress is reflected in both the verification dock and the active
 orbital beacon. Successful runs can be shared through the Web Share API or
-copied to the clipboard.
+copied to the clipboard. The local-file control accepts the published
+`PHSPv1` certificate or a paired `PHSMv1`/`PHCPv1` workload and certificate,
+checks exact byte lengths, and computes the release SHA-256 digests entirely
+in the browser.
 
 The browser replays provide immediate interactive checks. The canonical Rust
 and Python tooling provides full artifact parsing, transcript validation,
@@ -50,8 +53,11 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in
 - Device pixel ratio is capped separately for desktop and mobile GPUs.
 - Rendering pauses while the page is hidden.
 - Reduced-motion preferences disable automatic orbital motion.
-- Artifact downloads stream into a preallocated buffer when content length is
-  available, avoiding a second full-size in-memory copy.
+- Artifact downloads stream against the canonical uncompressed release size.
+  The growable buffer deliberately ignores compressed HTTP `Content-Length`
+  values, preventing gzip expansion from corrupting browser verification.
+- Exact artifact-length checks reject truncated or expanded release data
+  before hashing.
 - Date and time formatters are cached per IANA zone.
 
 ## Deployment
@@ -70,3 +76,5 @@ can stream and hash them from the same origin.
   https://threejs.org/
 - Lucide:
   https://lucide.dev/
+- The computational proof-lattice backdrop was generated for this project
+  with OpenAI image generation and optimized locally as WebP.
