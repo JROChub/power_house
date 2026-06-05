@@ -33,6 +33,11 @@ jobs:
       - name: Test network targets
         run: cargo test --all-targets --features net --locked
 
+      - name: Reproduce sparse conformance vectors
+        run: |
+          cargo run --example conformance_vectors
+          git diff --exit-code -- conformance/v1
+
       - name: Large-domain examples
         run: |
           cargo run --release --example sextillion_verify
@@ -40,9 +45,19 @@ jobs:
           cargo run --release --example sparse_record
           cargo run --release --example committed_workload
 
-      - name: Independent sparse verification
+      - name: Cross-language sparse verification
         run: |
           python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
           python3 scripts/verify_sparse_certificate.py \
             target/external_interaction_model.phcp \
             --polynomial target/external_interaction_model.phsm
+
+      - name: Sparse verifier conformance and mutation tests
+        run: python3 scripts/test_sparse_verifier.py
+
+      - name: Soundness budget checks
+        run: |
+          python3 scripts/soundness_budget.py
+          python3 scripts/soundness_budget.py \
+            --field 18446744073709551557 \
+            --repetitions 3

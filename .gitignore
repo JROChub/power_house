@@ -18,3 +18,5 @@ boot1.anchor
 boot2.anchor
 *.ed25519
 *.key
+__pycache__/
+*.py[cod]

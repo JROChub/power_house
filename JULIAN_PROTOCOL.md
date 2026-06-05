@@ -176,7 +176,8 @@ verified without a polynomial commitment, oracle, or compact algebraic descripti
 
 For the public sparse computation artifact, run `cargo run --release --example sparse_record`.
 The default polynomial has one million variables, 8,192 nonzero monomials, and maximum degree 12.
-Its `PHSPv1` certificate is then replayed by an independent standard-library implementation with:
+Its `PHSPv1` certificate is then replayed by a separate standard-library Python
+implementation with:
 
 ```bash
 python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp

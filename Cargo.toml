@@ -21,9 +21,14 @@ include = [
   "JULIAN_PROTOCOL.md",
   "docs/*.md",
   "artifacts/*.json",
+  "conformance/**",
+  "scripts/benchmark_sparse.py",
+  "scripts/soundness_budget.py",
+  "scripts/test_sparse_verifier.py",
   "scripts/verify_sparse_certificate.py",
   "src/**",
   "examples/**",
+  "tests/**",
 ]
 
 [badges]

@@ -20,18 +20,20 @@ Relevant prior art includes:
 - Recent sub-linear GKR work:
   https://eprint.iacr.org/2025/717
 
-## Current Candidate Result
+## Current Established Result
 
-Power-House has a candidate public engineering record:
+Power-House has a reproducible public engineering artifact:
 
-> A cross-language reproducible, one-million-round sum-check certificate for a
-> separately stored, commitment-bound sparse multilinear polynomial over
-> `2^1,000,000` Boolean points, with a stable 16 MB certificate and no
-> hypercube allocation.
+> A Rust/Python reproducible, one-million-round deterministic sum-check
+> transcript for a separately stored, hash-bound sparse multilinear polynomial
+> over a one-million-variable Boolean domain, with a stable 16 MB certificate
+> and no hypercube allocation.
 
-This wording is a candidate, not an established world-first claim. An exhaustive
-literature and artifact search has not yet been completed, and no independent
-external party has reproduced the result.
+This is an engineering result, not an established world-first claim. The v1
+verifier reads the complete workload and recomputes the exact expected
+transcript. The represented sum also has a closed form. These facts prevent a
+succinct-verification or novel-protocol claim. See
+[Security Model](security_model.md) and [Prior-Art Review](prior_art_review.md).
 
 ## Historical Claim Gates
 
@@ -47,9 +49,9 @@ complete:
    details, and exact commands in a timestamped release or archival DOI.
 
 3. **Independent implementation**  
-   Obtain verification by an implementation not authored from the Rust code.
-   The bundled Python verifier is useful cross-language evidence but is not an
-   independent external audit.
+   Obtain verification by an implementation authored by an unaffiliated team.
+   The bundled Python verifier is useful cross-language conformance evidence
+   but is not an independent external audit.
 
 4. **Prior-art comparison**  
    Compare the result directly against sum-check, sparse-dense sum-check, GKR,
@@ -61,19 +63,21 @@ complete:
    publish machine details and timings.
 
 6. **Cryptographic scope**  
-   The `PHSMv1`/`PHCPv1` workflow now binds public external data with
-   BLAKE2b-256. For a general or succinct verifiable-computation claim, replace
-   full workload replay with a proven multilinear polynomial commitment and an
-   opening proof for an externally supplied computation or witness.
+   The `PHSMv1`/`PHCPv1` workflow binds public external data with BLAKE2b-256.
+   For a general or succinct verifiable-computation claim, replace full
+   workload replay with a reviewed multilinear polynomial commitment and an
+   opening proof for an externally supplied computation or witness. A standard
+   one-repetition sum-check at the published million-round field parameters has
+   only about 9.97 bits under the classical `n/|F|` bound.
 
 7. **Public review**  
    Publish a technical preprint and obtain specialist review or a formal audit.
 
 ## Claim Levels
 
-- **Allowed now:** "Power-House verifies a separately stored,
-  commitment-bound sparse polynomial over `2^1,000,000` points through a
-  million-round reproducible certificate."
+- **Allowed now:** "Power-House deterministically replays a separately stored,
+  hash-bound sparse polynomial transcript over a one-million-variable Boolean
+  domain through a million-round reproducible certificate."
 - **Allowed after external reproduction:** "Power-House publishes an
   independently reproduced million-round sparse sum-check artifact."
 - **Allowed after novelty review:** A narrowly worded "first" claim matching

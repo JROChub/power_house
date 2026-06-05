@@ -20,8 +20,8 @@
 //! * **Finite field arithmetic** via the [`Field`](field/struct.Field.html) type.
 //! * **Sum-check demonstration**: the [`sumcheck`](sumcheck/index.html) module
 //!   contains functions to compute the true sum of a small bivariate polynomial
-//!   over the Boolean hypercube, build a one-shot claim, and verify it with
-//!   negligible soundness error.
+//!   over the Boolean hypercube, build a one-shot claim, and verify it. Security
+//!   depends on the selected field, round count, transcript model, and protocol.
 //! * **Pseudorandom number generator (PRNG)**: the [`prng`](prng/index.html)
 //!   module exposes a compact BLAKE2b-256 expander that derives deterministic
 //!   Fiat–Shamir challenges from transcripts.  It serves as a stand-in for a
@@ -33,9 +33,8 @@
 //! * **JULIAN protocol blueprint**: the [`julian`](julian/index.html) module
 //!   outlines, through documentation and type stubs, how one could combine
 //!   interactive proofs, VRF randomness, consensus and provability logic
-//!   into a globally verifiable proof ledger. This module is meant to
-//!   illustrate a production-ready ledger blueprint, but it does not
-//!   implement a full ledger.
+//!   into a globally verifiable proof ledger. It is a protocol blueprint and
+//!   does not by itself implement a complete production ledger.
 //!
 //! ## Usage
 //!

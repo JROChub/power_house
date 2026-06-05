@@ -29,6 +29,11 @@ const SPARSE_PRNG_DOMAIN: &[u8] = b"JROC_PRNG";
 const CERTIFICATE_MAGIC: &[u8; 8] = b"PHSPv1\0\0";
 const POLYNOMIAL_MAGIC: &[u8; 8] = b"PHSMv1\0\0";
 const COMMITTED_CERTIFICATE_MAGIC: &[u8; 8] = b"PHCPv1\0\0";
+const MAX_DECODED_VARIABLES: usize = 16_000_000;
+const MAX_DECODED_TERMS: usize = 1_000_000;
+const MAX_DECODED_DEGREE: usize = 1_000_000;
+const MAX_DECODED_SEED_BYTES: usize = 1_048_576;
+const MAX_DECODED_INCIDENCES: usize = 64_000_000;
 
 /// Public description of a deterministic sparse multilinear polynomial.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -212,15 +217,45 @@ impl CommittedSparsePolynomial {
         }
         let num_vars = reader.usize()?;
         let num_terms = reader.usize()?;
+        if num_vars == 0
+            || num_vars > MAX_DECODED_VARIABLES
+            || num_terms == 0
+            || num_terms > MAX_DECODED_TERMS
+        {
+            return Err(SparseProofError::InvalidEncoding(
+                "polynomial dimensions exceed decoder limits",
+            ));
+        }
         if num_terms > reader.remaining() / 24 {
             return Err(SparseProofError::InvalidEncoding(
                 "polynomial term count exceeds input size",
             ));
         }
         let mut terms = Vec::with_capacity(num_terms);
+        let mut total_incidences = 0usize;
         for _ in 0..num_terms {
             let coefficient = reader.u64()?;
             let degree = reader.usize()?;
+            if degree == 0
+                || degree > num_vars
+                || degree > MAX_DECODED_DEGREE
+                || degree > reader.remaining() / 8
+            {
+                return Err(SparseProofError::InvalidEncoding(
+                    "polynomial degree exceeds input or domain size",
+                ));
+            }
+            total_incidences =
+                total_incidences
+                    .checked_add(degree)
+                    .ok_or(SparseProofError::InvalidEncoding(
+                        "polynomial incidence count overflow",
+                    ))?;
+            if total_incidences > MAX_DECODED_INCIDENCES {
+                return Err(SparseProofError::InvalidEncoding(
+                    "polynomial incidence count exceeds decoder limit",
+                ));
+            }
             let mut variables = Vec::with_capacity(degree);
             for _ in 0..degree {
                 variables.push(reader.usize()?);
@@ -529,13 +564,21 @@ impl SeededSparseProof {
         let num_vars = reader.usize()?;
         let num_terms = reader.usize()?;
         let max_degree = reader.usize()?;
-        if num_vars == 0 || num_terms == 0 || max_degree == 0 || max_degree > num_vars {
+        if num_vars == 0
+            || num_vars > MAX_DECODED_VARIABLES
+            || num_terms == 0
+            || num_terms > MAX_DECODED_TERMS
+            || max_degree == 0
+            || max_degree > num_vars
+            || max_degree > MAX_DECODED_DEGREE
+            || !decoded_work_within_limits(num_terms, max_degree)
+        {
             return Err(SparseProofError::InvalidEncoding(
                 "invalid sparse specification",
             ));
         }
         let seed_len = reader.usize()?;
-        if seed_len > reader.remaining() {
+        if seed_len > MAX_DECODED_SEED_BYTES || seed_len > reader.remaining() {
             return Err(SparseProofError::InvalidEncoding(
                 "seed length exceeds input size",
             ));
@@ -666,7 +709,15 @@ impl CommittedSparseProof {
         let num_vars = reader.usize()?;
         let num_terms = reader.usize()?;
         let max_degree = reader.usize()?;
-        if num_vars == 0 || num_terms == 0 || max_degree == 0 || max_degree > num_vars {
+        if num_vars == 0
+            || num_vars > MAX_DECODED_VARIABLES
+            || num_terms == 0
+            || num_terms > MAX_DECODED_TERMS
+            || max_degree == 0
+            || max_degree > num_vars
+            || max_degree > MAX_DECODED_DEGREE
+            || !decoded_work_within_limits(num_terms, max_degree)
+        {
             return Err(SparseProofError::InvalidEncoding(
                 "invalid committed certificate metadata",
             ));
@@ -929,6 +980,13 @@ fn usize_word(value: usize) -> u64 {
 
 fn push_u64(out: &mut Vec<u8>, value: u64) {
     out.extend_from_slice(&value.to_be_bytes());
+}
+
+fn decoded_work_within_limits(num_terms: usize, max_degree: usize) -> bool {
+    num_terms
+        .checked_mul(max_degree)
+        .map(|incidences| incidences <= MAX_DECODED_INCIDENCES)
+        .unwrap_or(false)
 }
 
 struct CertificateReader<'a> {

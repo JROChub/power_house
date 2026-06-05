@@ -1,5 +1,20 @@
 # Release Notes
 
+## Unreleased - v0.3 research foundation
+
+### Added
+- Canonical small `PHSPv1`/`PHSMv1`/`PHCPv1` conformance vectors and manifest.
+- Property-based dense-equivalence tests and full single-byte mutation rejection.
+- Reproducible soundness-budget and benchmark-report tools.
+- Security model, falsifiable research protocol, and primary-source prior-art review.
+
+### Security
+- Enforced deterministic primality validation for every Rust `Field`.
+- Fixed near-`u64::MAX` field addition overflow.
+- Added matching Python primality validation.
+- Added decoder limits for variables, terms, degree, seeds, and total incidences.
+- Rejected oversized polynomial degrees before allocation.
+
 ## v0.2.1 - 2026-06-05
 
 ### Added
@@ -7,7 +22,7 @@
 - Seeded-affine sum-check over configurable domains, demonstrated at `2^4096`.
 - Stable `PHSPv1` million-round seeded sparse certificates.
 - Stable `PHSMv1` external sparse workloads and commitment-bound `PHCPv1` proofs.
-- Independent standard-library Python verifier for both sparse formats.
+- Separately implemented standard-library Python verifier for both sparse formats.
 - Unified verification guide and reproducible reference artifacts.
 
 ### Changed
