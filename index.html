@@ -4,20 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#020607">
-  <meta name="description" content="MFENX Power House orbital proof observatory: live world time, published proof artifacts, and reproducible large-domain verification.">
+  <meta name="description" content="MFENX Power House orbital proof observatory: live Earth telemetry, world time, published proof artifacts, and reproducible large-domain verification.">
   <meta property="og:title" content="MFENX Power House">
-  <meta property="og:description" content="An orbital observatory for reproducible verification over enormous implicit domains.">
+  <meta property="og:description" content="A live planetary observatory for reproducible proof verification.">
   <meta property="og:image" content="https://mfenx.com/assets/earth-day.jpg">
   <title>MFENX Power House | Orbital Proof Observatory</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
-  <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin>
-  <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin>
+  <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
+  <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
+  <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
+  <link rel="preload" href="assets/earth-night-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <div id="boot-screen" class="boot-screen" aria-live="polite">
+    <img src="assets/powerhouse-logo.png" alt="">
+    <span>INITIALIZING ORBITAL OBSERVATORY</span>
+    <i><b id="boot-progress"></b></i>
+  </div>
+
   <div id="app">
-    <canvas id="orbital-canvas" aria-label="Interactive Earth showing world time and proof orbits"></canvas>
+    <canvas id="orbital-canvas" tabindex="0" aria-label="Interactive Earth. Drag to rotate, scroll to zoom, or select a glowing city marker."></canvas>
     <div class="scan-grid" aria-hidden="true"></div>
+    <div class="edge-vignette" aria-hidden="true"></div>
 
     <header class="topbar">
       <a class="brand" href="/" aria-label="MFENX Power House home">
@@ -28,43 +37,53 @@
         </span>
       </a>
 
-      <div class="mission-clock" aria-label="Coordinated Universal Time">
+      <div class="mission-clock" aria-label="Observatory time">
         <span class="signal-dot"></span>
+        <span id="mission-state">LIVE ORBIT</span>
         <span id="utc-date">JUN 05 2026</span>
         <strong id="utc-time">00:00:00</strong>
         <span>UTC</span>
       </div>
 
       <nav class="top-actions" aria-label="Project links">
-        <a href="https://docs.rs/power_house" title="Rust API documentation">API</a>
-        <a href="https://crates.io/crates/power_house" title="power_house on crates.io">CRATE</a>
-        <a href="https://github.com/JROChub/power_house" title="Source repository">SOURCE</a>
-        <a href="https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/" title="NASA Earth imagery">NASA</a>
+        <a href="https://docs.rs/power_house" title="Rust API documentation">
+          <span data-icon="book-open"></span><b>API</b>
+        </a>
+        <a href="https://crates.io/crates/power_house" title="power_house on crates.io">
+          <span data-icon="package"></span><b>CRATE</b>
+        </a>
+        <a href="https://github.com/JROChub/power_house" title="Source repository">
+          <span data-icon="code"></span><b>SOURCE</b>
+        </a>
+        <button id="observatory-toggle" class="mobile-observatory-toggle" type="button" aria-label="Open world observatory" title="World observatory">
+          <span data-icon="globe"></span>
+        </button>
       </nav>
     </header>
 
     <aside class="proof-rail" aria-label="Proof modes">
       <div class="rail-heading">
         <span>PROOF ORBITS</span>
-        <b>04</b>
+        <b>04 ACTIVE</b>
       </div>
+
       <div id="proof-modes" class="proof-modes">
-        <button class="proof-mode active" data-mode="constant">
+        <button class="proof-mode active" data-mode="constant" type="button" aria-pressed="true">
           <span class="mode-index">01</span>
           <span class="mode-copy"><b>SEXTILLION</b><small>CONSTANT / 70 ROUNDS</small></span>
           <i></i>
         </button>
-        <button class="proof-mode" data-mode="affine">
+        <button class="proof-mode" data-mode="affine" type="button" aria-pressed="false">
           <span class="mode-index">02</span>
-          <span class="mode-copy"><b>HYPERSCALE</b><small>SEEDED AFFINE / 4096</small></span>
+          <span class="mode-copy"><b>HYPERSCALE</b><small>SEEDED AFFINE / 4,096</small></span>
           <i></i>
         </button>
-        <button class="proof-mode" data-mode="sparse">
+        <button class="proof-mode" data-mode="sparse" type="button" aria-pressed="false">
           <span class="mode-index">03</span>
           <span class="mode-copy"><b>MEGAROUND</b><small>SPARSE / 1,000,000</small></span>
           <i></i>
         </button>
-        <button class="proof-mode" data-mode="committed">
+        <button class="proof-mode" data-mode="committed" type="button" aria-pressed="false">
           <span class="mode-index">04</span>
           <span class="mode-copy"><b>COMMITTED</b><small>EXTERNAL PHSM + PHCP</small></span>
           <i></i>
@@ -77,9 +96,17 @@
         <small id="domain-detail">1,180,591,620,717,411,303,424 points</small>
       </div>
 
+      <button id="install-command" class="install-command" type="button" title="Copy install command">
+        <span>
+          <small>INSTALL</small>
+          <code>cargo add power_house</code>
+        </span>
+        <span data-icon="copy"></span>
+      </button>
+
       <div class="rail-links">
         <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
-        <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY</a>
       </div>
     </aside>
 
@@ -87,14 +114,18 @@
       <div class="stage-label">
         <span id="stage-city">GREENWICH</span>
         <strong id="stage-time">00:00:00</strong>
-        <small id="stage-zone">EUROPE/LONDON</small>
+        <small><span id="stage-date">JUN 05</span> / <span id="stage-zone">EUROPE/LONDON</span></small>
       </div>
+
+      <div class="target-reticle" aria-hidden="true"><i></i><i></i></div>
 
       <div class="scale-axis" aria-hidden="true">
         <span>FINITE FIELD</span>
         <i></i>
         <b>1,000,000,007</b>
       </div>
+
+      <div id="globe-tooltip" class="globe-tooltip" role="status"></div>
 
       <div class="orbit-caption">
         <span id="orbit-kicker">CLOSED-FORM SUM-CHECK</span>
@@ -103,18 +134,74 @@
       </div>
     </main>
 
-    <aside class="clock-rail" aria-label="World clocks">
-      <div class="rail-heading">
-        <span>WORLD CLOCK</span>
-        <b>LIVE</b>
+    <aside id="observatory-rail" class="clock-rail" aria-label="World observatory">
+      <div class="observatory-heading">
+        <div>
+          <span>WORLD OBSERVATORY</span>
+          <b id="observatory-mode">LIVE</b>
+        </div>
+        <button id="observatory-close" type="button" aria-label="Close world observatory" title="Close">
+          <span data-icon="x"></span>
+        </button>
       </div>
+
+      <label class="city-search">
+        <span data-icon="search"></span>
+        <input id="city-search" type="search" autocomplete="off" placeholder="Search city or zone" aria-label="Search world clocks">
+      </label>
+
       <div id="city-list" class="city-list"></div>
-      <div class="solar-readout">
-        <span>SUBSOLAR POSITION</span>
-        <b id="solar-position">0.0 N / 0.0 E</b>
-        <small>TERMINATOR UPDATED LIVE</small>
-      </div>
+
+      <section class="celestial-readout" aria-label="Selected city celestial data">
+        <div class="celestial-primary">
+          <span id="solar-state">DAYLIGHT</span>
+          <b id="solar-altitude">+00.0°</b>
+          <small>SOLAR ALTITUDE</small>
+        </div>
+        <dl>
+          <div><dt>SUNRISE</dt><dd id="sunrise-value">--:--</dd></div>
+          <div><dt>SUNSET</dt><dd id="sunset-value">--:--</dd></div>
+          <div><dt>MOON</dt><dd id="moon-phase">--</dd></div>
+          <div><dt>LIGHT</dt><dd id="moon-light">--%</dd></div>
+        </dl>
+        <div class="subsolar-line">
+          <span>SUBSOLAR</span>
+          <b id="solar-position">0.0 N / 0.0 E</b>
+        </div>
+      </section>
+
+      <section class="time-lab" aria-label="Celestial timeline">
+        <div class="time-lab-heading">
+          <span>CELESTIAL TIMELINE</span>
+          <b id="time-offset-label">LIVE</b>
+        </div>
+        <div class="time-controls">
+          <button id="time-back" type="button" aria-label="Move one hour backward" title="Back one hour">
+            <span data-icon="chevron-left"></span>
+          </button>
+          <button id="time-live" type="button" aria-label="Return to live time" title="Return to live">
+            <span data-icon="rotate-ccw"></span><b>LIVE</b>
+          </button>
+          <button id="time-forward" type="button" aria-label="Move one hour forward" title="Forward one hour">
+            <span data-icon="chevron-right"></span>
+          </button>
+        </div>
+        <input id="time-slider" type="range" min="-24" max="24" step="1" value="0" aria-label="Time offset from live, in hours">
+        <div class="time-scale" aria-hidden="true"><span>-24H</span><span>NOW</span><span>+24H</span></div>
+      </section>
     </aside>
+
+    <div class="scene-controls" aria-label="Scene controls">
+      <button id="focus-toggle" class="icon-button" type="button" aria-label="Focus selected city" title="Focus selected city">
+        <span data-icon="crosshair"></span>
+      </button>
+      <button id="sound-toggle" class="icon-button" type="button" aria-label="Enable interface sound" title="Toggle interface sound">
+        <span data-icon="volume-x"></span>
+      </button>
+      <button id="motion-toggle" class="icon-button" type="button" aria-label="Pause orbital motion" title="Pause orbital motion">
+        <span data-icon="pause"></span>
+      </button>
+    </div>
 
     <section class="verification-dock" aria-label="Verification console">
       <div class="dock-primary">
@@ -131,28 +218,25 @@
           <p id="verification-detail">The browser checks every round equation over the field and computes a certificate SHA-256 digest.</p>
         </div>
 
-        <button id="verify-button" class="verify-button">
-          <span>RUN PROOF</span>
-          <b>ENTER</b>
-        </button>
+        <div class="verification-actions">
+          <button id="share-button" class="share-button" type="button" disabled title="Share verification result">
+            <span data-icon="share-2"></span>
+          </button>
+          <button id="verify-button" class="verify-button" type="button">
+            <span>RUN PROOF</span>
+            <b>ENTER</b>
+          </button>
+        </div>
       </div>
 
       <div class="telemetry">
         <div><span>ROUND</span><b id="round-value">0 / 70</b></div>
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
+        <div><span>MODE</span><b id="mode-value">CONSTANT</b></div>
         <div><span>RELEASE</span><b>v0.2.2</b></div>
-        <div><span>ENGINE</span><b>RUST + PYTHON</b></div>
       </div>
     </section>
-
-    <button id="sound-toggle" class="icon-button sound-toggle" aria-label="Toggle interface sound" title="Toggle interface sound">
-      <span aria-hidden="true">◖</span>
-    </button>
-
-    <button id="motion-toggle" class="icon-button motion-toggle" aria-label="Pause orbital motion" title="Pause orbital motion">
-      <span aria-hidden="true">Ⅱ</span>
-    </button>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
