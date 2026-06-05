@@ -25,8 +25,9 @@ Relevant prior art includes:
 Power-House has a candidate public engineering record:
 
 > A cross-language reproducible, one-million-round sum-check certificate for a
-> public seeded sparse multilinear polynomial over `2^1,000,000` Boolean
-> points, with a stable 16 MB certificate and no hypercube allocation.
+> separately stored, commitment-bound sparse multilinear polynomial over
+> `2^1,000,000` Boolean points, with a stable 16 MB certificate and no
+> hypercube allocation.
 
 This wording is a candidate, not an established world-first claim. An exhaustive
 literature and artifact search has not yet been completed, and no independent
@@ -60,17 +61,19 @@ complete:
    publish machine details and timings.
 
 6. **Cryptographic scope**  
-   For a general verifiable-computation claim, add a binding commitment to an
-   externally supplied computation or witness. A public seeded polynomial is a
-   structured verification artifact, not proof of unknown work.
+   The `PHSMv1`/`PHCPv1` workflow now binds public external data with
+   BLAKE2b-256. For a general or succinct verifiable-computation claim, replace
+   full workload replay with a proven multilinear polynomial commitment and an
+   opening proof for an externally supplied computation or witness.
 
 7. **Public review**  
    Publish a technical preprint and obtain specialist review or a formal audit.
 
 ## Claim Levels
 
-- **Allowed now:** "Power-House verifies a public seeded sparse polynomial over
-  `2^1,000,000` points through a million-round reproducible certificate."
+- **Allowed now:** "Power-House verifies a separately stored,
+  commitment-bound sparse polynomial over `2^1,000,000` points through a
+  million-round reproducible certificate."
 - **Allowed after external reproduction:** "Power-House publishes an
   independently reproduced million-round sparse sum-check artifact."
 - **Allowed after novelty review:** A narrowly worded "first" claim matching

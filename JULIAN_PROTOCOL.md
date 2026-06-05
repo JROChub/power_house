@@ -143,6 +143,7 @@ library, the protocol remains lightweight and deterministic across platforms.
   - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.
   - `hyperscale_affine`: seeded affine certificate over a default `2^4096` Boolean domain.
   - `sparse_record`: portable million-round certificate for a seeded sparse polynomial.
+  - `committed_workload`: separate external polynomial and commitment-bound certificate files.
   - `verify_logs`: CLI to validate stored transcripts.
 
 ## 7. Performance Evaluation
@@ -184,6 +185,12 @@ python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.ph
 The artifact specification and benchmark manifest are in `docs/sparse_record.md` and
 `artifacts/sparse_record_v1.json`. The claim policy in `docs/research_claim.md` deliberately separates
 this reproducible engineering result from an unsupported world-first cryptographic claim.
+
+The next layer is available through `cargo run --release --example committed_workload -- all`.
+It creates a canonical external `PHSMv1` sparse polynomial and a separate `PHCPv1` certificate
+containing its domain-separated BLAKE2b-256 commitment. Rust and Python require both files and reject
+workload substitution. This is binding for public external data, but it is not yet a succinct
+multilinear polynomial commitment or a hidden-witness argument.
 
 ## 8. Security Considerations
 

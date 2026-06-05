@@ -40,6 +40,19 @@ jobs:
           cargo run --release --example sparse_record -- 100000 2048 10
           python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
 
+      - name: External commitment workflow
+        env:
+          POWER_HOUSE_COMMITTED_VARS: "100000"
+          POWER_HOUSE_COMMITTED_TERMS: "2048"
+          POWER_HOUSE_COMMITTED_DEGREE: "10"
+        run: |
+          cargo run --release --example committed_workload -- all \
+            target/ci_external_model.phsm \
+            target/ci_external_model.phcp
+          python3 scripts/verify_sparse_certificate.py \
+            target/ci_external_model.phcp \
+            --polynomial target/ci_external_model.phsm
+
       - name: Validate ops CLI
         run: |
           python3 -m py_compile scripts/netctl.py

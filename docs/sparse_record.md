@@ -85,8 +85,7 @@ The verifier remains linear in the number of rounds. It is independent of the
 
 ## Scope
 
-This certificate verifies a public, compactly described polynomial. It does not
-yet bind a secret or externally supplied computation trace through a
-multilinear polynomial commitment. That commitment layer is the next step
-required before describing Power-House as a general delegated-computation
-argument.
+This certificate verifies a public, compactly described polynomial. The
+`PHSMv1`/`PHCPv1` workflow in `docs/committed_workload.md` extends it to
+separately stored external public data. Neither format yet provides a succinct
+multilinear polynomial opening or a hidden-witness argument.

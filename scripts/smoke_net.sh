@@ -11,6 +11,7 @@ LOG_DIR_A="${SMOKE_LOG_DIR_A:-./logs/smoke_nodeA}"
 LOG_DIR_B="${SMOKE_LOG_DIR_B:-./logs/smoke_nodeB}"
 PORT_A=7211
 PORT_B=7212
+SMOKE_TIMEOUT=${SMOKE_TIMEOUT:-20}
 
 cleanup() {
   [[ -n "${PID_A:-}" ]] && kill "$PID_A" 2>/dev/null || true
@@ -57,7 +58,27 @@ stdbuf -oL -eL "$CARGO_BIN" run --features net --bin julian --quiet -- net start
   >"$TMP_B" 2>&1 &
 PID_B=$!
 
-sleep 6
+wait_for_cluster() {
+  local elapsed=0
+  while (( elapsed < SMOKE_TIMEOUT )); do
+    if grep -q "broadcasted local anchor" "$TMP_A" &&
+      grep -q "finality reached" "$TMP_A" &&
+      grep -q "broadcasted local anchor" "$TMP_B" &&
+      grep -q "finality reached" "$TMP_B"; then
+      return 0
+    fi
+    sleep 1
+    ((elapsed += 1))
+  done
+  printf 'smoke_net: timed out after %ss\n' "$SMOKE_TIMEOUT" >&2
+  printf '%s\n' '--- node A ---' >&2
+  cat "$TMP_A" >&2
+  printf '%s\n' '--- node B ---' >&2
+  cat "$TMP_B" >&2
+  return 1
+}
+
+wait_for_cluster
 
 cleanup
 

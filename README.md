@@ -88,12 +88,22 @@ python3 scripts/verify_sparse_certificate.py \
   target/power_house_sparse_record.phsp
 ```
 
+`cargo run --release --example committed_workload -- all` separates the
+polynomial from its proof. It writes a canonical external `PHSMv1` workload and
+a `PHCPv1` certificate that commits to those exact bytes. Verification fails if
+either file changes:
+
+```bash
+python3 scripts/verify_sparse_certificate.py \
+  target/external_interaction_model.phcp \
+  --polynomial target/external_interaction_model.phsm
+```
+
 The scientific notes are in `docs/sextillion_proof.md` and
 `docs/hyperscale_proof.md`. The sparse artifact specification is in
-`docs/sparse_record.md`, and `docs/research_claim.md` defines the evidence
-required before Power-House uses a historical or world-first claim. The
-launchable interactive game/presentation for `mfenx.com` is in
-`publicpower/index.html`.
+`docs/sparse_record.md`; the external commitment workflow is documented in
+`docs/committed_workload.md`. `docs/research_claim.md` defines the evidence
+required before Power-House uses a historical or world-first claim.
 
 Bootstrap multiaddrs:
 
@@ -555,6 +565,17 @@ python3 scripts/verify_sparse_certificate.py \
 
 Produces and independently replays a stable `PHSPv1` binary certificate with
 one million sum-check rounds and thousands of high-degree interaction terms.
+
+Externally committed workload
+
+```bash
+cargo run --release --example committed_workload -- generate
+cargo run --release --example committed_workload -- prove
+cargo run --release --example committed_workload -- verify
+```
+
+Generates a separate `PHSMv1` workload, binds its BLAKE2b-256 commitment into a
+`PHCPv1` certificate, and verifies both artifacts in a fresh process.
 
 Transcript hash verification
 
