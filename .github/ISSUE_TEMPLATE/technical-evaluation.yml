@@ -1,0 +1,60 @@
+name: Technical evaluation
+description: Define a workload or verification problem for Power House evaluation.
+title: "[Evaluation] "
+labels:
+  - evaluation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the statement to verify, the implicit domain, and the acceptance criteria. Do not include confidential data in a public issue.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization or project
+      placeholder: Team, company, laboratory, or open-source project
+  - type: dropdown
+    id: workload
+    attributes:
+      label: Workload class
+      options:
+        - Constant or closed-form polynomial
+        - Seeded affine polynomial
+        - Seeded sparse polynomial
+        - External commitment-bound sparse workload
+        - Other verification workload
+    validations:
+      required: true
+  - type: textarea
+    id: statement
+    attributes:
+      label: Verification statement
+      description: What exact claim should a verifier accept or reject?
+    validations:
+      required: true
+  - type: textarea
+    id: scale
+    attributes:
+      label: Domain and scale
+      description: Variables, field, sparse terms, incidence count, artifact size, or other relevant bounds.
+    validations:
+      required: true
+  - type: textarea
+    id: trust
+    attributes:
+      label: Trust boundary and threat model
+      description: Identify untrusted inputs, substitution risks, and required tamper rejection.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction target
+      description: Required language, runtime, hardware, operating system, or deployment environment.
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Public information confirmation
+      options:
+        - label: I confirm this issue contains no confidential or regulated data.
+          required: true
