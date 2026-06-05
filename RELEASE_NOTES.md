@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unreleased - v0.3 research foundation
+## v0.2.2 - 2026-06-05
 
 ### Added
 - Canonical small `PHSPv1`/`PHSMv1`/`PHCPv1` conformance vectors and manifest.
@@ -14,6 +14,11 @@
 - Added matching Python primality validation.
 - Added decoder limits for variables, terms, degree, seeds, and total incidences.
 - Rejected oversized polynomial degrees before allocation.
+
+### Documentation
+- Streamlined the crate README and documentation index.
+- Removed the obsolete research-claim policy document.
+- Updated the observatory documentation link and release label.
 
 ## v0.2.1 - 2026-06-05
 
