@@ -12,7 +12,7 @@
 //! variables and nonzero term incidences. They never allocate the `2^n`
 //! Boolean hypercube.
 
-use crate::{prng::SimplePrng, Field, TranscriptDigest};
+use crate::{Field, TranscriptDigest};
 use blake2::digest::{consts::U32, Digest};
 use std::fmt;
 
@@ -23,6 +23,9 @@ const COMMITTED_POLYNOMIAL_DOMAIN: &[u8] = b"power_house:v1:committed-sparse-pol
 const TRANSCRIPT_DOMAIN: &[u8] = b"power_house:v1:sparse-sumcheck-transcript";
 const CHALLENGE_DOMAIN: &[u8] = b"power_house:v1:sparse-sumcheck-challenge";
 const RESPONSE_DOMAIN: &[u8] = b"power_house:v1:sparse-sumcheck-response";
+// PHSPv1 was published before the project-wide MFENX PRNG domain migration.
+// Keep its derivation domain fixed so existing certificates remain reproducible.
+const SPARSE_PRNG_DOMAIN: &[u8] = b"JROC_PRNG";
 const CERTIFICATE_MAGIC: &[u8; 8] = b"PHSPv1\0\0";
 const POLYNOMIAL_MAGIC: &[u8; 8] = b"PHSMv1\0\0";
 const COMMITTED_CERTIFICATE_MAGIC: &[u8; 8] = b"PHCPv1\0\0";
@@ -352,6 +355,49 @@ struct SparseExecution {
     polynomial_digest: TranscriptDigest,
     transcript_digest: TranscriptDigest,
     term_incidences: usize,
+}
+
+#[derive(Debug, Clone)]
+struct SparsePrng {
+    seed: [u8; 32],
+    counter: u64,
+    buffer: [u8; 32],
+    offset: usize,
+}
+
+impl SparsePrng {
+    fn from_seed_bytes(seed: [u8; 32]) -> Self {
+        Self {
+            seed,
+            counter: 0,
+            buffer: [0u8; 32],
+            offset: 32,
+        }
+    }
+
+    fn refill(&mut self) {
+        let mut hasher = Blake2b256::new();
+        hasher.update(SPARSE_PRNG_DOMAIN);
+        hasher.update(self.seed);
+        hasher.update(self.counter.to_be_bytes());
+        self.buffer.copy_from_slice(&hasher.finalize());
+        self.counter = self.counter.wrapping_add(1);
+        self.offset = 0;
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        if self.offset >= self.buffer.len() {
+            self.refill();
+        }
+        let mut chunk = [0u8; 8];
+        chunk.copy_from_slice(&self.buffer[self.offset..self.offset + 8]);
+        self.offset += 8;
+        u64::from_be_bytes(chunk)
+    }
+
+    fn gen_mod(&mut self, modulus: u64) -> u64 {
+        self.next_u64() % modulus
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -803,7 +849,7 @@ fn derive_terms(spec: &SeededSparseSpec, field: &Field) -> Vec<SparseTerm> {
     seed_hasher.update(usize_word(spec.num_terms).to_be_bytes());
     seed_hasher.update(usize_word(spec.max_degree).to_be_bytes());
     absorb_bytes(&mut seed_hasher, &spec.seed);
-    let mut prng = SimplePrng::from_seed_bytes(finish_hash(seed_hasher));
+    let mut prng = SparsePrng::from_seed_bytes(finish_hash(seed_hasher));
 
     let mut terms = Vec::with_capacity(spec.num_terms);
     for _ in 0..spec.num_terms {

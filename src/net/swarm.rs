@@ -80,6 +80,8 @@ const DEFAULT_MAX_REQUEST_BYTES: usize = 64 * 1024 * 1024;
 const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 10_000;
 const DEFAULT_BLOB_MAX_CONCURRENCY: usize = 128;
 
+type AnchorVotes = HashMap<[u8; 32], (Instant, HashMap<Vec<u8>, LedgerAnchor>)>;
+
 struct BftState {
     round: u64,
     votes: HashMap<String, HashSet<Vec<u8>>>,
@@ -103,10 +105,7 @@ impl BftState {
     }
 
     fn record_vote(&mut self, anchor_hash: &str, key_bytes: &[u8]) -> usize {
-        let entry = self
-            .votes
-            .entry(anchor_hash.to_string())
-            .or_insert_with(HashSet::new);
+        let entry = self.votes.entry(anchor_hash.to_string()).or_default();
         entry.insert(key_bytes.to_vec());
         entry.len()
     }
@@ -248,7 +247,7 @@ impl NetConfig {
         let blob_max_concurrency = blob_max_concurrency.unwrap_or(DEFAULT_BLOB_MAX_CONCURRENCY);
         let blob_request_timeout =
             Duration::from_millis(blob_request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS));
-        let bft_round_ms = bft_round_ms.unwrap_or_else(|| broadcast_interval.as_millis() as u64);
+        let bft_round_ms = bft_round_ms.unwrap_or(broadcast_interval.as_millis() as u64);
         Self {
             node_id,
             listen_addr,
@@ -1801,8 +1800,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let mut last_publish: Option<Instant> = None;
     let mut broadcast_counter: u64 = 0;
     let mut bft_state = BftState::new(cfg.bft_round_ms);
-    let mut anchor_votes: HashMap<[u8; 32], (Instant, HashMap<Vec<u8>, LedgerAnchor>)> =
-        HashMap::new();
+    let mut anchor_votes = AnchorVotes::new();
 
     let local_peer = cfg.key_material.libp2p.public().to_peer_id();
 
@@ -1832,20 +1830,18 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                         metrics.inc_gossipsub_rejects();
                         eprintln!("bft tick error: {err}");
                     }
-                } else {
-                    if let Err(err) = broadcast_local_anchor(
-                        &mut swarm,
-                        &cfg,
-                        &mut last_payload,
-                        &mut last_publish,
-                        &mut broadcast_counter,
-                        &metrics,
-                    )
-                    .await
-                    {
-                        metrics.inc_gossipsub_rejects();
-                        eprintln!("broadcast error: {err}");
-                    }
+                } else if let Err(err) = broadcast_local_anchor(
+                    &mut swarm,
+                    &cfg,
+                    &mut last_payload,
+                    &mut last_publish,
+                    &mut broadcast_counter,
+                    &metrics,
+                )
+                .await
+                {
+                    metrics.inc_gossipsub_rejects();
+                    eprintln!("broadcast error: {err}");
                 }
                 if let Err(err) = broadcast_evidence(&mut swarm, &cfg) {
                     eprintln!("evidence broadcast error: {err}");
@@ -2140,6 +2136,7 @@ fn build_anchor_payload(cfg: &NetConfig) -> Result<(AnchorJson, Vec<u8>, usize),
     Ok((anchor_json, payload, ledger.entries.len()))
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn publish_anchor_payload(
     swarm: &mut Swarm<JrocBehaviour>,
     cfg: &NetConfig,
@@ -2207,7 +2204,7 @@ async fn publish_anchor_payload(
     if let Some(interval) = cfg.checkpoint_interval {
         if interval > 0 {
             *broadcast_counter = broadcast_counter.saturating_add(1);
-            if *broadcast_counter % interval == 0 {
+            if (*broadcast_counter).is_multiple_of(interval) {
                 let checkpoint = AnchorCheckpoint::new(
                     *broadcast_counter,
                     anchor_json.clone(),
@@ -2349,6 +2346,7 @@ async fn bft_tick(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn handle_event(
     event: SwarmEvent<JrocBehaviourEvent>,
     swarm: &mut Swarm<JrocBehaviour>,
@@ -2356,7 +2354,7 @@ async fn handle_event(
     seen_payloads: &mut PayloadCache,
     invalid_counters: &mut HashMap<libp2p::PeerId, usize>,
     bft_state: &mut BftState,
-    anchor_votes: &mut HashMap<[u8; 32], (Instant, HashMap<Vec<u8>, LedgerAnchor>)>,
+    anchor_votes: &mut AnchorVotes,
     metrics: &Arc<Metrics>,
 ) -> Result<(), NetworkError> {
     #[allow(clippy::collapsible_match, clippy::single_match)]

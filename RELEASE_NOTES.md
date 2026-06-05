@@ -1,6 +1,23 @@
-﻿# Release Notes
+# Release Notes
 
-## v0.1.58 — 2026-02-18
+## v0.2.1 - 2026-06-05
+
+### Added
+- Closed-form constant sum-check over `2^70` Boolean points.
+- Seeded-affine sum-check over configurable domains, demonstrated at `2^4096`.
+- Stable `PHSPv1` million-round seeded sparse certificates.
+- Stable `PHSMv1` external sparse workloads and commitment-bound `PHCPv1` proofs.
+- Independent standard-library Python verifier for both sparse formats.
+- Unified verification guide and reproducible reference artifacts.
+
+### Changed
+- Combined the v0.2 network, migration, rollup, and operations line with the
+  large-domain proof work.
+- Normalized the source manifest and expanded packaged documentation.
+- Tightened public claims to distinguish implicit-domain scale from arbitrary
+  computation, succinct verification, and established novelty.
+
+## v0.1.58 - 2026-02-18
 
 ### Added
 - External DA publisher pipeline with receipts (HTTP relay + Ethereum anchoring support).

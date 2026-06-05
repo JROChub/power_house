@@ -1,0 +1,107 @@
+# Verification Guide
+
+This guide reproduces every large-domain claim in `power_house` v0.2.1.
+
+## Requirements
+
+- Rust stable with Cargo
+- Python 3.10 or newer for the independent verifier
+- approximately 100 MB of free disk space for generated certificates
+
+Run all commands from the repository root.
+
+## 1. Test the implementation
+
+```bash
+cargo fmt --check
+cargo test --all-targets --locked
+cargo test --all-targets --features net --locked
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+## 2. Verify more than one sextillion points
+
+```bash
+cargo run --release --example sextillion_verify
+```
+
+This proves the Boolean-hypercube sum of a constant polynomial over `2^70`
+points. The proof and verifier each process 70 rounds.
+
+## 3. Verify a seeded non-constant polynomial
+
+```bash
+cargo run --release --example hyperscale_affine
+```
+
+The public seed defines an affine multilinear polynomial over `2^4096` points.
+The verifier derives the same coefficients, replays every Fiat-Shamir round,
+and rejects a different seed or modified round.
+
+## 4. Generate a million-round sparse certificate
+
+```bash
+cargo run --release --example sparse_record
+
+python3 scripts/verify_sparse_certificate.py \
+  target/power_house_sparse_record.phsp
+```
+
+The default certificate has one million rounds and describes a public seeded
+sparse polynomial over `2^1,000,000` points.
+
+## 5. Bind a proof to external data
+
+```bash
+cargo run --release --example committed_workload -- generate
+cargo run --release --example committed_workload -- prove
+cargo run --release --example committed_workload -- verify
+
+python3 scripts/verify_sparse_certificate.py \
+  target/external_interaction_model.phcp \
+  --polynomial target/external_interaction_model.phsm
+```
+
+The `PHCPv1` proof commits to the separate `PHSMv1` workload. The Rust and
+Python verifiers both require the exact workload bytes.
+
+## 6. Confirm tamper rejection
+
+```bash
+cp target/external_interaction_model.phsm /tmp/tampered.phsm
+printf '\001' | dd of=/tmp/tampered.phsm bs=1 seek=40 count=1 conv=notrunc
+
+python3 scripts/verify_sparse_certificate.py \
+  target/external_interaction_model.phcp \
+  --polynomial /tmp/tampered.phsm
+```
+
+The final command must fail. Unit tests also cover modified proof rounds,
+wrong public seeds, malformed lengths, workload changes, and transcript digest
+changes.
+
+## Complexity and scope
+
+For `n` variables and `I` sparse term incidences:
+
+- proof size: `O(n)`
+- prover work: `O(n + I log n)`
+- verifier work: `O(n + I log n)`
+- expanded `2^n` table: never allocated
+
+The current external-data commitment is public and non-hiding. Verification
+reads the complete sparse workload. It is not a succinct polynomial opening,
+general virtual-machine proof, or hidden-witness argument.
+
+## Reporting results
+
+Record:
+
+- Git commit and crate version
+- `rustc --version` and `python3 --version`
+- CPU model and memory
+- generated file sizes and SHA-256 digests
+- prover and verifier timings
+
+External reproductions should publish these values independently rather than
+copying the reference artifact metadata.

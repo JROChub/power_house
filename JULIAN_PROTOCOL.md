@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.1.54 — February 2026
+Version 0.2.1 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -237,7 +237,7 @@ To support distributed reconciliation, the crate now ships an optional networkin
 - `net::swarm` – libp2p stack (TCP + Noise + Yamux) with Gossipsub gossip, Kademlia discovery, and
   Identify metadata. Nodes recompute anchors from local logs, sign them, broadcast envelopes, and run
   quorum reconciliation upon receipt. Envelope handling now enforces schema/network identifiers,
-  caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and fumes
+  caps payloads to 64 KB/10k entries, maintains an LRU of recently seen payload hashes, and flags
   invalid senders after repeated mistakes.
 - `net::governance` – membership policy trait plus static, multisig, and stake-backed implementations
   (`--policy`).
@@ -300,7 +300,7 @@ their libp2p Peer IDs remain constant across restarts. Operators joining the net
 their local anchor via `julian node run` and compare the resulting statements/digests against the
 values above before accepting finality.
 
-## 13. Conclusion
+## 14. Conclusion
 
 The JULIAN Protocol now spans two layers: a dependency-free proof/ledger core and an optional
 libp2p-based networking shell. Deterministic transcripts, append-only anchors, and quorum
