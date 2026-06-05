@@ -27,11 +27,15 @@ include = [
   "docs/book_of_power.md",
   "docs/sextillion_proof.md",
   "docs/hyperscale_proof.md",
+  "docs/sparse_record.md",
+  "docs/research_claim.md",
+  "artifacts/sparse_record_v1.json",
   "assets/**",
   "publicpower/**",
   "infra/ops_hosts.example.toml",
   "scripts/netctl.py",
   "scripts/smoke_net.sh",
+  "scripts/verify_sparse_certificate.py",
   "src/**",
   "examples/**"
 ]

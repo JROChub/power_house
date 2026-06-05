@@ -78,9 +78,22 @@ seeded affine certificate over the default `2^4096` domain, roughly `1e1233`
 Boolean points. The verifier derives the polynomial from a public seed and
 checks every sum-check round without allocating the hypercube.
 
+`cargo run --release --example sparse_record` produces a portable one-million
+round certificate for 8,192 seeded sparse interaction terms over
+`2^1,000,000` Boolean points. The domain has 301,030 decimal digits. A separate
+standard-library Python implementation replays the binary certificate:
+
+```bash
+python3 scripts/verify_sparse_certificate.py \
+  target/power_house_sparse_record.phsp
+```
+
 The scientific notes are in `docs/sextillion_proof.md` and
-`docs/hyperscale_proof.md`. The launchable interactive game/presentation for
-`mfenx.com` is in `publicpower/index.html`.
+`docs/hyperscale_proof.md`. The sparse artifact specification is in
+`docs/sparse_record.md`, and `docs/research_claim.md` defines the evidence
+required before Power-House uses a historical or world-first claim. The
+launchable interactive game/presentation for `mfenx.com` is in
+`publicpower/index.html`.
 
 Bootstrap multiaddrs:
 
@@ -531,6 +544,17 @@ cargo run --example hyperscale_affine
 Replays a non-constant seeded affine certificate over the default `2^4096`
 domain. Use `cargo run --example hyperscale_affine -- 1024` for a faster
 CI-sized run.
+
+Public sparse computation certificate
+
+```bash
+cargo run --release --example sparse_record
+python3 scripts/verify_sparse_certificate.py \
+  target/power_house_sparse_record.phsp
+```
+
+Produces and independently replays a stable `PHSPv1` binary certificate with
+one million sum-check rounds and thousands of high-degree interaction terms.
 
 Transcript hash verification
 

@@ -68,6 +68,7 @@ mod log_parser;
 mod merkle;
 mod multilinear;
 mod prng;
+pub mod sparse_sumcheck;
 mod streaming;
 pub mod sumcheck;
 mod transcript;
@@ -96,6 +97,9 @@ pub use merkle::{
 };
 pub use multilinear::MultilinearPolynomial;
 pub use prng::SimplePrng;
+pub use sparse_sumcheck::{
+    SeededSparseProof, SeededSparseSpec, SparseProofError, SparseVerificationReport,
+};
 pub use streaming::StreamingPolynomial;
 pub use sumcheck::{ChainedSumProof, GeneralSumClaim, GeneralSumProof, ProofStats, SumClaim};
 pub use transcript::Transcript;

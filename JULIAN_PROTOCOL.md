@@ -142,6 +142,7 @@ library, the protocol remains lightweight and deterministic across platforms.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
   - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.
   - `hyperscale_affine`: seeded affine certificate over a default `2^4096` Boolean domain.
+  - `sparse_record`: portable million-round certificate for a seeded sparse polynomial.
   - `verify_logs`: CLI to validate stored transcripts.
 
 ## 7. Performance Evaluation
@@ -171,6 +172,18 @@ over `2^4096` Boolean points, roughly `1e1233` evaluations. The verifier derives
 from the seed, checks all 4096 sum-check rounds, and evaluates one final challenge point. This is an
 `O(n)` verifier for the seeded affine family; it is not a claim that arbitrary `2^4096` tables can be
 verified without a polynomial commitment, oracle, or compact algebraic description.
+
+For the public sparse computation artifact, run `cargo run --release --example sparse_record`.
+The default polynomial has one million variables, 8,192 nonzero monomials, and maximum degree 12.
+Its `PHSPv1` certificate is then replayed by an independent standard-library implementation with:
+
+```bash
+python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
+```
+
+The artifact specification and benchmark manifest are in `docs/sparse_record.md` and
+`artifacts/sparse_record_v1.json`. The claim policy in `docs/research_claim.md` deliberately separates
+this reproducible engineering result from an unsupported world-first cryptographic claim.
 
 ## 8. Security Considerations
 

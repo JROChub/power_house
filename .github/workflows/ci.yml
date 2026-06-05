@@ -35,9 +35,15 @@ jobs:
       - name: Hyperscale seeded-affine certificate
         run: cargo run --example hyperscale_affine -- 1024
 
+      - name: Cross-language sparse certificate
+        run: |
+          cargo run --release --example sparse_record -- 100000 2048 10
+          python3 scripts/verify_sparse_certificate.py target/power_house_sparse_record.phsp
+
       - name: Validate ops CLI
         run: |
           python3 -m py_compile scripts/netctl.py
+          python3 -m py_compile scripts/verify_sparse_certificate.py
           python3 scripts/netctl.py --hosts-file infra/ops_hosts.example.toml list-hosts
           python3 scripts/netctl.py --hosts-file infra/ops_hosts.example.toml deploy --hosts boot1 --dry-run --no-restart
 
