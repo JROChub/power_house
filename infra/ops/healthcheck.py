@@ -9,6 +9,7 @@ import urllib.request
 SERVICE = os.environ.get("PH_SERVICE_NAME", "powerhouse-boot")
 HEALTH_URL = os.environ.get("PH_HEALTH_URL", "http://127.0.0.1:8181/healthz")
 METRICS_URL = os.environ.get("PH_METRICS_URL", "http://127.0.0.1:9100/metrics")
+RPC_HEALTH_URL = os.environ.get("PH_RPC_HEALTH_URL", "")
 AUTH_TOKEN = os.environ.get("PH_BLOB_AUTH_TOKEN", "")
 STATE_PATH = os.environ.get("PH_HEALTH_STATE", "/var/lib/powerhouse/ops/health_state.json")
 STALL_MINUTES = int(os.environ.get("PH_METRICS_STALL_MINUTES", "20"))
@@ -68,6 +69,20 @@ health_status, health_body = http_get(HEALTH_URL, AUTH_TOKEN or None)
 if health_status != 200:
     errors.append(f"healthz failed ({health_status}): {health_body}")
 
+if RPC_HEALTH_URL:
+    rpc_status, rpc_body = http_get(RPC_HEALTH_URL)
+    if rpc_status != 200:
+        errors.append(f"rpc healthz failed ({rpc_status}): {rpc_body}")
+    else:
+        try:
+            rpc_health = json.loads(rpc_body)
+            if rpc_health.get("status") != "ok":
+                errors.append(f"rpc healthz returned unhealthy state: {rpc_body}")
+            if not isinstance(rpc_health.get("finalized_block"), int):
+                errors.append(f"rpc healthz missing finalized block: {rpc_body}")
+        except json.JSONDecodeError:
+            errors.append(f"rpc healthz returned invalid JSON: {rpc_body}")
+
 metrics_status, metrics_body = http_get(METRICS_URL)
 if metrics_status != 200:
     errors.append(f"metrics failed ({metrics_status}): {metrics_body}")
@@ -80,6 +95,14 @@ required = [
     "anchors_verified_total",
     "finality_events_total",
 ]
+if RPC_HEALTH_URL:
+    required.extend(
+        [
+            "native_transactions_accepted_total",
+            "native_blocks_finalized_total",
+            "native_sync_blocks_applied_total",
+        ]
+    )
 for key in required:
     if key not in metrics:
         warnings.append(f"metrics missing {key}")

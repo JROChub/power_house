@@ -15,20 +15,20 @@ work_dir = "/var/lib/powerhouse"
 
 [[node]]
 name = "boot1"
-host = "137.184.33.2"
+host = "boot1.example.net"
 service = "powerhouse-boot1"
 log_path = "/var/log/powerhouse/powerhouse-boot1-*.log.gz"
 work_dir = "/var/lib/powerhouse/boot1"
 bootstrap = [
-  "/ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd"
+  "/dns4/boot2.example.net/tcp/7002/p2p/<BOOT2_PEER_ID>"
 ]
 
 [[node]]
 name = "boot2"
-host = "146.190.126.101"
+host = "boot2.example.net"
 service = "powerhouse-boot2"
 log_path = "/var/log/powerhouse/powerhouse-boot2-*.log.gz"
 work_dir = "/var/lib/powerhouse/boot2"
 bootstrap = [
-  "/ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q"
+  "/dns4/boot1.example.net/tcp/7001/p2p/<BOOT1_PEER_ID>"
 ]

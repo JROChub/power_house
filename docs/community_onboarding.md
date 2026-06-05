@@ -23,8 +23,8 @@ docker run -it --rm \
     --node-id node3 \
     --log-dir /data/logs \
     --listen /ip4/0.0.0.0/tcp/7003 \
-    --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-    --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+    --bootstrap <BOOTSTRAP_MULTIADDR_1> \
+    --bootstrap <BOOTSTRAP_MULTIADDR_2> \
     --broadcast-interval 1500 \
     --quorum 7 \
     --metrics :9100
@@ -44,8 +44,8 @@ julian net start \
   --node-id node3 \
   --log-dir ./logs/node3 \
   --listen /ip4/0.0.0.0/tcp/7003 \
-  --bootstrap /ip4/137.184.33.2/tcp/7001/p2p/12D3KooWLASw1JVBdDFNATYDJMbAn69CeWieTBLxAKaN9eLEkh3q \
-  --bootstrap /ip4/146.190.126.101/tcp/7002/p2p/12D3KooWRLM7PJrtjRM6NZPX8vmdu4YGJa9D6aPoEnLcE1o6aKCd \
+  --bootstrap <BOOTSTRAP_MULTIADDR_1> \
+  --bootstrap <BOOTSTRAP_MULTIADDR_2> \
   --broadcast-interval 1500 \
   --quorum 7 \
   --metrics :9100

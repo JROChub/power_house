@@ -156,6 +156,23 @@ Nonzero fees require a funded `X-Publisher` account and its matching
 
 ## 10.1 JSON-RPC publication gate
 
+Enable native-chain finality on every validator with the same chain ID,
+membership policy, quorum, and initial stake registry. Only RPC-facing nodes
+need `--evm-rpc-listen`; validators without an HTTP endpoint still require
+`--evm-chain-id`.
+
+The first start writes `native_chain_state.json` under `--blob-dir`, or under
+`--log-dir` when no blob directory is configured. Genesis commits the validator
+set, strict-majority quorum, and initial balances. Fund the registry before the
+first start. Later configuration mismatches fail startup instead of creating a
+different chain.
+
+Validate the complete three-validator transaction path before deployment:
+
+```bash
+scripts/test_native_rpc_cluster.sh
+```
+
 Before publishing an EVM-compatible endpoint in ChainList, run:
 
 ```bash

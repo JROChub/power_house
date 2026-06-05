@@ -39,6 +39,9 @@ jobs:
       - name: RPC publication-gate tests
         run: python3 scripts/test_rpc_check.py
 
+      - name: Native RPC replica finality
+        run: scripts/test_native_rpc_cluster.sh
+
       - name: Reproduce sparse conformance vectors
         run: |
           cargo run --example conformance_vectors
