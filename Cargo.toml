@@ -26,6 +26,7 @@ include = [
   "docs/ops.md",
   "docs/book_of_power.md",
   "docs/sextillion_proof.md",
+  "docs/hyperscale_proof.md",
   "assets/**",
   "publicpower/**",
   "infra/ops_hosts.example.toml",

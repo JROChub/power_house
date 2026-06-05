@@ -73,8 +73,14 @@ sum-check certificate over `2^70` Boolean points:
 `1,180,591,620,717,411,303,424` evaluations, greater than one sextillion,
 using 70 verifier rounds and no domain enumeration.
 
-The scientific note is in `docs/sextillion_proof.md`, and the launchable
-interactive game/presentation for `mfenx.com` is in `publicpower/index.html`.
+`cargo run --example hyperscale_affine` proves and verifies a non-constant
+seeded affine certificate over the default `2^4096` domain, roughly `1e1233`
+Boolean points. The verifier derives the polynomial from a public seed and
+checks every sum-check round without allocating the hypercube.
+
+The scientific notes are in `docs/sextillion_proof.md` and
+`docs/hyperscale_proof.md`. The launchable interactive game/presentation for
+`mfenx.com` is in `publicpower/index.html`.
 
 Bootstrap multiaddrs:
 
@@ -515,6 +521,16 @@ cargo run --example sextillion_verify
 Replays a 70-round verifier certificate for a constant multilinear polynomial
 over `2^70` Boolean points. This demonstrates a real sextillion-domain claim
 without enumerating the domain.
+
+Hyperscale seeded-affine proof
+
+```bash
+cargo run --example hyperscale_affine
+```
+
+Replays a non-constant seeded affine certificate over the default `2^4096`
+domain. Use `cargo run --example hyperscale_affine -- 1024` for a faster
+CI-sized run.
 
 Transcript hash verification
 

@@ -55,3 +55,6 @@ is independent of the challenge and the final evaluation is exactly `173`.
 This certificate proves the scale claim honestly: the domain is sextillion
 scale, while the proof and verification work are logarithmic in the number of
 points for this polynomial family.
+
+For a non-constant structured computation far beyond sextillion scale, see
+`docs/hyperscale_proof.md` and `cargo run --example hyperscale_affine`.

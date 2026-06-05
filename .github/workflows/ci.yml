@@ -32,6 +32,9 @@ jobs:
       - name: Sextillion certificate
         run: cargo run --example sextillion_verify
 
+      - name: Hyperscale seeded-affine certificate
+        run: cargo run --example hyperscale_affine -- 1024
+
       - name: Validate ops CLI
         run: |
           python3 -m py_compile scripts/netctl.py

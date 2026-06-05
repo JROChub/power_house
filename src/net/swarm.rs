@@ -17,7 +17,7 @@ use crate::net::{
 };
 use crate::{
     compute_fold_digest, julian_genesis_anchor, merkle_root, parse_log_file, read_fold_digest_hint,
-    transcript_digest, AnchorMetadata, AnchorVote, EntryAnchor, LedgerAnchor,
+    AnchorVote, EntryAnchor, LedgerAnchor,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use futures::StreamExt;
@@ -35,8 +35,7 @@ use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
-    env,
-    io::{self, Read},
+    env, io,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -686,7 +685,7 @@ async fn respond_with_metrics(
 fn load_anchor_from_logs(path: &Path) -> Result<LedgerAnchor, NetworkError> {
     let mut cutoff: Option<String> = None;
     let mut anchor_from_checkpoint = false;
-    let mut anchor = match load_latest_checkpoint(path) {
+    let anchor = match load_latest_checkpoint(path) {
         Ok(Some(checkpoint)) => {
             anchor_from_checkpoint = true;
             let (anchor, cp_cutoff) = checkpoint
@@ -792,6 +791,7 @@ fn now_millis() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::transcript_digest;
     use std::fs;
     use std::sync::atomic::Ordering;
     use std::time::SystemTime;

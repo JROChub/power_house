@@ -202,11 +202,13 @@ impl AnchorJson {
                 merkle_root,
             });
         }
-        let mut metadata = AnchorMetadata::default();
-        metadata.challenge_mode = self.challenge_mode;
-        metadata.crate_version = self
-            .crate_version
-            .or_else(|| Some(env!("CARGO_PKG_VERSION").to_string()));
+        let mut metadata = AnchorMetadata {
+            challenge_mode: self.challenge_mode,
+            crate_version: self
+                .crate_version
+                .or_else(|| Some(env!("CARGO_PKG_VERSION").to_string())),
+            ..AnchorMetadata::default()
+        };
         if let Some(fold_hex) = self.fold_digest {
             metadata.fold_digest = Some(
                 digest_from_hex(&fold_hex)

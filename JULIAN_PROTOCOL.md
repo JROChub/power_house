@@ -141,6 +141,7 @@ library, the protocol remains lightweight and deterministic across platforms.
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
   - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.
+  - `hyperscale_affine`: seeded affine certificate over a default `2^4096` Boolean domain.
   - `verify_logs`: CLI to validate stored transcripts.
 
 ## 7. Performance Evaluation
@@ -163,6 +164,13 @@ For a domain-scale certificate, run `cargo run --example sextillion_verify`. It 
 constant multilinear sum-check over `2^70 = 1,180,591,620,717,411,303,424` Boolean points with a
 70-round certificate and one final evaluation. This example proves the sextillion-domain verifier
 path without pretending that the general streaming prover can enumerate a sextillion-point table.
+
+For a far-beyond-sextillion structured computation, run `cargo run --example hyperscale_affine`.
+The default certificate uses a public seed to define a non-constant affine multilinear polynomial
+over `2^4096` Boolean points, roughly `1e1233` evaluations. The verifier derives the coefficients
+from the seed, checks all 4096 sum-check rounds, and evaluates one final challenge point. This is an
+`O(n)` verifier for the seeded affine family; it is not a claim that arbitrary `2^4096` tables can be
+verified without a polynomial commitment, oracle, or compact algebraic description.
 
 ## 8. Security Considerations
 
