@@ -151,9 +151,8 @@ if [[ ! -f "$SAMPLE_BLOB" ]]; then
   SAMPLE_BLOB="$BLOB_DIR/sample.bin"
   printf 'power_house smoke sample\n' >"$SAMPLE_BLOB"
 fi
-curl -sS -X POST "http://${BLOB_LISTEN_A}/submit_blob" \
+curl --fail-with-body -sS -X POST "http://${BLOB_LISTEN_A}/submit_blob" \
   -H 'X-Namespace: default' \
-  -H 'X-Fee: 1' \
   --data-binary @"$SAMPLE_BLOB" \
   >/dev/null
 

@@ -3,7 +3,13 @@
 //! Durable stake/balance store for fee enforcement and slashing.
 
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fs,
+    io::Write,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 /// Account record storing stake and balance.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -38,7 +44,25 @@ impl StakeRegistry {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
         let data = serde_json::to_vec_pretty(self).map_err(|e| e.to_string())?;
-        fs::write(path, data).map_err(|e| e.to_string())
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let temp_path = path.with_extension(format!("tmp-{}-{nonce}", std::process::id()));
+        let write_result = (|| -> Result<(), String> {
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&temp_path)
+                .map_err(|e| e.to_string())?;
+            file.write_all(&data).map_err(|e| e.to_string())?;
+            file.sync_all().map_err(|e| e.to_string())?;
+            fs::rename(&temp_path, path).map_err(|e| e.to_string())
+        })();
+        if write_result.is_err() {
+            let _ = fs::remove_file(&temp_path);
+        }
+        write_result
     }
 
     /// Ensure an account exists and return mutable ref.
@@ -119,5 +143,34 @@ impl StakeRegistry {
         acct.stake -= amount;
         acct.balance = acct.balance.saturating_add(amount);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn save_replaces_registry_without_leaving_temp_files() {
+        let base = std::env::temp_dir().join(format!(
+            "power_house_stake_registry_{}_{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let path = base.join("stake_registry.json");
+        let mut registry = StakeRegistry::default();
+        registry.fund_balance("operator", 10);
+        registry.save(&path).unwrap();
+        registry.fund_balance("operator", 5);
+        registry.save(&path).unwrap();
+
+        let loaded = StakeRegistry::load(&path).unwrap();
+        assert_eq!(loaded.account("operator").unwrap().balance, 15);
+        let entries = fs::read_dir(&base).unwrap().count();
+        assert_eq!(entries, 1);
+        fs::remove_dir_all(base).unwrap();
     }
 }

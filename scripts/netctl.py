@@ -155,6 +155,43 @@ def config_files() -> list[Path]:
     return sorted(path for path in infra.glob("*.json") if path.is_file())
 
 
+def package_files() -> list[tuple[Path, str]]:
+    files: list[tuple[Path, str]] = []
+    for path in config_files():
+        files.append((path, f"infra/{path.name}"))
+    for directory, prefix in (
+        (ROOT / "infra" / "systemd", "systemd"),
+        (ROOT / "infra" / "ops", "ops"),
+        (ROOT / "infra" / "scripts", "scripts"),
+    ):
+        for path in sorted(directory.iterdir()):
+            if path.is_file() and "__pycache__" not in path.parts:
+                files.append((path, f"{prefix}/{path.name}"))
+    for name in ("ops.md", "rpc_operations.md"):
+        path = ROOT / "docs" / name
+        if path.is_file():
+            files.append((path, f"docs/{name}"))
+    for name in (
+        "check_rpc.py",
+        "deploy_units.sh",
+        "fault_test.sh",
+        "load_test.sh",
+        "netctl.py",
+        "scale_net.sh",
+        "smoke_net.sh",
+        "stop_scale_net.sh",
+    ):
+        path = ROOT / "scripts" / name
+        files.append((path, f"scripts/{name}"))
+    files.append(
+        (
+            ROOT / "infra" / "ops_hosts.example.toml",
+            "infra/ops_hosts.example.toml",
+        )
+    )
+    return files
+
+
 def cmd_list_hosts(args: argparse.Namespace) -> None:
     nodes = select_nodes(load_nodes(args.hosts_file), args.hosts)
     headers = ("name", "ssh", "service", "work_dir", "bootstraps")
@@ -189,12 +226,8 @@ def cmd_package(args: argparse.Namespace) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(out, "w:gz") as archive:
         archive.add(binary, arcname="bin/julian")
-        for path in config_files():
-            archive.add(path, arcname=f"infra/{path.name}")
-        for path in sorted(ROOT.glob("powerhouse-boot*.service")):
-            archive.add(path, arcname=f"systemd/{path.name}")
-        archive.add(ROOT / "docs" / "ops.md", arcname="docs/ops.md")
-        archive.add(ROOT / "infra" / "ops_hosts.example.toml", arcname="infra/ops_hosts.example.toml")
+        for path, arcname in package_files():
+            archive.add(path, arcname=arcname)
     print(f"wrote {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}")
 
 

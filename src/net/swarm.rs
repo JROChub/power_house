@@ -297,6 +297,7 @@ struct BlobServiceConfig {
     max_concurrency: usize,
     request_timeout: Duration,
     rate_limits: Arc<Mutex<HashMap<String, RateState>>>,
+    stake_registry_lock: Arc<Mutex<()>>,
     da_publish: Option<DaPublishConfig>,
 }
 
@@ -1022,6 +1023,78 @@ fn share_hashes(shares: &[Vec<u8>]) -> Vec<[u8; 32]> {
         .collect()
 }
 
+async fn prepare_fee_settlement(
+    cfg: &BlobServiceConfig,
+    meta: &BlobMeta,
+    namespace: &str,
+    amount: Option<u64>,
+) -> Result<Option<(PathBuf, StakeRegistry)>, String> {
+    let (Some(path), Some(amount)) = (&cfg.stake_registry_path, amount) else {
+        return Ok(None);
+    };
+    let payer = meta
+        .publisher_pk
+        .clone()
+        .unwrap_or_else(|| cfg.verifying_b64.clone());
+    let mut reg =
+        StakeRegistry::load(path).map_err(|err| format!("failed to load stake registry: {err}"))?;
+    let mut settled_via_registry = true;
+    if let Err(debit_err) = reg.debit_fee(&payer, amount) {
+        if token_mode_enabled(cfg) {
+            if token_mode_requires_oracle(cfg) {
+                let covered = token_oracle_balance_sufficient(cfg, &payer, amount)
+                    .await
+                    .map_err(|err| format!("token oracle check failed: {err}"))?;
+                if covered {
+                    settled_via_registry = false;
+                } else {
+                    return Err(format!(
+                        "fee debit failed and oracle balance insufficient: {debit_err}"
+                    ));
+                }
+            } else {
+                return Err(format!("fee debit failed in native mode: {debit_err}"));
+            }
+        } else {
+            return Err(format!("fee debit failed: {debit_err}"));
+        }
+    }
+    if settled_via_registry {
+        let ns_rule = namespace_rule(cfg, namespace).unwrap_or_default();
+        let op_bps = ns_rule.operator_reward_bps.unwrap_or(5000) as u64;
+        let operator_cut = amount.saturating_mul(op_bps).saturating_div(10_000);
+        let attestor_pool = amount.saturating_sub(operator_cut);
+        reg.credit_reward(&cfg.verifying_b64, operator_cut);
+        let total_weight: u64 = meta
+            .attestations
+            .iter()
+            .filter_map(|att| reg.stake_for(&att.pk))
+            .sum();
+        if total_weight == 0 {
+            reg.credit_reward(&cfg.verifying_b64, attestor_pool);
+        } else {
+            for att in &meta.attestations {
+                if let Some(weight) = reg.stake_for(&att.pk) {
+                    let share = attestor_pool
+                        .saturating_mul(weight)
+                        .checked_div(total_weight)
+                        .unwrap_or_default();
+                    if share > 0 {
+                        reg.credit_reward(&att.pk, share);
+                    }
+                }
+            }
+        }
+    }
+    Ok(Some((path.clone(), reg)))
+}
+
+fn remove_blob_artifacts(meta_path: &Path, blob_path: &Path, share_dir: &Path) {
+    let _ = fs::remove_file(meta_path);
+    let _ = fs::remove_file(blob_path);
+    let _ = fs::remove_dir_all(share_dir);
+}
+
 async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Result<String, String> {
     if crate::net::refresh_migration_mode_from_env() {
         return Err("migration freeze active: blob ingestion disabled".to_string());
@@ -1075,16 +1148,6 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
         .map_err(|e| format!("encode error: {e}"))?;
 
     let (meta_path, blob_path, share_dir) = blob_paths(&cfg.base_dir, &namespace, &blob.hash);
-    if let Some(parent) = meta_path.parent() {
-        fs::create_dir_all(parent).map_err(|err| format!("create dirs: {err}"))?;
-    }
-    fs::write(&blob_path, &req.body).map_err(|err| format!("write blob: {err}"))?;
-    fs::create_dir_all(&share_dir).map_err(|err| format!("create share dir: {err}"))?;
-    for (idx, share) in shares.iter().enumerate() {
-        let path = share_dir.join(format!("{idx}.share"));
-        fs::write(&path, share).map_err(|err| format!("write share: {err}"))?;
-    }
-
     let sig = sign_payload(&cfg.signing, commitment.share_root.as_bytes());
     let operator_att = StoredAttestation {
         pk: cfg.verifying_b64.clone(),
@@ -1122,7 +1185,36 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
             return Err("missing x-publisher-sig header for publisher".into());
         }
     }
-    save_blob_meta(&cfg.base_dir, &meta).map_err(|err| err.to_string())?;
+
+    let _registry_guard = if fee.is_some() && cfg.stake_registry_path.is_some() {
+        Some(cfg.stake_registry_lock.lock().await)
+    } else {
+        None
+    };
+    let pending_registry = prepare_fee_settlement(cfg, &meta, &namespace, fee).await?;
+    let persist_result = (|| -> Result<(), String> {
+        if let Some(parent) = meta_path.parent() {
+            fs::create_dir_all(parent).map_err(|err| format!("create dirs: {err}"))?;
+        }
+        fs::write(&blob_path, &req.body).map_err(|err| format!("write blob: {err}"))?;
+        fs::create_dir_all(&share_dir).map_err(|err| format!("create share dir: {err}"))?;
+        for (idx, share) in shares.iter().enumerate() {
+            let path = share_dir.join(format!("{idx}.share"));
+            fs::write(&path, share).map_err(|err| format!("write share: {err}"))?;
+        }
+        save_blob_meta(&cfg.base_dir, &meta).map_err(|err| err.to_string())
+    })();
+    if let Err(err) = persist_result {
+        remove_blob_artifacts(&meta_path, &blob_path, &share_dir);
+        return Err(err);
+    }
+    if let Some((path, registry)) = pending_registry {
+        if let Err(err) = registry.save(&path) {
+            remove_blob_artifacts(&meta_path, &blob_path, &share_dir);
+            return Err(format!("failed to persist stake registry: {err}"));
+        }
+    }
+
     if let Some(da_cfg) = cfg.da_publish.clone() {
         let record = DaOutboxRecord {
             namespace: meta.namespace.clone(),
@@ -1164,67 +1256,6 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
             }
         }
     }
-    // Fees and rewards (split between operator and attestors by stake).
-    if let (Some(path), Some(amount)) = (&cfg.stake_registry_path, fee) {
-        let payer = meta
-            .publisher_pk
-            .clone()
-            .unwrap_or_else(|| cfg.verifying_b64.clone());
-        match StakeRegistry::load(path) {
-            Ok(mut reg) => {
-                let mut settled_via_registry = true;
-                if let Err(debit_err) = reg.debit_fee(&payer, amount) {
-                    if token_mode_enabled(cfg) {
-                        if token_mode_requires_oracle(cfg) {
-                            let covered = token_oracle_balance_sufficient(cfg, &payer, amount)
-                                .await
-                                .map_err(|err| format!("token oracle check failed: {err}"))?;
-                            if covered {
-                                settled_via_registry = false;
-                            } else {
-                                return Err(format!(
-                                    "fee debit failed and oracle balance insufficient: {debit_err}"
-                                ));
-                            }
-                        } else {
-                            return Err(format!("fee debit failed in native mode: {debit_err}"));
-                        }
-                    } else {
-                        return Err(format!("fee debit failed: {debit_err}"));
-                    }
-                }
-                if settled_via_registry {
-                    let ns_rule = namespace_rule(cfg, &namespace).unwrap_or_default();
-                    let op_bps = ns_rule.operator_reward_bps.unwrap_or(5000) as u64;
-                    let operator_cut = amount.saturating_mul(op_bps).saturating_div(10_000);
-                    let attestor_pool = amount.saturating_sub(operator_cut);
-                    reg.credit_reward(&cfg.verifying_b64, operator_cut);
-                    let attestors = meta.attestations.clone();
-                    let total_weight: u64 =
-                        attestors.iter().filter_map(|a| reg.stake_for(&a.pk)).sum();
-                    if total_weight == 0 {
-                        reg.credit_reward(&cfg.verifying_b64, attestor_pool);
-                    } else {
-                        for att in attestors {
-                            if let Some(w) = reg.stake_for(&att.pk) {
-                                let share = attestor_pool
-                                    .saturating_mul(w)
-                                    .checked_div(total_weight)
-                                    .unwrap_or_default();
-                                if share > 0 {
-                                    reg.credit_reward(&att.pk, share);
-                                }
-                            }
-                        }
-                    }
-                }
-                reg.save(path)
-                    .map_err(|err| format!("failed to persist stake registry: {err}"))?;
-            }
-            Err(err) => return Err(format!("failed to load stake registry: {err}")),
-        }
-    }
-
     let da_status = meta
         .da_receipt
         .as_ref()
@@ -1792,6 +1823,7 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
             max_concurrency: cfg.blob_max_concurrency,
             request_timeout: cfg.blob_request_timeout,
             rate_limits: Arc::new(Mutex::new(HashMap::new())),
+            stake_registry_lock: Arc::new(Mutex::new(())),
             da_publish: da_publish_config_from_env(),
         };
         tokio::spawn(run_blob_service(blob_cfg));
@@ -3279,5 +3311,44 @@ mod tests {
         assert!(!token_mode_is_native(
             "0x0000000000000000000000000000000000000001"
         ));
+    }
+
+    #[tokio::test]
+    async fn rejected_fee_does_not_persist_blob_artifacts() {
+        let base_dir = temp_path("mfenx_powerhouse_rejected_blob");
+        let signing = SigningKey::from_bytes(&[7u8; 32]);
+        let cfg = BlobServiceConfig {
+            base_dir: base_dir.clone(),
+            listen: "127.0.0.1:0".parse().unwrap(),
+            max_bytes: None,
+            retention_days: None,
+            policies: None,
+            signing: signing.clone(),
+            verifying_b64: encode_public_key_base64(&signing.verifying_key()),
+            stake_registry_path: Some(base_dir.join("stake_registry.json")),
+            token_mode_contract: None,
+            token_oracle_rpc: None,
+            membership_policy: Arc::new(crate::net::StaticPolicy::allow_all()),
+            auth_token: None,
+            max_concurrency: 1,
+            request_timeout: Duration::from_secs(1),
+            rate_limits: Arc::new(Mutex::new(HashMap::new())),
+            stake_registry_lock: Arc::new(Mutex::new(())),
+            da_publish: None,
+        };
+        let request = HttpRequest {
+            method: "POST".to_string(),
+            path: "/submit_blob".to_string(),
+            headers: HashMap::from([
+                ("x-namespace".to_string(), "default".to_string()),
+                ("x-fee".to_string(), "1".to_string()),
+            ]),
+            body: b"must not persist".to_vec(),
+        };
+
+        let error = handle_submit_blob(&request, &cfg).await.unwrap_err();
+        assert!(error.contains("insufficient balance"));
+        assert!(!base_dir.join("default").exists());
+        assert!(!base_dir.join("stake_registry.json").exists());
     }
 }

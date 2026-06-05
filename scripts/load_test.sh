@@ -6,11 +6,18 @@ BLOB="${BLOB:-./sample.bin}"
 COUNT="${COUNT:-1000}"
 RATE_PER_HOUR="${RATE_PER_HOUR:-0}"
 NAMESPACE="${NAMESPACE:-default}"
-FEE="${FEE:-1}"
+FEE="${FEE:-0}"
+
+GENERATED_BLOB=""
+cleanup() {
+  rm -f "$GENERATED_BLOB"
+}
+trap cleanup EXIT
 
 if [[ ! -f "$BLOB" ]]; then
-  echo "blob file not found: $BLOB"
-  exit 1
+  GENERATED_BLOB="$(mktemp)"
+  printf 'power_house load-test sample\n' >"$GENERATED_BLOB"
+  BLOB="$GENERATED_BLOB"
 fi
 
 sleep_interval=0
@@ -23,7 +30,7 @@ start_ns=$(date +%s%N)
 success=0
 for _ in $(seq 1 "$COUNT"); do
   req_start_ns=$(date +%s%N)
-  if curl -sS -X POST "$URL" \
+  if curl --fail-with-body -sS -X POST "$URL" \
     -H "X-Namespace: $NAMESPACE" \
     -H "X-Fee: $FEE" \
     --data-binary @"$BLOB" > /dev/null; then
@@ -52,3 +59,8 @@ print(f"success={success}/{count}")
 if elapsed_s > 0:
     print(f"tps={success/elapsed_s:.2f}")
 PY
+
+if [[ "$success" -ne "$COUNT" ]]; then
+  echo "load test failed: $((COUNT - success)) request(s) returned an error" >&2
+  exit 1
+fi
