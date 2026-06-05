@@ -1,7 +1,44 @@
 import * as THREE from "./vendor/three.module.min.js";
+import BookOpen from "./vendor/lucide/book-open.mjs";
+import ChevronLeft from "./vendor/lucide/chevron-left.mjs";
+import ChevronRight from "./vendor/lucide/chevron-right.mjs";
+import Code from "./vendor/lucide/code.mjs";
+import Copy from "./vendor/lucide/copy.mjs";
+import Crosshair from "./vendor/lucide/crosshair.mjs";
+import Globe from "./vendor/lucide/globe.mjs";
+import Package from "./vendor/lucide/package.mjs";
+import Pause from "./vendor/lucide/pause.mjs";
+import Play from "./vendor/lucide/play.mjs";
+import RotateCcw from "./vendor/lucide/rotate-ccw.mjs";
+import Search from "./vendor/lucide/search.mjs";
+import Share2 from "./vendor/lucide/share-2.mjs";
+import Volume2 from "./vendor/lucide/volume-2.mjs";
+import VolumeX from "./vendor/lucide/volume-x.mjs";
+import X from "./vendor/lucide/x.mjs";
 
 const FIELD = 1_000_000_007n;
 const CONSTANT = 173n;
+const EARTH_RADIUS = 1.36;
+const DEG = Math.PI / 180;
+const iconLibrary = {
+  "book-open": BookOpen,
+  "chevron-left": ChevronLeft,
+  "chevron-right": ChevronRight,
+  code: Code,
+  copy: Copy,
+  crosshair: Crosshair,
+  globe: Globe,
+  package: Package,
+  pause: Pause,
+  play: Play,
+  "rotate-ccw": RotateCcw,
+  search: Search,
+  "share-2": Share2,
+  "volume-2": Volume2,
+  "volume-x": VolumeX,
+  x: X,
+};
+
 const modes = {
   constant: {
     exponent: 70,
@@ -14,6 +51,7 @@ const modes = {
       "The browser checks every round equation over the field and computes a certificate SHA-256 digest.",
     button: "RUN PROOF",
     status: "LOCAL VERIFIER READY",
+    color: 0xb9ff3d,
     action: runConstantProof,
   },
   affine: {
@@ -27,6 +65,7 @@ const modes = {
       "This browser replay checks the affine recurrence; the release implementation uses BLAKE2b Fiat-Shamir challenges in Rust.",
     button: "RUN REPLAY",
     status: "BROWSER MODEL READY",
+    color: 0x45ddd2,
     action: runAffineReplay,
   },
   sparse: {
@@ -40,6 +79,7 @@ const modes = {
       "Downloads the immutable release asset and checks its full SHA-256 digest in this browser.",
     button: "VERIFY HASH",
     status: "RELEASE ARTIFACT READY",
+    color: 0xffc14d,
     action: () => verifyReleaseArtifacts("sparse"),
   },
   committed: {
@@ -53,64 +93,112 @@ const modes = {
       "Downloads the external workload and million-round certificate, then checks both SHA-256 digests.",
     button: "VERIFY BOTH",
     status: "TWO-FILE BINDING READY",
+    color: 0xff7167,
     action: () => verifyReleaseArtifacts("committed"),
   },
 };
 
 const cities = [
   { name: "SAN FRANCISCO", code: "SFO", zone: "America/Los_Angeles", lat: 37.77, lon: -122.42 },
+  { name: "VANCOUVER", code: "YVR", zone: "America/Vancouver", lat: 49.28, lon: -123.12 },
+  { name: "MEXICO CITY", code: "MEX", zone: "America/Mexico_City", lat: 19.43, lon: -99.13 },
   { name: "NEW YORK", code: "NYC", zone: "America/New_York", lat: 40.71, lon: -74.0 },
-  { name: "GREENWICH", code: "UTC", zone: "Europe/London", lat: 51.48, lon: 0.0 },
   { name: "SAO PAULO", code: "SAO", zone: "America/Sao_Paulo", lat: -23.55, lon: -46.63 },
+  { name: "GREENWICH", code: "UTC", zone: "Europe/London", lat: 51.48, lon: 0.0 },
+  { name: "PARIS", code: "CDG", zone: "Europe/Paris", lat: 48.86, lon: 2.35 },
   { name: "LAGOS", code: "LOS", zone: "Africa/Lagos", lat: 6.52, lon: 3.38 },
+  { name: "CAIRO", code: "CAI", zone: "Africa/Cairo", lat: 30.04, lon: 31.24 },
+  { name: "NAIROBI", code: "NBO", zone: "Africa/Nairobi", lat: -1.29, lon: 36.82 },
   { name: "DUBAI", code: "DXB", zone: "Asia/Dubai", lat: 25.2, lon: 55.27 },
   { name: "DELHI", code: "DEL", zone: "Asia/Kolkata", lat: 28.61, lon: 77.21 },
   { name: "SINGAPORE", code: "SIN", zone: "Asia/Singapore", lat: 1.35, lon: 103.82 },
+  { name: "BEIJING", code: "PEK", zone: "Asia/Shanghai", lat: 39.9, lon: 116.4 },
   { name: "TOKYO", code: "TYO", zone: "Asia/Tokyo", lat: 35.68, lon: 139.69 },
   { name: "SYDNEY", code: "SYD", zone: "Australia/Sydney", lat: -33.87, lon: 151.21 },
+  { name: "AUCKLAND", code: "AKL", zone: "Pacific/Auckland", lat: -36.85, lon: 174.76 },
+  { name: "HONOLULU", code: "HNL", zone: "Pacific/Honolulu", lat: 21.31, lon: -157.86 },
 ];
 
-const el = {
-  canvas: document.querySelector("#orbital-canvas"),
-  utcDate: document.querySelector("#utc-date"),
-  utcTime: document.querySelector("#utc-time"),
-  cityList: document.querySelector("#city-list"),
-  stageCity: document.querySelector("#stage-city"),
-  stageTime: document.querySelector("#stage-time"),
-  stageZone: document.querySelector("#stage-zone"),
-  solarPosition: document.querySelector("#solar-position"),
-  domainLabel: document.querySelector("#domain-label"),
-  domainDetail: document.querySelector("#domain-detail"),
-  orbitKicker: document.querySelector("#orbit-kicker"),
-  orbitDescription: document.querySelector("#orbit-description"),
-  verificationStatus: document.querySelector("#verification-status"),
-  verificationTitle: document.querySelector("#verification-title"),
-  verificationDetail: document.querySelector("#verification-detail"),
-  verifyButton: document.querySelector("#verify-button"),
-  progressBar: document.querySelector("#progress-bar"),
-  roundValue: document.querySelector("#round-value"),
-  claimValue: document.querySelector("#claim-value"),
-  digestValue: document.querySelector("#digest-value"),
-  statusSeal: document.querySelector("#status-seal"),
-  sealValue: document.querySelector("#seal-value"),
-  toast: document.querySelector("#toast"),
-  soundToggle: document.querySelector("#sound-toggle"),
-  motionToggle: document.querySelector("#motion-toggle"),
-};
+const el = Object.fromEntries(
+  [
+    "orbital-canvas",
+    "boot-screen",
+    "boot-progress",
+    "mission-state",
+    "utc-date",
+    "utc-time",
+    "city-list",
+    "city-search",
+    "stage-city",
+    "stage-time",
+    "stage-date",
+    "stage-zone",
+    "solar-state",
+    "solar-altitude",
+    "sunrise-value",
+    "sunset-value",
+    "moon-phase",
+    "moon-light",
+    "solar-position",
+    "observatory-mode",
+    "time-offset-label",
+    "time-slider",
+    "time-back",
+    "time-live",
+    "time-forward",
+    "observatory-toggle",
+    "observatory-close",
+    "domain-label",
+    "domain-detail",
+    "orbit-kicker",
+    "orbit-description",
+    "verification-status",
+    "verification-title",
+    "verification-detail",
+    "verify-button",
+    "share-button",
+    "progress-bar",
+    "round-value",
+    "claim-value",
+    "digest-value",
+    "mode-value",
+    "status-seal",
+    "seal-value",
+    "toast",
+    "sound-toggle",
+    "motion-toggle",
+    "focus-toggle",
+    "install-command",
+    "globe-tooltip",
+  ].map((id) => [camelCase(id), document.querySelector(`#${id}`)]),
+);
+el.canvas = el.orbitalCanvas;
 
 const state = {
   mode: "constant",
-  activeCity: 2,
+  activeCity: 5,
   running: false,
   motion: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   sound: false,
-  targetRotationX: 0.16,
-  targetRotationY: 0,
-  dragX: 0,
-  dragY: 0,
-  zoom: 4.6,
+  visible: !document.hidden,
+  timeOffsetHours: 0,
+  targetRotationX: cities[5].lat * DEG,
+  targetRotationY: -Math.PI / 2 - cities[5].lon * DEG,
+  zoom: window.innerWidth < 760 ? 4.85 : 4.55,
   toastTimer: 0,
+  proofProgress: 0,
+  lastResult: null,
+  pointerDown: null,
 };
+
+const formatterCache = new Map();
+const cityRows = [];
+const cityMarkers = [];
+const orbitEntries = [];
+const interactiveObjects = [];
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const hitWorldPosition = new THREE.Vector3();
 
 let renderer;
 let scene;
@@ -119,90 +207,195 @@ let earthGroup;
 let earthMaterial;
 let atmosphereMaterial;
 let orbitGroup;
-let proofNodes = [];
+let moon;
+let moonOrbit;
+let subsolarMarker;
+let animationFrame;
 let audioContext;
+let latestSolar = null;
 
-function pad(value) {
-  return String(value).padStart(2, "0");
+function camelCase(value) {
+  return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-function formatClock(date, zone, seconds = true) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: zone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: seconds ? "2-digit" : undefined,
-    hour12: false,
-  }).format(date);
+function mountIcon(target, iconName) {
+  if (!target || !iconLibrary[iconName]) return;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const [tag, attributes] of iconLibrary[iconName]) {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
+    svg.append(node);
+  }
+  target.replaceChildren(svg);
+  target.dataset.icon = iconName;
 }
 
-function updateClocks() {
-  const now = new Date();
-  el.utcDate.textContent = new Intl.DateTimeFormat("en-US", {
-    timeZone: "UTC",
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-  })
-    .format(now)
-    .toUpperCase();
-  el.utcTime.textContent = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(
-    now.getUTCSeconds(),
-  )}`;
-
-  document.querySelectorAll(".city-row").forEach((row, index) => {
-    row.querySelector("strong").textContent = formatClock(now, cities[index].zone, false);
+function mountIcons() {
+  document.querySelectorAll("[data-icon]").forEach((target) => {
+    mountIcon(target, target.dataset.icon);
   });
-
-  const city = cities[state.activeCity];
-  el.stageTime.textContent = formatClock(now, city.zone);
 }
 
-function buildCityList() {
-  const fragment = document.createDocumentFragment();
-  cities.forEach((city, index) => {
-    const button = document.createElement("button");
-    button.className = `city-row${index === state.activeCity ? " active" : ""}`;
-    button.innerHTML = `<b>${city.name}</b><strong>00:00</strong><small>${city.code} / ${city.zone}</small>`;
-    button.addEventListener("click", () => selectCity(index));
-    fragment.append(button);
-  });
-  el.cityList.append(fragment);
+function setBootProgress(percent) {
+  el.bootProgress.style.width = `${Math.max(8, Math.min(100, percent))}%`;
 }
 
-function selectCity(index) {
-  state.activeCity = index;
-  const city = cities[index];
-  document.querySelectorAll(".city-row").forEach((row, rowIndex) => {
-    row.classList.toggle("active", rowIndex === index);
-  });
-  el.stageCity.textContent = city.name;
-  el.stageZone.textContent = city.zone.toUpperCase();
-  state.targetRotationX = THREE.MathUtils.degToRad(city.lat) * 0.55;
-  state.targetRotationY = -THREE.MathUtils.degToRad(city.lon);
-  updateClocks();
-  tone(520, 0.04);
+function finishBoot() {
+  setBootProgress(100);
+  window.setTimeout(() => el.bootScreen.classList.add("hidden"), 220);
 }
 
-function dayOfYear(date) {
-  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
-  return Math.floor((date.getTime() - start) / 86_400_000);
+function getFormatter(zone, kind) {
+  const key = `${zone}:${kind}`;
+  if (formatterCache.has(key)) return formatterCache.get(key);
+  const options =
+    kind === "clock"
+      ? { timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }
+      : kind === "clockSeconds"
+        ? {
+            timeZone: zone,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hourCycle: "h23",
+          }
+        : kind === "stageDate"
+          ? { timeZone: zone, month: "short", day: "2-digit" }
+          : { timeZone: zone, month: "short", day: "2-digit", year: "numeric" };
+  const formatter = new Intl.DateTimeFormat("en-US", options);
+  formatterCache.set(key, formatter);
+  return formatter;
+}
+
+function simulationDate() {
+  return new Date(Date.now() + state.timeOffsetHours * 3_600_000);
+}
+
+function formatClock(date, zone, seconds = false) {
+  return getFormatter(zone, seconds ? "clockSeconds" : "clock").format(date);
+}
+
+function normalizeDegrees(value) {
+  return ((value + 180) % 360 + 360) % 360 - 180;
+}
+
+function julianDay(date) {
+  return date.getTime() / 86_400_000 + 2_440_587.5;
 }
 
 function solarCoordinates(date) {
-  const day = dayOfYear(date);
-  const hours =
-    date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-  const declination = -23.44 * Math.cos((2 * Math.PI * (day + 10)) / 365);
-  let longitude = 180 - hours * 15;
-  if (longitude > 180) longitude -= 360;
-  if (longitude < -180) longitude += 360;
-  return { lat: declination, lon: longitude };
+  const centuries = (julianDay(date) - 2_451_545) / 36_525;
+  const meanLongitude =
+    ((280.46646 + centuries * (36_000.76983 + centuries * 0.0003032)) % 360 + 360) % 360;
+  const meanAnomaly = 357.52911 + centuries * (35_999.05029 - 0.0001537 * centuries);
+  const eccentricity = 0.016708634 - centuries * (0.000042037 + 0.0000001267 * centuries);
+  const equationOfCenter =
+    Math.sin(meanAnomaly * DEG) * (1.914602 - centuries * (0.004817 + 0.000014 * centuries)) +
+    Math.sin(2 * meanAnomaly * DEG) * (0.019993 - 0.000101 * centuries) +
+    Math.sin(3 * meanAnomaly * DEG) * 0.000289;
+  const trueLongitude = meanLongitude + equationOfCenter;
+  const omega = 125.04 - 1934.136 * centuries;
+  const apparentLongitude = trueLongitude - 0.00569 - 0.00478 * Math.sin(omega * DEG);
+  const meanObliquity =
+    23 +
+    (26 +
+      (21.448 -
+        centuries * (46.815 + centuries * (0.00059 - centuries * 0.001813))) /
+        60) /
+      60;
+  const obliquity = meanObliquity + 0.00256 * Math.cos(omega * DEG);
+  const declination =
+    Math.asin(Math.sin(obliquity * DEG) * Math.sin(apparentLongitude * DEG)) / DEG;
+  const y = Math.tan((obliquity * DEG) / 2) ** 2;
+  const equationOfTime =
+    (4 / DEG) *
+    (y * Math.sin(2 * meanLongitude * DEG) -
+      2 * eccentricity * Math.sin(meanAnomaly * DEG) +
+      4 *
+        eccentricity *
+        y *
+        Math.sin(meanAnomaly * DEG) *
+        Math.cos(2 * meanLongitude * DEG) -
+      0.5 * y * y * Math.sin(4 * meanLongitude * DEG) -
+      1.25 * eccentricity * eccentricity * Math.sin(2 * meanAnomaly * DEG));
+  const utcMinutes =
+    date.getUTCHours() * 60 +
+    date.getUTCMinutes() +
+    date.getUTCSeconds() / 60 +
+    date.getUTCMilliseconds() / 60_000;
+  const longitude = normalizeDegrees(180 - (utcMinutes + equationOfTime) / 4);
+  return { lat: declination, lon: longitude, declination, equationOfTime };
+}
+
+function solarAltitude(city, date, solar) {
+  const utcMinutes =
+    date.getUTCHours() * 60 +
+    date.getUTCMinutes() +
+    date.getUTCSeconds() / 60 +
+    date.getUTCMilliseconds() / 60_000;
+  const trueSolarMinutes =
+    ((utcMinutes + solar.equationOfTime + 4 * city.lon) % 1440 + 1440) % 1440;
+  const hourAngle = (trueSolarMinutes / 4 - 180) * DEG;
+  const latitude = city.lat * DEG;
+  const declination = solar.declination * DEG;
+  const sine =
+    Math.sin(latitude) * Math.sin(declination) +
+    Math.cos(latitude) * Math.cos(declination) * Math.cos(hourAngle);
+  return Math.asin(THREE.MathUtils.clamp(sine, -1, 1)) / DEG;
+}
+
+function solarEvents(city, date, solar) {
+  const latitude = city.lat * DEG;
+  const declination = solar.declination * DEG;
+  const cosineHourAngle =
+    Math.cos(90.833 * DEG) / (Math.cos(latitude) * Math.cos(declination)) -
+    Math.tan(latitude) * Math.tan(declination);
+  if (cosineHourAngle > 1) return { sunrise: "POLAR NIGHT", sunset: "POLAR NIGHT" };
+  if (cosineHourAngle < -1) return { sunrise: "MIDNIGHT SUN", sunset: "MIDNIGHT SUN" };
+  const hourAngle = Math.acos(cosineHourAngle) / DEG;
+  const solarNoon = 720 - 4 * city.lon - solar.equationOfTime;
+  return {
+    sunrise: formatEventTime(date, solarNoon - hourAngle * 4, city.zone),
+    sunset: formatEventTime(date, solarNoon + hourAngle * 4, city.zone),
+  };
+}
+
+function formatEventTime(date, utcMinutes, zone) {
+  const midnight = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  return formatClock(new Date(midnight + utcMinutes * 60_000), zone);
+}
+
+function moonData(date) {
+  const synodicMonth = 29.53058867;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+  const age =
+    ((((date.getTime() - knownNewMoon) / 86_400_000) % synodicMonth) + synodicMonth) %
+      synodicMonth;
+  const phase = age / synodicMonth;
+  const illumination = (1 - Math.cos(phase * Math.PI * 2)) / 2;
+  const names = [
+    "NEW",
+    "WAXING CRESCENT",
+    "FIRST QUARTER",
+    "WAXING GIBBOUS",
+    "FULL",
+    "WANING GIBBOUS",
+    "LAST QUARTER",
+    "WANING CRESCENT",
+  ];
+  return {
+    age,
+    phase,
+    illumination,
+    name: names[Math.round(phase * 8) % 8],
+  };
 }
 
 function latLonVector(lat, lon, radius = 1) {
-  const phi = THREE.MathUtils.degToRad(90 - lat);
-  const theta = THREE.MathUtils.degToRad(lon + 180);
+  const phi = (90 - lat) * DEG;
+  const theta = (lon + 180) * DEG;
   return new THREE.Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
@@ -210,30 +403,169 @@ function latLonVector(lat, lon, radius = 1) {
   );
 }
 
-function updateSun() {
-  if (!earthMaterial) return;
-  const solar = solarCoordinates(new Date());
-  earthMaterial.uniforms.sunDirection.value.copy(latLonVector(solar.lat, solar.lon).normalize());
-  const lat = `${Math.abs(solar.lat).toFixed(1)} ${solar.lat >= 0 ? "N" : "S"}`;
-  const lon = `${Math.abs(solar.lon).toFixed(1)} ${solar.lon >= 0 ? "E" : "W"}`;
-  el.solarPosition.textContent = `${lat} / ${lon}`;
+function coordinateLabel(value, positive, negative) {
+  return `${Math.abs(value).toFixed(1)} ${value >= 0 ? positive : negative}`;
+}
+
+function updateAstronomy() {
+  const date = simulationDate();
+  latestSolar = solarCoordinates(date);
+  const moonState = moonData(date);
+  const city = cities[state.activeCity];
+  const altitude = solarAltitude(city, date, latestSolar);
+  const events = solarEvents(city, date, latestSolar);
+
+  el.utcDate.textContent = getFormatter("UTC", "date").format(date).toUpperCase();
+  el.utcTime.textContent = formatClock(date, "UTC", true);
+  el.missionState.textContent =
+    state.timeOffsetHours === 0
+      ? "LIVE ORBIT"
+      : `TIME SHIFT ${state.timeOffsetHours > 0 ? "+" : ""}${state.timeOffsetHours}H`;
+  el.observatoryMode.textContent = state.timeOffsetHours === 0 ? "LIVE" : "SIM";
+  el.timeOffsetLabel.textContent =
+    state.timeOffsetHours === 0
+      ? "LIVE"
+      : `${state.timeOffsetHours > 0 ? "+" : ""}${state.timeOffsetHours}H`;
+
+  cityRows.forEach((row, index) => {
+    const rowAltitude = solarAltitude(cities[index], date, latestSolar);
+    row.clock.textContent = formatClock(date, cities[index].zone);
+    row.solar.className = `city-solar-dot ${rowAltitude > -0.833 ? "day" : "night"}`;
+  });
+
+  el.stageTime.textContent = formatClock(date, city.zone, true);
+  el.stageDate.textContent = getFormatter(city.zone, "stageDate").format(date).toUpperCase();
+  el.solarState.textContent =
+    altitude > 0 ? "DAYLIGHT" : altitude > -6 ? "CIVIL TWILIGHT" : "NIGHT";
+  el.solarState.classList.toggle("night", altitude <= 0);
+  el.solarAltitude.textContent = `${altitude >= 0 ? "+" : ""}${altitude.toFixed(1)}°`;
+  el.sunriseValue.textContent = events.sunrise;
+  el.sunsetValue.textContent = events.sunset;
+  el.moonPhase.textContent = moonState.name;
+  el.moonLight.textContent = `${Math.round(moonState.illumination * 100)}%`;
+  el.solarPosition.textContent = `${coordinateLabel(latestSolar.lat, "N", "S")} / ${coordinateLabel(
+    latestSolar.lon,
+    "E",
+    "W",
+  )}`;
+
+  if (earthMaterial) {
+    earthMaterial.uniforms.sunDirection.value.copy(
+      latLonVector(latestSolar.lat, latestSolar.lon).normalize(),
+    );
+  }
+  if (subsolarMarker) {
+    const position = latLonVector(latestSolar.lat, latestSolar.lon, EARTH_RADIUS + 0.025);
+    subsolarMarker.position.copy(position);
+    subsolarMarker.lookAt(position.clone().multiplyScalar(2));
+  }
+  if (moonOrbit && moon) {
+    moonOrbit.rotation.z = 5.14 * DEG;
+    const angle = moonState.phase * Math.PI * 2 + Math.PI;
+    moon.position.set(Math.cos(angle) * 2.65, 0.16 * Math.sin(angle * 2), Math.sin(angle) * 2.65);
+    moon.rotation.y = -angle;
+  }
+}
+
+function buildCityList() {
+  const fragment = document.createDocumentFragment();
+  cities.forEach((city, index) => {
+    const button = document.createElement("button");
+    const solar = document.createElement("i");
+    const name = document.createElement("b");
+    const clock = document.createElement("strong");
+    const metadata = document.createElement("small");
+    button.className = `city-row${index === state.activeCity ? " active" : ""}`;
+    button.type = "button";
+    button.dataset.index = String(index);
+    solar.className = "city-solar-dot night";
+    name.textContent = city.name;
+    clock.textContent = "00:00";
+    metadata.textContent = `${city.code} / ${city.zone}`;
+    button.append(solar, name, clock, metadata);
+    button.addEventListener("click", () => selectCity(index));
+    cityRows.push({ button, solar, clock });
+    fragment.append(button);
+  });
+  el.cityList.append(fragment);
+}
+
+function filterCities(query) {
+  const normalized = query.trim().toLowerCase();
+  let visible = 0;
+  cityRows.forEach(({ button }, index) => {
+    const city = cities[index];
+    const matches =
+      !normalized ||
+      city.name.toLowerCase().includes(normalized) ||
+      city.code.toLowerCase().includes(normalized) ||
+      city.zone.toLowerCase().includes(normalized);
+    button.hidden = !matches;
+    if (matches) visible += 1;
+  });
+  let empty = el.cityList.querySelector(".city-empty");
+  if (!visible && !empty) {
+    empty = document.createElement("div");
+    empty.className = "city-empty";
+    empty.textContent = "NO OBSERVATORY MATCH";
+    el.cityList.append(empty);
+  } else if (visible && empty) {
+    empty.remove();
+  }
+}
+
+function selectCity(index, focus = true) {
+  state.activeCity = index;
+  const city = cities[index];
+  cityRows.forEach(({ button }, rowIndex) => {
+    button.classList.toggle("active", rowIndex === index);
+    button.setAttribute("aria-pressed", rowIndex === index ? "true" : "false");
+  });
+  cityMarkers.forEach((marker, markerIndex) => {
+    marker.material.color.setHex(markerIndex === index ? 0xb9ff3d : 0x45ddd2);
+    marker.scale.setScalar(markerIndex === index ? 1.7 : 1);
+  });
+  el.stageCity.textContent = city.name;
+  el.stageZone.textContent = city.zone.toUpperCase();
+  if (focus) focusSelectedCity();
+  updateAstronomy();
+  if (window.innerWidth <= 760) document.body.classList.remove("observatory-open");
+  tone(520, 0.04);
+}
+
+function focusSelectedCity() {
+  const city = cities[state.activeCity];
+  state.targetRotationX = THREE.MathUtils.clamp(city.lat * DEG, -1.18, 1.18);
+  state.targetRotationY = -Math.PI / 2 - city.lon * DEG;
+  state.zoom = window.innerWidth < 760 ? 4.45 : 4.2;
+}
+
+function seededRandom() {
+  let seed = 0x504f5745;
+  return () => {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    return (seed >>> 0) / 4_294_967_296;
+  };
 }
 
 function createStars() {
-  const count = window.innerWidth < 760 ? 900 : 1800;
+  const random = seededRandom();
+  const count = window.innerWidth < 760 ? 850 : 1800;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   for (let index = 0; index < count; index += 1) {
-    const radius = 8 + Math.random() * 18;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
+    const radius = 8 + random() * 18;
+    const theta = random() * Math.PI * 2;
+    const phi = Math.acos(2 * random() - 1);
     positions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
     positions[index * 3 + 1] = radius * Math.cos(phi);
     positions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
-    const brightness = 0.45 + Math.random() * 0.55;
-    colors[index * 3] = brightness * 0.72;
-    colors[index * 3 + 1] = brightness * 0.9;
-    colors[index * 3 + 2] = brightness * 0.82;
+    const brightness = 0.42 + random() * 0.58;
+    colors[index * 3] = brightness * 0.76;
+    colors[index * 3 + 1] = brightness * 0.92;
+    colors[index * 3 + 2] = brightness * 0.86;
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -248,14 +580,53 @@ function createStars() {
   scene.add(new THREE.Points(geometry, material));
 }
 
-function createEarth() {
-  const loader = new THREE.TextureLoader();
-  const dayTexture = loader.load("assets/earth-day.jpg");
-  const nightTexture = loader.load("assets/earth-night.jpg");
-  dayTexture.colorSpace = THREE.SRGBColorSpace;
-  nightTexture.colorSpace = THREE.SRGBColorSpace;
-  dayTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  nightTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+function loadTexture(url, progress) {
+  return new Promise((resolve, reject) => {
+    new THREE.TextureLoader().load(
+      url,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+        setBootProgress(progress);
+        resolve(texture);
+      },
+      undefined,
+      reject,
+    );
+  });
+}
+
+function createEarthGrid() {
+  const group = new THREE.Group();
+  const material = new THREE.LineBasicMaterial({
+    color: 0x8bd7cd,
+    transparent: true,
+    opacity: 0.085,
+    depthWrite: false,
+  });
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const points = [];
+    for (let lon = -180; lon <= 180; lon += 3) {
+      points.push(latLonVector(lat, lon, EARTH_RADIUS + 0.006));
+    }
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
+  }
+  for (let lon = -150; lon <= 180; lon += 30) {
+    const points = [];
+    for (let lat = -90; lat <= 90; lat += 3) {
+      points.push(latLonVector(lat, lon, EARTH_RADIUS + 0.006));
+    }
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
+  }
+  return group;
+}
+
+async function createEarth() {
+  const mobile = window.innerWidth <= 760;
+  const [dayTexture, nightTexture] = await Promise.all([
+    loadTexture(`assets/earth-day${mobile ? "-mobile" : ""}.jpg`, 48),
+    loadTexture(`assets/earth-night${mobile ? "-mobile" : ""}.jpg`, 70),
+  ]);
 
   earthMaterial = new THREE.ShaderMaterial({
     uniforms: {
@@ -265,14 +636,16 @@ function createEarth() {
     },
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vWorldNormal;
-      varying vec3 vWorldPosition;
+      varying vec3 vObjectNormal;
+      varying vec3 vViewNormal;
+      varying vec3 vViewPosition;
       void main() {
         vUv = uv;
-        vWorldNormal = normalize(mat3(modelMatrix) * normal);
-        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-        vWorldPosition = worldPosition.xyz;
-        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        vObjectNormal = normalize(normal);
+        vViewNormal = normalize(normalMatrix * normal);
+        vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = viewPosition.xyz;
+        gl_Position = projectionMatrix * viewPosition;
       }
     `,
     fragmentShader: `
@@ -280,30 +653,31 @@ function createEarth() {
       uniform sampler2D nightMap;
       uniform vec3 sunDirection;
       varying vec2 vUv;
-      varying vec3 vWorldNormal;
-      varying vec3 vWorldPosition;
+      varying vec3 vObjectNormal;
+      varying vec3 vViewNormal;
+      varying vec3 vViewPosition;
       void main() {
-        vec3 normal = normalize(vWorldNormal);
-        float solar = dot(normal, normalize(sunDirection));
-        float daylight = smoothstep(-0.16, 0.24, solar);
+        float solar = dot(normalize(vObjectNormal), normalize(sunDirection));
+        float daylight = smoothstep(-0.13, 0.18, solar);
         vec3 day = texture2D(dayMap, vUv).rgb;
-        vec3 night = texture2D(nightMap, vUv).rgb * 1.35;
-        vec3 litDay = day * (0.42 + max(solar, 0.0) * 0.78);
-        float limb = pow(1.0 - max(dot(normal, normalize(cameraPosition - vWorldPosition)), 0.0), 3.0);
+        vec3 night = texture2D(nightMap, vUv).rgb * 1.32;
+        vec3 litDay = day * (0.48 + max(solar, 0.0) * 0.70);
+        vec3 viewDirection = normalize(-vViewPosition);
+        float limb = pow(1.0 - max(dot(normalize(vViewNormal), viewDirection), 0.0), 3.0);
         vec3 color = mix(night, litDay, daylight);
-        color += vec3(0.04, 0.22, 0.20) * limb * 0.42;
+        color += vec3(0.035, 0.24, 0.22) * limb * 0.52;
         gl_FragColor = vec4(color, 1.0);
       }
     `,
   });
 
   earthGroup = new THREE.Group();
-  const globeSegments = window.innerWidth < 760 ? [64, 40] : [96, 64];
+  const globeSegments = mobile ? [64, 40] : [112, 72];
   const globe = new THREE.Mesh(
-    new THREE.SphereGeometry(1.36, globeSegments[0], globeSegments[1]),
+    new THREE.SphereGeometry(EARTH_RADIUS, globeSegments[0], globeSegments[1]),
     earthMaterial,
   );
-  earthGroup.add(globe);
+  earthGroup.add(globe, createEarthGrid());
 
   atmosphereMaterial = new THREE.ShaderMaterial({
     transparent: true,
@@ -320,190 +694,357 @@ function createEarth() {
     fragmentShader: `
       varying vec3 vNormal;
       void main() {
-        float intensity = pow(0.76 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.2);
-        gl_FragColor = vec4(0.12, 0.75, 0.68, 1.0) * intensity;
+        float intensity = pow(max(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 3.0);
+        gl_FragColor = vec4(0.12, 0.82, 0.73, 1.0) * intensity;
       }
     `,
   });
-  const atmosphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1.47, 72, 48),
-    atmosphereMaterial,
+  earthGroup.add(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(EARTH_RADIUS + 0.11, mobile ? 56 : 80, mobile ? 36 : 52),
+      atmosphereMaterial,
+    ),
   );
-  earthGroup.add(atmosphere);
 
-  const markerGeometry = new THREE.SphereGeometry(0.018, 10, 8);
+  const markerGeometry = new THREE.SphereGeometry(0.021, 12, 8);
+  const markerHitGeometry = new THREE.SphereGeometry(0.055, 10, 8);
   cities.forEach((city, index) => {
-    const markerMaterial = new THREE.MeshBasicMaterial({
-      color: index === state.activeCity ? 0xb9ff3d : 0x39d7ce,
-    });
-    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-    marker.position.copy(latLonVector(city.lat, city.lon, 1.385));
-    marker.userData.cityIndex = index;
-    earthGroup.add(marker);
+    const marker = new THREE.Mesh(
+      markerGeometry,
+      new THREE.MeshBasicMaterial({ color: index === state.activeCity ? 0xb9ff3d : 0x45ddd2 }),
+    );
+    marker.position.copy(latLonVector(city.lat, city.lon, EARTH_RADIUS + 0.03));
+    marker.scale.setScalar(index === state.activeCity ? 1.7 : 1);
+    marker.userData = { type: "city", cityIndex: index };
+    const hitMarker = new THREE.Mesh(
+      markerHitGeometry,
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    );
+    hitMarker.position.copy(marker.position);
+    hitMarker.userData = { type: "city", cityIndex: index };
+    cityMarkers.push(marker);
+    interactiveObjects.push(hitMarker);
+    earthGroup.add(marker, hitMarker);
   });
 
+  const solarGroup = new THREE.Group();
+  const solarRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.043, 0.059, 24),
+    new THREE.MeshBasicMaterial({
+      color: 0xffc14d,
+      transparent: true,
+      opacity: 0.92,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  const solarCore = new THREE.Mesh(
+    new THREE.SphereGeometry(0.012, 10, 8),
+    new THREE.MeshBasicMaterial({ color: 0xfff0b8 }),
+  );
+  solarGroup.add(solarRing, solarCore);
+  subsolarMarker = solarGroup;
+  earthGroup.add(solarGroup);
   scene.add(earthGroup);
-  updateSun();
+  updateAstronomy();
 }
 
-function createOrbit(radius, tiltX, tiltZ, color, opacity) {
+function createOrbitTrack(name, index) {
+  const radius = [1.78, 1.98, 2.17, 2.36][index];
+  const tiltX = [0.4, 1.04, -0.68, 0.78][index];
+  const tiltZ = [0.16, -0.3, 0.52, -0.62][index];
   const points = [];
-  for (let index = 0; index <= 256; index += 1) {
-    const angle = (index / 256) * Math.PI * 2;
+  for (let point = 0; point <= 256; point += 1) {
+    const angle = (point / 256) * Math.PI * 2;
     points.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
   }
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const material = new THREE.LineBasicMaterial({
-    color,
+    color: modes[name].color,
     transparent: true,
-    opacity,
+    opacity: index === 0 ? 0.66 : 0.16,
     blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
-  const line = new THREE.Line(geometry, material);
-  line.rotation.x = tiltX;
-  line.rotation.z = tiltZ;
-  return line;
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material);
+  line.rotation.set(tiltX, 0, tiltZ);
+  const beacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.035, 14, 10),
+    new THREE.MeshBasicMaterial({ color: modes[name].color, transparent: true, opacity: 0.95 }),
+  );
+  beacon.userData = {
+    type: "proof",
+    mode: name,
+    radius,
+    tiltX,
+    tiltZ,
+    phase: index * 1.63,
+    speed: 0.055 + index * 0.014,
+  };
+  const hitBeacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.085, 10, 8),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  );
+  hitBeacon.userData = { type: "proof", mode: name };
+  beacon.add(hitBeacon);
+  orbitGroup.add(line, beacon);
+  orbitEntries.push({ name, line, beacon });
+  interactiveObjects.push(hitBeacon);
 }
 
 function createOrbits() {
   orbitGroup = new THREE.Group();
-  orbitGroup.add(createOrbit(1.76, 0.42, 0.16, 0x39d7ce, 0.28));
-  orbitGroup.add(createOrbit(1.95, 1.02, -0.28, 0xb9ff3d, 0.22));
-  orbitGroup.add(createOrbit(2.15, -0.7, 0.5, 0xffb83e, 0.16));
-
-  const nodeGeometry = new THREE.SphereGeometry(0.025, 12, 8);
-  const colors = [0xb9ff3d, 0x39d7ce, 0xffb83e];
-  for (let index = 0; index < 9; index += 1) {
-    const material = new THREE.MeshBasicMaterial({ color: colors[index % colors.length] });
-    const node = new THREE.Mesh(nodeGeometry, material);
-    node.userData = {
-      orbit: index % 3,
-      phase: (index / 9) * Math.PI * 2,
-      speed: 0.08 + (index % 3) * 0.025,
-    };
-    proofNodes.push(node);
-    orbitGroup.add(node);
-  }
+  Object.keys(modes).forEach(createOrbitTrack);
   scene.add(orbitGroup);
 }
 
-function initScene() {
+function createMoon() {
+  moonOrbit = new THREE.Group();
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xc8d0c8,
+    roughness: 0.9,
+    metalness: 0,
+  });
+  moon = new THREE.Mesh(new THREE.SphereGeometry(0.105, 28, 18), material);
+  moonOrbit.add(moon);
+  scene.add(moonOrbit);
+  scene.add(new THREE.AmbientLight(0x203132, 0.7));
+  const sunLight = new THREE.DirectionalLight(0xffefd0, 2.4);
+  sunLight.position.set(5, 2, 4);
+  scene.add(sunLight);
+}
+
+async function initScene() {
   try {
     renderer = new THREE.WebGLRenderer({
       canvas: el.canvas,
       antialias: true,
+      alpha: false,
       powerPreference: "high-performance",
     });
-  } catch (error) {
+  } catch {
     document.body.classList.add("webgl-fallback");
+    finishBoot();
     showToast("WebGL is unavailable; proof controls remain active.");
     return;
   }
   renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, window.innerWidth < 760 ? 1.25 : 1.8),
+    Math.min(window.devicePixelRatio, window.innerWidth <= 760 ? 1.15 : 1.5),
   );
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.13;
 
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020607);
   scene.fog = new THREE.FogExp2(0x020607, 0.022);
   camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, state.zoom);
 
   createStars();
-  createEarth();
   createOrbits();
+  createMoon();
+  try {
+    await createEarth();
+  } catch {
+    document.body.classList.add("webgl-fallback");
+    showToast("Earth textures could not load; verification remains available.");
+  }
   bindGlobeInput();
+  selectMode(state.mode, false);
+  selectCity(state.activeCity, false);
+  setBootProgress(90);
   animate();
+  finishBoot();
+}
+
+function pointerPosition(event) {
+  const bounds = el.canvas.getBoundingClientRect();
+  pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+  pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+}
+
+function raycast(event) {
+  if (!camera || !scene) return null;
+  pointerPosition(event);
+  raycaster.setFromCamera(pointer, camera);
+  return (
+    raycaster.intersectObjects(interactiveObjects, false).find((hit) => {
+      if (hit.object.userData.type !== "city") return true;
+      hit.object.getWorldPosition(hitWorldPosition);
+      return hitWorldPosition.z > 0;
+    }) || null
+  );
+}
+
+function showGlobeTooltip(event, object) {
+  const data = object.userData;
+  if (data.type === "city") {
+    const city = cities[data.cityIndex];
+    el.globeTooltip.innerHTML = `<b>${city.name}</b><span>${formatClock(
+      simulationDate(),
+      city.zone,
+      true,
+    )} / ${city.code}</span>`;
+  } else {
+    const mode = modes[data.mode];
+    el.globeTooltip.innerHTML = `<b>${data.mode.toUpperCase()}</b><span>2^${mode.exponent.toLocaleString()} DOMAIN</span>`;
+  }
+  el.globeTooltip.style.left = `${Math.min(event.clientX + 14, window.innerWidth - 190)}px`;
+  el.globeTooltip.style.top = `${Math.min(event.clientY + 14, window.innerHeight - 72)}px`;
+  el.globeTooltip.classList.add("visible");
+}
+
+function hideGlobeTooltip() {
+  el.globeTooltip.classList.remove("visible");
+}
+
+function activateSceneObject(object) {
+  if (object.userData.type === "city") {
+    selectCity(object.userData.cityIndex);
+    showToast(`${cities[object.userData.cityIndex].name} observatory selected`);
+  } else if (object.userData.type === "proof") {
+    selectMode(object.userData.mode);
+    showToast(`${object.userData.mode.toUpperCase()} proof orbit selected`);
+  }
 }
 
 function bindGlobeInput() {
-  let dragging = false;
-  let lastX = 0;
-  let lastY = 0;
-
   el.canvas.addEventListener("pointerdown", (event) => {
-    dragging = true;
-    lastX = event.clientX;
-    lastY = event.clientY;
+    const hit = raycast(event);
+    state.pointerDown = {
+      id: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      moved: false,
+      hitObject: hit?.object || null,
+    };
     el.canvas.setPointerCapture(event.pointerId);
   });
   el.canvas.addEventListener("pointermove", (event) => {
-    if (!dragging) return;
-    const dx = event.clientX - lastX;
-    const dy = event.clientY - lastY;
-    lastX = event.clientX;
-    lastY = event.clientY;
-    state.targetRotationY += dx * 0.006;
-    state.targetRotationX = THREE.MathUtils.clamp(
-      state.targetRotationX + dy * 0.004,
-      -1.1,
-      1.1,
-    );
+    if (state.pointerDown) {
+      const dx = event.clientX - state.pointerDown.lastX;
+      const dy = event.clientY - state.pointerDown.lastY;
+      state.pointerDown.lastX = event.clientX;
+      state.pointerDown.lastY = event.clientY;
+      if (
+        Math.hypot(
+          event.clientX - state.pointerDown.startX,
+          event.clientY - state.pointerDown.startY,
+        ) > 5
+      ) {
+        state.pointerDown.moved = true;
+      }
+      state.targetRotationY += dx * 0.006;
+      state.targetRotationX = THREE.MathUtils.clamp(
+        state.targetRotationX + dy * 0.004,
+        -1.18,
+        1.18,
+      );
+      hideGlobeTooltip();
+      return;
+    }
+    const hit = raycast(event);
+    el.canvas.style.cursor = hit ? "pointer" : "grab";
+    if (hit) showGlobeTooltip(event, hit.object);
+    else hideGlobeTooltip();
   });
-  el.canvas.addEventListener("pointerup", () => {
-    dragging = false;
+  el.canvas.addEventListener("pointerup", (event) => {
+    if (state.pointerDown && !state.pointerDown.moved) {
+      const hitObject = state.pointerDown.hitObject || raycast(event)?.object;
+      if (hitObject) activateSceneObject(hitObject);
+    }
+    state.pointerDown = null;
   });
+  el.canvas.addEventListener("pointercancel", () => {
+    state.pointerDown = null;
+  });
+  el.canvas.addEventListener("pointerleave", hideGlobeTooltip);
   el.canvas.addEventListener(
     "wheel",
     (event) => {
       event.preventDefault();
-      state.zoom = THREE.MathUtils.clamp(state.zoom + event.deltaY * 0.002, 3.5, 6.4);
+      state.zoom = THREE.MathUtils.clamp(state.zoom + event.deltaY * 0.002, 3.45, 6.2);
     },
     { passive: false },
   );
 }
 
 function animate(time = 0) {
-  requestAnimationFrame(animate);
-  if (!renderer || !scene || !camera) return;
-
+  animationFrame = requestAnimationFrame(animate);
+  if (!renderer || !scene || !camera || !state.visible) return;
   const seconds = time * 0.001;
   if (earthGroup) {
-    if (state.motion) state.targetRotationY += 0.00045;
-    earthGroup.rotation.x += (state.targetRotationX - earthGroup.rotation.x) * 0.035;
-    earthGroup.rotation.y += (state.targetRotationY - earthGroup.rotation.y) * 0.035;
+    if (state.motion && !state.pointerDown) state.targetRotationY += 0.00024;
+    earthGroup.rotation.x += (state.targetRotationX - earthGroup.rotation.x) * 0.045;
+    earthGroup.rotation.y += (state.targetRotationY - earthGroup.rotation.y) * 0.045;
   }
   if (orbitGroup) {
-    orbitGroup.rotation.y = state.motion ? seconds * 0.035 : orbitGroup.rotation.y;
-    proofNodes.forEach((node) => {
-      const radii = [1.76, 1.95, 2.15];
-      const tiltsX = [0.42, 1.02, -0.7];
-      const tiltsZ = [0.16, -0.28, 0.5];
-      const angle = node.userData.phase + seconds * node.userData.speed;
-      const vector = new THREE.Vector3(
-        Math.cos(angle) * radii[node.userData.orbit],
+    orbitGroup.rotation.y = state.motion ? seconds * 0.022 : orbitGroup.rotation.y;
+    orbitEntries.forEach(({ name, beacon }, index) => {
+      const data = beacon.userData;
+      const angle = data.phase + seconds * (state.motion ? data.speed : 0);
+      const position = new THREE.Vector3(
+        Math.cos(angle) * data.radius,
         0,
-        Math.sin(angle) * radii[node.userData.orbit],
+        Math.sin(angle) * data.radius,
       );
-      vector.applyEuler(
-        new THREE.Euler(tiltsX[node.userData.orbit], 0, tiltsZ[node.userData.orbit]),
-      );
-      node.position.copy(vector);
-      const pulse = 0.75 + Math.sin(seconds * 3 + node.userData.phase) * 0.25;
-      node.scale.setScalar(pulse);
+      position.applyEuler(new THREE.Euler(data.tiltX, 0, data.tiltZ));
+      beacon.position.copy(position);
+      const selected = name === state.mode;
+      const pulse = selected ? 1.1 + Math.sin(seconds * 4) * 0.24 : 0.72;
+      const progressBoost = selected ? state.proofProgress * 0.55 : 0;
+      beacon.scale.setScalar(pulse + progressBoost);
     });
   }
-  camera.position.z += (state.zoom - camera.position.z) * 0.055;
+  if (subsolarMarker) {
+    subsolarMarker.scale.setScalar(1 + Math.sin(seconds * 3) * 0.12);
+  }
+  if (moon) moon.rotation.y += state.motion ? 0.0015 : 0;
+  camera.position.z += (state.zoom - camera.position.z) * 0.06;
   renderer.render(scene, camera);
 }
 
 function resize() {
   if (!renderer || !camera) return;
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, window.innerWidth <= 760 ? 1.15 : 1.5),
+  );
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
-  camera.fov = window.innerWidth < 760 ? 50 : 42;
+  camera.fov = window.innerWidth <= 760 ? 50 : 42;
   camera.updateProjectionMatrix();
 }
 
-function selectMode(name) {
-  if (state.running) return;
+function updateOrbitSelection() {
+  orbitEntries.forEach(({ name, line, beacon }) => {
+    const selected = name === state.mode;
+    line.material.opacity = selected ? 0.68 : 0.14;
+    beacon.material.opacity = selected ? 1 : 0.58;
+  });
+}
+
+function setProgress(percent) {
+  const bounded = Math.max(0, Math.min(100, percent));
+  state.proofProgress = bounded / 100;
+  el.progressBar.style.width = `${bounded}%`;
+}
+
+function selectMode(name, withTone = true) {
+  if (state.running || !modes[name]) return;
   state.mode = name;
+  state.lastResult = null;
   const mode = modes[name];
   document.querySelectorAll(".proof-mode").forEach((button) => {
-    button.classList.toggle("active", button.dataset.mode === name);
+    const active = button.dataset.mode === name;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
   });
   el.domainLabel.innerHTML = `2<sup>${mode.exponent.toLocaleString()}</sup>`;
   el.domainDetail.textContent = mode.domain;
@@ -518,9 +1059,12 @@ function selectMode(name) {
   el.roundValue.textContent = `0 / ${mode.exponent.toLocaleString()}`;
   el.claimValue.textContent = "WAITING";
   el.digestValue.textContent = "PENDING";
-  el.progressBar.style.width = "0";
+  el.modeValue.textContent = name.toUpperCase();
+  el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
-  tone(420, 0.035);
+  setProgress(0);
+  updateOrbitSelection();
+  if (withTone) tone(420, 0.035);
 }
 
 function mod(value) {
@@ -555,20 +1099,29 @@ function sleep(milliseconds) {
 
 function beginRun() {
   state.running = true;
+  state.lastResult = null;
   el.verifyButton.disabled = true;
+  el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
-  el.progressBar.style.width = "0";
   el.digestValue.textContent = "WORKING";
+  setProgress(0);
 }
 
 function completeRun(digest, claim = "VERIFIED") {
   state.running = false;
+  state.lastResult = {
+    mode: state.mode,
+    digest: digest.toUpperCase(),
+    claim,
+    rounds: modes[state.mode].exponent,
+  };
   el.verifyButton.disabled = false;
-  el.progressBar.style.width = "100%";
+  el.shareButton.disabled = false;
   el.digestValue.textContent = digest.slice(0, 12).toUpperCase();
   el.claimValue.textContent = claim;
   el.statusSeal.classList.add("verified");
   el.verificationStatus.textContent = "VERIFICATION COMPLETE";
+  setProgress(100);
   tone(760, 0.12);
 }
 
@@ -601,7 +1154,7 @@ async function runConstantProof() {
     rounds.push([a.toString(), b.toString(), running.toString()]);
     running = b;
     el.roundValue.textContent = `${index + 1} / 70`;
-    el.progressBar.style.width = `${((index + 1) / 70) * 100}%`;
+    setProgress(((index + 1) / 70) * 100);
     if (index % 7 === 0) tone(300 + index * 4, 0.018);
     if (index % 5 === 4) await sleep(12);
   }
@@ -610,7 +1163,6 @@ async function runConstantProof() {
     failRun("Final evaluation did not equal the public constant.");
     return;
   }
-
   const digest = await sha256Hex(
     JSON.stringify({
       format: "MFENX_BROWSER_CONSTANT_V1",
@@ -665,8 +1217,9 @@ async function runAffineReplay() {
     running = mod(a * challenge + b);
     if (index % 64 === 0) {
       digestWords.push(`${a}:${b}:${running}`);
-      el.roundValue.textContent = `${(index + 64).toLocaleString()} / 4,096`;
-      el.progressBar.style.width = `${((index + 64) / count) * 100}%`;
+      const completed = Math.min(index + 64, count);
+      el.roundValue.textContent = `${completed.toLocaleString()} / 4,096`;
+      setProgress((completed / count) * 100);
       tone(350 + (index / 64) * 3, 0.012);
       await sleep(7);
     }
@@ -689,17 +1242,22 @@ async function fetchWithProgress(url, progressStart, progressSpan) {
   const total = Number(response.headers.get("content-length")) || 0;
   if (!response.body) return new Uint8Array(await response.arrayBuffer());
   const reader = response.body.getReader();
+  const output = total ? new Uint8Array(total) : null;
   const chunks = [];
   let received = 0;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    chunks.push(value);
+    if (output) output.set(value, received);
+    else chunks.push(value);
     received += value.length;
     const ratio = total ? received / total : Math.min(received / 16_000_000, 0.95);
-    el.progressBar.style.width = `${progressStart + ratio * progressSpan}%`;
-    el.verificationDetail.textContent = `${(received / 1_000_000).toFixed(1)} MB downloaded and buffered for SHA-256`;
+    setProgress(progressStart + ratio * progressSpan);
+    el.verificationDetail.textContent = `${(received / 1_000_000).toFixed(
+      1,
+    )} MB streamed for SHA-256`;
   }
+  if (output) return received === output.length ? output : output.slice(0, received);
   const bytes = new Uint8Array(received);
   let offset = 0;
   chunks.forEach((chunk) => {
@@ -770,10 +1328,7 @@ function tone(frequency, duration) {
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0.025, audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      audioContext.currentTime + duration,
-    );
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
     oscillator.connect(gain);
     gain.connect(audioContext.destination);
     oscillator.start();
@@ -790,6 +1345,62 @@ function showToast(message) {
   state.toastTimer = window.setTimeout(() => el.toast.classList.remove("show"), 3600);
 }
 
+async function copyText(value, successMessage) {
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast(successMessage);
+  } catch {
+    showToast("Clipboard access is unavailable in this browser.");
+  }
+}
+
+async function shareVerification() {
+  if (!state.lastResult) return;
+  const result = state.lastResult;
+  const text = `MFENX Power House ${result.mode.toUpperCase()} verification accepted: ${result.rounds.toLocaleString()} rounds, digest ${result.digest.slice(
+    0,
+    16,
+  )}…`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "MFENX Power House Verification", text, url: location.href });
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+  }
+  await copyText(`${text} ${location.href}`, "Verification result copied");
+}
+
+function setTimeOffset(hours) {
+  state.timeOffsetHours = THREE.MathUtils.clamp(Number(hours), -24, 24);
+  el.timeSlider.value = String(state.timeOffsetHours);
+  updateAstronomy();
+}
+
+function setMotion(enabled) {
+  state.motion = enabled;
+  mountIcon(el.motionToggle.querySelector("[data-icon]"), enabled ? "pause" : "play");
+  el.motionToggle.classList.toggle("active", !enabled);
+  el.motionToggle.setAttribute(
+    "aria-label",
+    enabled ? "Pause orbital motion" : "Resume orbital motion",
+  );
+  el.motionToggle.title = enabled ? "Pause orbital motion" : "Resume orbital motion";
+}
+
+function setSound(enabled) {
+  state.sound = enabled;
+  mountIcon(el.soundToggle.querySelector("[data-icon]"), enabled ? "volume-2" : "volume-x");
+  el.soundToggle.classList.toggle("active", enabled);
+  el.soundToggle.setAttribute(
+    "aria-label",
+    enabled ? "Mute interface sound" : "Enable interface sound",
+  );
+  if (enabled) tone(620, 0.08);
+  showToast(enabled ? "Interface sound enabled" : "Interface sound muted");
+}
+
 function bindInterface() {
   document.querySelectorAll(".proof-mode").forEach((button) => {
     button.addEventListener("click", () => selectMode(button.dataset.mode));
@@ -797,40 +1408,76 @@ function bindInterface() {
   el.verifyButton.addEventListener("click", () => {
     if (!state.running) modes[state.mode].action();
   });
-  el.soundToggle.addEventListener("click", () => {
-    state.sound = !state.sound;
-    el.soundToggle.classList.toggle("active", state.sound);
-    el.soundToggle.querySelector("span").textContent = state.sound ? "◕" : "◖";
-    if (state.sound) tone(620, 0.08);
-    showToast(state.sound ? "Interface sound enabled" : "Interface sound muted");
+  el.shareButton.addEventListener("click", shareVerification);
+  el.installCommand.addEventListener("click", () =>
+    copyText("cargo add power_house", "Install command copied"),
+  );
+  el.citySearch.addEventListener("input", (event) => filterCities(event.target.value));
+  el.observatoryToggle.addEventListener("click", () =>
+    document.body.classList.add("observatory-open"),
+  );
+  el.observatoryClose.addEventListener("click", () =>
+    document.body.classList.remove("observatory-open"),
+  );
+  el.timeSlider.addEventListener("input", (event) => setTimeOffset(event.target.value));
+  el.timeBack.addEventListener("click", () => setTimeOffset(state.timeOffsetHours - 1));
+  el.timeForward.addEventListener("click", () => setTimeOffset(state.timeOffsetHours + 1));
+  el.timeLive.addEventListener("click", () => setTimeOffset(0));
+  el.focusToggle.addEventListener("click", () => {
+    focusSelectedCity();
+    showToast(`${cities[state.activeCity].name} centered`);
   });
-  el.motionToggle.addEventListener("click", () => {
-    state.motion = !state.motion;
-    el.motionToggle.querySelector("span").textContent = state.motion ? "Ⅱ" : "▶";
-    el.motionToggle.setAttribute(
-      "aria-label",
-      state.motion ? "Pause orbital motion" : "Resume orbital motion",
-    );
-  });
+  el.soundToggle.addEventListener("click", () => setSound(!state.sound));
+  el.motionToggle.addEventListener("click", () => setMotion(!state.motion));
   window.addEventListener("resize", resize);
+  document.addEventListener("visibilitychange", () => {
+    state.visible = !document.hidden;
+  });
   window.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const typing =
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement;
+    if (event.key === "Escape") {
+      document.body.classList.remove("observatory-open");
+      hideGlobeTooltip();
+      return;
+    }
+    if (typing) return;
     if (event.key === "Enter" && !state.running) modes[state.mode].action();
     if (event.key === " ") {
       event.preventDefault();
-      el.motionToggle.click();
+      setMotion(!state.motion);
     }
+    if (event.key === "ArrowLeft") state.targetRotationY -= 0.12;
+    if (event.key === "ArrowRight") state.targetRotationY += 0.12;
+    if (event.key === "ArrowUp") {
+      state.targetRotationX = THREE.MathUtils.clamp(state.targetRotationX - 0.08, -1.18, 1.18);
+    }
+    if (event.key === "ArrowDown") {
+      state.targetRotationX = THREE.MathUtils.clamp(state.targetRotationX + 0.08, -1.18, 1.18);
+    }
+    if (event.key === "+" || event.key === "=") state.zoom = Math.max(3.45, state.zoom - 0.2);
+    if (event.key === "-") state.zoom = Math.min(6.2, state.zoom + 0.2);
   });
 }
 
 function init() {
+  mountIcons();
+  setBootProgress(22);
   buildCityList();
   bindInterface();
-  selectMode("constant");
-  selectCity(2);
-  updateClocks();
-  window.setInterval(updateClocks, 1000);
-  window.setInterval(updateSun, 30_000);
+  selectMode("constant", false);
+  selectCity(state.activeCity, false);
+  setMotion(state.motion);
+  updateAstronomy();
+  window.setInterval(updateAstronomy, 1000);
   initScene();
 }
+
+window.addEventListener("beforeunload", () => {
+  if (animationFrame) cancelAnimationFrame(animationFrame);
+});
 
 init();
