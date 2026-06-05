@@ -1207,7 +1207,10 @@ async fn handle_submit_blob(req: &HttpRequest, cfg: &BlobServiceConfig) -> Resul
                     } else {
                         for att in attestors {
                             if let Some(w) = reg.stake_for(&att.pk) {
-                                let share = attestor_pool.saturating_mul(w) / total_weight;
+                                let share = attestor_pool
+                                    .saturating_mul(w)
+                                    .checked_div(total_weight)
+                                    .unwrap_or_default();
                                 if share > 0 {
                                     reg.credit_reward(&att.pk, share);
                                 }
