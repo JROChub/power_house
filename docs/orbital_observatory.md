@@ -1,47 +1,66 @@
 # MFENX Orbital Observatory
 
-`mfenx.com` is a static operational view of the Power House proof artifacts.
-It combines a live world clock with an interactive Three.js Earth and proof
-verification controls.
+`mfenx.com` presents Power House as an interactive planetary proof
+observatory. It combines live celestial telemetry, world time, published proof
+artifacts, and browser-side verification in one static deployment.
 
-## Orbital map
+## World observatory
 
-The globe uses NASA Blue Marble daytime imagery and NASA Earth at Night data.
-A fragment shader blends the two textures around a live solar terminator.
+The Three.js globe uses NASA Blue Marble daytime imagery and NASA Earth at
+Night data. Desktop clients receive 4K textures; mobile clients receive
+smaller responsive textures for faster startup.
 
-The subsolar point is updated from UTC:
+The astronomy model provides:
 
-- longitude follows UTC solar time,
-- latitude follows the approximate annual solar declination,
-- city clocks use the browser's IANA time-zone database,
-- selecting a city rotates the globe to its coordinates.
+- solar declination and equation-of-time calculations,
+- a geographically anchored day/night terminator,
+- the live subsolar point,
+- solar altitude, sunrise, and sunset for each indexed city,
+- lunar phase and illumination,
+- an adjustable 48-hour celestial timeline,
+- 18 searchable IANA time-zone clocks.
 
-The orbit tracks represent the four public proof modes, not physical
-satellites.
+City markers and proof-orbit beacons are selectable directly on the globe.
+The globe supports pointer rotation, wheel zoom, touch input, keyboard
+rotation, keyboard zoom, and one-command focus on the selected city.
 
-## Browser verification
+## Proof orbits
 
-The interface provides four actions:
+The four orbit tracks map to the public verification modes:
 
-1. A real 70-round constant-polynomial equation replay over field
+1. A 70-round constant-polynomial equation replay over field
    `1,000,000,007`.
-2. A 4,096-round seeded-affine structural replay. This is a browser model; the
-   canonical Rust proof uses BLAKE2b Fiat-Shamir challenges.
+2. A 4,096-round seeded-affine structural replay.
 3. SHA-256 verification of the published `PHSPv1` million-round artifact.
-4. SHA-256 verification of both the `PHSMv1` workload and `PHCPv1` certificate.
+4. SHA-256 verification of both the `PHSMv1` workload and `PHCPv1`
+   certificate.
 
-The artifact actions prove that the bytes served by the site match the
-immutable release digests. They do not replace the algebraic Rust/Python
-verification described in `docs/verification_guide.md`.
+Proof progress is reflected in both the verification dock and the active
+orbital beacon. Successful runs can be shared through the Web Share API or
+copied to the clipboard.
+
+The browser replays provide immediate interactive checks. The canonical Rust
+and Python tooling provides full artifact parsing, transcript validation,
+BLAKE2b workload commitment checks, and algebraic replay as documented in
+`docs/verification_guide.md`.
+
+## Performance
+
+- Texture resolution is selected at startup from the client viewport.
+- Device pixel ratio is capped separately for desktop and mobile GPUs.
+- Rendering pauses while the page is hidden.
+- Reduced-motion preferences disable automatic orbital motion.
+- Artifact downloads stream into a preallocated buffer when content length is
+  available, avoiding a second full-size in-memory copy.
+- Date and time formatters are cached per IANA zone.
 
 ## Deployment
 
-The site is stored under `publicpower/` and deployed from the `gh-pages`
-branch. `publicpower/CNAME` maps the Pages deployment to `mfenx.com`.
+The static site is stored under `publicpower/` and deployed from the
+`gh-pages` branch. `publicpower/CNAME` maps GitHub Pages to `mfenx.com`.
 
-The release artifacts are bundled under `publicpower/artifacts/` because
-GitHub release downloads do not allow the cross-origin browser fetch required
-for local SHA-256 verification.
+Release artifacts are bundled under `publicpower/artifacts/` so the browser
+can stream and hash them from the same origin.
 
 ## Visual sources
 
@@ -49,3 +68,5 @@ for local SHA-256 verification.
   https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/
 - Three.js:
   https://threejs.org/
+- Lucide:
+  https://lucide.dev/

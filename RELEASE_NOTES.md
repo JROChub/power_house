@@ -7,6 +7,8 @@
 - Property-based dense-equivalence tests and full single-byte mutation rejection.
 - Reproducible soundness-budget and benchmark-report tools.
 - Security model, falsifiable research protocol, and primary-source prior-art review.
+- Orbital Observatory v2 with live solar geometry, lunar telemetry, searchable
+  world clocks, a 48-hour celestial timeline, and direct globe interaction.
 
 ### Security
 - Enforced deterministic primality validation for every Rust `Field`.
@@ -19,6 +21,13 @@
 - Streamlined the crate README and documentation index.
 - Removed the obsolete research-claim policy document.
 - Updated the observatory documentation link and release label.
+- Expanded the observatory operations guide and visual-source attribution.
+
+### Website
+- Connected all four public proof modes to interactive orbital telemetry and
+  shareable browser verification results.
+- Added responsive NASA Earth textures, optimized visual assets, mobile
+  observatory controls, WebGL fallback, and reduced-memory artifact hashing.
 
 ## v0.2.1 - 2026-06-05
 
