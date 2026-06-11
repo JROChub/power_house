@@ -4,6 +4,10 @@ Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
 state are finalized by the configured validator quorum. Chain ID `177155` is
 the default production identity.
 
+For the three-validator production topology, sealed configuration generator,
+generic deployment command, TLS edge, and cloud readiness gate, see
+[`production_rpc_deployment.md`](production_rpc_deployment.md).
+
 ## Consensus deployment
 
 Use the same static membership policy, quorum, chain ID, and initial registry
