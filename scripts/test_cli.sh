@@ -33,6 +33,17 @@ expect_output "propose-migration" governance --help
 expect_output "execute-burn-intents" migration --help
 expect_output "settle-file" rollup --help
 expect_output "encrypted Ed25519 identity" keygen --help
+expect_output "libp2p peer ID" key-info --help
+
+KEY_INFO=$("$JULIAN" key-info ed25519://cli-test-validator --json)
+python3 -c '
+import json
+import sys
+
+info = json.loads(sys.argv[1])
+assert len(info["public_key_b64"]) == 44
+assert info["peer_id"].startswith("12D3KooW")
+' "$KEY_INFO"
 
 if "$JULIAN" definitely-not-a-command >/dev/null 2>&1; then
   echo "unknown command unexpectedly succeeded" >&2

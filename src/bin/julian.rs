@@ -73,6 +73,7 @@ fn print_cli_help() {
         println!("  migration        Finalize and verify migrations");
         println!("  rollup           Settle rollup requests");
         println!("  keygen           Create an encrypted network identity");
+        println!("  key-info         Inspect a network identity without exposing its secret");
     }
     println!();
     println!("Use 'julian <command> --help' for command details.");
@@ -196,6 +197,12 @@ fn print_keygen_help() {
 }
 
 #[cfg(feature = "net")]
+fn print_key_info_help() {
+    println!("Usage: julian key-info <key-spec> [--json]");
+    println!("  Prints the Ed25519 public key and libp2p peer ID for a key source.");
+}
+
+#[cfg(feature = "net")]
 fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -237,6 +244,10 @@ fn main() {
         #[cfg(feature = "net")]
         Some("keygen") => {
             cmd_keygen(args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("key-info") => {
+            cmd_key_info(args.collect());
         }
         #[cfg(feature = "net")]
         Some("net") | Some("network") => {
@@ -547,6 +558,42 @@ fn cmd_keygen(args: Vec<String>) {
         power_house::net::encode_public_key_base64(&material.verifying)
     );
     println!("identity_path: {}", out_path.display());
+}
+
+#[cfg(feature = "net")]
+fn cmd_key_info(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_key_info_help();
+        return;
+    }
+
+    let mut key_spec: Option<String> = None;
+    let mut json = false;
+    for arg in args {
+        match arg.as_str() {
+            "--json" => json = true,
+            value if key_spec.is_none() => key_spec = Some(value.to_string()),
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    let key_spec = key_spec.unwrap_or_else(|| fatal("key-info requires a key specification"));
+    let material = load_or_derive_keypair(&Ed25519KeySource::from_spec(Some(&key_spec)))
+        .unwrap_or_else(|err| fatal(&format!("failed to load key: {err}")));
+    let public_key = power_house::net::encode_public_key_base64(&material.verifying);
+    let peer_id = material.libp2p.public().to_peer_id().to_string();
+
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "peer_id": peer_id,
+                "public_key_b64": public_key,
+            })
+        );
+    } else {
+        println!("public_key_b64: {public_key}");
+        println!("peer_id: {peer_id}");
+    }
 }
 
 #[cfg(feature = "net")]

@@ -36,6 +36,9 @@ jobs:
       - name: CLI contract tests
         run: bash scripts/test_cli.sh
 
+      - name: RPC cluster bundle tests
+        run: python3 scripts/test_generate_rpc_cluster.py
+
       - name: RPC publication-gate tests
         run: python3 scripts/test_rpc_check.py
 
