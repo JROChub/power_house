@@ -1,6 +1,6 @@
 # Verification Guide
 
-This guide reproduces every large-domain proof mode in `power_house` v0.2.2.
+This guide reproduces every large-domain proof mode in `power_house` v0.3.0.
 
 ## Requirements
 

@@ -23,6 +23,8 @@ expect_output() {
 
 expect_output "Power-House JULIAN" --help
 expect_output "julian $VERSION" --version
+expect_output "navigate" rootprint --help
+expect_output "never changes the Power House core fingerprint" attach-external-proof --help
 expect_output "verify-proof" node --help
 expect_output "streaming sum-check" scale_sumcheck --help
 expect_output "verify-envelope" net --help

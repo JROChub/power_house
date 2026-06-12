@@ -1,0 +1,34 @@
+{
+  "schema": "power-house/pha/v1",
+  "provenance": {
+    "producer": "power-house-conformance",
+    "stage": "baseline"
+  },
+  "embedded_proof": {
+    "protocol": "power-house/rootprint-example/v1",
+    "public_inputs": {
+      "claim": 70,
+      "field": 1000000007
+    },
+    "proof": {
+      "accepted": true,
+      "rounds": 70
+    },
+    "external_proof_attachments": [
+      {
+        "id": "external-example-1",
+        "proof_system": "example/external-proof/v1",
+        "payload": {
+          "proof": "opaque-example",
+          "public_inputs": [
+            1,
+            2,
+            3
+          ]
+        },
+        "payload_sha256": "sha256:8188d0344f4a44aaa455ae4dd7e79d63e5793295b73ff24b79867eaf905281f4"
+      }
+    ]
+  },
+  "phx_fingerprint": "sha256:9cd9c336ffdabb701a907657c75d44e8fe5251fe951cc3cfc90ef228e29cacae"
+}

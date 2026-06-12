@@ -1,0 +1,128 @@
+{
+  "schema": "power-house/rootprint/v1",
+  "root_branch": "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4",
+  "branches": {
+    "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4": {
+      "id": "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4",
+      "label": "main",
+      "sequence": 0,
+      "parents": [],
+      "artifact": {
+        "schema": "power-house/pha/v1",
+        "provenance": {
+          "producer": "power-house-conformance",
+          "stage": "baseline"
+        },
+        "embedded_proof": {
+          "protocol": "power-house/rootprint-example/v1",
+          "public_inputs": {
+            "claim": 70,
+            "field": 1000000007
+          },
+          "proof": {
+            "accepted": true,
+            "rounds": 70
+          }
+        },
+        "phx_fingerprint": "sha256:9cd9c336ffdabb701a907657c75d44e8fe5251fe951cc3cfc90ef228e29cacae"
+      }
+    },
+    "sha256:7741da3abefbe66fcd8bd547be0f5c16544154437b031b93a78da7266f38e4ba": {
+      "id": "sha256:7741da3abefbe66fcd8bd547be0f5c16544154437b031b93a78da7266f38e4ba",
+      "label": "audit",
+      "sequence": 1,
+      "parents": [
+        "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4"
+      ],
+      "artifact": {
+        "schema": "power-house/pha/v1",
+        "provenance": {
+          "producer": "power-house-conformance",
+          "stage": "audit"
+        },
+        "embedded_proof": {
+          "protocol": "power-house/rootprint-example/v1",
+          "public_inputs": {
+            "claim": 70,
+            "field": 1000000007
+          },
+          "proof": {
+            "accepted": true,
+            "rounds": 70
+          }
+        },
+        "phx_fingerprint": "sha256:72f0bf01f23399c4bea1f0fc41b6a330a80dbf559c0c3184b9560b9e2cbe8a42"
+      }
+    },
+    "sha256:8ff2524d624945a81bc89934213b2652672f827bdd6fd32b5cce9be987231711": {
+      "id": "sha256:8ff2524d624945a81bc89934213b2652672f827bdd6fd32b5cce9be987231711",
+      "label": "accepted",
+      "sequence": 2,
+      "parents": [
+        "sha256:7741da3abefbe66fcd8bd547be0f5c16544154437b031b93a78da7266f38e4ba",
+        "sha256:f223e4ec43c132b0729dbf9b00ca32a639d00c00278bc71c5adc340d663e6a17"
+      ],
+      "artifact": {
+        "schema": "power-house/pha/v1",
+        "provenance": {
+          "producer": "power-house-conformance",
+          "stage": "accepted"
+        },
+        "embedded_proof": {
+          "protocol": "power-house/rootprint-example/v1",
+          "public_inputs": {
+            "claim": 70,
+            "field": 1000000007
+          },
+          "proof": {
+            "accepted": true,
+            "rounds": 70
+          }
+        },
+        "phx_fingerprint": "sha256:6e4f62bd1a2dce7961d8e88c0cbabba888ddc5e874be02d6fdf9c847e96c4966"
+      }
+    },
+    "sha256:f223e4ec43c132b0729dbf9b00ca32a639d00c00278bc71c5adc340d663e6a17": {
+      "id": "sha256:f223e4ec43c132b0729dbf9b00ca32a639d00c00278bc71c5adc340d663e6a17",
+      "label": "candidate",
+      "sequence": 1,
+      "parents": [
+        "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4"
+      ],
+      "artifact": {
+        "schema": "power-house/pha/v1",
+        "provenance": {
+          "producer": "power-house-conformance",
+          "stage": "baseline"
+        },
+        "embedded_proof": {
+          "protocol": "power-house/rootprint-example/v1",
+          "public_inputs": {
+            "claim": 70,
+            "field": 1000000007
+          },
+          "proof": {
+            "accepted": true,
+            "rounds": 70
+          },
+          "external_proof_attachments": [
+            {
+              "id": "external-example-1",
+              "proof_system": "example/external-proof/v1",
+              "payload": {
+                "proof": "opaque-example",
+                "public_inputs": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              "payload_sha256": "sha256:8188d0344f4a44aaa455ae4dd7e79d63e5793295b73ff24b79867eaf905281f4"
+            }
+          ]
+        },
+        "phx_fingerprint": "sha256:9cd9c336ffdabb701a907657c75d44e8fe5251fe951cc3cfc90ef228e29cacae"
+      }
+    }
+  }
+}

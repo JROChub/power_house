@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#010405">
-  <meta name="description" content="MFENX Power House: a live planetary instrument for reproducible large-domain proof verification.">
-  <meta property="og:title" content="MFENX Power House">
-  <meta property="og:description" content="Run public proofs across sextillion-scale and million-variable implicit domains.">
+  <meta name="description" content="MFENX Power House + Rootprint: public proof verification with deterministic provenance branching.">
+  <meta property="og:title" content="MFENX Power House + Rootprint">
+  <meta property="og:description" content="Verify public proofs and navigate deterministic provenance from one planetary instrument.">
   <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
-  <title>MFENX Power House | Proof Singularity</title>
+  <title>MFENX Power House + Rootprint | Proof Observatory</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
   <link rel="preload" href="assets/proof-lattice.webp" as="image">
   <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
@@ -40,7 +40,7 @@
         <img src="assets/powerhouse-logo.png" alt="">
         <span>
           <strong>MFENX</strong>
-          <small>POWER HOUSE / PUBLIC PROOF INSTRUMENT</small>
+          <small>POWER HOUSE + ROOTPRINT / PUBLIC PROOF INSTRUMENT</small>
         </span>
       </a>
 
@@ -71,27 +71,32 @@
     <aside class="proof-rail" aria-label="Proof modes">
       <div class="rail-heading">
         <span>PUBLIC PROOF ARRAY</span>
-        <b>04</b>
+        <b>05</b>
       </div>
 
       <div id="proof-modes" class="proof-modes">
-        <button class="proof-mode active" data-mode="constant" type="button" aria-pressed="true">
+        <button class="proof-mode active" data-mode="rootprint" type="button" aria-pressed="true">
           <span class="mode-index">01</span>
+          <span class="mode-copy"><b>ROOTPRINT</b><small>PHA / CORE DAG</small></span>
+          <i></i>
+        </button>
+        <button class="proof-mode" data-mode="constant" type="button" aria-pressed="false">
+          <span class="mode-index">02</span>
           <span class="mode-copy"><b>SEXTILLION</b><small>70 ROUNDS</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="affine" type="button" aria-pressed="false">
-          <span class="mode-index">02</span>
+          <span class="mode-index">03</span>
           <span class="mode-copy"><b>HYPERSCALE</b><small>4,096 ROUNDS</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="sparse" type="button" aria-pressed="false">
-          <span class="mode-index">03</span>
+          <span class="mode-index">04</span>
           <span class="mode-copy"><b>MEGAROUND</b><small>PHSP / 1,000,000</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="committed" type="button" aria-pressed="false">
-          <span class="mode-index">04</span>
+          <span class="mode-index">05</span>
           <span class="mode-copy"><b>COMMITTED</b><small>PHSM + PHCP</small></span>
           <i></i>
         </button>
@@ -114,17 +119,17 @@
       <div id="globe-tooltip" class="globe-tooltip" role="status"></div>
 
       <section class="proof-monument" aria-label="Selected proof scale">
-        <span id="orbit-kicker">CLOSED-FORM SUM-CHECK</span>
+        <span id="orbit-kicker">DETERMINISTIC PROVENANCE GRAPH</span>
         <h1>POWER HOUSE</h1>
         <div class="domain-equation">
-          <small>IMPLICIT DOMAIN</small>
-          <strong id="domain-label">2<sup>70</sup></strong>
+          <small id="domain-caption">PUBLIC STRUCTURE</small>
+          <strong id="domain-label">DAG<sup>4</sup></strong>
         </div>
-        <p id="orbit-description">Seventy verifier rounds close a domain larger than one sextillion Boolean points without enumerating it.</p>
+        <p id="orbit-description">Navigate, fork, merge, and verify proof history while optional external attachments remain outside core identity.</p>
         <div class="mode-metrics">
-          <div><span>PUBLIC SCALE</span><b id="domain-detail">1.18 SEXTILLION POINTS</b></div>
-          <div><span>VERIFIER PATH</span><b id="verifier-path">70 FIELD EQUATIONS</b></div>
-          <div><span>EXPANDED DOMAIN</span><b id="allocation-value">NEVER ALLOCATED</b></div>
+          <div><span>PUBLIC SCALE</span><b id="domain-detail">4 VERIFIED BRANCHES</b></div>
+          <div><span>VERIFIER PATH</span><b id="verifier-path">CORE-ONLY DAG REPLAY</b></div>
+          <div><span>EXTERNAL PROOFS</span><b id="allocation-value">STRICTLY OPTIONAL</b></div>
         </div>
       </section>
 
@@ -215,10 +220,10 @@
       </div>
 
       <dl class="evaluation-spec">
-        <div><dt>SELECTED ARRAY</dt><dd id="dossier-mode">SEXTILLION</dd></div>
-        <div><dt>DOMAIN</dt><dd id="dossier-domain">2^70</dd></div>
-        <div><dt>VERIFIER WORK</dt><dd id="dossier-work">70 ROUNDS</dd></div>
-        <div><dt>PUBLIC ARTIFACT</dt><dd id="dossier-artifact">BROWSER TRACE</dd></div>
+        <div><dt>SELECTED ARRAY</dt><dd id="dossier-mode">ROOTPRINT</dd></div>
+        <div><dt>DOMAIN</dt><dd id="dossier-domain">4-BRANCH DAG</dd></div>
+        <div><dt>VERIFIER WORK</dt><dd id="dossier-work">CORE-ONLY DAG REPLAY</dd></div>
+        <div><dt>PUBLIC ARTIFACT</dt><dd id="dossier-artifact">ROOTPRINT v1 JSON</dd></div>
       </dl>
 
       <a class="evaluation-primary" href="https://github.com/JROChub/power_house/issues/new?template=technical-evaluation.yml">
@@ -228,15 +233,15 @@
       <div class="evaluation-links">
         <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
-        <a href="https://crates.io/crates/power_house">CRATE v0.2.2</a>
+        <a href="https://crates.io/crates/power_house">CRATE v0.3.0</a>
       </div>
     </aside>
 
     <section class="verification-dock" aria-label="Verification console">
       <div class="trace-header">
-        <span id="verification-status">LOCAL VERIFIER READY</span>
-        <b id="verification-title">Run the 70-round browser proof</b>
-        <p id="verification-detail">Every round equation is checked over the field before the certificate digest is accepted.</p>
+        <span id="verification-status">ROOTPRINT VERIFIER READY</span>
+        <b id="verification-title">Verify the public provenance graph</b>
+        <p id="verification-detail">The browser recalculates every PHA fingerprint and deterministic branch identifier.</p>
       </div>
 
       <div class="trace-runway">
@@ -245,31 +250,31 @@
       </div>
 
       <div class="verification-actions">
-        <input id="artifact-input" type="file" multiple hidden accept=".phsp,.phsm,.phcp">
+        <input id="artifact-input" type="file" multiple hidden accept=".pha,.json,.phsp,.phsm,.phcp">
         <button id="artifact-button" class="artifact-button" type="button" title="Verify local artifact files">
           <span data-icon="upload"></span><b>LOCAL FILE</b>
         </button>
-        <a id="download-button" class="download-button" href="artifacts/power_house_sparse_record.phsp" download title="Download selected public artifact">
+        <a id="download-button" class="download-button" href="artifacts/rootprint-valid.json" download title="Download selected public artifact">
           <span data-icon="download"></span>
         </a>
         <button id="share-button" class="share-button" type="button" disabled title="Share verification result">
           <span data-icon="share-2"></span>
         </button>
         <button id="verify-button" class="verify-button" type="button">
-          <span>RUN PROOF</span>
+          <span>VERIFY GRAPH</span>
           <b>ENTER</b>
         </button>
       </div>
 
       <div class="telemetry">
         <div class="status-seal" id="status-seal">
-          <span>READY</span><b id="seal-value">70</b><small>ROUNDS</small>
+          <span>READY</span><b id="seal-value">4</b><small id="seal-unit">BRANCHES</small>
         </div>
-        <div><span>ROUND</span><b id="round-value">0 / 70</b></div>
+        <div><span>ROUND</span><b id="round-value">0 / 4</b></div>
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
-        <div><span>MODE</span><b id="mode-value">CONSTANT</b></div>
-        <div><span>RELEASE</span><b>v0.2.2</b></div>
+        <div><span>MODE</span><b id="mode-value">ROOTPRINT</b></div>
+        <div><span>RELEASE</span><b>v0.3.0</b></div>
       </div>
     </section>
 
