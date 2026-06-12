@@ -18,6 +18,8 @@ grep -q "compute domain create \"\$DNS_ZONE\"" \
   "$ROOT/scripts/provision_digitalocean_rpc.sh"
 grep -q "BLOCKED: \$DNS_ZONE is not delegated to DigitalOcean." \
   "$ROOT/scripts/provision_digitalocean_rpc.sh"
+grep -q -- '- \[systemctl, reload, nginx\]' \
+  "$ROOT/infra/digitalocean/cloud-init.yaml"
 
 if "$ROOT/scripts/provision_digitalocean_rpc.sh" \
   --ssh-key test-fingerprint \
