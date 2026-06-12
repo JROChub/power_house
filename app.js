@@ -45,6 +45,29 @@ const iconLibrary = {
 };
 
 const modes = {
+  rootprint: {
+    exponent: 4,
+    domainLabel: "DAG<sup>4</sup>",
+    domainCaption: "PUBLIC STRUCTURE",
+    dossierDomain: "4-BRANCH DAG",
+    domain: "4 VERIFIED BRANCHES",
+    verifierPath: "CORE-ONLY DAG REPLAY",
+    allocation: "EPA STRICTLY OPTIONAL",
+    dossierArtifact: "ROOTPRINT v1 JSON",
+    kicker: "DETERMINISTIC PROVENANCE GRAPH",
+    description:
+      "Navigate, fork, merge, and verify proof history while optional external attachments remain outside core identity.",
+    title: "Verify the public provenance graph",
+    detail:
+      "The browser recalculates every PHA fingerprint and deterministic branch identifier.",
+    button: "VERIFY GRAPH",
+    status: "ROOTPRINT VERIFIER READY",
+    downloadHref: "artifacts/rootprint-valid.json",
+    downloadName: "rootprint-valid.json",
+    color: 0x45ddd2,
+    unit: "BRANCHES",
+    action: verifyRootprintRelease,
+  },
   constant: {
     exponent: 70,
     domain: "1.18 SEXTILLION POINTS",
@@ -124,6 +147,11 @@ const modes = {
 };
 
 const knownArtifacts = {
+  rootprint: {
+    size: 4_232,
+    hash: "eeb33450c6473c082675b8fcdaf70abfb0e6070fe739eeda5c839070d13750a3",
+    label: "ROOTPRINT v1",
+  },
   phsp: {
     size: 16_000_171,
     hash: "2b219ba189c3a38f1073c7797629e9aaf44a36820abb64c7628129480eb43f3b",
@@ -194,6 +222,7 @@ const el = Object.fromEntries(
     "evaluation-toggle",
     "evaluation-close",
     "domain-label",
+    "domain-caption",
     "domain-detail",
     "verifier-path",
     "allocation-value",
@@ -221,6 +250,7 @@ const el = Object.fromEntries(
     "mode-value",
     "status-seal",
     "seal-value",
+    "seal-unit",
     "toast",
     "sound-toggle",
     "motion-toggle",
@@ -232,7 +262,7 @@ const el = Object.fromEntries(
 el.canvas = el.orbitalCanvas;
 
 const state = {
-  mode: "constant",
+  mode: "rootprint",
   activeCity: 5,
   running: false,
   motion: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -1181,7 +1211,9 @@ function selectMode(name, withTone = true) {
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
-  el.domainLabel.innerHTML = `2<sup>${mode.exponent.toLocaleString()}</sup>`;
+  el.domainLabel.innerHTML =
+    mode.domainLabel ?? `2<sup>${mode.exponent.toLocaleString()}</sup>`;
+  el.domainCaption.textContent = mode.domainCaption ?? "IMPLICIT DOMAIN";
   el.domainDetail.textContent = mode.domain;
   el.verifierPath.textContent = mode.verifierPath;
   el.allocationValue.textContent = mode.allocation;
@@ -1193,12 +1225,14 @@ function selectMode(name, withTone = true) {
   el.verifyButton.querySelector("span").textContent = mode.button;
   el.sealValue.textContent =
     mode.exponent >= 1_000_000 ? "1M" : mode.exponent.toLocaleString();
+  el.sealUnit.textContent = mode.unit ?? "ROUNDS";
   el.roundValue.textContent = `0 / ${mode.exponent.toLocaleString()}`;
   el.claimValue.textContent = "WAITING";
   el.digestValue.textContent = "PENDING";
   el.modeValue.textContent = name.toUpperCase();
   el.dossierMode.textContent = name.toUpperCase();
-  el.dossierDomain.textContent = `2^${mode.exponent.toLocaleString()}`;
+  el.dossierDomain.textContent =
+    mode.dossierDomain ?? `2^${mode.exponent.toLocaleString()}`;
   el.dossierWork.textContent = mode.verifierPath;
   el.dossierArtifact.textContent = mode.dossierArtifact;
   el.downloadButton.href = mode.downloadHref;
@@ -1239,6 +1273,123 @@ async function sha256Hex(value) {
   return [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function assertBrowserCanonicalNumbers(value) {
+  if (typeof value === "number" && !Number.isSafeInteger(value)) {
+    throw new Error("Browser verification requires safe integer JSON numbers");
+  }
+  if (Array.isArray(value)) {
+    value.forEach(assertBrowserCanonicalNumbers);
+  } else if (value && typeof value === "object") {
+    Object.values(value).forEach(assertBrowserCanonicalNumbers);
+  }
+}
+
+async function domainSeparatedHash(domain, value) {
+  const domainBytes = new TextEncoder().encode(`${domain}\0`);
+  const valueBytes = new TextEncoder().encode(canonicalJson(value));
+  const combined = new Uint8Array(domainBytes.length + valueBytes.length);
+  combined.set(domainBytes);
+  combined.set(valueBytes, domainBytes.length);
+  return `sha256:${await sha256Hex(combined)}`;
+}
+
+async function verifyPhaArtifact(artifact) {
+  if (artifact?.schema !== "power-house/pha/v1") {
+    throw new Error("Unsupported PHA schema");
+  }
+  const embedded = artifact.embedded_proof;
+  if (!embedded || typeof embedded.protocol !== "string" || !embedded.protocol.trim()) {
+    throw new Error("Invalid embedded Power House proof");
+  }
+  assertBrowserCanonicalNumbers(artifact.provenance);
+  assertBrowserCanonicalNumbers(embedded.public_inputs);
+  assertBrowserCanonicalNumbers(embedded.proof);
+  const core = {
+    embedded_proof: {
+      proof: embedded.proof,
+      protocol: embedded.protocol,
+      public_inputs: embedded.public_inputs,
+    },
+    provenance: artifact.provenance,
+    schema: artifact.schema,
+  };
+  const expected = await domainSeparatedHash(
+    "power-house:pha:v1:phx-fingerprint",
+    core,
+  );
+  if (artifact.phx_fingerprint !== expected) {
+    throw new Error("PHA core fingerprint mismatch");
+  }
+}
+
+async function verifyRootprintGraph(graph) {
+  if (graph?.schema !== "power-house/rootprint/v1") {
+    throw new Error("Unsupported Rootprint schema");
+  }
+  const branches = graph.branches;
+  const root = branches?.[graph.root_branch];
+  if (!root || root.sequence !== 0 || root.parents.length !== 0) {
+    throw new Error("Invalid Rootprint root branch");
+  }
+  const branchEntries = Object.entries(branches);
+  for (let index = 0; index < branchEntries.length; index += 1) {
+    const [key, branch] = branchEntries[index];
+    if (key !== branch.id) throw new Error("Rootprint branch key mismatch");
+    await verifyPhaArtifact(branch.artifact);
+    const parents = branch.parents;
+    if (
+      parents.length > 2 ||
+      parents.some((parent, parentIndex) => parentIndex > 0 && parents[parentIndex - 1] >= parent)
+    ) {
+      throw new Error("Rootprint parents are not sorted and unique");
+    }
+    if (branch.id !== graph.root_branch && parents.length === 0) {
+      throw new Error("Rootprint non-root branch has no parent");
+    }
+    for (const parentId of parents) {
+      const parent = branches[parentId];
+      if (!parent || parent.sequence >= branch.sequence) {
+        throw new Error("Rootprint parent ordering failed");
+      }
+    }
+    const expectedId = await domainSeparatedHash("power-house:rootprint:v1:branch-id", {
+      artifact_phx_fingerprint: branch.artifact.phx_fingerprint,
+      label: branch.label,
+      parents,
+    });
+    if (branch.id !== expectedId) throw new Error("Rootprint branch identifier mismatch");
+    el.roundValue.textContent = `${index + 1} / ${branchEntries.length}`;
+    setProgress(35 + ((index + 1) / branchEntries.length) * 55);
+  }
+
+  const reachable = new Set([graph.root_branch]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const branch of Object.values(branches)) {
+      if (!reachable.has(branch.id) && branch.parents.some((parent) => reachable.has(parent))) {
+        reachable.add(branch.id);
+        changed = true;
+      }
+    }
+  }
+  if (reachable.size !== branchEntries.length) {
+    throw new Error("Rootprint contains an unreachable branch");
+  }
+  return branchEntries.length;
 }
 
 function sleep(milliseconds) {
@@ -1474,6 +1625,32 @@ async function verifyReleaseArtifacts(kind) {
   }
 }
 
+async function verifyRootprintRelease() {
+  beginRun();
+  try {
+    el.verificationStatus.textContent = "DOWNLOADING ROOTPRINT v1";
+    const bytes = await fetchWithProgress(
+      "artifacts/rootprint-valid.json",
+      knownArtifacts.rootprint.size,
+      0,
+      28,
+    );
+    const digest = await sha256Hex(bytes);
+    if (digest !== knownArtifacts.rootprint.hash) {
+      throw new Error("Rootprint release SHA-256 mismatch");
+    }
+    el.verificationStatus.textContent = "REPLAYING CORE IDENTITIES";
+    const graph = JSON.parse(new TextDecoder().decode(bytes));
+    const branchCount = await verifyRootprintGraph(graph);
+    completeRun(digest, `${branchCount} BRANCHES OK`);
+    el.verificationTitle.textContent = "Rootprint graph and every PHA core accepted";
+    el.verificationDetail.textContent =
+      "EPA data was transported but deliberately excluded from all core identities.";
+  } catch (error) {
+    failRun(error.message);
+  }
+}
+
 function artifactType(file) {
   return file.name.toLowerCase().split(".").pop();
 }
@@ -1506,6 +1683,34 @@ async function readLocalFile(file, start, span) {
 async function verifyLocalArtifacts(fileList) {
   const files = [...fileList];
   const byType = new Map(files.map((file) => [artifactType(file), file]));
+  const portable = byType.get("json") ?? byType.get("pha");
+  if (portable) {
+    if (portable.size > 2_000_000) {
+      showToast("PHA and Rootprint JSON files must be 2 MB or smaller.");
+      return;
+    }
+    selectMode("rootprint");
+    beginRun();
+    try {
+      const bytes = new Uint8Array(await portable.arrayBuffer());
+      const value = JSON.parse(new TextDecoder().decode(bytes));
+      if (value.schema === "power-house/rootprint/v1") {
+        const branchCount = await verifyRootprintGraph(value);
+        completeRun(await sha256Hex(bytes), `${branchCount} BRANCHES OK`);
+      } else {
+        await verifyPhaArtifact(value);
+        completeRun(await sha256Hex(bytes), "PHA CORE OK");
+      }
+      el.verificationTitle.textContent = "Local Power House identity accepted";
+      el.verificationDetail.textContent =
+        "Verification used only Power House core fields; EPA remained optional.";
+    } catch (error) {
+      failRun(error.message);
+    } finally {
+      el.artifactInput.value = "";
+    }
+    return;
+  }
   const committed = byType.has("phsm") || byType.has("phcp");
   const required = committed ? ["phsm", "phcp"] : ["phsp"];
   const missing = required.filter((type) => !byType.has(type));
@@ -1547,8 +1752,8 @@ function scheduleAutoProof() {
   window.clearTimeout(autoProofTimer);
   autoProofTimer = window.setTimeout(() => {
     autoProofTimer = 0;
-    if (!state.userInteracted && !state.running && state.mode === "constant") {
-      runConstantProof();
+    if (!state.userInteracted && !state.running && state.mode === "rootprint") {
+      verifyRootprintRelease();
     }
   }, 2400);
 }
@@ -1727,7 +1932,7 @@ function init() {
   buildProofTrace();
   buildCityList();
   bindInterface();
-  selectMode("constant", false);
+  selectMode("rootprint", false);
   selectCity(state.activeCity, false);
   setMotion(state.motion);
   updateAstronomy();
