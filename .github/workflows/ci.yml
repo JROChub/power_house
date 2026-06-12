@@ -39,6 +39,9 @@ jobs:
       - name: RPC cluster bundle tests
         run: python3 scripts/test_generate_rpc_cluster.py
 
+      - name: DigitalOcean provisioning contract
+        run: scripts/test_digitalocean_provision.sh
+
       - name: RPC publication-gate tests
         run: python3 scripts/test_rpc_check.py
 
