@@ -24,6 +24,7 @@ REGIONS_CSV="${DO_REGIONS:-nyc3,sfo3,ams3}"
 SIZE="${DO_SIZE:-s-2vcpu-2gb}"
 IMAGE="${DO_IMAGE:-ubuntu-24-04-x64}"
 RPC_HOST="${RPC_HOST:-rpc.mfenx.com}"
+DNS_ZONE="$RPC_HOST"
 PROJECT_NAME="MFENX Power-House"
 TAG="mfenx-rpc-validator"
 FIREWALL_NAME="mfenx-rpc-firewall"
@@ -86,7 +87,7 @@ MFENX DigitalOcean production plan
   regions: $REGIONS_CSV
   droplets: 3 x $SIZE ($IMAGE), weekly backups, monitoring
   firewall: SSH from $SSH_CIDR; P2P among validator tag; HTTP from load balancer
-  edge: global HTTPS load balancer for $RPC_HOST
+  edge: global HTTPS load balancer and delegated DNS zone for $RPC_HOST
   estimated base: three Droplets + backups + \$15/month global load balancer
 EOF
 
@@ -131,7 +132,17 @@ import sys
 
 field = sys.argv[1]
 data = json.load(sys.stdin)
-item = data[0] if isinstance(data, list) else data
+if isinstance(data, list):
+    if not data:
+        raise SystemExit(f"DigitalOcean returned no resource while reading {field}")
+    item = data[0]
+else:
+    item = data
+if field not in item:
+    raise SystemExit(
+        f"DigitalOcean response is missing {field}: "
+        + json.dumps(item, sort_keys=True)
+    )
 value = item[field]
 if isinstance(value, dict):
     value = value.get("slug") or value.get("name")
@@ -162,6 +173,34 @@ raise SystemExit(0 if any(item.get("name") == sys.argv[1] for item in json.load(
   echo "-> creating validator tag"
   doctl_cmd compute tag create "$TAG" >/dev/null
 fi
+
+domains_json=$(doctl_cmd compute domain list --output json)
+if ! python3 -c '
+import json
+import sys
+raise SystemExit(0 if any(item.get("name") == sys.argv[1] for item in json.load(sys.stdin)) else 1)
+' "$DNS_ZONE" <<<"$domains_json"; then
+  echo "-> creating delegated DNS zone $DNS_ZONE"
+  doctl_cmd compute domain create "$DNS_ZONE" >/dev/null
+fi
+
+command -v dig >/dev/null 2>&1 || {
+  echo "BLOCKED: dig is required to verify public DNS delegation" >&2
+  exit 2
+}
+public_nameservers=$(dig +short NS "$DNS_ZONE" | tr '[:upper:]' '[:lower:]')
+for nameserver in ns1.digitalocean.com. ns2.digitalocean.com. ns3.digitalocean.com.; do
+  if ! grep -qx "$nameserver" <<<"$public_nameservers"; then
+    cat >&2 <<EOF
+BLOCKED: $DNS_ZONE is not delegated to DigitalOcean.
+Add these Namecheap NS records with host 'rpc', then rerun:
+  ns1.digitalocean.com
+  ns2.digitalocean.com
+  ns3.digitalocean.com
+EOF
+    exit 2
+  fi
+done
 
 firewalls_json=$(doctl_cmd compute firewall list --output json)
 firewall_id=$(printf '%s' "$firewalls_json" | json_field_by_name id "$FIREWALL_NAME")
@@ -268,29 +307,36 @@ if [[ -z "$load_balancer_id" ]]; then
       --wait \
       --output json | first_json_field id
   )
-fi
-
-firewall_json=$(doctl_cmd compute firewall get "$firewall_id" --output json)
-if ! python3 - "$load_balancer_id" "$firewall_json" <<'PY'
+else
+  load_balancer_json=$(
+    doctl_cmd compute load-balancer get "$load_balancer_id" --output json
+  )
+  python3 - "$RPC_HOST" "$load_balancer_json" <<'PY'
 import json
 import sys
 
-load_balancer_id, raw = sys.argv[1:]
+rpc_host, raw = sys.argv[1:]
 data = json.loads(raw)
 item = data[0] if isinstance(data, list) else data
-found = any(
-    load_balancer_id in rule.get("sources", {}).get("load_balancer_uids", [])
-    for rule in item.get("inbound_rules", [])
-    if rule.get("protocol") == "tcp" and rule.get("ports") == "80"
-)
-raise SystemExit(0 if found else 1)
+domains = item.get("domains", [])
+matches = [domain for domain in domains if domain.get("name") == rpc_host]
+if len(matches) != 1 or matches[0].get("is_managed") is not True:
+    raise SystemExit(
+        "existing global load balancer does not use the required delegated-DNS "
+        f"domain configuration for {rpc_host}; replace it before retrying"
+    )
 PY
-then
-  echo "-> allowing load balancer health and RPC traffic"
-  doctl_cmd compute firewall add-rules "$firewall_id" \
-    --inbound-rules \
-      "protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id"
 fi
+
+echo "-> reconciling validator firewall rules"
+doctl_cmd compute firewall update "$firewall_id" \
+  --name "$FIREWALL_NAME" \
+  --tag-names "$TAG" \
+  --inbound-rules \
+    "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id protocol:tcp,ports:7001,tag:$TAG" \
+  --outbound-rules \
+    "protocol:tcp,ports:all,address:0.0.0.0/0 protocol:udp,ports:all,address:0.0.0.0/0" \
+  >/dev/null
 
 load_balancer_json=$(
   doctl_cmd compute load-balancer get "$load_balancer_id" --output json
@@ -354,4 +400,5 @@ echo "Infrastructure created. Next:"
 echo "  1. Build the release binary."
 echo "  2. Generate the sealed cluster bundle using the three public IPv4 addresses above."
 echo "  3. Deploy with scripts/deploy_rpc_cluster.sh."
-echo "  4. Add every load-balancer IPv4 address as a Namecheap A record for $RPC_HOST."
+echo "  4. Delegate $DNS_ZONE from Namecheap to DigitalOcean's three nameservers."
+echo "  5. Wait for managed DNS and TLS to become active before publication."
