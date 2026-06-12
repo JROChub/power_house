@@ -1,6 +1,10 @@
 # Training Binder — Power House Operator Packet
 Doc version: v0.1.54
 
+> Historical training snapshot. This binder preserves v0.1.54 exercises and is
+> not the current v0.3.1 operator runbook. See [Documentation](README.md) and
+> [Network Operations](ops.md).
+
 This binder distills the mandatory drills called out across `book_of_power.md`. Work through each section, initial in the signature block, and archive the completed packet with your ledger logs.
 
 ## 1. Field Prime Exercises *(Book refs: Chapter II, §§01–41)*

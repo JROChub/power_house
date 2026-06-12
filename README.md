@@ -1,193 +1,205 @@
-# power_house
+# Power House
 
 [![CI](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?branch=main&label=CI)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/power_house)](https://crates.io/crates/power_house)
 [![docs.rs](https://img.shields.io/docsrs/power_house)](https://docs.rs/power_house)
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
-`power_house` is a Rust verification stack for deterministic sum-check proofs,
-portable proof provenance, commitment-bound sparse workloads, transcript
-anchoring, and optional quorum networking.
+Power House is a deterministic verification and provenance stack for Rust. It
+combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
+proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
+and an optional quorum network.
 
-Power House Archive (`.pha`) and Rootprint are the primary provenance workflow.
-A `.pha` file binds core proof data and provenance to a deterministic
-`phx_fingerprint`. Rootprint adds verifiable navigation, forks, merges, and
-equivalence over those core identities.
+The primary workflow is **Power House + Rootprint**:
 
-External proof attachments are optional transport data. They never affect a
-Power House fingerprint, Rootprint branch ID, core verification, or branch
-equivalence.
+- **Power House Archive (`.pha`)** binds proof data and provenance to a
+  deterministic `phx_fingerprint`.
+- **Rootprint** provides verifiable navigation, forks, merges, and equivalence
+  over `.pha` core identities.
+- **External proof attachments (EPA)** are optional transport data and remain
+  outside the Power House core fingerprint and Rootprint branch identity.
 
-## Power House + Rootprint
+## Quick Start
+
+```bash
+cargo add power_house
+```
 
 ```rust
 use power_house::{prove_with_rootprint, provenance::PhaArtifact};
 use serde_json::json;
 
-let artifact = PhaArtifact::new(
-    json!({"producer": "example"}),
-    "power-house/example/v1",
-    json!({"claim": 7}),
-    json!({"accepted": true}),
-)?;
-let graph = prove_with_rootprint!(label: "main", artifact: artifact)?;
-graph.verify()?;
-# Ok::<(), Box<dyn std::error::Error>>(())
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let artifact = PhaArtifact::new(
+        json!({"producer": "example"}),
+        "power-house/example/v1",
+        json!({"claim": 7}),
+        json!({"accepted": true}),
+    )?;
+
+    let graph = prove_with_rootprint!(
+        label: "main",
+        artifact: artifact,
+    )?;
+    graph.verify()?;
+    Ok(())
+}
 ```
 
-The `julian rootprint` workflow navigates, forks, merges, compares, and verifies
-portable graphs. `julian attach-external-proof` is deliberately separate from
-the core engine.
-
-## Verified Scale
-
-The repository contains four reproducible proof modes:
-
-| Mode | Public domain | Verifier work | Command |
-| --- | ---: | ---: | --- |
-| Constant polynomial | `2^70` points | `O(70)` | `cargo run --release --example sextillion_verify` |
-| Seeded affine polynomial | `2^4096` points | `O(4096)` | `cargo run --release --example hyperscale_affine` |
-| Seeded sparse polynomial | `2^1,000,000` points | `O(n + I log n)` | `cargo run --release --example sparse_record` |
-| External committed sparse polynomial | `2^1,000,000` points | `O(n + I log n)` | `cargo run --release --example committed_workload` |
-
-Here `n` is the number of variables and `I` is the number of nonzero variable
-incidences. None of these modes allocates the expanded Boolean hypercube.
-
-The external workflow stores the polynomial and proof separately:
-
-- `PHSMv1`: canonical sparse polynomial
-- `PHCPv1`: proof containing a domain-separated BLAKE2b-256 commitment
-
-Verification requires both files and rejects workload substitution.
-
-## Install
+Install the `julian` CLI with the network feature:
 
 ```bash
-cargo add power_house
 cargo install power_house --features net
 ```
+
+The primary provenance commands are:
+
+```bash
+julian rootprint init main.pha --label main --output proof.rootprint.json
+julian rootprint fork proof.rootprint.json main candidate.pha --label candidate
+julian rootprint navigate proof.rootprint.json candidate
+julian rootprint verify proof.rootprint.json
+```
+
+## Verification Profiles
+
+| Profile | Public statement | Verifier path | Reproduce |
+| --- | --- | --- | --- |
+| Constant sum-check | `2^70` Boolean points | 70 field rounds | `cargo run --release --example sextillion_verify` |
+| Seeded affine sum-check | `2^4096` Boolean points | 4,096 field rounds | `cargo run --release --example hyperscale_affine` |
+| Seeded sparse certificate | `2^1,000,000` Boolean points | `O(n + I log n)` deterministic replay | `cargo run --release --example sparse_record` |
+| Committed sparse workload | External `PHSMv1` + `PHCPv1` files | Commitment-bound deterministic replay | `cargo run --release --example committed_workload` |
+| Portable provenance | `.pha` core + Rootprint DAG | Fingerprint and graph replay | `cargo run --example rootprint_workflow` |
+
+Here `n` is the number of variables and `I` is the number of nonzero variable
+incidences. The proof modes operate on compact algebraic descriptions and do
+not allocate the expanded Boolean hypercube.
+
+## Core Formats
+
+| Format | Purpose |
+| --- | --- |
+| `.pha` v1 | Portable proof, public inputs, provenance, and core fingerprint |
+| Rootprint v1 | Deterministic proof-history graph with forks and merges |
+| `PHSPv1` | Seeded sparse polynomial certificate |
+| `PHSMv1` | Canonical external sparse polynomial |
+| `PHCPv1` | Certificate bound to a `PHSMv1` commitment |
+
+Rust and Python consume the same canonical vectors under `conformance/`.
+Mutation tests require core changes to reject while proving that EPA mutation
+does not alter Power House core validity.
 
 ## Reproduce
 
 ```bash
-cargo test --all-targets
-cargo test --all-targets --features net
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+cargo test --all-targets --locked
+cargo test --all-targets --features net --locked
 
+cargo run --example pha_conformance_vectors
+cargo run --example rootprint_workflow
 cargo run --release --example sextillion_verify
 cargo run --release --example hyperscale_affine
 cargo run --release --example sparse_record
 cargo run --release --example committed_workload
-cargo run --example rootprint_workflow
-cargo run --example pha_conformance_vectors
 
-python3 scripts/verify_sparse_certificate.py \
-  target/power_house_sparse_record.phsp
-
-python3 scripts/verify_sparse_certificate.py \
-  target/external_interaction_model.phcp \
-  --polynomial target/external_interaction_model.phsm
-
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 python3 scripts/test_sparse_verifier.py
 python3 scripts/soundness_budget.py
-PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
-The full procedure, formats, expected outputs, and failure tests are in
+The complete procedure and expected rejection behavior are documented in the
 [Verification Guide](docs/verification_guide.md).
 
-Small canonical files in `conformance/v1` are checked by both languages. Every
-single-byte XOR mutation of each vector must reject.
+## Primary Rust APIs
 
-## Library
+- [`PhaArtifact`](https://docs.rs/power_house/latest/power_house/provenance/struct.PhaArtifact.html):
+  portable Power House core identity.
+- [`Rootprint`](https://docs.rs/power_house/latest/power_house/provenance/struct.Rootprint.html):
+  deterministic proof-history branching and verification.
+- `prove_with_rootprint!`: recommended provenance-aware construction interface.
+- [`GeneralSumProof`](https://docs.rs/power_house/latest/power_house/struct.GeneralSumProof.html):
+  dense, streaming, constant, and seeded-affine sum-check.
+- [`SeededSparseProof`](https://docs.rs/power_house/latest/power_house/struct.SeededSparseProof.html):
+  stable `PHSPv1` certificates.
+- [`CommittedSparsePolynomial`](https://docs.rs/power_house/latest/power_house/struct.CommittedSparsePolynomial.html)
+  and
+  [`CommittedSparseProof`](https://docs.rs/power_house/latest/power_house/struct.CommittedSparseProof.html):
+  external workload binding.
+- [`ProofLedger`](https://docs.rs/power_house/latest/power_house/struct.ProofLedger.html):
+  transcript logs, anchors, and quorum reconciliation.
 
-```rust
-use power_house::{Field, GeneralSumProof};
+## Python SDK
 
-let field = Field::new(1_000_000_007);
-let proof = GeneralSumProof::prove_seeded_affine(
-    4096,
-    &field,
-    b"public reproducible workload",
-);
+The bundled zero-dependency Python SDK defaults to pure Power House + Rootprint:
 
-assert!(proof.verify_seeded_affine(
-    &field,
-    b"public reproducible workload",
-));
+```python
+from power_house import create_artifact, new_rootprint, verify_rootprint
+
+artifact = create_artifact(
+    {"source": "python"},
+    "power-house/example/v1",
+    {"claim": 7},
+    {"accepted": True},
+)
+graph = new_rootprint("main", artifact)
+verify_rootprint(graph)
 ```
 
-Primary APIs:
+EPA helpers require an explicit secondary import:
 
-- `GeneralSumProof`: dense, streaming, constant, and seeded-affine sum-check
-- `SeededSparseProof`: stable `PHSPv1` seeded sparse certificates
-- `CommittedSparsePolynomial`: canonical external sparse workloads
-- `CommittedSparseProof`: stable `PHCPv1` commitment-bound certificates
-- `PhaArtifact`: portable core proof and provenance identity
-- `Rootprint`: deterministic proof-history branching and equivalence
-- `prove_with_rootprint!`: recommended provenance-aware construction interface
-- `ProofLedger`: transcript logs, anchors, and quorum reconciliation
-
-## Network
-
-The `net` feature enables the `julian` CLI, libp2p transport, signed envelopes,
-data availability endpoints, governance policies, stake accounting, and token
-migration commands.
-
-```bash
-julian keygen ed25519://<seed> --out ./keys/node.identity
-
-julian net start \
-  --node-id <node_id> \
-  --log-dir ./logs/<node_id> \
-  --listen /ip4/0.0.0.0/tcp/0 \
-  --bootstrap /dns4/mfenx.com/tcp/7002/p2p/<PEER_ID> \
-  --quorum 2 \
-  --key ed25519://<seed>
+```python
+from power_house.external import attach_external_proof
 ```
 
-The native wallet lane accepts signed EIP-1559 transfers and exposes only
-quorum-finalized blocks, balances, nonces, transactions, and receipts:
+See [SDKs](docs/sdk.md) for installation and interoperability tests.
+
+## Network And RPC
+
+The optional `net` feature enables libp2p transport, signed envelopes, data
+availability services, governance policies, stake accounting, migration tools,
+and a quorum-finalized native JSON-RPC lane.
 
 ```bash
 julian net start \
-  --node-id <node_id> \
-  --log-dir ./logs/<node_id> \
-  --blob-dir ./data/<node_id> \
+  --node-id validator-1 \
+  --log-dir ./logs/validator-1 \
+  --blob-dir ./data/validator-1 \
   --listen /ip4/0.0.0.0/tcp/7001 \
-  --policy ./config/native-validators.json \
+  --policy ./configs/governance.stake.json \
   --quorum 2 \
   --evm-chain-id 177155 \
   --evm-rpc-listen 127.0.0.1:8545 \
   --key ed25519://<seed>
 ```
 
-Run `scripts/test_native_rpc_cluster.sh` to verify three independent replicas
-produce the same finalized block hash, state root, balances, and receipt.
-Use `scripts/generate_rpc_cluster.py` to create a sealed quorum-2 production
-bundle for three validators. The production runbook provisions the validators
-and global HTTPS edge on DigitalOcean.
-
-Operations and migration procedures are documented in
-[Operations](docs/ops.md) and [Mainnet Launch](docs/mainnet_launch.md).
+Use `scripts/test_native_rpc_cluster.sh` to verify replica finality and
+`scripts/check_rpc.py` to run the external publication gate.
 
 ## Documentation
 
-- [Verification Guide](docs/verification_guide.md)
+Start with the [Documentation Index](docs/README.md).
+
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
+- [Provenance Security Model](docs/provenance_security.md)
+- [Verification Guide](docs/verification_guide.md)
 - [SDKs](docs/sdk.md)
-- [v0.3.0 Benchmarks](benchmarks/v0.3.0/report.json)
 - [JULIAN Protocol](JULIAN_PROTOCOL.md)
-- [Committed Workload Format](docs/committed_workload.md)
-- [Million-Round Sparse Certificate](docs/sparse_record.md)
-- [Hyperscale Seeded-Affine Proof](docs/hyperscale_proof.md)
-- [Prior-Art Review](docs/prior_art_review.md)
-- [Sparse Certificate Security Model](docs/security_model.md)
-- [Research Protocol](docs/research_protocol.md)
-- [Orbital Observatory](docs/orbital_observatory.md)
-- [Operations](docs/ops.md)
+- [Sparse Security Model](docs/security_model.md)
 - [RPC Operations](docs/rpc_operations.md)
 - [Production RPC Deployment](docs/production_rpc_deployment.md)
+- [Orbital Observatory](docs/orbital_observatory.md)
+- [v0.3.0 Benchmark Report](benchmarks/v0.3.0/report.json)
+
+## Public Surfaces
+
+- API documentation: <https://docs.rs/power_house>
+- Package: <https://crates.io/crates/power_house>
+- Repository: <https://github.com/JROChub/power_house>
+- Public verifier: <https://mfenx.com>
 
 ## License
 

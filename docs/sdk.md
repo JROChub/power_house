@@ -1,6 +1,6 @@
 # SDKs
 
-Power House v0.3.0 ships matching Rust and zero-dependency Python interfaces
+Power House v0.3.1 ships matching Rust and zero-dependency Python interfaces
 for `.pha` and Rootprint v1.
 
 ## Rust
@@ -21,6 +21,9 @@ graph.verify()?;
 ```
 
 ## Python
+
+The Python package is distributed in this repository and in the crate source
+archive. Install it from a checkout or extracted crate:
 
 ```bash
 python3 -m pip install ./sdk/python
@@ -43,3 +46,26 @@ The default Python namespace contains no EPA functions. Optional attachment
 transport requires an explicit import from `power_house.external`.
 
 Both implementations consume the vectors in `conformance/pha-v1`.
+
+## Core API mapping
+
+| Operation | Rust | Python |
+| --- | --- | --- |
+| Create `.pha` | `PhaArtifact::new` | `create_artifact` |
+| Verify `.pha` core | `PhaArtifact::verify` | `verify_artifact` |
+| Create Rootprint | `Rootprint::new` or `prove_with_rootprint!` | `new_rootprint` |
+| Navigate | `Rootprint::navigate` | `navigate` |
+| Fork | `Rootprint::fork` | `fork` |
+| Merge | `Rootprint::merge` | `merge` |
+| Compare core identity | `Rootprint::equivalent` | `equivalent` |
+| Verify graph | `Rootprint::verify` | `verify_rootprint` |
+
+## Conformance
+
+```bash
+cargo run --example pha_conformance_vectors
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
+```
+
+The suite verifies matching fingerprints and branch IDs, rejects core
+mutations, and confirms that EPA mutation remains outside core validity.

@@ -1,5 +1,9 @@
 # Community Node Onboarding (Phase 3)
 
+> Historical Phase 3 onboarding material. Bootstrap addresses, quorum values,
+> policies, and incentives must be obtained from the current operator release.
+> See [Documentation](README.md) and [Network Operations](ops.md).
+
 This guide covers a minimal operator path for joining the Power-House network and maintaining 90%+ uptime.
 
 ## Prerequisites
@@ -57,7 +61,8 @@ julian net start \
 - Monitor `anchors_received_total`, `finality_events_total` and peer counts via Prometheus.
 
 ## Permissionless Mode
-For public growth, run the network without policy gating. See `docs/permissionless_join.md`.
+For the historical public-growth configuration, see the
+[Permissionless Join Guide](permissionless_join.md).
 
 ## Tokenomics (Stake Registry)
 - Fees and rewards are tracked in `stake_registry.json`.
@@ -66,4 +71,5 @@ For public growth, run the network without policy gating. See `docs/permissionle
 
 ## Governance
 - Membership is controlled by governance state (`stake` or `multisig` backends).
-- Use the governance update flow in `README.md` to add/remove members.
+- Use the current CLI help and [Network Operations](ops.md) for governance
+  procedures.

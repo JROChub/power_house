@@ -1,5 +1,9 @@
 # Tokenomics (Phase 3)
 
+> Historical Phase 3 economic configuration. It is not a current offer,
+> issuance schedule, or production policy. Runtime behavior is defined by the
+> deployed registry and policy files.
+
 This document defines fee flow and reward splitting for Power-House anchors.
 
 ## Roles

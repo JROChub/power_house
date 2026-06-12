@@ -1,3 +1,9 @@
+Historical snapshot
+===================
+This manual is retained as the v0.1.57 protocol snapshot. It is not the
+current Power House release specification. Start with `docs/README.md`,
+`docs/pha_spec.md`, `docs/rootprint.md`, and `JULIAN_PROTOCOL.md` for v0.3.1.
+
 Power-House Protocol Manual
 ===========================
 Version: v0.1.57

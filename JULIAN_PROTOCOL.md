@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.3.0 - June 2026
+Version 0.3.1 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -11,9 +11,9 @@ proof-transparent ledger that derives consensus from folding-style interactive p
 Streaming sum-check provers produce deterministic Fiat–Shamir transcripts that are hashed into
 domain-separated BLAKE2b-256 anchors. These anchors are captured inside a ledger structure and
 reconciled across peers with a quorum predicate: once at least *q* replicas expose identical anchor
-sequences, the ledger state is final. The implementation retains a minimal dependency surface while
-leaning on BLAKE2b for transcript authenticity, and ships with reproducible logging and verification
-tooling.
+sequences, the ledger state is final. The implementation uses an explicit Rust
+dependency set, leans on BLAKE2b for transcript authenticity, and ships with
+reproducible logging and verification tooling.
 
 ## 1. Introduction
 
@@ -35,6 +35,8 @@ The JULIAN Protocol is implemented in the `power_house` crate. The key architect
 |-----------|----------------|-----------|
 | `StreamingPolynomial` | On-demand evaluation of multilinear polynomials without allocating the entire hypercube | `src/streaming.rs` |
 | `GeneralSumProof` | Non-interactive sum-check prover/verifier with deterministic Fiat–Shamir transcripts | `src/sumcheck.rs` |
+| `PhaArtifact` | Portable proof and provenance identity with optional non-core attachments | `src/provenance/pha.rs` |
+| `Rootprint` | Deterministic provenance graph for navigation, forks, merges, and equivalence | `src/provenance/rootprint.rs` |
 | `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/julian.rs` |
 | Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/julian.rs` |
 | Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/julian.rs` |
@@ -115,8 +117,9 @@ for Byzantine tolerance.
 4. **Forensics** – Errant anchors are investigated by retrieving the corresponding ASCII log and
    re-running `verify_logs`; this isolates the exact transcript responsible for divergence.
 
-Because all primitives (hashing, polynomial evaluation, transcript generation) use only the standard
-library, the protocol remains lightweight and deterministic across platforms.
+The protocol uses deterministic crate APIs for hashing, polynomial evaluation,
+and transcript generation so independently configured nodes can reproduce the
+same anchor state.
 
 ## 6. Implementation Details
 
@@ -138,6 +141,8 @@ library, the protocol remains lightweight and deterministic across platforms.
   <code>N</code> broadcasts (`--checkpoint-interval N`), enabling fast bootstrap by replaying only
   logs newer than the last checkpoint.
 - **Examples**:
+  - `rootprint_workflow`: creates and verifies a forked and merged provenance graph.
+  - `pha_conformance_vectors`: regenerates Rust/Python `.pha` and Rootprint vectors.
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
   - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.

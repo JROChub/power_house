@@ -1,5 +1,7 @@
 # Production RPC Deployment
 
+Release scope: Power House v0.3.1.
+
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
 configuration, and public edge are independently verifiable.

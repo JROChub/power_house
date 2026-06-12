@@ -1,5 +1,7 @@
 # Power House Python SDK
 
+Version: 0.3.1
+
 The default `power_house` namespace implements `.pha` v1 and Rootprint v1
 without requiring or interpreting external proof attachments.
 
@@ -20,4 +22,10 @@ EPA transport helpers are deliberately separated:
 
 ```python
 from power_house.external import attach_external_proof, verify_external_attachments
+```
+
+Run the shared conformance suite from the repository root:
+
+```bash
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
