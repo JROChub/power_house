@@ -1,5 +1,8 @@
 # Uptime Bounty Policy (Phase 3)
 
+> Historical policy draft. No current bounty or payment commitment is created
+> by this document.
+
 ## Objective
 Reward operators that maintain stable, high‑availability nodes.
 

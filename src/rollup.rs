@@ -184,7 +184,7 @@ pub struct ZkRollupProof {
     pub proof: Vec<u8>,
     /// Public inputs: prev||next||tx_root||share_root (4 x 32 bytes LE).
     pub public_inputs: Vec<u8>,
-    /// Merkle path siblings (JSON-serialized Vec<MerkleSibling>).
+    /// Merkle path siblings (JSON-serialized `Vec<MerkleSibling>`).
     pub merkle_path: Vec<u8>,
 }
 

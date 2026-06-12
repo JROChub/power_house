@@ -1,5 +1,7 @@
 # Public Sparse Computation Certificate
 
+Status: active format guide for Power House v0.3.1.
+
 Power-House now includes an event-driven sum-check prover for a public seeded
 sparse multilinear polynomial:
 
@@ -86,6 +88,6 @@ The verifier remains linear in the number of rounds. It is independent of the
 ## Scope
 
 This certificate verifies a public, compactly described polynomial. The
-`PHSMv1`/`PHCPv1` workflow in `docs/committed_workload.md` extends it to
-separately stored external public data. Neither format yet provides a succinct
+[`PHSMv1`/`PHCPv1` workflow](committed_workload.md) extends it to separately
+stored external public data. Neither format yet provides a succinct
 multilinear polynomial opening or a hidden-witness argument.

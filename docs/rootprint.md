@@ -1,5 +1,7 @@
 # Rootprint v1
 
+Status: normative for Power House v0.3.1.
+
 Rootprint is the primary Power House provenance workflow. It is a deterministic
 directed acyclic graph whose nodes carry `.pha` artifacts and whose edges record
 fork and merge ancestry.
@@ -16,6 +18,26 @@ External proof attachments are never inputs to branch IDs, graph verification,
 navigation, equivalence, forking, or merging. A branch can carry EPA because
 its `.pha` artifact can carry EPA, but Rootprint does not require or interpret
 it.
+
+## Document model
+
+A Rootprint document contains:
+
+| Field | Meaning |
+| --- | --- |
+| `schema` | Must equal `power-house/rootprint/v1`. |
+| `root_branch` | Deterministic ID of the unique root branch. |
+| `branches` | Object keyed by deterministic branch ID. |
+
+Each branch contains:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Domain-separated deterministic branch ID. |
+| `label` | Human-readable selector, limited to 128 characters. |
+| `sequence` | Parent-before-child ordering value. |
+| `parents` | Zero IDs for root, one for fork, two sorted IDs for merge. |
+| `artifact` | A core-valid `.pha` artifact. |
 
 ## Rust interface
 
@@ -84,6 +106,9 @@ julian rootprint verify experiment.rootprint.json
 Selectors resolve exact branch IDs, unique ID prefixes, or unique labels.
 `rootprint verify` is always a Power House core operation.
 
+`julian attach-external-proof` is a separate optional operation. It may add EPA
+transport data to a `.pha` artifact without changing its `phx_fingerprint`.
+
 ## Deterministic branch ID
 
 Every branch ID is domain-separated SHA-256 over canonical JSON with
@@ -109,3 +134,21 @@ part of branch identity.
 EPA integrity can be checked explicitly through
 `Rootprint::verify_external_proof_attachments()`. It is not called by
 `Rootprint::verify()` and is not part of the standard CLI workflow.
+
+## Verification invariants
+
+Core verification requires:
+
+1. the Rootprint schema is supported;
+2. the root exists, has sequence `0`, and has no parents;
+3. every branch map key equals its stored branch ID;
+4. every carried `.pha` artifact passes core verification;
+5. every branch ID recalculates exactly;
+6. parent lists are sorted, unique, and contain at most two IDs;
+7. every parent has a lower sequence than its child;
+8. every branch is reachable from the root.
+
+Canonical vectors are published under `conformance/pha-v1`.
+
+Security assumptions and mutation behavior are defined in the
+[Provenance Security Model](provenance_security.md).

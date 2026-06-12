@@ -1,5 +1,9 @@
 # Power-House v0.1.54 Design Plan
 
+> Historical design record. This plan is retained for release traceability and
+> does not describe the current v0.3.1 implementation. See
+> [Documentation](README.md).
+
 Objective
 - Deliver a verifiable, adversarially hardened core that is closer to a coordination primitive than a product feature set.
 - Keep the implementation auditable and testable: no hidden magic, no opaque dependencies.

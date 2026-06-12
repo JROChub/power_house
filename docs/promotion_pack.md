@@ -1,5 +1,8 @@
 # Promotion Pack (Forums + Hackathons)
 
+> Historical campaign material. Verify current bootstrap addresses, policies,
+> quorum values, and program terms before publishing any derivative.
+
 This pack is designed to grow to 1,000+ nodes without paying for more VPS instances.
 
 ## Forum Announcement (Short)
@@ -59,5 +62,5 @@ Deliverables:
 - Uptime window:
 
 ## Links
-- Permissionless join guide: `docs/permissionless_join.md`
-- Community onboarding: `docs/community_onboarding.md`
+- [Permissionless join guide](permissionless_join.md)
+- [Community onboarding](community_onboarding.md)

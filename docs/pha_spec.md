@@ -2,6 +2,8 @@
 
 ## Status
 
+Normative for Power House v0.3.1.
+
 This document defines the portable Power House Archive v1 JSON format. The
 schema identifier is:
 
@@ -121,3 +123,24 @@ a caller-supplied verifier for external proof semantics.
 
 No Power House workflow is permitted to require EPA verification for core
 validity.
+
+## Conformance
+
+Canonical valid vectors are stored in `conformance/pha-v1`:
+
+- `core-valid.pha`
+- `core-with-epa.pha`
+- `rootprint-valid.json`
+- `manifest.json`
+
+Regenerate and verify them with:
+
+```bash
+cargo run --example pha_conformance_vectors
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
+```
+
+See [Rootprint v1](rootprint.md) for graph identity and
+[SDKs](sdk.md) for cross-language interfaces. Security assumptions and
+mutation behavior are defined in the
+[Provenance Security Model](provenance_security.md).

@@ -1,6 +1,6 @@
 # Verification Guide
 
-This guide reproduces every large-domain proof mode in `power_house` v0.3.0.
+This guide reproduces the Power House v0.3.1 provenance and proof workflows.
 
 ## Requirements
 
@@ -20,7 +20,35 @@ cargo clippy --all-targets --all-features -- -D warnings
 python3 -m py_compile scripts/*.py
 ```
 
-## 2. Verify more than one sextillion points
+## 2. Verify `.pha` and Rootprint
+
+Regenerate the canonical artifacts:
+
+```bash
+cargo run --example pha_conformance_vectors
+git diff --exit-code -- \
+  conformance/pha-v1 \
+  publicpower/artifacts/rootprint-valid.json
+```
+
+Run Rust and Python core-independence tests:
+
+```bash
+cargo test --test provenance_protocol --test rootprint_cli
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
+```
+
+Run the library workflow:
+
+```bash
+cargo run --example rootprint_workflow
+```
+
+The tests require all Power House core mutations to reject. EPA payload
+mutation must preserve `.pha` and Rootprint core validity while failing the
+separate explicit EPA integrity check.
+
+## 3. Verify more than one sextillion points
 
 ```bash
 cargo run --release --example sextillion_verify
@@ -29,7 +57,7 @@ cargo run --release --example sextillion_verify
 This proves the Boolean-hypercube sum of a constant polynomial over `2^70`
 points. The proof and verifier each process 70 rounds.
 
-## 3. Verify a seeded non-constant polynomial
+## 4. Verify a seeded non-constant polynomial
 
 ```bash
 cargo run --release --example hyperscale_affine
@@ -39,7 +67,7 @@ The public seed defines an affine multilinear polynomial over `2^4096` points.
 The verifier derives the same coefficients, replays every Fiat-Shamir round,
 and rejects a different seed or modified round.
 
-## 4. Generate a million-round sparse certificate
+## 5. Generate a million-round sparse certificate
 
 ```bash
 cargo run --release --example sparse_record
@@ -51,7 +79,7 @@ python3 scripts/verify_sparse_certificate.py \
 The default certificate has one million rounds and describes a public seeded
 sparse polynomial over `2^1,000,000` points.
 
-## 5. Bind a proof to external data
+## 6. Bind a proof to external data
 
 ```bash
 cargo run --release --example committed_workload -- generate
@@ -76,7 +104,7 @@ python3 scripts/test_sparse_verifier.py
 The test consumes the canonical `conformance/v1` files, validates their
 manifest, and requires rejection after XOR-mutating every individual byte.
 
-## 6. Confirm tamper rejection
+## 7. Confirm tamper rejection
 
 ```bash
 cp target/external_interaction_model.phsm /tmp/tampered.phsm

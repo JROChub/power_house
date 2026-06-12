@@ -1,5 +1,7 @@
 # Sparse Certificate Security Model
 
+Status: active security statement for Power House v0.3.1 sparse formats.
+
 This document defines what `PHSPv1`, `PHSMv1`, and `PHCPv1` establish and what
 they do not establish.
 

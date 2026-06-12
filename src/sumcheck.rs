@@ -85,7 +85,7 @@ impl SumClaim {
     /// Proves the sum of the demo polynomial without interaction.
     ///
     /// This function constructs an honest claim for the demo polynomial
-    /// defined by [`f_demo`](crate::sumcheck::f_demo) over the field with
+    /// defined by [`f_demo`] over the field with
     /// modulus `field.modulus()`.  It deterministically derives a
     /// randomness seed from the transcript to choose the challenge `r1`
     /// and the final checks `r2_i`.  The soundness error is bounded

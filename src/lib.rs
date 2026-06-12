@@ -1,62 +1,94 @@
 #![deny(missing_docs)]
 
-//! The design philosophy underlying `power_house` is pedagogical, yet mathematically rigorous.
-//! Each module encapsulates a discrete concept in modern computational complexity theory,
-//! illustrating how modest abstractions compose into a cohesive proof infrastructure.
+//! Deterministic verification, portable proof provenance, and optional quorum
+//! networking.
 //!
-//! This crate aspires to bridge gaps between theoretical exposition and practical engineering,
-//! serving both as a didactic resource and a foundation for future cryptographic research.
-//! # power_house
+//! Power House combines five interoperable layers:
 //!
-//! **Power-House** is a Rust crate that showcases a set of cryptographic
-//! and verification primitives inspired by interactive proof systems and the
-//! sum-check protocol. The goal of this crate is to
-//! demonstrate how one can build powerful proof systems and consensus logic
-//! with a minimal dependency surface while still leaning on modern hash
-//! primitives for tamper evidence.
+//! - [`provenance`] defines Power House Archive (`.pha`) and Rootprint v1.
+//! - [`sumcheck`] implements dense, streaming, constant, and seeded-affine
+//!   sum-check workflows.
+//! - [`sparse_sumcheck`] implements stable seeded and commitment-bound sparse
+//!   certificate formats.
+//! - [`julian`] records proof transcripts, anchors them, and reconciles quorum
+//!   state.
+//! - [`net`] adds signed libp2p transport, data availability, governance, and
+//!   quorum-finalized native RPC when the `net` feature is enabled.
 //!
-//! ## Features
+//! # Power House Archive
 //!
-//! * **Finite field arithmetic** via the [`Field`](field/struct.Field.html) type.
-//! * **Sum-check demonstration**: the [`sumcheck`](sumcheck/index.html) module
-//!   contains functions to compute the true sum of a small bivariate polynomial
-//!   over the Boolean hypercube, build a one-shot claim, and verify it. Security
-//!   depends on the selected field, round count, transcript model, and protocol.
-//! * **Pseudorandom number generator (PRNG)**: the [`prng`](prng/index.html)
-//!   module exposes a compact BLAKE2b-256 expander that derives deterministic
-//!   Fiat–Shamir challenges from transcripts.  It serves as a stand-in for a
-//!   verifiable random function (VRF) when exploring protocol blueprints.
-//! * **Byzantine-fault-tolerant consensus**: the [`consensus`](consensus/index.html)
-//!   module provides a trivial consensus primitive that takes a set of binary
-//!   votes and returns whether the threshold has been met.  It is intended as
-//!   a pedagogical example of how one might aggregate prover responses.
-//! * **JULIAN protocol blueprint**: the [`julian`](julian/index.html) module
-//!   outlines, through documentation and type stubs, how one could combine
-//!   interactive proofs, VRF randomness, consensus and provability logic
-//!   into a globally verifiable proof ledger. It is a protocol blueprint and
-//!   does not by itself implement a complete production ledger.
+//! A [`provenance::PhaArtifact`] binds core proof data and provenance to a
+//! deterministic `phx_fingerprint`. Optional external proof attachments are
+//! transported with the artifact but do not alter its Power House core
+//! identity.
 //!
-//! ## Usage
+//! ```
+//! use power_house::provenance::PhaArtifact;
+//! use serde_json::json;
 //!
-//! The following example demonstrates how to compute and verify a sum-check
-//! claim for the demo polynomial \f$\,f(x_1,x_2) = x_1 + x_2 + 2 x_1 x_2\,\) modulo a
-//! small prime \f$p\,\) using this crate:
-//!
-//! ```rust
-//! use power_house::{Field, sumcheck::SumClaim};
-//!
-//! // Choose a prime field of order 101.
-//! let field = Field::new(101);
-//!
-//! // Prover creates an honest claim with default round count k=8.
-//! let claim = SumClaim::prove_demo(&field, 8);
-//! // The verifier checks that the claim is valid.
-//! assert!(claim.verify_demo());
+//! let artifact = PhaArtifact::new(
+//!     json!({"producer": "example"}),
+//!     "power-house/example/v1",
+//!     json!({"claim": 7}),
+//!     json!({"accepted": true}),
+//! )?;
+//! artifact.verify()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! The crate can be extended with richer protocols by building on these
-//! primitives.  It is intentionally minimal and does not offer a complete
-//! blockchain or proof ledger implementation.
+//! # Rootprint
+//!
+//! [`provenance::Rootprint`] is a deterministic directed acyclic graph of
+//! `.pha` artifacts. The [`prove_with_rootprint!`] macro is the recommended
+//! construction interface.
+//!
+//! ```
+//! use power_house::{prove_with_rootprint, provenance::PhaArtifact};
+//! use serde_json::json;
+//!
+//! let artifact = PhaArtifact::new(
+//!     json!({"source": "rootprint-example"}),
+//!     "power-house/example/v1",
+//!     json!({"claim": 11}),
+//!     json!({"accepted": true}),
+//! )?;
+//! let graph = prove_with_rootprint!(label: "main", artifact: artifact)?;
+//! graph.verify()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! # Structured sum-check
+//!
+//! Closed-form and seeded proof constructors operate on compact algebraic
+//! descriptions without allocating the expanded Boolean hypercube.
+//!
+//! ```
+//! use power_house::{Field, GeneralSumProof};
+//!
+//! let field = Field::new(1_000_000_007);
+//! let proof = GeneralSumProof::prove_seeded_affine(
+//!     4096,
+//!     &field,
+//!     b"public reproducible workload",
+//! );
+//! assert!(proof.verify_seeded_affine(
+//!     &field,
+//!     b"public reproducible workload",
+//! ));
+//! ```
+//!
+//! # Feature flags
+//!
+//! - `default`: proof, provenance, transcript, and sparse-certificate APIs.
+//! - `net`: networking, migration commands, data availability, governance,
+//!   staking, and native JSON-RPC.
+//!
+//! # Specifications and guides
+//!
+//! The repository contains the normative `.pha` and Rootprint specifications,
+//! cross-language conformance vectors, provenance and sparse security models,
+//! verification guide, and operational runbooks. See the
+//! [documentation index](https://github.com/JROChub/power_house/blob/main/docs/README.md).
 
 pub mod consensus;
 mod data;

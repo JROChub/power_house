@@ -1,5 +1,7 @@
 # Sextillion-Scale Verification Certificate
 
+Status: active proof profile for Power House v0.3.1.
+
 Power-House can verify a sum-check claim over a domain larger than one
 sextillion points without enumerating the domain.
 
@@ -57,4 +59,5 @@ scale, while the proof and verification work are logarithmic in the number of
 points for this polynomial family.
 
 For a non-constant structured computation far beyond sextillion scale, see
-`docs/hyperscale_proof.md` and `cargo run --example hyperscale_affine`.
+[Hyperscale Seeded-Affine Proof](hyperscale_proof.md) and
+`cargo run --example hyperscale_affine`.

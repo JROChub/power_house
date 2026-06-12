@@ -1,5 +1,25 @@
 # Release Notes
 
+## v0.3.1 - 2026-06-12
+
+### Documentation
+- Rebuilt the GitHub and crates.io README around Power House Archive,
+  Rootprint, proof profiles, SDKs, and current network operations.
+- Replaced the legacy rustdoc introduction with current `.pha`, Rootprint,
+  sum-check, sparse proof, and feature documentation.
+- Added an authoritative documentation index that separates current guides
+  from retained historical material.
+- Updated active protocol, SDK, verification, Observatory, RPC, and operations
+  guides to the v0.3.1 release surface.
+- Added docs.rs metadata to build all features and a CI gate that rejects
+  rustdoc warnings.
+- Fixed existing rustdoc markup and link warnings.
+
+### Metadata
+- Updated the crates.io description and keywords for portable provenance and
+  Rootprint.
+- Synchronized the bundled Python SDK and public verifier release labels.
+
 ## v0.3.0 - 2026-06-12
 
 ### Added

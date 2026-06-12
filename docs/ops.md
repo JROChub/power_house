@@ -1,9 +1,12 @@
 # Power-House Operations Guide
-Doc version: v0.1.54
 
-This guide documents the production-grade deployment flow for the JULIAN network
-nodes and blob service. It assumes explicit manual control (no hidden scripts),
-so every step is auditable.
+Release scope: Power House v0.3.1.
+
+This guide documents the retained boot-node, JULIAN network, and blob-service
+operations in v0.3.1. For the current three-validator native RPC topology and
+public HTTPS edge, use
+[Production RPC Deployment](production_rpc_deployment.md). Commands here
+assume explicit operator control so each change remains auditable.
 
 ## 1. Requirements
 
@@ -182,7 +185,7 @@ python3 scripts/check_rpc.py https://rpc.example.org --expected-chain-id 177155 
 The probe requires working DNS/TLS, consistent `eth_chainId` and
 `net_version`, a valid latest block response, and browser CORS when requested.
 It is an endpoint integrity check, not a substitute for consensus-state audits.
-See `docs/rpc_operations.md`.
+See [RPC Operations](rpc_operations.md).
 
 ## 10.2 External DA publisher (optional)
 

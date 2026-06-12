@@ -1,5 +1,9 @@
 # Permissionless Join Guide
 
+> Historical public-testnet guide. Do not reuse its bootstrap placeholders or
+> quorum values for production. See [Documentation](README.md) and
+> [Network Operations](ops.md).
+
 This guide enables open community joining without additional infrastructure spend.
 
 ## When To Use
