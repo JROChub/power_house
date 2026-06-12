@@ -117,7 +117,7 @@ def render_common(chain_id: int) -> str:
             "PH_CHECKPOINT_INTERVAL=60",
             "PH_POLICY=/etc/powerhouse/native-validators.json",
             f"PH_EVM_CHAIN_ID={chain_id}",
-            "PH_EVM_RPC_LISTEN=0.0.0.0:8545",
+            "PH_EVM_RPC_LISTEN=127.0.0.1:8545",
             "PH_RPC_HEALTH_URL=http://127.0.0.1:8545/healthz",
             "PH_METRICS_ADDR=127.0.0.1:9100",
             "PH_METRICS_URL=http://127.0.0.1:9100/metrics",

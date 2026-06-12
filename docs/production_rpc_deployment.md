@@ -6,17 +6,80 @@ configuration, and public edge are independently verifiable.
 
 ## Target architecture
 
-- Three validators in separate failure zones.
+- Three DigitalOcean Droplets in separate regions.
 - Static validator membership with quorum `2`.
-- Private validator traffic on TCP `7001`.
-- Finalized RPC on TCP `8545`, reachable only from the HTTPS load balancer.
-- A global static IP and managed TLS certificate for `rpc.mfenx.com`.
-- Scheduled disk snapshots plus the application-level state backups.
+- Authenticated libp2p validator traffic on TCP `7001`, restricted by tag.
+- Finalized RPC bound to `127.0.0.1:8545` on each validator.
+- Nginx on port `80`, reachable only from the Global Load Balancer.
+- Managed TLS and global ingress for `rpc.mfenx.com`.
+- Weekly Droplet backups plus application-level state backups.
 - External probes comparing finalized height, block hash, and state root.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
-internet. Permit SSH through the provider's authenticated access path and
-permit RPC only from load-balancer and health-check source ranges.
+internet. Limit SSH to the operator's public CIDR and permit HTTP only from the
+DigitalOcean Global Load Balancer.
+
+## Authenticate DigitalOcean
+
+Install `doctl`, revoke any token that has appeared in chat, logs, shell
+history, or source control, and create a new write token. Store it only in a
+local `doctl` context:
+
+```bash
+doctl auth init --context mfenx-production
+```
+
+Verify the new account, its three-Droplet limit, regions, size, SSH key, and
+empty resource inventory:
+
+```bash
+scripts/digitalocean_rpc_preflight.sh
+```
+
+If the new account has no SSH key yet, register the existing operator key:
+
+```bash
+doctl --context mfenx-production compute ssh-key import mfenx-operator \
+  --public-key-file ~/.ssh/id_ed25519.pub
+```
+
+Never pass the token as a command-line argument or commit the `doctl`
+configuration.
+
+## Provision the DigitalOcean edge
+
+Register an SSH key in DigitalOcean, determine the operator's public IPv4 CIDR,
+and review the non-billable plan:
+
+```bash
+scripts/provision_digitalocean_rpc.sh \
+  --ssh-key <fingerprint-or-id> \
+  --ssh-cidr <public-ip>/32
+```
+
+Create the resources only after reviewing the estimated charges:
+
+```bash
+scripts/provision_digitalocean_rpc.sh \
+  --ssh-key <fingerprint-or-id> \
+  --ssh-cidr <public-ip>/32 \
+  --apply
+```
+
+The provisioner creates or preserves:
+
+- project `MFENX Power-House`
+- tag `mfenx-rpc-validator`
+- firewall `mfenx-rpc-firewall`
+- `mfenx-validator-1` in `nyc3`
+- `mfenx-validator-2` in `sfo3`
+- `mfenx-validator-3` in `ams3`
+- Global Load Balancer `mfenx-rpc-global`
+
+It refuses an existing validator whose region or size disagrees with the
+requested production topology. Infrastructure metadata is written to
+`deployment/generated/digitalocean-infra.json`; it contains IDs and addresses,
+not credentials.
 
 ## Generate the sealed cluster bundle
 
@@ -26,37 +89,22 @@ Build a network-enabled release binary:
 cargo build --release --locked --features net --bin julian
 ```
 
-Generate three identities and deterministic configuration. The host values are
-the validators' private addresses:
+Generate three identities and deterministic configuration. Use the three
+Droplet public IPv4 addresses from the infrastructure manifest. Cloud Firewall
+restricts TCP `7001` to the validator tag:
 
 ```bash
 scripts/generate_rpc_cluster.py \
   --output deployment/generated/mfenx-production \
-  --host 10.42.0.11 \
-  --host 10.42.0.12 \
-  --host 10.42.0.13 \
+  --host <validator-1-ipv4> \
+  --host <validator-2-ipv4> \
+  --host <validator-3-ipv4> \
   --fund 0xYOUR_GENESIS_ADDRESS:1000000
 ```
 
 The output directory contains consensus private keys. It is intentionally
 created with restrictive permissions and must be encrypted, backed up, and
 kept outside source control.
-
-## GCP readiness gate
-
-The repository defaults to project `mfenx-485623`:
-
-```bash
-scripts/gcp_rpc_preflight.sh
-```
-
-The gate refuses to continue if billing or required APIs are unavailable. It
-does not create billable resources.
-
-Provision a dedicated VPC, three VMs in separate zones, persistent disks,
-restricted firewall rules, a health-checked external HTTPS load balancer,
-managed certificate, global address, monitoring, and snapshot schedules.
-Record the validators' private addresses in the cluster bundle.
 
 ## Install the cluster
 
@@ -65,9 +113,9 @@ After the hosts exist and SSH access works:
 ```bash
 scripts/deploy_rpc_cluster.sh \
   deployment/generated/mfenx-production \
-  validator-1-ssh \
-  validator-2-ssh \
-  validator-3-ssh
+  root@<validator-1-ipv4> \
+  root@<validator-2-ipv4> \
+  root@<validator-3-ipv4>
 ```
 
 The deployer installs the same binary and policy on all validators, copies only
@@ -76,8 +124,10 @@ registry, and preserves existing finalized chain state during upgrades.
 
 ## Publish DNS and verify
 
-Point the Namecheap `A` record for `rpc.mfenx.com` to the load balancer's global
-IP. Wait for the managed certificate to become active, then run:
+DigitalOcean Global Load Balancers provide multiple public addresses. Add each
+IPv4 address from the load balancer as a Namecheap `A` record for
+`rpc.mfenx.com`. If IPv6 is enabled later, add each advertised IPv6 address as
+an `AAAA` record. Wait for managed TLS to become active, then run:
 
 ```bash
 python3 scripts/check_rpc.py \

@@ -128,7 +128,8 @@ julian net start \
 Run `scripts/test_native_rpc_cluster.sh` to verify three independent replicas
 produce the same finalized block hash, state root, balances, and receipt.
 Use `scripts/generate_rpc_cluster.py` to create a sealed quorum-2 production
-bundle for three validators.
+bundle for three validators. The production runbook provisions the validators
+and global HTTPS edge on DigitalOcean.
 
 Operations and migration procedures are documented in
 [Operations](docs/ops.md) and [Mainnet Launch](docs/mainnet_launch.md).
