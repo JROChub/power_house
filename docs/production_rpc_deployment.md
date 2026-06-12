@@ -11,7 +11,7 @@ configuration, and public edge are independently verifiable.
 - Authenticated libp2p validator traffic on TCP `7001`, restricted by tag.
 - Finalized RPC bound to `127.0.0.1:8545` on each validator.
 - Nginx on port `80`, reachable only from the Global Load Balancer.
-- Managed TLS and global ingress for `rpc.mfenx.com`.
+- Global ingress and managed TLS for a delegated `rpc.mfenx.com` DNS zone.
 - Weekly Droplet backups plus application-level state backups.
 - External probes comparing finalized height, block hash, and state root.
 
@@ -57,7 +57,7 @@ scripts/provision_digitalocean_rpc.sh \
   --ssh-cidr <public-ip>/32
 ```
 
-Create the resources only after reviewing the estimated charges:
+Create the DNS zone and resources only after reviewing the estimated charges:
 
 ```bash
 scripts/provision_digitalocean_rpc.sh \
@@ -66,10 +66,26 @@ scripts/provision_digitalocean_rpc.sh \
   --apply
 ```
 
+On the first run, the provisioner creates the `rpc.mfenx.com` DNS zone and
+exits with status `2` until the public delegation exists. In Namecheap, add
+three `NS` records with host `rpc`:
+
+```text
+ns1.digitalocean.com
+ns2.digitalocean.com
+ns3.digitalocean.com
+```
+
+This delegates only `rpc.mfenx.com`; the apex website and mail records remain
+at Namecheap. After DNS propagation, rerun the same `--apply` command. The
+provisioner verifies all three authoritative nameservers before creating the
+Global Load Balancer.
+
 The provisioner creates or preserves:
 
 - project `MFENX Power-House`
 - tag `mfenx-rpc-validator`
+- delegated DNS zone `rpc.mfenx.com`
 - firewall `mfenx-rpc-firewall`
 - `mfenx-validator-1` in `nyc3`
 - `mfenx-validator-2` in `sfo3`
@@ -124,10 +140,9 @@ registry, and preserves existing finalized chain state during upgrades.
 
 ## Publish DNS and verify
 
-DigitalOcean Global Load Balancers provide multiple public addresses. Add each
-IPv4 address from the load balancer as a Namecheap `A` record for
-`rpc.mfenx.com`. If IPv6 is enabled later, add each advertised IPv6 address as
-an `AAAA` record. Wait for managed TLS to become active, then run:
+DigitalOcean then manages the Global Load Balancer's A/AAAA records and TLS
+certificate without moving the website or mail records. Wait for delegation,
+domain validation, and managed TLS to become active. Then run:
 
 ```bash
 python3 scripts/check_rpc.py \
