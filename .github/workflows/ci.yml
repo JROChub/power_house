@@ -53,6 +53,16 @@ jobs:
           cargo run --example conformance_vectors
           git diff --exit-code -- conformance/v1
 
+      - name: Reproduce PHA and Rootprint conformance vectors
+        run: |
+          cargo run --example pha_conformance_vectors
+          git diff --exit-code -- \
+            conformance/pha-v1 \
+            publicpower/artifacts/rootprint-valid.json
+
+      - name: Cross-language PHA and Rootprint verification
+        run: PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
+
       - name: Large-domain examples
         run: |
           cargo run --release --example sextillion_verify

@@ -1,0 +1,14 @@
+{
+  "core_fingerprint": "sha256:9cd9c336ffdabb701a907657c75d44e8fe5251fe951cc3cfc90ef228e29cacae",
+  "external_attachments_affect_core_identity": false,
+  "files": {
+    "core-valid.pha": "d9267160308805adf6f91560c0c406f1c6dae58be7040524ae1b7685c7e5d3c6",
+    "core-with-epa.pha": "08c3f547720bee18b33bbd8b17422a40f2839fcef9d9313019641c1a3dbbfbae",
+    "rootprint-valid.json": "eeb33450c6473c082675b8fcdaf70abfb0e6070fe739eeda5c839070d13750a3"
+  },
+  "mutation_rules": {
+    "core_field_mutation": "must fail core verification",
+    "epa_payload_mutation": "must preserve core verification and fail explicit EPA integrity verification"
+  },
+  "schema": "power-house-pha-conformance-v1"
+}

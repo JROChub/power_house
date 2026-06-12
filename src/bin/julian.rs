@@ -21,6 +21,7 @@ use power_house::net::{
     AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule,
     NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
 };
+use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
     compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
     reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, Field, GeneralSumProof,
@@ -61,8 +62,12 @@ fn print_cli_help() {
     println!("Usage: julian <command> [options]");
     println!();
     println!("Core commands:");
+    println!("  rootprint        Navigate, fork, merge, and verify Power House provenance");
     println!("  node             Replay logs, derive anchors, and verify Merkle proofs");
     println!("  scale_sumcheck   Benchmark streaming sum-check verification");
+    println!();
+    println!("Optional external integration:");
+    println!("  attach-external-proof  Attach non-core proof data to a .pha artifact");
     #[cfg(feature = "net")]
     {
         println!();
@@ -91,6 +96,32 @@ fn print_node_help() {
 fn print_scale_help() {
     println!("Usage: julian scale_sumcheck [--vars <N>]");
     println!("  Runs deterministic streaming sum-check benchmarks through N variables.");
+}
+
+fn print_rootprint_help() {
+    println!("Usage: julian rootprint <init|navigate|fork|merge|verify|equivalent> ...");
+    println!("  init <artifact.pha> --label <name> --output <rootprint.json>");
+    println!("  navigate <rootprint.json> <branch-selector> [--artifact-output <file>]");
+    println!("  fork <rootprint.json> <parent> <artifact.pha> --label <name> [--output <file>]");
+    println!(
+        "  merge <rootprint.json> <left> <right> <artifact.pha> --label <name> [--output <file>]"
+    );
+    println!("  verify <rootprint.json>");
+    println!("  equivalent <rootprint.json> <left> <right>");
+    println!();
+    println!("Rootprint commands verify Power House core data only.");
+}
+
+fn print_attach_external_proof_help() {
+    println!("Usage: julian attach-external-proof <artifact.pha> [options]");
+    println!("  --id <id>                 Attachment identifier");
+    println!("  --proof-system <name>     External proof system identifier");
+    println!("  --payload <json-file>     Opaque external proof payload");
+    println!("  --verifier-hint <value>   Optional verifier hint");
+    println!("  --metadata <json-file>    Optional non-core metadata");
+    println!("  --output <artifact.pha>   Output path; defaults to the input artifact");
+    println!();
+    println!("This optional command never changes the Power House core fingerprint.");
 }
 
 #[cfg(feature = "net")]
@@ -241,6 +272,16 @@ fn main() {
         Some("scale_sumcheck") => {
             cmd_scale_sumcheck(args.collect());
         }
+        Some("rootprint") => {
+            if let Some(sub) = args.next() {
+                handle_rootprint(&sub, args.collect());
+            } else {
+                print_rootprint_help();
+            }
+        }
+        Some("attach-external-proof") => {
+            cmd_attach_external_proof(args.collect());
+        }
         #[cfg(feature = "net")]
         Some("keygen") => {
             cmd_keygen(args.collect());
@@ -295,6 +336,300 @@ fn main() {
             std::process::exit(1);
         }
     }
+}
+
+fn handle_rootprint(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_rootprint_help(),
+        "init" => cmd_rootprint_init(tail),
+        "navigate" => cmd_rootprint_navigate(tail),
+        "fork" => cmd_rootprint_fork(tail),
+        "merge" => cmd_rootprint_merge(tail),
+        "verify" => cmd_rootprint_verify(tail),
+        "equivalent" => cmd_rootprint_equivalent(tail),
+        _ => fatal(&format!("unknown rootprint subcommand: {sub}")),
+    }
+}
+
+fn read_pha(path: &Path) -> PhaArtifact {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    serde_json::from_str(&contents)
+        .unwrap_or_else(|err| fatal(&format!("invalid .pha JSON in {}: {err}", path.display())))
+}
+
+fn read_rootprint(path: &Path) -> Rootprint {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid Rootprint JSON in {}: {err}",
+            path.display()
+        ))
+    })
+}
+
+fn read_json_value(path: &Path) -> serde_json::Value {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    serde_json::from_str(&contents)
+        .unwrap_or_else(|err| fatal(&format!("invalid JSON in {}: {err}", path.display())))
+}
+
+fn write_json<T: serde::Serialize>(path: &Path, value: &T) {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).unwrap_or_else(|err| {
+            fatal(&format!(
+                "failed to create output directory {}: {err}",
+                parent.display()
+            ))
+        });
+    }
+    let mut bytes = serde_json::to_vec_pretty(value)
+        .unwrap_or_else(|err| fatal(&format!("failed to encode JSON: {err}")));
+    bytes.push(b'\n');
+    fs::write(path, bytes)
+        .unwrap_or_else(|err| fatal(&format!("failed to write {}: {err}", path.display())));
+}
+
+fn take_option(iter: &mut impl Iterator<Item = String>, name: &str) -> String {
+    iter.next()
+        .unwrap_or_else(|| fatal(&format!("{name} expects a value")))
+}
+
+fn cmd_rootprint_init(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_rootprint_help();
+        return;
+    }
+    let mut artifact_path = None;
+    let mut label = None;
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--label" => label = Some(take_option(&mut iter, "--label")),
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if artifact_path.is_none() => artifact_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let artifact_path = artifact_path.unwrap_or_else(|| fatal("artifact.pha is required"));
+    let output = output.unwrap_or_else(|| fatal("--output is required"));
+    let label = label.unwrap_or_else(|| fatal("--label is required"));
+    let artifact = read_pha(&artifact_path);
+    let graph = Rootprint::new(label, artifact)
+        .unwrap_or_else(|err| fatal(&format!("failed to create Rootprint: {err}")));
+    write_json(&output, &graph);
+    println!("root_branch: {}", graph.root_branch);
+    println!("rootprint: {}", output.display());
+}
+
+fn cmd_rootprint_navigate(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_rootprint_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut artifact_output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 2 {
+        fatal("navigate requires <rootprint.json> <branch-selector>");
+    }
+    let graph = read_rootprint(Path::new(&positionals[0]));
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    let branch = graph
+        .navigate(&positionals[1])
+        .unwrap_or_else(|err| fatal(&err.to_string()));
+    if let Some(path) = artifact_output {
+        write_json(&path, &branch.artifact);
+    }
+    println!(
+        "{}",
+        serde_json::to_string_pretty(branch)
+            .unwrap_or_else(|err| fatal(&format!("failed to encode branch: {err}")))
+    );
+}
+
+fn cmd_rootprint_fork(args: Vec<String>) {
+    mutate_rootprint(args, false);
+}
+
+fn cmd_rootprint_merge(args: Vec<String>) {
+    mutate_rootprint(args, true);
+}
+
+fn mutate_rootprint(args: Vec<String>, merge: bool) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_rootprint_help();
+        return;
+    }
+    let required = if merge { 4 } else { 3 };
+    let mut positionals = Vec::new();
+    let mut label = None;
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--label" => label = Some(take_option(&mut iter, "--label")),
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != required {
+        if merge {
+            fatal("merge requires <rootprint.json> <left> <right> <artifact.pha>");
+        }
+        fatal("fork requires <rootprint.json> <parent> <artifact.pha>");
+    }
+    let input = PathBuf::from(&positionals[0]);
+    let output = output.unwrap_or_else(|| input.clone());
+    let label = label.unwrap_or_else(|| fatal("--label is required"));
+    let mut graph = read_rootprint(&input);
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    let artifact_path = if merge {
+        &positionals[3]
+    } else {
+        &positionals[2]
+    };
+    let artifact = read_pha(Path::new(artifact_path));
+    let branch_id = if merge {
+        graph
+            .merge(&positionals[1], &positionals[2], label, artifact)
+            .unwrap_or_else(|err| fatal(&format!("merge failed: {err}")))
+    } else {
+        graph
+            .fork(&positionals[1], label, artifact)
+            .unwrap_or_else(|err| fatal(&format!("fork failed: {err}")))
+    };
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    write_json(&output, &graph);
+    println!("branch: {branch_id}");
+    println!("rootprint: {}", output.display());
+}
+
+fn cmd_rootprint_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_rootprint_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("verify requires <rootprint.json>");
+    }
+    let graph = read_rootprint(Path::new(&args[0]));
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    println!(
+        "PASS: Rootprint core verified ({} branches, root {}).",
+        graph.branches.len(),
+        graph.root_branch
+    );
+}
+
+fn cmd_rootprint_equivalent(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_rootprint_help();
+        return;
+    }
+    if args.len() != 3 {
+        fatal("equivalent requires <rootprint.json> <left> <right>");
+    }
+    let graph = read_rootprint(Path::new(&args[0]));
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    let equivalent = graph
+        .equivalent(&args[1], &args[2])
+        .unwrap_or_else(|err| fatal(&err.to_string()));
+    println!(
+        "{}",
+        if equivalent {
+            "equivalent"
+        } else {
+            "different"
+        }
+    );
+}
+
+fn cmd_attach_external_proof(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_attach_external_proof_help();
+        return;
+    }
+    let mut artifact_path = None;
+    let mut id = None;
+    let mut proof_system = None;
+    let mut payload = None;
+    let mut verifier_hint = None;
+    let mut metadata = None;
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--id" => id = Some(take_option(&mut iter, "--id")),
+            "--proof-system" => proof_system = Some(take_option(&mut iter, "--proof-system")),
+            "--payload" => payload = Some(PathBuf::from(take_option(&mut iter, "--payload"))),
+            "--verifier-hint" => verifier_hint = Some(take_option(&mut iter, "--verifier-hint")),
+            "--metadata" => metadata = Some(PathBuf::from(take_option(&mut iter, "--metadata"))),
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if artifact_path.is_none() => artifact_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let artifact_path = artifact_path.unwrap_or_else(|| fatal("artifact.pha is required"));
+    let output = output.unwrap_or_else(|| artifact_path.clone());
+    let payload_path = payload.unwrap_or_else(|| fatal("--payload is required"));
+    let mut artifact = read_pha(&artifact_path);
+    artifact
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("PHA core verification failed: {err}")));
+    let original_fingerprint = artifact.phx_fingerprint.clone();
+    let mut attachment = ExternalProofAttachment::new(
+        id.unwrap_or_else(|| fatal("--id is required")),
+        proof_system.unwrap_or_else(|| fatal("--proof-system is required")),
+        read_json_value(&payload_path),
+    )
+    .unwrap_or_else(|err| fatal(&format!("failed to create attachment: {err}")));
+    attachment.verifier_hint = verifier_hint;
+    attachment.metadata = metadata.map(|path| read_json_value(&path));
+    let attachments = artifact
+        .embedded_proof
+        .external_proof_attachments
+        .get_or_insert_with(Vec::new);
+    if attachments
+        .iter()
+        .any(|existing| existing.id == attachment.id)
+    {
+        fatal(&format!("attachment id already exists: {}", attachment.id));
+    }
+    attachments.push(attachment);
+    artifact
+        .verify_external_proof_attachments()
+        .unwrap_or_else(|err| fatal(&format!("attachment verification failed: {err}")));
+    if artifact.phx_fingerprint != original_fingerprint {
+        fatal("internal error: external attachment changed the Power House fingerprint");
+    }
+    write_json(&output, &artifact);
+    println!("phx_fingerprint: {}", artifact.phx_fingerprint);
+    println!("core_unchanged: true");
+    println!("artifact: {}", output.display());
 }
 
 #[cfg(feature = "net")]

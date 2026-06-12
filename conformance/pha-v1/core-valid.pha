@@ -1,0 +1,19 @@
+{
+  "schema": "power-house/pha/v1",
+  "provenance": {
+    "producer": "power-house-conformance",
+    "stage": "baseline"
+  },
+  "embedded_proof": {
+    "protocol": "power-house/rootprint-example/v1",
+    "public_inputs": {
+      "claim": 70,
+      "field": 1000000007
+    },
+    "proof": {
+      "accepted": true,
+      "rounds": 70
+    }
+  },
+  "phx_fingerprint": "sha256:9cd9c336ffdabb701a907657c75d44e8fe5251fe951cc3cfc90ef228e29cacae"
+}

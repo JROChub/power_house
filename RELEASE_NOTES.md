@@ -1,5 +1,28 @@
 # Release Notes
 
+## v0.3.0 - 2026-06-12
+
+### Added
+- Power House Archive (`.pha`) v1 with deterministic core fingerprints.
+- Rootprint v1 navigation, forking, merging, equivalence, and graph verification.
+- The `prove_with_rootprint!` macro and `julian rootprint` command family.
+- Zero-dependency Python SDK with Rust-compatible conformance vectors.
+- Browser-native Rootprint and `.pha` verification on mfenx.com.
+- Reproducible v0.3.0 provenance, branching, scale, and verification benchmarks.
+
+### External Proof Attachments
+- Added EPA as optional transport data inside `embedded_proof`.
+- Omitted the field when unused through `skip_serializing_if = "Option::is_none"`.
+- Excluded EPA from core fingerprints, branch IDs, graph validity, and equivalence.
+- Added explicit attachment integrity and caller-supplied semantic verification.
+- Added mutation tests proving EPA changes preserve core validity while core
+  mutations reject.
+
+### Performance
+- Changed Rootprint reachability verification to linear graph traversal.
+- Published measured release results for `2^70`, `2^4096`, core provenance, and
+  a 2,049-branch graph. Timings are machine-dependent measurements.
+
 ## v0.2.2 - 2026-06-05
 
 ### Added

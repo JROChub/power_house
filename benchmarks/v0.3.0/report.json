@@ -1,0 +1,49 @@
+{
+  "branching": {
+    "branches": 2049,
+    "fork_mean_us": 33.3962880859375,
+    "fork_total_us": 68395.598,
+    "full_graph_verify_us": 25262.056
+  },
+  "environment": {
+    "arch": "x86_64",
+    "os": "linux",
+    "profile": "release"
+  },
+  "provenance": {
+    "fingerprint_mean_us": 3.7993911999999996,
+    "fingerprint_total_us": 37993.912,
+    "iterations": 10000,
+    "verify_mean_us": 3.8158258999999997,
+    "verify_total_us": 38158.259
+  },
+  "public_verification": {
+    "core_mutation_classes": 6,
+    "epa_mutation_isolated": true,
+    "python_cross_language_vectors": 3,
+    "rust_conformance_vectors": 3
+  },
+  "release": "0.3.0",
+  "reproducibility": {
+    "identical_fingerprints": true,
+    "phx_fingerprint": "sha256:7aa94fe612b22e5be12ff8d3d70875424f85afd9f3a9afb24861be6c811dd40c",
+    "runs": 1000,
+    "total_us": 4119.291
+  },
+  "scale": {
+    "constant": {
+      "domain": "2^70",
+      "domain_points": "1180591620717411303424",
+      "proof_rounds": 70,
+      "prove_us": 218.355,
+      "verify_us": 207.164
+    },
+    "seeded_affine": {
+      "domain": "2^4096",
+      "proof_rounds": 4096,
+      "prove_us": 440883.769,
+      "verify_us": 450011.402
+    }
+  },
+  "schema": "power-house-benchmark-v0.3.0"
+}

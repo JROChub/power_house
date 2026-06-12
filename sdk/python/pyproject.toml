@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "power-house-sdk"
+version = "0.3.0"
+description = "Zero-dependency Python SDK for Power House Archive and Rootprint v1"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT OR BSD-2-Clause" }
+authors = [{ name = "MFENX LLC" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["power_house*"]

@@ -68,6 +68,7 @@ mod log_parser;
 mod merkle;
 mod multilinear;
 mod prng;
+pub mod provenance;
 pub mod rollup;
 pub mod sparse_sumcheck;
 mod streaming;

@@ -6,8 +6,38 @@
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
 `power_house` is a Rust verification stack for deterministic sum-check proofs,
-commitment-bound sparse workloads, transcript anchoring, and optional quorum
-networking.
+portable proof provenance, commitment-bound sparse workloads, transcript
+anchoring, and optional quorum networking.
+
+Power House Archive (`.pha`) and Rootprint are the primary provenance workflow.
+A `.pha` file binds core proof data and provenance to a deterministic
+`phx_fingerprint`. Rootprint adds verifiable navigation, forks, merges, and
+equivalence over those core identities.
+
+External proof attachments are optional transport data. They never affect a
+Power House fingerprint, Rootprint branch ID, core verification, or branch
+equivalence.
+
+## Power House + Rootprint
+
+```rust
+use power_house::{prove_with_rootprint, provenance::PhaArtifact};
+use serde_json::json;
+
+let artifact = PhaArtifact::new(
+    json!({"producer": "example"}),
+    "power-house/example/v1",
+    json!({"claim": 7}),
+    json!({"accepted": true}),
+)?;
+let graph = prove_with_rootprint!(label: "main", artifact: artifact)?;
+graph.verify()?;
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+The `julian rootprint` workflow navigates, forks, merges, compares, and verifies
+portable graphs. `julian attach-external-proof` is deliberately separate from
+the core engine.
 
 ## Verified Scale
 
@@ -47,6 +77,8 @@ cargo run --release --example sextillion_verify
 cargo run --release --example hyperscale_affine
 cargo run --release --example sparse_record
 cargo run --release --example committed_workload
+cargo run --example rootprint_workflow
+cargo run --example pha_conformance_vectors
 
 python3 scripts/verify_sparse_certificate.py \
   target/power_house_sparse_record.phsp
@@ -57,6 +89,7 @@ python3 scripts/verify_sparse_certificate.py \
 
 python3 scripts/test_sparse_verifier.py
 python3 scripts/soundness_budget.py
+PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
 The full procedure, formats, expected outputs, and failure tests are in
@@ -89,6 +122,9 @@ Primary APIs:
 - `SeededSparseProof`: stable `PHSPv1` seeded sparse certificates
 - `CommittedSparsePolynomial`: canonical external sparse workloads
 - `CommittedSparseProof`: stable `PHCPv1` commitment-bound certificates
+- `PhaArtifact`: portable core proof and provenance identity
+- `Rootprint`: deterministic proof-history branching and equivalence
+- `prove_with_rootprint!`: recommended provenance-aware construction interface
 - `ProofLedger`: transcript logs, anchors, and quorum reconciliation
 
 ## Network
@@ -137,6 +173,10 @@ Operations and migration procedures are documented in
 ## Documentation
 
 - [Verification Guide](docs/verification_guide.md)
+- [Power House Archive v1](docs/pha_spec.md)
+- [Rootprint v1](docs/rootprint.md)
+- [SDKs](docs/sdk.md)
+- [v0.3.0 Benchmarks](benchmarks/v0.3.0/report.json)
 - [JULIAN Protocol](JULIAN_PROTOCOL.md)
 - [Committed Workload Format](docs/committed_workload.md)
 - [Million-Round Sparse Certificate](docs/sparse_record.md)
