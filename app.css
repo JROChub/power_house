@@ -1856,7 +1856,7 @@ body.proof-verified .proof-event b {
   }
 }
 
-/* v0.3.4 Observatory command surface */
+/* v0.3.5 Observatory command surface */
 :root {
   --mode-color: #45ddd2;
   --top: 68px;
