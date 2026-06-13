@@ -12,22 +12,14 @@ alerting:
 
 scrape_configs:
   - job_name: powerhouse
-    static_configs:
-      - targets: ["__NODE1__:9100"]
-        labels: { node: "validator-1", region: "nyc3" }
-      - targets: ["__NODE2__:9100"]
-        labels: { node: "validator-2", region: "sfo3" }
-      - targets: ["__NODE3__:9100"]
-        labels: { node: "validator-3", region: "ams3" }
+    file_sd_configs:
+      - files: ["/etc/prometheus/file_sd/powerhouse-validators.json"]
+        refresh_interval: 15s
 
   - job_name: node
-    static_configs:
-      - targets: ["__NODE1__:9101"]
-        labels: { node: "validator-1", region: "nyc3" }
-      - targets: ["__NODE2__:9101"]
-        labels: { node: "validator-2", region: "sfo3" }
-      - targets: ["__NODE3__:9101"]
-        labels: { node: "validator-3", region: "ams3" }
+    file_sd_configs:
+      - files: ["/etc/prometheus/file_sd/powerhouse-systems.json"]
+        refresh_interval: 15s
 
   - job_name: blackbox-rpc
     metrics_path: /probe

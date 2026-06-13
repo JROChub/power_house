@@ -45,12 +45,31 @@ def main() -> None:
         manifest = json.loads((output / "cluster-manifest.json").read_text())
         policy = json.loads((output / "native-validators.json").read_text())
         registry = json.loads((output / "stake_registry.json").read_text())
+        validator_registry = json.loads(
+            (output / "validator-registry.json").read_text()
+        )
         assert manifest["chain_id"] == 177155
+        assert manifest["validator_registry"] == "validator-registry.json"
         assert len({item["peer_id"] for item in manifest["validators"]}) == 3
         assert len({item["public_key_b64"] for item in manifest["validators"]}) == 3
         assert policy["allowlist"] == [
             item["public_key_b64"] for item in manifest["validators"]
         ]
+        assert validator_registry["chain_id"] == 177155
+        assert len(validator_registry["registrations"]) == 3
+        subprocess.run(
+            [
+                str(BINARY),
+                "validator-registry",
+                "verify",
+                str(output / "validator-registry.json"),
+                "--policy",
+                str(output / "native-validators.json"),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         assert (
             registry["accounts"][
                 "0x4a62316623ad457f02cdc5d997ded67a383ec569"

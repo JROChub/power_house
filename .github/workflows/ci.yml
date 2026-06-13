@@ -42,9 +42,12 @@ jobs:
             scripts/check_rustdoc_links.py \
             scripts/rpc_load_test.py \
             scripts/test_observatory_contract.py \
+            scripts/test_status_registry.py \
+            scripts/test_validator_registry.py \
             infra/ops/healthcheck.py \
             infra/monitoring/alert_receiver.py \
-            infra/monitoring/status_api.py
+            infra/monitoring/status_api.py \
+            infra/monitoring/validator_registry.py
           jq empty configs/network.json contrib/grafana/mfenx_powerhouse_dashboard.json
           terraform -chdir=infra/terraform/digitalocean fmt -check
           terraform -chdir=infra/terraform/digitalocean init -backend=false
@@ -71,6 +74,11 @@ jobs:
 
       - name: RPC cluster bundle tests
         run: python3 scripts/test_generate_rpc_cluster.py
+
+      - name: Signed validator registry
+        run: |
+          python3 scripts/test_validator_registry.py
+          python3 scripts/test_status_registry.py
 
       - name: DigitalOcean provisioning contract
         run: scripts/test_digitalocean_provision.sh

@@ -30,6 +30,7 @@ required_bundle_files=(
   native-validators.json
   powerhouse-common.env
   stake_registry.json
+  validator-registry.json
 )
 
 [[ -d "$BUNDLE" ]] || {
@@ -125,6 +126,8 @@ deploy_node() {
     "$host:/etc/powerhouse/.native-validators.json.upload"
   scp "${SSH_ARGS[@]}" "$BUNDLE/stake_registry.json" \
     "$host:/etc/powerhouse/.stake_registry.json.upload"
+  scp "${SSH_ARGS[@]}" "$BUNDLE/validator-registry.json" \
+    "$host:/etc/powerhouse/.validator-registry.json.upload"
 
   ssh "${SSH_ARGS[@]}" "$host" env "NODE=$node" bash -s <<'REMOTE'
 set -euo pipefail
@@ -134,6 +137,7 @@ install -m 0640 /etc/powerhouse/.powerhouse-common.env.upload /etc/powerhouse/po
 install -m 0640 "/etc/powerhouse/.powerhouse-$NODE.env.upload" "/etc/powerhouse/powerhouse-$NODE.env"
 install -m 0600 "/etc/powerhouse/.$NODE.key.upload" "/etc/powerhouse/$NODE.key"
 install -m 0640 /etc/powerhouse/.native-validators.json.upload /etc/powerhouse/native-validators.json
+install -m 0640 /etc/powerhouse/.validator-registry.json.upload /etc/powerhouse/validator-registry.json
 
 if [[ -e "$state/native_chain_state.json" ]]; then
   echo "preserving finalized native chain state for $NODE"
@@ -151,7 +155,8 @@ rm -f \
   "/etc/powerhouse/.powerhouse-$NODE.env.upload" \
   "/etc/powerhouse/.$NODE.key.upload" \
   /etc/powerhouse/.native-validators.json.upload \
-  /etc/powerhouse/.stake_registry.json.upload
+  /etc/powerhouse/.stake_registry.json.upload \
+  /etc/powerhouse/.validator-registry.json.upload
 
 systemctl daemon-reload
 systemd-analyze verify "/etc/systemd/system/powerhouse-node@.service"

@@ -1,6 +1,6 @@
 # LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.3.3.
+Release scope: Power House v0.3.4.
 
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
@@ -17,6 +17,7 @@ configuration, and public edge are independently verifiable.
 - Weekly Droplet backups plus application-level state backups.
 - External probes comparing finalized height, block hash, and state root.
 - Prometheus, Alertmanager, blackbox exporter, node exporter, and Grafana.
+- Signed validator identity registry with dynamic Prometheus discovery.
 - A public status API at `/network-status.json`.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
@@ -122,9 +123,10 @@ scripts/generate_rpc_cluster.py \
   --fund 0xYOUR_GENESIS_ADDRESS:1000000
 ```
 
-The output directory contains consensus private keys. It is intentionally
-created with restrictive permissions and must be encrypted, backed up, and
-kept outside source control.
+The output directory contains consensus private keys plus signed public
+validator registrations and an assembled `validator-registry.json`. It is
+intentionally created with restrictive permissions and must be encrypted,
+backed up, and kept outside source control.
 
 ## Install the cluster
 
@@ -149,7 +151,7 @@ restarts one validator at a time, waits for RPC health, verifies
 Allow validator-tag traffic to TCP `9090`, `9100`, and `9101`, then run:
 
 ```bash
-POWER_HOUSE_RELEASE=0.3.3 \
+POWER_HOUSE_RELEASE=0.3.4 \
 SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
 scripts/deploy_monitoring_stack.sh \
   root@<validator-1-ipv4> \
@@ -161,6 +163,12 @@ Grafana binds to `127.0.0.1:3000`; open it through an SSH tunnel. Alertmanager
 always delivers to the local journal. Set `PH_SLACK_WEBHOOK_URL` or
 `PH_PAGERDUTY_ROUTING_KEY` in the root-only monitoring alert environment to
 add an external destination.
+
+The deployment enables `powerhouse-validator-registry.timer` on each node.
+Every 15 seconds it verifies signatures and policy admission, checks live
+identity and health, then atomically updates the status state. Only the primary
+monitor uses the generated Prometheus discovery files, but every RPC replica
+can serve the same independently reconciled public status.
 
 The corresponding Terraform declaration is under
 [`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).

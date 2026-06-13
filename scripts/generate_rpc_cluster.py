@@ -13,10 +13,12 @@ import secrets
 import stat
 import subprocess
 import sys
+import time
 
 
 VALIDATOR_COUNT = 3
 DEFAULT_CHAIN_ID = 177155
+DEFAULT_REGIONS = ["nyc3", "sfo3", "ams3"]
 EVM_ADDRESS = re.compile(r"^0x[0-9a-fA-F]{40}$")
 
 
@@ -94,6 +96,71 @@ def inspect_key(binary: Path, key_path: Path) -> dict[str, str]:
     if set(info) != {"peer_id", "public_key_b64"}:
         fail("key-info returned an unexpected payload")
     return info
+
+
+def create_validator_registry(
+    binary: Path,
+    output: Path,
+    hosts: list[str],
+    keys: list[dict[str, str]],
+    chain_id: int,
+) -> None:
+    issued_at = int(time.time())
+    valid_until = issued_at + 365 * 24 * 60 * 60
+    registrations = []
+    for index, host in enumerate(hosts):
+        registration = output / f"validator-{index + 1}.registration.json"
+        p2p_address = (
+            f"{multiaddr_host(host)}/tcp/7001/p2p/{keys[index]['peer_id']}"
+        )
+        subprocess.run(
+            [
+                str(binary),
+                "validator-registry",
+                "create",
+                "--key",
+                str(output / f"validator-{index + 1}.key"),
+                "--node-id",
+                f"validator-{index + 1}",
+                "--operator",
+                "MFENX LLC",
+                "--region",
+                DEFAULT_REGIONS[index],
+                "--p2p-address",
+                p2p_address,
+                "--metrics-url",
+                f"http://{host}:9100/metrics",
+                "--system-metrics-url",
+                f"http://{host}:9101/metrics",
+                "--chain-id",
+                str(chain_id),
+                "--issued-at",
+                str(issued_at),
+                "--valid-until",
+                str(valid_until),
+                "--output",
+                str(registration),
+            ],
+            check=True,
+        )
+        os.chmod(registration, 0o640)
+        registrations.append(registration)
+
+    command = [
+        str(binary),
+        "validator-registry",
+        "assemble",
+        "--policy",
+        str(output / "native-validators.json"),
+        "--chain-id",
+        str(chain_id),
+        "--output",
+        str(output / "validator-registry.json"),
+    ]
+    for registration in registrations:
+        command.extend(["--registration", str(registration)])
+    subprocess.run(command, check=True)
+    os.chmod(output / "validator-registry.json", 0o640)
 
 
 def write_private(path: Path, data: bytes) -> None:
@@ -197,6 +264,7 @@ def main() -> int:
         output / "native-validators.json",
         json.dumps(policy, indent=2, sort_keys=True) + "\n",
     )
+    create_validator_registry(binary, output, args.host, key_info, args.chain_id)
     write_text(output / "powerhouse-common.env", render_common(args.chain_id))
 
     for index in range(VALIDATOR_COUNT):
@@ -214,6 +282,7 @@ def main() -> int:
         "chain_id": args.chain_id,
         "hosts": args.host,
         "quorum": 2,
+        "validator_registry": "validator-registry.json",
         "validators": [
             {
                 "name": f"validator-{index + 1}",

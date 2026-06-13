@@ -1,6 +1,6 @@
 # Power-House RPC Operations
 
-Release scope: Power House v0.3.3.
+Release scope: Power House v0.3.4.
 
 Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
 state are finalized by the configured validator quorum. Chain ID `177155` is
@@ -103,6 +103,13 @@ Prometheus exports `native_transactions_accepted_total`,
 `native_blocks_finalized_total`, and `native_sync_blocks_applied_total`.
 It also exports `powerhouse_connected_peers`, which must remain above zero on
 every production validator.
+
+Each validator also exports `powerhouse_node_identity`, binding its node ID,
+libp2p peer ID, Ed25519 public key, and chain ID to the live metrics endpoint.
+The signed validator registry reconciler checks that metric every 15 seconds
+and supplies dynamic Prometheus targets. Public validator totals come from
+fresh, policy-admitted, identity-verified registry state rather than peer
+connection counts. See [Signed Validator Registry](validator_registry.md).
 
 ## Incident response
 

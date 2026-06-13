@@ -10,7 +10,7 @@ combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
 proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
 and an optional quorum network.
 
-Current release: **v0.3.3**
+Current release: **v0.3.4**
 
 The primary workflow is **Power House + Rootprint**:
 
@@ -133,6 +133,8 @@ The complete procedure and expected rejection behavior are documented in the
   external workload binding.
 - [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
+- [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
+  signed identity admission and monitoring discovery records.
 
 ## Python SDK
 
@@ -175,7 +177,9 @@ and a quorum-finalized native JSON-RPC lane.
 
 The production edge uses health-aware global routing across validators in
 New York, San Francisco, and Amsterdam. Public traffic is rate-limited at
-Nginx and removed from a backend automatically when `/healthz` fails.
+Nginx and removed from a backend automatically when `/healthz` fails. Signed
+validator registrations bind each admitted public key to its derived peer ID
+and live identity metrics; validator totals are not inferred from peer links.
 
 ```bash
 julian net start \
@@ -207,6 +211,7 @@ Start with the [Documentation Index](docs/README.md).
 - [RPC Operations](docs/rpc_operations.md)
 - [Production RPC Deployment](docs/production_rpc_deployment.md)
 - [Stable Public Network Roadmap](docs/network_roadmap.md)
+- [Signed Validator Registry](docs/validator_registry.md)
 - [Node Operator Guide](docs/node_operator.md)
 - [Incident Response](docs/incident_response.md)
 - [Load Testing](docs/load_testing.md)

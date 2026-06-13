@@ -32,6 +32,10 @@ async function refreshStatus() {
     );
     setText("rpc", data.rpc?.reachable ? "ONLINE" : "UNAVAILABLE");
     setText("validators", `${data.validators_healthy} / ${data.validators_total}`);
+    document.querySelector("#validator-identity").textContent =
+      data.validator_registry?.verified && data.validator_registry?.fresh
+        ? `${data.validator_registry.identity_verified} IDENTITIES VERIFIED`
+        : "SIGNED REGISTRY UNAVAILABLE";
     setText("block", Number(data.block_height).toLocaleString("en-US"));
     setText("peers", Number(data.peer_connections).toLocaleString("en-US"));
     setText(

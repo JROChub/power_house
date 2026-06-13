@@ -31,6 +31,8 @@ pub mod sign;
 pub mod stake_registry;
 /// Libp2p orchestration layer and networking runtime.
 pub mod swarm;
+/// Signed validator registration and identity validation.
+pub mod validator_registry;
 
 pub use attestation::{aggregate_attestations, Attestation, AttestationQuorum};
 pub use availability::{encode_shares, share_proof, verify_sample, ShareCommitment};
@@ -59,3 +61,7 @@ pub use sign::{
 };
 pub use stake_registry::StakeRegistry;
 pub use swarm::{run_network, NamespaceRule, NetConfig, NetworkError};
+pub use validator_registry::{
+    ValidatorRegistration, ValidatorRegistry, ValidatorRegistryError,
+    VALIDATOR_REGISTRATION_SCHEMA, VALIDATOR_REGISTRY_SCHEMA,
+};

@@ -35,6 +35,7 @@ ACTIVE_DOCS = [
     "docs/sextillion_proof.md",
     "docs/sparse_record.md",
     "docs/testnet_mainnet.md",
+    "docs/validator_registry.md",
     "docs/verification_guide.md",
     "sdk/python/README.md",
 ]

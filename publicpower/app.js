@@ -2014,7 +2014,7 @@ async function refreshNetworkStatus() {
     el.networkState.textContent = networkState.toUpperCase();
     el.networkConsoleState.textContent = networkState.toUpperCase();
     el.networkBlock.textContent = Number(data.block_height).toLocaleString("en-US");
-    el.networkValidators.textContent = `${healthy} / ${Number(data.validators_total) || 3}`;
+    el.networkValidators.textContent = `${healthy} / ${Number(data.validators_total) || 0}`;
     el.networkPeers.textContent = Number(data.peer_connections).toLocaleString("en-US");
     updateNetworkNodeStates(healthy);
   } catch {

@@ -19,6 +19,7 @@ EXPECTED_API_PAGES = (
     "sparse_sumcheck/struct.CommittedSparsePolynomial.html",
     "sparse_sumcheck/struct.CommittedSparseProof.html",
     "julian/struct.ProofLedger.html",
+    "net/validator_registry/struct.ValidatorRegistry.html",
 )
 
 
