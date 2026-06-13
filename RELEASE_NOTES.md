@@ -1,5 +1,33 @@
 # Release Notes
 
+## v0.3.3 - 2026-06-13
+
+### Documentation
+- Corrected every Primary Rust API link to the defining rustdoc module so the
+  GitHub and crates.io README links resolve to populated docs.rs item pages.
+- Added a direct rustdoc link for the `prove_with_rootprint!` macro.
+- Added a generated-document validation gate that rejects missing, empty, or
+  noncanonical README API targets before release.
+
+### Orbital Observatory
+- Rebuilt the public instrument around a brighter NASA day/night Earth,
+  proof-reactive point shell, selected-city signal geometry, and animated
+  routes between the three production validator regions.
+- Added live public RPC state, block height, validator count, and peer count to
+  the primary control surface.
+- Added explicit focus, network, zoom, reset, sound, and motion controls plus
+  direct URL state for proof mode, city, time offset, and open drawer.
+- Expanded the Observatory with Amsterdam, a solar-position track, and
+  selectable `sfo3`, `nyc3`, and `ams3` quorum controls.
+- Added a CI contract test for all browser control bindings and immutable
+  Rootprint, PHSPv1, PHSMv1, and PHCPv1 artifact sizes and hashes.
+
+### Release Governance
+- Decoupled the active software release from historical network benchmark
+  identity, preserving measured v0.3.2 results without relabeling them.
+- Synchronized Rust, Python, container, website, network, and operator-facing
+  release labels for v0.3.3.
+
 ## v0.3.2 - 2026-06-12
 
 ### Public Network
