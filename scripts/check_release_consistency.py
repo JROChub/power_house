@@ -108,9 +108,38 @@ def main() -> int:
     )
 
     network = json.loads(read("configs/network.json"))
-    benchmark = json.loads(read(f"benchmarks/v{version}/rpc-report.json"))
+    benchmark_path = network.get("benchmarkReport")
+    benchmark_match = (
+        re.fullmatch(
+            r"benchmarks/v(\d+\.\d+\.\d+)/rpc-report\.json", benchmark_path
+        )
+        if isinstance(benchmark_path, str)
+        else None
+    )
+    require(errors, benchmark_match is not None, "network benchmark report path is invalid")
+    benchmark = (
+        json.loads(read(benchmark_path))
+        if isinstance(benchmark_path, str) and (ROOT / benchmark_path).is_file()
+        else {}
+    )
     require(errors, network.get("release") == version, "network metadata version differs")
-    require(errors, benchmark.get("release") == version, "RPC benchmark version differs")
+    require(
+        errors,
+        benchmark.get("schema") == "power-house-rpc-acceptance-v1",
+        "RPC benchmark schema differs",
+    )
+    require(
+        errors,
+        benchmark_match is not None
+        and benchmark.get("release") == benchmark_match.group(1),
+        "RPC benchmark release does not match its versioned path",
+    )
+    require(
+        errors,
+        benchmark.get("environment", {}).get("endpoint")
+        == network.get("rpc", {}).get("canonicalUrl"),
+        "RPC benchmark endpoint differs",
+    )
     require(errors, network.get("chainId") == 177155, "network chain ID differs")
     require(
         errors,

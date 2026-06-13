@@ -10,6 +10,7 @@ import Crosshair from "./vendor/lucide/crosshair.mjs";
 import Download from "./vendor/lucide/download.mjs";
 import Globe from "./vendor/lucide/globe.mjs";
 import Pause from "./vendor/lucide/pause.mjs";
+import Package from "./vendor/lucide/package.mjs";
 import Play from "./vendor/lucide/play.mjs";
 import RotateCcw from "./vendor/lucide/rotate-ccw.mjs";
 import Search from "./vendor/lucide/search.mjs";
@@ -34,6 +35,7 @@ const iconLibrary = {
   download: Download,
   globe: Globe,
   pause: Pause,
+  package: Package,
   play: Play,
   "rotate-ccw": RotateCcw,
   search: Search,
@@ -177,6 +179,7 @@ const cities = [
   { name: "SAO PAULO", code: "SAO", zone: "America/Sao_Paulo", lat: -23.55, lon: -46.63 },
   { name: "GREENWICH", code: "UTC", zone: "Europe/London", lat: 51.48, lon: 0.0 },
   { name: "PARIS", code: "CDG", zone: "Europe/Paris", lat: 48.86, lon: 2.35 },
+  { name: "AMSTERDAM", code: "AMS", zone: "Europe/Amsterdam", lat: 52.37, lon: 4.9 },
   { name: "LAGOS", code: "LOS", zone: "Africa/Lagos", lat: 6.52, lon: 3.38 },
   { name: "CAIRO", code: "CAI", zone: "Africa/Cairo", lat: 30.04, lon: 31.24 },
   { name: "NAIROBI", code: "NBO", zone: "Africa/Nairobi", lat: -1.29, lon: 36.82 },
@@ -196,6 +199,15 @@ const el = Object.fromEntries(
     "boot-screen",
     "boot-progress",
     "mission-state",
+    "network-indicator",
+    "network-state",
+    "network-block",
+    "network-validators",
+    "network-peers",
+    "network-console-state",
+    "node-sfo-state",
+    "node-nyc-state",
+    "node-ams-state",
     "utc-date",
     "utc-time",
     "city-list",
@@ -211,6 +223,7 @@ const el = Object.fromEntries(
     "moon-phase",
     "moon-light",
     "solar-position",
+    "solar-arc",
     "observatory-mode",
     "time-offset-label",
     "time-slider",
@@ -255,8 +268,14 @@ const el = Object.fromEntries(
     "sound-toggle",
     "motion-toggle",
     "focus-toggle",
+    "network-toggle",
+    "zoom-in",
+    "zoom-out",
+    "view-reset",
     "install-command",
     "globe-tooltip",
+    "monument-index",
+    "network-console",
   ].map((id) => [camelCase(id), document.querySelector(`#${id}`)]),
 );
 el.canvas = el.orbitalCanvas;
@@ -301,10 +320,17 @@ let subsolarMarker;
 let proofShell;
 let proofShellMaterial;
 let proofRingGroup;
+let proofParticles;
+let proofParticlesMaterial;
+let selectedCityHalo;
+let selectedCityBeam;
+let networkGroup;
 let animationFrame;
 let audioContext;
 let latestSolar = null;
 let autoProofTimer = 0;
+const networkLinks = [];
+const networkCityIndexes = [0, 3, 7];
 
 function camelCase(value) {
   return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -531,6 +557,10 @@ function updateAstronomy() {
     altitude > 0 ? "DAYLIGHT" : altitude > -6 ? "CIVIL TWILIGHT" : "NIGHT";
   el.solarState.classList.toggle("night", altitude <= 0);
   el.solarAltitude.textContent = `${altitude >= 0 ? "+" : ""}${altitude.toFixed(1)}°`;
+  el.solarArc.style.setProperty(
+    "--solar-position",
+    `${THREE.MathUtils.clamp((altitude + 90) / 180, 0, 1) * 100}%`,
+  );
   el.sunriseValue.textContent = events.sunrise;
   el.sunsetValue.textContent = events.sunset;
   el.moonPhase.textContent = moonState.name;
@@ -619,6 +649,7 @@ function selectCity(index, focus = true) {
   });
   el.stageCity.textContent = city.name;
   el.stageZone.textContent = city.zone.toUpperCase();
+  updateSelectedCityGeometry();
   if (focus) focusSelectedCity();
   updateAstronomy();
   if (window.innerWidth <= 760) document.body.classList.remove("observatory-open");
@@ -713,6 +744,120 @@ function createEarthGrid() {
   return group;
 }
 
+function elevatedArc(start, end, height = 0.28) {
+  const points = [];
+  for (let index = 0; index <= 72; index += 1) {
+    const progress = index / 72;
+    const point = start
+      .clone()
+      .lerp(end, progress)
+      .normalize()
+      .multiplyScalar(EARTH_RADIUS + 0.035 + Math.sin(progress * Math.PI) * height);
+    points.push(point);
+  }
+  return new THREE.CatmullRomCurve3(points);
+}
+
+function createNetworkTopology() {
+  networkGroup = new THREE.Group();
+  const pairs = [
+    [0, 3],
+    [3, 7],
+    [7, 0],
+  ];
+  pairs.forEach(([fromIndex, toIndex], index) => {
+    const curve = elevatedArc(
+      latLonVector(cities[fromIndex].lat, cities[fromIndex].lon),
+      latLonVector(cities[toIndex].lat, cities[toIndex].lon),
+      0.22 + index * 0.045,
+    );
+    const material = new THREE.LineBasicMaterial({
+      color: index === 1 ? 0xffc15a : 0x45ddd2,
+      transparent: true,
+      opacity: 0.56,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(96)),
+      material,
+    );
+    const pulse = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 12, 8),
+      new THREE.MeshBasicMaterial({
+        color: index === 1 ? 0xffc15a : 0xb9ff3d,
+        transparent: true,
+        opacity: 0.95,
+      }),
+    );
+    networkGroup.add(line, pulse);
+    networkLinks.push({ curve, line, pulse, phase: index / pairs.length });
+  });
+
+  networkCityIndexes.forEach((cityIndex) => {
+    const city = cities[cityIndex];
+    const position = latLonVector(city.lat, city.lon, EARTH_RADIUS + 0.045);
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.04, 0.057, 28),
+      new THREE.MeshBasicMaterial({
+        color: 0xb9ff3d,
+        transparent: true,
+        opacity: 0.86,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    ring.position.copy(position);
+    ring.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      position.clone().normalize(),
+    );
+    networkGroup.add(ring);
+  });
+  earthGroup.add(networkGroup);
+}
+
+function createSelectedCityGeometry() {
+  selectedCityHalo = new THREE.Mesh(
+    new THREE.RingGeometry(0.052, 0.083, 36),
+    new THREE.MeshBasicMaterial({
+      color: 0xb9ff3d,
+      transparent: true,
+      opacity: 0.82,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  selectedCityBeam = new THREE.Line(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({
+      color: 0xb9ff3d,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  earthGroup.add(selectedCityHalo, selectedCityBeam);
+  updateSelectedCityGeometry();
+}
+
+function updateSelectedCityGeometry() {
+  if (!selectedCityHalo || !selectedCityBeam) return;
+  const city = cities[state.activeCity];
+  const surface = latLonVector(city.lat, city.lon, EARTH_RADIUS + 0.045);
+  selectedCityHalo.position.copy(surface);
+  selectedCityHalo.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 0, 1),
+    surface.clone().normalize(),
+  );
+  selectedCityBeam.geometry.dispose();
+  selectedCityBeam.geometry = new THREE.BufferGeometry().setFromPoints([
+    surface,
+    surface.clone().normalize().multiplyScalar(EARTH_RADIUS + 0.46),
+  ]);
+}
+
 async function createEarth() {
   const mobile = window.innerWidth <= 760;
   const [dayTexture, nightTexture] = await Promise.all([
@@ -750,14 +895,17 @@ async function createEarth() {
       varying vec3 vViewPosition;
       void main() {
         float solar = dot(normalize(vObjectNormal), normalize(sunDirection));
-        float daylight = smoothstep(-0.13, 0.18, solar);
+        float daylight = smoothstep(-0.22, 0.16, solar);
         vec3 day = texture2D(dayMap, vUv).rgb;
-        vec3 night = texture2D(nightMap, vUv).rgb * 1.32;
-        vec3 litDay = day * (0.48 + max(solar, 0.0) * 0.70);
+        vec3 night = texture2D(nightMap, vUv).rgb * 2.05;
+        vec3 litDay = day * (0.68 + max(solar, 0.0) * 0.72);
         vec3 viewDirection = normalize(-vViewPosition);
         float limb = pow(1.0 - max(dot(normalize(vViewNormal), viewDirection), 0.0), 3.0);
+        float terminator = 1.0 - smoothstep(0.0, 0.18, abs(solar));
         vec3 color = mix(night, litDay, daylight);
-        color += vec3(0.035, 0.24, 0.22) * limb * 0.52;
+        color += day * 0.08;
+        color += vec3(0.05, 0.34, 0.3) * limb * 0.78;
+        color += vec3(0.11, 0.42, 0.36) * terminator * 0.11;
         gl_FragColor = vec4(color, 1.0);
       }
     `,
@@ -822,6 +970,9 @@ async function createEarth() {
     interactiveObjects.push(hitMarker);
     earthGroup.add(marker, hitMarker);
   });
+
+  createNetworkTopology();
+  createSelectedCityGeometry();
 
   const solarGroup = new THREE.Group();
   const solarRing = new THREE.Mesh(
@@ -922,7 +1073,32 @@ function createProofField() {
     ring.rotation.set(0.38 + index * 0.48, index * 0.36, -0.24 + index * 0.42);
     proofRingGroup.add(ring);
   });
-  scene.add(proofShell, proofRingGroup);
+
+  const pointCount = window.innerWidth <= 760 ? 900 : 2400;
+  const positions = new Float32Array(pointCount * 3);
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  for (let index = 0; index < pointCount; index += 1) {
+    const y = 1 - (index / (pointCount - 1)) * 2;
+    const radial = Math.sqrt(1 - y * y);
+    const angle = goldenAngle * index;
+    const shell = 1.58 + ((index * 17) % 23) * 0.006;
+    positions[index * 3] = Math.cos(angle) * radial * shell;
+    positions[index * 3 + 1] = y * shell;
+    positions[index * 3 + 2] = Math.sin(angle) * radial * shell;
+  }
+  const particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  proofParticlesMaterial = new THREE.PointsMaterial({
+    color: modes[state.mode].color,
+    size: window.innerWidth <= 760 ? 0.012 : 0.009,
+    transparent: true,
+    opacity: 0.2,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  proofParticles = new THREE.Points(particleGeometry, proofParticlesMaterial);
+  scene.add(proofShell, proofRingGroup, proofParticles);
 }
 
 function createMoon() {
@@ -962,7 +1138,7 @@ async function initScene() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.13;
+  renderer.toneMappingExposure = 1.28;
   renderer.setClearColor(0x010405, 0.42);
 
   scene = new THREE.Scene();
@@ -1130,6 +1306,18 @@ function animate(time = 0) {
       beacon.scale.setScalar(pulse + progressBoost);
     });
   }
+  if (networkGroup) {
+    networkLinks.forEach(({ curve, pulse, line, phase }, index) => {
+      const progress = (phase + seconds * (0.055 + index * 0.008)) % 1;
+      pulse.position.copy(curve.getPoint(progress));
+      pulse.scale.setScalar(0.85 + Math.sin(seconds * 7 + index) * 0.24);
+      line.material.opacity = 0.38 + Math.sin(seconds * 1.4 + index) * 0.13;
+    });
+  }
+  if (selectedCityHalo) {
+    selectedCityHalo.scale.setScalar(1 + Math.sin(seconds * 4.5) * 0.18);
+    selectedCityHalo.material.opacity = 0.66 + Math.sin(seconds * 4.5) * 0.16;
+  }
   if (subsolarMarker) {
     subsolarMarker.scale.setScalar(1 + Math.sin(seconds * 3) * 0.12);
   }
@@ -1146,6 +1334,14 @@ function animate(time = 0) {
       ring.rotation.y += state.motion ? 0.0008 * (index + 1) : 0;
       ring.rotation.z += state.motion ? 0.00045 * (index % 2 ? -1 : 1) : 0;
     });
+  }
+  if (proofParticles) {
+    proofParticles.rotation.y = seconds * -0.018;
+    proofParticles.rotation.z = seconds * 0.006;
+    proofParticlesMaterial.color.setHex(modes[state.mode].color);
+    proofParticlesMaterial.opacity =
+      0.12 + state.proofProgress * 0.52 + (state.running ? 0.08 : 0);
+    proofParticles.scale.setScalar(1 + state.proofProgress * 0.12);
   }
   if (moon) moon.rotation.y += state.motion ? 0.0015 : 0;
   camera.position.z += (state.zoom - camera.position.z) * 0.06;
@@ -1206,6 +1402,10 @@ function selectMode(name, withTone = true) {
   state.mode = name;
   state.lastResult = null;
   const mode = modes[name];
+  document.documentElement.style.setProperty(
+    "--mode-color",
+    `#${mode.color.toString(16).padStart(6, "0")}`,
+  );
   document.querySelectorAll(".proof-mode").forEach((button) => {
     const active = button.dataset.mode === name;
     button.classList.toggle("active", active);
@@ -1235,6 +1435,7 @@ function selectMode(name, withTone = true) {
     mode.dossierDomain ?? `2^${mode.exponent.toLocaleString()}`;
   el.dossierWork.textContent = mode.verifierPath;
   el.dossierArtifact.textContent = mode.dossierArtifact;
+  el.monumentIndex.textContent = String(Object.keys(modes).indexOf(name) + 1).padStart(2, "0");
   el.downloadButton.href = mode.downloadHref;
   el.downloadButton.target = mode.downloadName ? "" : "_blank";
   if (mode.downloadName) el.downloadButton.setAttribute("download", mode.downloadName);
@@ -1790,6 +1991,40 @@ function showToast(message) {
   state.toastTimer = window.setTimeout(() => el.toast.classList.remove("show"), 3600);
 }
 
+function updateNetworkNodeStates(healthy) {
+  const nodeFields = [el.nodeSfoState, el.nodeNycState, el.nodeAmsState];
+  nodeFields.forEach((field, index) => {
+    const online = index < healthy;
+    field.textContent = online ? "ONLINE" : "CHECK";
+    field.closest("button").classList.toggle("online", online);
+  });
+}
+
+async function refreshNetworkStatus() {
+  try {
+    const response = await fetch("https://rpc.mfenx.com/network-status.json", {
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+
+    const networkState = data.status || "degraded";
+    const healthy = Number(data.validators_healthy) || 0;
+    document.body.dataset.network = networkState;
+    el.networkState.textContent = networkState.toUpperCase();
+    el.networkConsoleState.textContent = networkState.toUpperCase();
+    el.networkBlock.textContent = Number(data.block_height).toLocaleString("en-US");
+    el.networkValidators.textContent = `${healthy} / ${Number(data.validators_total) || 3}`;
+    el.networkPeers.textContent = Number(data.peer_connections).toLocaleString("en-US");
+    updateNetworkNodeStates(healthy);
+  } catch {
+    document.body.dataset.network = "unknown";
+    el.networkState.textContent = "FEED CHECK";
+    el.networkConsoleState.textContent = "FEED CHECK";
+    updateNetworkNodeStates(0);
+  }
+}
+
 async function copyText(value, successMessage) {
   try {
     await navigator.clipboard.writeText(value);
@@ -1889,6 +2124,29 @@ function bindInterface() {
     focusSelectedCity();
     showToast(`${cities[state.activeCity].name} centered`);
   });
+  el.networkToggle.addEventListener("click", () => {
+    document.body.classList.remove("evaluation-open");
+    document.body.classList.add("observatory-open");
+    window.setTimeout(
+      () => el.networkConsole.scrollIntoView({ behavior: "smooth", block: "end" }),
+      300,
+    );
+  });
+  el.zoomIn.addEventListener("click", () => {
+    state.zoom = Math.max(3.45, state.zoom - 0.32);
+  });
+  el.zoomOut.addEventListener("click", () => {
+    state.zoom = Math.min(6.2, state.zoom + 0.32);
+  });
+  el.viewReset.addEventListener("click", () => {
+    setTimeOffset(0);
+    focusSelectedCity();
+    state.zoom = window.innerWidth < 760 ? 4.85 : 4.55;
+    showToast("Orbital view reset");
+  });
+  document.querySelectorAll("[data-network-city]").forEach((button) => {
+    button.addEventListener("click", () => selectCity(Number(button.dataset.networkCity)));
+  });
   el.soundToggle.addEventListener("click", () => setSound(!state.sound));
   el.motionToggle.addEventListener("click", () => setMotion(!state.motion));
   window.addEventListener("resize", resize);
@@ -1926,17 +2184,45 @@ function bindInterface() {
   });
 }
 
+function applyUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const requestedMode = params.get("mode");
+  if (requestedMode && modes[requestedMode]) state.mode = requestedMode;
+
+  const requestedCity = params.get("city")?.toUpperCase();
+  if (requestedCity) {
+    const cityIndex = cities.findIndex(
+      (city) => city.code === requestedCity || city.name === requestedCity,
+    );
+    if (cityIndex >= 0) state.activeCity = cityIndex;
+  }
+
+  const requestedOffset = Number(params.get("time"));
+  if (Number.isFinite(requestedOffset)) {
+    state.timeOffsetHours = THREE.MathUtils.clamp(requestedOffset, -24, 24);
+  }
+
+  const panel = params.get("panel");
+  if (panel === "observatory") document.body.classList.add("observatory-open");
+  if (panel === "evaluation") document.body.classList.add("evaluation-open");
+}
+
 function init() {
   mountIcons();
   setBootProgress(22);
   buildProofTrace();
   buildCityList();
   bindInterface();
-  selectMode("rootprint", false);
+  applyUrlState();
+  selectMode(state.mode, false);
   selectCity(state.activeCity, false);
+  focusSelectedCity();
+  setTimeOffset(state.timeOffsetHours);
   setMotion(state.motion);
   updateAstronomy();
+  refreshNetworkStatus();
   window.setInterval(updateAstronomy, 1000);
+  window.setInterval(refreshNetworkStatus, 15_000);
   initScene();
 }
 

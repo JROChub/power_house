@@ -1,6 +1,6 @@
 # MFENX Orbital Observatory
 
-Release surface: Power House v0.3.2.
+Release surface: Power House v0.3.3.
 
 `mfenx.com` presents Power House as an interactive planetary proof
 observatory. It combines live celestial telemetry, world time, published proof
@@ -20,11 +20,26 @@ The astronomy model provides:
 - solar altitude, sunrise, and sunset for each indexed city,
 - lunar phase and illumination,
 - an adjustable 48-hour celestial timeline,
-- 18 searchable IANA time-zone clocks.
+- 19 searchable IANA time-zone clocks,
+- an altitude-position solar track,
+- live LAX MFENX RPC block, validator, and peer telemetry,
+- selectable `sfo3`, `nyc3`, and `ams3` regional quorum controls.
 
 City markers and proof-orbit beacons are selectable directly on the globe.
 The globe supports pointer rotation, wheel zoom, touch input, keyboard
-rotation, keyboard zoom, and one-command focus on the selected city.
+rotation, keyboard zoom, explicit zoom controls, orbital reset, and
+one-command focus on the selected city. The active city adds a surface halo
+and radial signal beam. Production validator regions are connected by animated
+great-circle routes.
+
+The scene also renders a proof-reactive point shell and field rings. Their
+color follows the selected proof mode, while their density and scale respond
+to live verification progress. URL parameters can open a selected mode, city,
+time offset, or drawer directly:
+
+```text
+/?mode=affine&city=SFO&time=6&panel=observatory
+```
 
 ## Verification modes
 
@@ -63,6 +78,10 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in the
 - Exact artifact-length checks reject truncated or expanded release data
   before hashing.
 - Date and time formatters are cached per IANA zone.
+- The public status feed refreshes every 15 seconds without blocking local
+  proof verification.
+- CI validates every control-to-DOM binding and recomputes the size and
+  SHA-256 digest of all four bundled public artifacts.
 
 ## Deployment
 

@@ -10,7 +10,7 @@ combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
 proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
 and an optional quorum network.
 
-Current release: **v0.3.2**
+Current release: **v0.3.3**
 
 The primary workflow is **Power House + Rootprint**:
 
@@ -117,20 +117,21 @@ The complete procedure and expected rejection behavior are documented in the
 
 ## Primary Rust APIs
 
-- [`PhaArtifact`](https://docs.rs/power_house/latest/power_house/provenance/struct.PhaArtifact.html):
+- [`PhaArtifact`](https://docs.rs/power_house/latest/power_house/provenance/pha/struct.PhaArtifact.html):
   portable Power House core identity.
-- [`Rootprint`](https://docs.rs/power_house/latest/power_house/provenance/struct.Rootprint.html):
+- [`Rootprint`](https://docs.rs/power_house/latest/power_house/provenance/rootprint/struct.Rootprint.html):
   deterministic proof-history branching and verification.
-- `prove_with_rootprint!`: recommended provenance-aware construction interface.
-- [`GeneralSumProof`](https://docs.rs/power_house/latest/power_house/struct.GeneralSumProof.html):
+- [`prove_with_rootprint!`](https://docs.rs/power_house/latest/power_house/macro.prove_with_rootprint.html):
+  recommended provenance-aware construction interface.
+- [`GeneralSumProof`](https://docs.rs/power_house/latest/power_house/sumcheck/struct.GeneralSumProof.html):
   dense, streaming, constant, and seeded-affine sum-check.
-- [`SeededSparseProof`](https://docs.rs/power_house/latest/power_house/struct.SeededSparseProof.html):
+- [`SeededSparseProof`](https://docs.rs/power_house/latest/power_house/sparse_sumcheck/struct.SeededSparseProof.html):
   stable `PHSPv1` certificates.
-- [`CommittedSparsePolynomial`](https://docs.rs/power_house/latest/power_house/struct.CommittedSparsePolynomial.html)
+- [`CommittedSparsePolynomial`](https://docs.rs/power_house/latest/power_house/sparse_sumcheck/struct.CommittedSparsePolynomial.html)
   and
-  [`CommittedSparseProof`](https://docs.rs/power_house/latest/power_house/struct.CommittedSparseProof.html):
+  [`CommittedSparseProof`](https://docs.rs/power_house/latest/power_house/sparse_sumcheck/struct.CommittedSparseProof.html):
   external workload binding.
-- [`ProofLedger`](https://docs.rs/power_house/latest/power_house/struct.ProofLedger.html):
+- [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
 
 ## Python SDK

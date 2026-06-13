@@ -39,7 +39,9 @@ jobs:
             infra/ops/alert.sh
           python3 -m py_compile \
             scripts/check_release_consistency.py \
+            scripts/check_rustdoc_links.py \
             scripts/rpc_load_test.py \
+            scripts/test_observatory_contract.py \
             infra/ops/healthcheck.py \
             infra/monitoring/alert_receiver.py \
             infra/monitoring/status_api.py
@@ -54,7 +56,9 @@ jobs:
       - name: Documentation
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc --all-features --no-deps
+        run: |
+          cargo doc --all-features --no-deps
+          python3 scripts/check_rustdoc_links.py
 
       - name: Test default targets
         run: cargo test --all-targets --locked
@@ -110,7 +114,10 @@ jobs:
         run: python3 scripts/test_sparse_verifier.py
 
       - name: Browser artifact stream regression
-        run: node scripts/test_observatory_stream.mjs
+        run: |
+          node --check publicpower/app.js
+          node scripts/test_observatory_stream.mjs
+          python3 scripts/test_observatory_contract.py
 
       - name: Soundness budget checks
         run: |
