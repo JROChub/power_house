@@ -1,6 +1,6 @@
 # MFENX Node Operator Guide
 
-Release scope: Power House v0.3.3.
+Release scope: Power House v0.3.4.
 
 This guide starts a public observer. Validator admission additionally requires
 a consensus identity approved by the active membership policy.
@@ -19,14 +19,14 @@ unless a firewall and authenticated reverse proxy explicitly protect them.
 ## Install
 
 ```bash
-cargo install power_house --version 0.3.3 --features net --locked
+cargo install power_house --version 0.3.4 --features net --locked
 julian --version
 ```
 
 Or use the release container:
 
 ```bash
-docker pull ghcr.io/jrochub/power_house:0.3.3
+docker pull ghcr.io/jrochub/power_house:0.3.4
 ```
 
 ## Create An Identity
@@ -40,6 +40,24 @@ julian key-info "$HOME/.powerhouse/node.key" --json
 
 Never send the private key. Share only the peer ID and public key when
 requesting validator admission.
+
+After admission is approved, create a signed monitoring registration:
+
+```bash
+julian validator-registry create \
+  --key "$HOME/.powerhouse/node.key" \
+  --node-id external-validator-1 \
+  --operator "Operator Name" \
+  --region <region> \
+  --p2p-address /dns4/<host>/tcp/7001/p2p/<peer-id> \
+  --metrics-url http://<monitoring-address>:9100/metrics \
+  --system-metrics-url http://<monitoring-address>:9101/metrics \
+  --output validator.registration.json
+```
+
+The signed record proves control of the claimed identity. It is counted only
+after policy admission and a matching live identity health check. See
+[Signed Validator Registry](validator_registry.md).
 
 ## Start An Observer
 

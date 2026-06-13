@@ -1,6 +1,6 @@
 # Power House Documentation
 
-This index is the authoritative map for Power House v0.3.3 documentation.
+This index is the authoritative map for Power House v0.3.4 documentation.
 
 ## Start Here
 
@@ -14,6 +14,7 @@ This index is the authoritative map for Power House v0.3.3 documentation.
 | [SDKs](sdk.md) | Rust and Python interfaces and cross-language interoperability |
 | [JULIAN Protocol](../JULIAN_PROTOCOL.md) | Transcript anchoring, quorum reconciliation, and network architecture |
 | [Stable Public Network Roadmap](network_roadmap.md) | Production topology, completion evidence, and remaining decentralization work |
+| [Signed Validator Registry](validator_registry.md) | Identity-bound validator enrollment, health reconciliation, and dynamic monitoring discovery |
 
 ## Proof Systems And Formats
 

@@ -19,7 +19,8 @@ use power_house::net::{
     decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
     load_or_derive_keypair, refresh_migration_mode_from_env, run_network, verify_signature_base64,
     AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule,
-    NetConfig, StakePolicy, StakeRegistry, StaticPolicy,
+    NetConfig, StakePolicy, StakeRegistry, StaticPolicy, ValidatorRegistration, ValidatorRegistry,
+    VALIDATOR_REGISTRY_SCHEMA,
 };
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
@@ -79,6 +80,7 @@ fn print_cli_help() {
         println!("  rollup           Settle rollup requests");
         println!("  keygen           Create an encrypted network identity");
         println!("  key-info         Inspect a network identity without exposing its secret");
+        println!("  validator-registry  Sign, assemble, and verify validator registrations");
     }
     println!();
     println!("Use 'julian <command> --help' for command details.");
@@ -234,6 +236,20 @@ fn print_key_info_help() {
 }
 
 #[cfg(feature = "net")]
+fn print_validator_registry_help() {
+    println!("Usage: julian validator-registry <create|assemble|verify> ...");
+    println!("  create --key <key> --node-id <id> --operator <name> --region <id>");
+    println!("         --p2p-address <multiaddr> --metrics-url <url>");
+    println!("         [--system-metrics-url <url>] [--chain-id <id>]");
+    println!("         [--issued-at <unix>] [--valid-until <unix>] --output <file>");
+    println!("  assemble --registration <file>... --policy <allowlist.json>");
+    println!("           [--chain-id <id>] --output <registry.json>");
+    println!("  verify <registry.json> --policy <allowlist.json> [--now <unix>] [--json]");
+    println!();
+    println!("Registrations are signed by the validator identity and do not alter consensus.");
+}
+
+#[cfg(feature = "net")]
 fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -289,6 +305,14 @@ fn main() {
         #[cfg(feature = "net")]
         Some("key-info") => {
             cmd_key_info(args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("validator-registry") => {
+            if let Some(sub) = args.next() {
+                handle_validator_registry(&sub, args.collect());
+            } else {
+                print_validator_registry_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("net") | Some("network") => {
@@ -929,6 +953,281 @@ fn cmd_key_info(args: Vec<String>) {
         println!("public_key_b64: {public_key}");
         println!("peer_id: {peer_id}");
     }
+}
+
+#[cfg(feature = "net")]
+fn handle_validator_registry(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_validator_registry_help(),
+        "create" => cmd_validator_registry_create(tail),
+        "assemble" => cmd_validator_registry_assemble(tail),
+        "verify" => cmd_validator_registry_verify(tail),
+        _ => fatal(&format!("unknown validator-registry subcommand: {sub}")),
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_validator_registry_create(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_validator_registry_help();
+        return;
+    }
+    let mut values = HashMap::new();
+    let mut iter = args.into_iter();
+    while let Some(flag) = iter.next() {
+        let value = iter
+            .next()
+            .unwrap_or_else(|| fatal(&format!("{flag} expects a value")));
+        if !matches!(
+            flag.as_str(),
+            "--key"
+                | "--node-id"
+                | "--operator"
+                | "--region"
+                | "--p2p-address"
+                | "--metrics-url"
+                | "--system-metrics-url"
+                | "--chain-id"
+                | "--issued-at"
+                | "--valid-until"
+                | "--output"
+        ) {
+            fatal(&format!("unknown argument: {flag}"));
+        }
+        if values.insert(flag.clone(), value).is_some() {
+            fatal(&format!("duplicate argument: {flag}"));
+        }
+    }
+
+    let now = unix_seconds();
+    let chain_id = parse_u64_option(values.get("--chain-id"), 177155, "--chain-id");
+    let issued_at = parse_u64_option(values.get("--issued-at"), now, "--issued-at");
+    let valid_until = parse_u64_option(
+        values.get("--valid-until"),
+        issued_at.saturating_add(365 * 24 * 60 * 60),
+        "--valid-until",
+    );
+    let key = required_option(&values, "--key");
+    let material = load_or_derive_keypair(&Ed25519KeySource::from_spec(Some(key)))
+        .unwrap_or_else(|err| fatal(&format!("failed to load validator key: {err}")));
+    let registration = ValidatorRegistration::sign(
+        chain_id,
+        required_option(&values, "--node-id").to_string(),
+        required_option(&values, "--operator").to_string(),
+        required_option(&values, "--region").to_string(),
+        required_option(&values, "--p2p-address").to_string(),
+        required_option(&values, "--metrics-url").to_string(),
+        values.get("--system-metrics-url").cloned(),
+        issued_at,
+        valid_until,
+        &material,
+    )
+    .unwrap_or_else(|err| fatal(&format!("failed to create validator registration: {err}")));
+    write_json_file(
+        Path::new(required_option(&values, "--output")),
+        &registration,
+        "validator registration",
+    );
+}
+
+#[cfg(feature = "net")]
+fn cmd_validator_registry_assemble(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_validator_registry_help();
+        return;
+    }
+    let mut registrations = Vec::new();
+    let mut policy = None;
+    let mut output = None;
+    let mut chain_id = 177155;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registration" => registrations.push(PathBuf::from(
+                iter.next()
+                    .unwrap_or_else(|| fatal("--registration expects a value")),
+            )),
+            "--policy" => {
+                policy = Some(PathBuf::from(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--policy expects a value")),
+                ))
+            }
+            "--output" => {
+                output = Some(PathBuf::from(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                ))
+            }
+            "--chain-id" => {
+                chain_id = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--chain-id expects a value"))
+                    .parse()
+                    .unwrap_or_else(|_| fatal("invalid --chain-id"))
+            }
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    if registrations.is_empty() {
+        fatal("assemble requires at least one --registration");
+    }
+    let entries = registrations
+        .iter()
+        .map(|path| read_json_file::<ValidatorRegistration>(path, "validator registration"))
+        .collect();
+    let registry = ValidatorRegistry {
+        schema: VALIDATOR_REGISTRY_SCHEMA.to_string(),
+        chain_id,
+        registrations: entries,
+    };
+    let admitted = read_validator_policy(
+        policy
+            .as_deref()
+            .unwrap_or_else(|| fatal("assemble requires --policy")),
+    );
+    registry
+        .verify(&admitted, unix_seconds())
+        .unwrap_or_else(|err| fatal(&format!("validator registry verification failed: {err}")));
+    write_json_file(
+        output
+            .as_deref()
+            .unwrap_or_else(|| fatal("assemble requires --output")),
+        &registry,
+        "validator registry",
+    );
+}
+
+#[cfg(feature = "net")]
+fn cmd_validator_registry_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_validator_registry_help();
+        return;
+    }
+    let mut registry_path = None;
+    let mut policy_path = None;
+    let mut now = unix_seconds();
+    let mut json = false;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--policy" => {
+                policy_path = Some(PathBuf::from(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--policy expects a value")),
+                ))
+            }
+            "--now" => {
+                now = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--now expects a value"))
+                    .parse()
+                    .unwrap_or_else(|_| fatal("invalid --now"))
+            }
+            "--json" => json = true,
+            value if registry_path.is_none() => registry_path = Some(PathBuf::from(value)),
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    let registry = read_json_file::<ValidatorRegistry>(
+        registry_path
+            .as_deref()
+            .unwrap_or_else(|| fatal("verify requires a registry path")),
+        "validator registry",
+    );
+    let admitted = read_validator_policy(
+        policy_path
+            .as_deref()
+            .unwrap_or_else(|| fatal("verify requires --policy")),
+    );
+    registry
+        .verify(&admitted, now)
+        .unwrap_or_else(|err| fatal(&format!("validator registry verification failed: {err}")));
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "chain_id": registry.chain_id,
+                "registrations": registry.registrations,
+                "schema": registry.schema,
+                "validators_verified": registry.registrations.len(),
+                "verified": true,
+            })
+        );
+    } else {
+        println!(
+            "validator registry verified: {} admitted identities on chain {}",
+            registry.registrations.len(),
+            registry.chain_id
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn required_option<'a>(values: &'a HashMap<String, String>, key: &str) -> &'a str {
+    values
+        .get(key)
+        .map(String::as_str)
+        .unwrap_or_else(|| fatal(&format!("{key} is required")))
+}
+
+#[cfg(feature = "net")]
+fn parse_u64_option(value: Option<&String>, default: u64, name: &str) -> u64 {
+    value.map_or(default, |raw| {
+        raw.parse()
+            .unwrap_or_else(|_| fatal(&format!("invalid {name}")))
+    })
+}
+
+#[cfg(feature = "net")]
+fn unix_seconds() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+#[cfg(feature = "net")]
+fn read_json_file<T: serde::de::DeserializeOwned>(path: &Path, label: &str) -> T {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {label} {}: {err}", path.display())));
+    serde_json::from_str(&contents)
+        .unwrap_or_else(|err| fatal(&format!("invalid {label} {}: {err}", path.display())))
+}
+
+#[cfg(feature = "net")]
+fn write_json_file<T: serde::Serialize>(path: &Path, value: &T, label: &str) {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).unwrap_or_else(|err| {
+            fatal(&format!(
+                "failed to create {} directory {}: {err}",
+                label,
+                parent.display()
+            ))
+        });
+    }
+    let bytes = serde_json::to_vec_pretty(value)
+        .unwrap_or_else(|err| fatal(&format!("failed to encode {label}: {err}")));
+    fs::write(path, [bytes, b"\n".to_vec()].concat()).unwrap_or_else(|err| {
+        fatal(&format!(
+            "failed to write {label} {}: {err}",
+            path.display()
+        ))
+    });
+}
+
+#[cfg(feature = "net")]
+fn read_validator_policy(path: &Path) -> std::collections::HashSet<String> {
+    #[derive(Deserialize)]
+    struct ValidatorPolicy {
+        allowlist: Vec<String>,
+    }
+    let policy: ValidatorPolicy = read_json_file(path, "validator policy");
+    if policy.allowlist.is_empty() {
+        fatal("validator policy allowlist cannot be empty");
+    }
+    policy.allowlist.into_iter().collect()
 }
 
 #[cfg(feature = "net")]

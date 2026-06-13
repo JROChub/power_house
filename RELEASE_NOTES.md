@@ -1,5 +1,36 @@
 # Release Notes
 
+## v0.3.4 - 2026-06-13
+
+### Signed Validator Registry
+- Added versioned validator registrations signed by each node's existing
+  Ed25519 identity.
+- Bound every registration to its derived libp2p peer ID, chain ID, p2p
+  address, operator, region, monitoring endpoints, and validity window.
+- Required explicit admission by the active validator policy before a record
+  can affect public validator totals.
+- Added `julian validator-registry create`, `assemble`, and `verify`.
+
+### Live Identity And Health
+- Added `powerhouse_node_identity` metrics so the registry reconciler can
+  compare the live node ID, peer ID, public key, and chain ID with the signed
+  registration.
+- Replaced hardcoded Prometheus validator targets with atomic file discovery.
+- Added concurrent validator and system health probes, bounded responses,
+  redirect rejection, stale-state detection, and last-known-good discovery
+  preservation when registry verification fails.
+- Updated the public status API and website to report dynamic registered and
+  healthy validator totals independently from peer-link observations.
+
+### Safety And Testing
+- Kept monitoring enrollment separate from persisted consensus membership and
+  quorum transitions.
+- Added signature mutation, identity mismatch, expiration, duplicate,
+  unadmitted-key, stale-state, dynamic-count, deployment-bundle, and
+  reconciliation tests.
+- Retained the existing three-validator finalized network while making
+  monitoring discovery ready for controlled future validator admission.
+
 ## v0.3.3 - 2026-06-13
 
 ### Documentation

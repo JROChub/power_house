@@ -9,6 +9,11 @@ from urllib.request import Request, urlopen
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "http://127.0.0.1:9090")
 RPC_URL = os.environ.get("RPC_URL", "https://rpc.mfenx.com")
 RELEASE = os.environ.get("POWER_HOUSE_RELEASE", "unknown")
+REGISTRY_STATE_PATH = os.environ.get(
+    "VALIDATOR_REGISTRY_STATE",
+    "/var/lib/powerhouse/monitoring/validator-registry-state.json",
+)
+REGISTRY_MAX_AGE_SECONDS = int(os.environ.get("VALIDATOR_REGISTRY_MAX_AGE", "45"))
 
 
 def fetch_json(url, data=None, headers=None):
@@ -41,30 +46,26 @@ def rpc(method):
     return response["result"]
 
 
+def registry_health():
+    with open(REGISTRY_STATE_PATH, encoding="utf-8") as handle:
+        state = json.load(handle)
+    generated = datetime.fromisoformat(state["generated_at"].replace("Z", "+00:00"))
+    age = (datetime.now(timezone.utc) - generated).total_seconds()
+    state["fresh"] = 0 <= age <= REGISTRY_MAX_AGE_SECONDS
+    return state
+
+
 def snapshot():
-    validators = int(
-        query(
-            'count(count by (node) '
-            '(up{job="powerhouse",node=~"validator-[123]"} == 1))'
-        )
-        or 0
-    )
-    systems = int(
-        query(
-            'count(count by (node) '
-            '(up{job="node",node=~"validator-[123]"} == 1))'
-        )
-        or 0
+    registry = registry_health()
+    validators = int(registry.get("validators_healthy", 0))
+    validators_total = int(registry.get("validators_total", 0))
+    systems = sum(
+        1
+        for item in registry.get("validators", [])
+        if item.get("system_metrics_reachable") is True
     )
     rpc_probe = int(query('min(probe_success{job="blackbox-rpc"})') or 0)
-    peers = int(
-        query(
-            'sum(max by (node) '
-            '(powerhouse_connected_peers{'
-            'job="powerhouse",node=~"validator-[123]"}))'
-        )
-        or 0
-    )
+    peers = int(registry.get("peer_link_observations", 0))
     uptime = query(
         'avg_over_time(probe_success{job="blackbox-rpc"}[24h])'
     )
@@ -79,9 +80,16 @@ def snapshot():
     chain_id = int(rpc("eth_chainId"), 16)
     block_height = int(rpc("eth_blockNumber"), 16)
     client = rpc("web3_clientVersion")
-    if validators == 3 and systems == 3 and rpc_probe == 1:
+    registry_ok = registry.get("registry_verified") is True and registry["fresh"]
+    if (
+        registry_ok
+        and validators_total > 0
+        and validators == validators_total
+        and systems == validators_total
+        and rpc_probe == 1
+    ):
         state = "operational"
-    elif validators >= 2 and rpc_probe == 1:
+    elif registry_ok and validators > 0 and rpc_probe == 1:
         state = "degraded"
     else:
         state = "outage"
@@ -106,7 +114,16 @@ def snapshot():
             else None
         ),
         "validators_healthy": validators,
-        "validators_total": 3,
+        "validators_total": validators_total,
+        "validator_registry": {
+            "fresh": registry["fresh"],
+            "identity_verified": sum(
+                1
+                for item in registry.get("validators", [])
+                if item.get("identity_verified") is True
+            ),
+            "verified": registry.get("registry_verified") is True,
+        },
     }
 
 

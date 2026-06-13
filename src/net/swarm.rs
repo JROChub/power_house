@@ -1662,6 +1662,14 @@ struct Metrics {
     native_sync_blocks_applied_total: AtomicU64,
 }
 
+#[derive(Clone)]
+struct MetricsIdentity {
+    node_id: String,
+    peer_id: String,
+    public_key_b64: String,
+    chain_id: u64,
+}
+
 impl Metrics {
     fn peer_connected(&self) {
         self.connected_peers.fetch_add(1, Ordering::Relaxed);
@@ -1715,9 +1723,11 @@ impl Metrics {
             .fetch_add(1, Ordering::Relaxed);
     }
 
-    fn render(&self) -> String {
+    fn render(&self, identity: &MetricsIdentity) -> String {
         format!(
-            "# TYPE powerhouse_connected_peers gauge\npowerhouse_connected_peers {}\n\
+            "# TYPE powerhouse_node_identity gauge\n\
+powerhouse_node_identity{{node_id=\"{}\",peer_id=\"{}\",public_key_b64=\"{}\",chain_id=\"{}\"}} 1\n\
+# TYPE powerhouse_connected_peers gauge\npowerhouse_connected_peers {}\n\
 # TYPE anchors_received_total counter\nanchors_received_total {}\n\
 # TYPE anchors_verified_total counter\nanchors_verified_total {}\n\
 # TYPE invalid_envelopes_total counter\ninvalid_envelopes_total {}\n\
@@ -1727,6 +1737,10 @@ impl Metrics {
 # TYPE native_transactions_accepted_total counter\nnative_transactions_accepted_total {}\n\
 # TYPE native_blocks_finalized_total counter\nnative_blocks_finalized_total {}\n\
 # TYPE native_sync_blocks_applied_total counter\nnative_sync_blocks_applied_total {}\n",
+            prometheus_label(&identity.node_id),
+            prometheus_label(&identity.peer_id),
+            prometheus_label(&identity.public_key_b64),
+            identity.chain_id,
             self.connected_peers.load(Ordering::Relaxed),
             self.anchors_received_total.load(Ordering::Relaxed),
             self.anchors_verified_total.load(Ordering::Relaxed),
@@ -1858,8 +1872,14 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
     let metrics = cfg.metrics.clone();
     if let Some(addr) = cfg.metrics_addr {
         let metrics_clone = metrics.clone();
+        let identity = MetricsIdentity {
+            node_id: cfg.node_id.clone(),
+            peer_id: cfg.key_material.libp2p.public().to_peer_id().to_string(),
+            public_key_b64: encode_public_key_base64(&cfg.key_material.verifying),
+            chain_id: cfg.evm_chain_id,
+        };
         tokio::spawn(async move {
-            if let Err(err) = run_metrics_server(addr, metrics_clone).await {
+            if let Err(err) = run_metrics_server(addr, metrics_clone, identity).await {
                 eprintln!("metrics server error: {err}");
             }
         });
@@ -3021,13 +3041,25 @@ fn record_invalid(
     }
 }
 
-async fn run_metrics_server(addr: SocketAddr, metrics: Arc<Metrics>) -> io::Result<()> {
+fn prometheus_label(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('\n', "\\n")
+        .replace('"', "\\\"")
+}
+
+async fn run_metrics_server(
+    addr: SocketAddr,
+    metrics: Arc<Metrics>,
+    identity: MetricsIdentity,
+) -> io::Result<()> {
     let listener = TcpListener::bind(addr).await?;
     loop {
         let (mut stream, _) = listener.accept().await?;
         let metrics = metrics.clone();
+        let identity = identity.clone();
         tokio::spawn(async move {
-            if let Err(err) = respond_with_metrics(&mut stream, metrics).await {
+            if let Err(err) = respond_with_metrics(&mut stream, metrics, identity).await {
                 eprintln!("metrics connection error: {err}");
             }
         });
@@ -3037,6 +3069,7 @@ async fn run_metrics_server(addr: SocketAddr, metrics: Arc<Metrics>) -> io::Resu
 async fn respond_with_metrics(
     stream: &mut tokio::net::TcpStream,
     metrics: Arc<Metrics>,
+    identity: MetricsIdentity,
 ) -> io::Result<()> {
     let mut buf = [0u8; 1024];
     let mut read = 0usize;
@@ -3073,7 +3106,7 @@ async fn respond_with_metrics(
         return Ok(());
     }
 
-    let body = metrics.render();
+    let body = metrics.render(&identity);
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/plain; version=0.0.4\r\nContent-Length: {}\r\n\r\n{}",
         body.len(),
@@ -3565,6 +3598,21 @@ mod tests {
         metrics.peer_connected();
         metrics.peer_disconnected();
         assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
+    }
+
+    #[test]
+    fn metrics_bind_live_node_identity() {
+        let metrics = Metrics::default();
+        let identity = MetricsIdentity {
+            node_id: "validator-1".to_string(),
+            peer_id: "12D3KooWExample".to_string(),
+            public_key_b64: "public/key==".to_string(),
+            chain_id: 177155,
+        };
+        let rendered = metrics.render(&identity);
+        assert!(rendered.contains(
+            "powerhouse_node_identity{node_id=\"validator-1\",peer_id=\"12D3KooWExample\",public_key_b64=\"public/key==\",chain_id=\"177155\"} 1"
+        ));
     }
 
     #[test]

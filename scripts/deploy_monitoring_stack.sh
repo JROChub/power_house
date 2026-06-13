@@ -8,6 +8,7 @@ fi
 
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 HOSTS=("$@")
+VALIDATOR_REGISTRY="${VALIDATOR_REGISTRY:-$ROOT/deployment/generated/mfenx-production/validator-registry.json}"
 SSH_ARGS=()
 if [[ -n "${SSH_OPTS:-}" ]]; then
   read -r -a SSH_ARGS <<<"$SSH_OPTS"
@@ -18,15 +19,10 @@ host_address() {
 }
 
 NODE1=$(host_address "${HOSTS[0]}")
-NODE2=$(host_address "${HOSTS[1]}")
-NODE3=$(host_address "${HOSTS[2]}")
-TEMP_CONFIG=$(mktemp)
-trap 'rm -f "$TEMP_CONFIG"' EXIT
-sed \
-  -e "s/__NODE1__/$NODE1/g" \
-  -e "s/__NODE2__/$NODE2/g" \
-  -e "s/__NODE3__/$NODE3/g" \
-  "$ROOT/infra/monitoring/prometheus.yml" >"$TEMP_CONFIG"
+[[ -f "$VALIDATOR_REGISTRY" ]] || {
+  echo "signed validator registry not found: $VALIDATOR_REGISTRY" >&2
+  exit 1
+}
 
 for index in 0 1 2; do
   host="${HOSTS[$index]}"
@@ -36,18 +32,27 @@ for index in 0 1 2; do
   ssh "${SSH_ARGS[@]}" "$host" \
     "apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y prometheus-node-exporter"
   ssh "${SSH_ARGS[@]}" "$host" \
-    "install -d -m 0750 /etc/powerhouse /usr/local/lib/powerhouse"
+    "install -d -m 0750 /etc/powerhouse /usr/local/lib/powerhouse /var/lib/powerhouse/monitoring && install -d -m 0755 /etc/prometheus/file_sd"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/status_api.py" \
     "$host:/usr/local/lib/powerhouse/status_api.py"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/validator_registry.py" \
+    "$host:/usr/local/lib/powerhouse/validator_registry.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-status-api.service" \
     "$host:/etc/systemd/system/powerhouse-status-api.service"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-validator-registry.service" \
+    "$host:/etc/systemd/system/powerhouse-validator-registry.service"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-validator-registry.timer" \
+    "$host:/etc/systemd/system/powerhouse-validator-registry.timer"
+  scp "${SSH_ARGS[@]}" "$VALIDATOR_REGISTRY" \
+    "$host:/etc/powerhouse/validator-registry.json"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/nginx-mfenx-rpc.conf" \
     "$host:/etc/nginx/sites-available/mfenx-rpc"
   ssh "${SSH_ARGS[@]}" "$host" env \
     "PROMETHEUS_URL=$prometheus_url" \
     "POWER_HOUSE_RELEASE=${POWER_HOUSE_RELEASE:?set POWER_HOUSE_RELEASE}" bash -s <<'REMOTE'
 set -euo pipefail
-chmod 0755 /usr/local/lib/powerhouse/status_api.py
+chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py
+chmod 0640 /etc/powerhouse/validator-registry.json
 cat >/etc/default/prometheus-node-exporter <<'EOF'
 ARGS="--web.listen-address=0.0.0.0:9101"
 EOF
@@ -55,14 +60,21 @@ cat >/etc/powerhouse/status-api.env <<EOF
 PROMETHEUS_URL=$PROMETHEUS_URL
 RPC_URL=https://rpc.mfenx.com
 POWER_HOUSE_RELEASE=$POWER_HOUSE_RELEASE
+VALIDATOR_REGISTRY_STATE=/var/lib/powerhouse/monitoring/validator-registry-state.json
+VALIDATOR_REGISTRY_MAX_AGE=45
 EOF
 chmod 0640 /etc/powerhouse/status-api.env
 ln -sfn /etc/nginx/sites-available/mfenx-rpc /etc/nginx/sites-enabled/mfenx-rpc
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl daemon-reload
-systemctl enable --now prometheus-node-exporter powerhouse-status-api
-systemctl restart prometheus-node-exporter powerhouse-status-api
+systemctl enable --now \
+  prometheus-node-exporter \
+  powerhouse-validator-registry.timer \
+  powerhouse-status-api
+systemctl restart prometheus-node-exporter
+systemctl start powerhouse-validator-registry.service
+systemctl restart powerhouse-status-api
 systemctl reload nginx
 REMOTE
 done
@@ -89,7 +101,8 @@ install -d -m 0755 \
   /usr/local/lib/powerhouse
 REMOTE
 
-scp "${SSH_ARGS[@]}" "$TEMP_CONFIG" "$monitor:/etc/prometheus/prometheus.yml"
+scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/prometheus.yml" \
+  "$monitor:/etc/prometheus/prometheus.yml"
 scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-alerts.yml" \
   "$monitor:/etc/prometheus/powerhouse-alerts.yml"
 scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/blackbox.yml" \
