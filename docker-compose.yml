@@ -1,5 +1,6 @@
 services:
   node:
+    image: ghcr.io/jrochub/power_house:0.3.2
     build: .
     command:
       [

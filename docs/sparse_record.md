@@ -1,6 +1,6 @@
 # Public Sparse Computation Certificate
 
-Status: active format guide for Power House v0.3.1.
+Status: active format guide for Power House v0.3.2.
 
 Power-House now includes an event-driven sum-check prover for a public seeded
 sparse multilinear polynomial:

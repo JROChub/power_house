@@ -1,0 +1,17 @@
+{
+  "chainId": 177155,
+  "chainName": "MFENX Power House",
+  "explorer": null,
+  "nativeCurrency": {
+    "decimals": 18,
+    "name": "JULIAN",
+    "symbol": "JULIAN"
+  },
+  "release": "0.3.2",
+  "rpc": {
+    "canonicalUrl": "https://rpc.mfenx.com",
+    "chainListUrl": "https://rpc.mfenx.com",
+    "name": "LAX MFENX RPC"
+  },
+  "statusUrl": "https://mfenx.com/status.html"
+}

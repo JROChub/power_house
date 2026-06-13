@@ -1,6 +1,6 @@
 # Power House Python SDK
 
-Version: 0.3.1
+Version: 0.3.2
 
 The default `power_house` namespace implements `.pha` v1 and Rootprint v1
 without requiring or interpreting external proof attachments.

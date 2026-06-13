@@ -1,59 +1,114 @@
 {
-  "title": "MFENX Power-House Network Overview",
+  "title": "MFENX Power House Network",
   "uid": "mfenx-powerhouse",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
+  "refresh": "15s",
+  "time": { "from": "now-6h", "to": "now" },
   "panels": [
     {
       "type": "stat",
-      "title": "Anchors Received",
-      "targets": [
-        {
-          "expr": "anchors_received_total",
-          "refId": "A"
-        }
-      ],
+      "title": "Validators Healthy",
+      "targets": [{ "expr": "sum(up{job=\"powerhouse\"})", "refId": "A" }],
       "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 }
     },
     {
       "type": "stat",
-      "title": "Anchors Verified",
-      "targets": [
-        {
-          "expr": "anchors_verified_total",
-          "refId": "A"
-        }
-      ],
+      "title": "LAX MFENX RPC",
+      "targets": [{ "expr": "min(probe_success{job=\"blackbox-rpc\"})", "refId": "A" }],
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 }
     },
     {
-      "type": "graph",
-      "title": "Finality & Invalid Envelopes",
-      "targets": [
-        {
-          "expr": "rate(finality_events_total[5m])",
-          "legendFormat": "finality",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(invalid_envelopes_total[5m])",
-          "legendFormat": "invalid",
-          "refId": "B"
-        }
-      ],
+      "type": "stat",
+      "title": "Peer Connections",
+      "targets": [{ "expr": "sum(powerhouse_connected_peers)", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "24h RPC Availability",
+      "targets": [{ "expr": "avg_over_time(probe_success{job=\"blackbox-rpc\"}[24h]) * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 3 } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "RPC Probe Latency",
+      "targets": [{ "expr": "probe_duration_seconds{job=\"blackbox-rpc\"}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Active Alerts",
+      "targets": [{ "expr": "sum(ALERTS{alertstate=\"firing\"})", "refId": "A" }],
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Finality Events",
+      "targets": [{
+        "expr": "rate(finality_events_total[5m])",
+        "legendFormat": "{{node}}",
+        "refId": "A"
+      }],
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 }
     },
     {
-      "type": "graph",
-      "title": "Gossipsub Drops",
+      "type": "timeseries",
+      "title": "Native Chain Activity",
       "targets": [
         {
-          "expr": "rate(gossipsub_rejects_total[5m])",
-          "legendFormat": "rejects",
+          "expr": "rate(native_transactions_accepted_total[5m])",
+          "legendFormat": "accepted {{node}}",
           "refId": "A"
+        },
+        {
+          "expr": "rate(native_blocks_finalized_total[5m])",
+          "legendFormat": "finalized {{node}}",
+          "refId": "B"
         }
       ],
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Available Memory",
+      "targets": [{
+        "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100",
+        "legendFormat": "{{node}}",
+        "refId": "A"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percent" } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Root Filesystem Available",
+      "targets": [{
+        "expr": "node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"} * 100",
+        "legendFormat": "{{node}}",
+        "refId": "A"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percent" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Rejected Network Messages",
+      "targets": [
+        {
+          "expr": "rate(invalid_envelopes_total[5m])",
+          "legendFormat": "invalid {{node}}",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(gossipsub_rejects_total[5m])",
+          "legendFormat": "gossipsub {{node}}",
+          "refId": "B"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 }
     }
   ],
   "templating": { "list": [] }

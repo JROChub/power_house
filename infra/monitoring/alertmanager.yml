@@ -1,0 +1,12 @@
+route:
+  receiver: powerhouse-local
+  group_by: [alertname, node]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: powerhouse-local
+    webhook_configs:
+      - url: http://127.0.0.1:9193/alerts
+        send_resolved: true

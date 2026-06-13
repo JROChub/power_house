@@ -30,8 +30,19 @@ write_files:
       server {
           listen 80 default_server;
           listen [::]:80 default_server;
-          server_name _;
+          server_name rpc.mfenx.com indexer.mfenx.com;
           client_max_body_size 1m;
+          limit_req_status 429;
+          limit_conn_status 429;
+
+          location = /network-status.json {
+              proxy_pass http://127.0.0.1:9194/status.json;
+              proxy_http_version 1.1;
+              proxy_connect_timeout 2s;
+              proxy_read_timeout 8s;
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Cache-Control "no-store" always;
+          }
 
           location = /healthz {
               proxy_pass http://127.0.0.1:8545/healthz;

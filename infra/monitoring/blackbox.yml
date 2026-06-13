@@ -1,0 +1,12 @@
+modules:
+  mfenx_rpc:
+    prober: http
+    timeout: 8s
+    http:
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
+      fail_if_body_not_matches_regexp:
+        - '"result":"0x2b403"'
+      preferred_ip_protocol: ip4

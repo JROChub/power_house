@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Power House
+    orgId: 1
+    folder: MFENX
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

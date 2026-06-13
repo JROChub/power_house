@@ -1,10 +1,13 @@
 # Power-House RPC Operations
 
-Release scope: Power House v0.3.1.
+Release scope: Power House v0.3.2.
 
 Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
 state are finalized by the configured validator quorum. Chain ID `177155` is
 the default production identity.
+
+The public service name is **LAX MFENX RPC**. Its canonical health-checked edge
+and submitted ChainList endpoint is `https://rpc.mfenx.com`.
 
 For the three-validator production topology, sealed configuration generator,
 generic deployment command, TLS edge, and cloud readiness gate, see
@@ -98,6 +101,8 @@ Place TLS and request controls in a reverse proxy in front of
 restarts, disk durability, and agreement between at least two RPC replicas.
 Prometheus exports `native_transactions_accepted_total`,
 `native_blocks_finalized_total`, and `native_sync_blocks_applied_total`.
+It also exports `powerhouse_connected_peers`, which must remain above zero on
+every production validator.
 
 ## Incident response
 

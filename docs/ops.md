@@ -1,12 +1,14 @@
 # Power-House Operations Guide
 
-Release scope: Power House v0.3.1.
+Release scope: Power House v0.3.2.
 
 This guide documents the retained boot-node, JULIAN network, and blob-service
-operations in v0.3.1. For the current three-validator native RPC topology and
+operations in v0.3.2. For the current three-validator native RPC topology and
 public HTTPS edge, use
 [Production RPC Deployment](production_rpc_deployment.md). Commands here
 assume explicit operator control so each change remains auditable.
+
+The production public service is named **LAX MFENX RPC**.
 
 ## 1. Requirements
 

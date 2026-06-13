@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050807">
+  <meta name="description" content="Live operational status for the MFENX Power House network and LAX MFENX RPC.">
+  <title>MFENX Network Status</title>
+  <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/earth-night.jpg" as="image">
+  <link rel="stylesheet" href="status.css">
+</head>
+<body>
+  <div class="earth-field" aria-hidden="true"></div>
+  <header>
+    <a class="brand" href="/">
+      <img src="assets/powerhouse-logo.png" alt="">
+      <span><b>MFENX</b><small>POWER HOUSE NETWORK CONTROL</small></span>
+    </a>
+    <div class="release"><span>RELEASE</span><b>v0.3.2</b></div>
+  </header>
+
+  <main>
+    <section class="network-state" aria-labelledby="status-title">
+      <div>
+        <span class="eyebrow">LAX MFENX RPC / CHAIN 177155</span>
+        <h1 id="status-title">NETWORK <b id="state-label">CONNECTING</b></h1>
+        <p id="state-detail">Waiting for independent edge and validator telemetry.</p>
+      </div>
+      <div class="pulse" id="state-pulse" aria-hidden="true"><i></i><i></i><i></i></div>
+    </section>
+
+    <section class="telemetry-grid" aria-label="Live network telemetry">
+      <article>
+        <span>PUBLIC RPC</span>
+        <b id="rpc-state">CHECKING</b>
+        <small id="rpc-endpoint">https://rpc.mfenx.com</small>
+      </article>
+      <article>
+        <span>VALIDATORS</span>
+        <b id="validators">-- / 3</b>
+        <small>NEW YORK / SAN FRANCISCO / AMSTERDAM</small>
+      </article>
+      <article>
+        <span>BLOCK HEIGHT</span>
+        <b id="block-height">--</b>
+        <small>QUORUM-FINALIZED NATIVE CHAIN</small>
+      </article>
+      <article>
+        <span>PEER LINKS</span>
+        <b id="peer-count">--</b>
+        <small>ACTIVE VALIDATOR CONNECTIONS</small>
+      </article>
+      <article>
+        <span>24H AVAILABILITY</span>
+        <b id="uptime">COLLECTING</b>
+        <small>EXTERNAL BLACKBOX PROBE</small>
+      </article>
+      <article>
+        <span>CLIENT</span>
+        <b id="client-version">--</b>
+        <small>DEPLOYED BINARY IDENTITY</small>
+      </article>
+    </section>
+
+    <section class="regions" aria-label="Validator regions">
+      <div class="region-head">
+        <span>REGIONAL QUORUM</span>
+        <time id="updated-at">NOT YET UPDATED</time>
+      </div>
+      <ol>
+        <li><i></i><span>LAX EDGE</span><b>GLOBAL INGRESS</b></li>
+        <li><i></i><span>NYC3</span><b>VALIDATOR 1</b></li>
+        <li><i></i><span>SFO3</span><b>VALIDATOR 2</b></li>
+        <li><i></i><span>AMS3</span><b>VALIDATOR 3</b></li>
+      </ol>
+    </section>
+
+    <footer>
+      <a href="https://rpc.mfenx.com/network-status.json">STATUS API</a>
+      <a href="https://github.com/JROChub/power_house/blob/main/docs/incident_response.md">INCIDENT PROCESS</a>
+      <a href="https://chainlist.org/chain/177155">CHAINLIST</a>
+    </footer>
+  </main>
+  <script src="status.js" defer></script>
+</body>
+</html>

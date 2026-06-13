@@ -1,0 +1,44 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/powerhouse-alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["127.0.0.1:9093"]
+
+scrape_configs:
+  - job_name: powerhouse
+    static_configs:
+      - targets: ["__NODE1__:9100"]
+        labels: { node: "validator-1", region: "nyc3" }
+      - targets: ["__NODE2__:9100"]
+        labels: { node: "validator-2", region: "sfo3" }
+      - targets: ["__NODE3__:9100"]
+        labels: { node: "validator-3", region: "ams3" }
+
+  - job_name: node
+    static_configs:
+      - targets: ["__NODE1__:9101"]
+        labels: { node: "validator-1", region: "nyc3" }
+      - targets: ["__NODE2__:9101"]
+        labels: { node: "validator-2", region: "sfo3" }
+      - targets: ["__NODE3__:9101"]
+        labels: { node: "validator-3", region: "ams3" }
+
+  - job_name: blackbox-rpc
+    metrics_path: /probe
+    params:
+      module: [mfenx_rpc]
+    static_configs:
+      - targets: ["https://rpc.mfenx.com"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115

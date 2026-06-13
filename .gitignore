@@ -18,3 +18,8 @@ boot2.anchor
 *.key
 __pycache__/
 *.py[cod]
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example

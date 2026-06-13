@@ -1,6 +1,6 @@
 # Power House Documentation
 
-This index is the authoritative map for Power House v0.3.1 documentation.
+This index is the authoritative map for Power House v0.3.2 documentation.
 
 ## Start Here
 
@@ -13,6 +13,7 @@ This index is the authoritative map for Power House v0.3.1 documentation.
 | [Provenance Security Model](provenance_security.md) | Integrity boundary, assumptions, mutation behavior, and EPA isolation |
 | [SDKs](sdk.md) | Rust and Python interfaces and cross-language interoperability |
 | [JULIAN Protocol](../JULIAN_PROTOCOL.md) | Transcript anchoring, quorum reconciliation, and network architecture |
+| [Stable Public Network Roadmap](network_roadmap.md) | Production topology, completion evidence, and remaining decentralization work |
 
 ## Proof Systems And Formats
 
@@ -29,6 +30,10 @@ This index is the authoritative map for Power House v0.3.1 documentation.
 - [RPC Operations](rpc_operations.md)
 - [Production RPC Deployment](production_rpc_deployment.md)
 - [Network Operations](ops.md)
+- [Node Operator Guide](node_operator.md)
+- [Incident Response](incident_response.md)
+- [Load Testing](load_testing.md)
+- [Testnet to Mainnet](testnet_mainnet.md)
 - [Orbital Observatory](orbital_observatory.md)
 
 Operational commands must be tested against the release identified at the top

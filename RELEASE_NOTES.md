@@ -1,5 +1,32 @@
 # Release Notes
 
+## v0.3.2 - 2026-06-12
+
+### Public Network
+- Added a health-checked rolling validator deployment with automatic rollback
+  and post-restart binary/RPC version verification.
+- Added Prometheus, Alertmanager, blackbox exporter, node exporter, and Grafana
+  deployment automation for the three-region production topology.
+- Added automatic node recovery with restart cooldowns and Slack/PagerDuty
+  alert delivery support.
+- Added a public status API and website status console for validator health,
+  RPC reachability, block height, peer connections, and rolling uptime.
+- Added DigitalOcean Terraform for validators, firewall rules, and the global
+  RPC edge.
+
+### Operations
+- Standardized the public endpoint name as **LAX MFENX RPC**.
+- Added node operator, incident response, load testing, network roadmap, and
+  testnet-to-mainnet guides.
+- Added release consistency enforcement across Rust, Python, documentation,
+  website labels, chain metadata, Docker tags, and Git tags.
+- Added a connected-peer Prometheus gauge for isolation detection.
+- Renamed the live global edge to `lax-mfenx-rpc`, enabled HTTP-to-HTTPS
+  redirection and strong TLS, and corrected ChainList metadata to the verified
+  canonical endpoint.
+- Verified controlled backend failover, automatic validator recovery, and a
+  zero-error 69.114 requests/second single-origin read-only load profile.
+
 ## v0.3.1 - 2026-06-12
 
 ### Documentation

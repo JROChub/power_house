@@ -28,7 +28,8 @@ DNS_ZONE="$RPC_HOST"
 PROJECT_NAME="MFENX Power-House"
 TAG="mfenx-rpc-validator"
 FIREWALL_NAME="mfenx-rpc-firewall"
-LOAD_BALANCER_NAME="mfenx-rpc-global"
+LOAD_BALANCER_NAME="lax-mfenx-rpc"
+LEGACY_LOAD_BALANCER_NAME="mfenx-rpc-global"
 OUTPUT="${DO_INFRA_OUTPUT:-$ROOT/deployment/generated/digitalocean-infra.json}"
 SSH_KEY=""
 SSH_CIDR=""
@@ -211,7 +212,7 @@ if [[ -z "$firewall_id" ]]; then
       --name "$FIREWALL_NAME" \
       --tag-names "$TAG" \
       --inbound-rules \
-        "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:7001,tag:$TAG" \
+        "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
       --outbound-rules \
         "protocol:tcp,ports:all,address:0.0.0.0/0 protocol:udp,ports:all,address:0.0.0.0/0" \
       --output json | first_json_field id
@@ -291,18 +292,26 @@ load_balancer_id=$(
     json_field_by_name id "$LOAD_BALANCER_NAME"
 )
 if [[ -z "$load_balancer_id" ]]; then
+  load_balancer_id=$(
+    printf '%s' "$load_balancers_json" |
+      json_field_by_name id "$LEGACY_LOAD_BALANCER_NAME"
+  )
+fi
+if [[ -z "$load_balancer_id" ]]; then
   echo "-> creating global load balancer"
   load_balancer_id=$(
     doctl_cmd compute load-balancer create \
       --name "$LOAD_BALANCER_NAME" \
       --type GLOBAL \
       --network EXTERNAL \
-      --network-stack IPV4 \
+      --network-stack DUALSTACK \
       --droplet-ids "$droplet_ids_csv" \
       --glb-settings "target_protocol:http,target_port:80" \
       --health-check \
         "protocol:http,port:80,path:/healthz,check_interval_seconds:10,response_timeout_seconds:5,healthy_threshold:2,unhealthy_threshold:3" \
       --domains "name:$RPC_HOST is_managed:true" \
+      --redirect-http-to-https \
+      --tls-cipher-policy STRONG \
       --project-id "$project_id" \
       --wait \
       --output json | first_json_field id
@@ -333,7 +342,7 @@ doctl_cmd compute firewall update "$firewall_id" \
   --name "$FIREWALL_NAME" \
   --tag-names "$TAG" \
   --inbound-rules \
-    "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id protocol:tcp,ports:7001,tag:$TAG" \
+    "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
   --outbound-rules \
     "protocol:tcp,ports:all,address:0.0.0.0/0 protocol:udp,ports:all,address:0.0.0.0/0" \
   >/dev/null
