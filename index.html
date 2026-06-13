@@ -71,10 +71,22 @@
       </nav>
     </header>
 
+    <section class="network-ribbon" aria-label="Live MFENX network telemetry">
+      <div class="network-ribbon-state">
+        <i id="network-indicator"></i>
+        <span>LAX MFENX RPC</span>
+        <b id="network-state">SYNCING</b>
+      </div>
+      <div><span>CHAIN</span><b>177155</b></div>
+      <div><span>BLOCK</span><b id="network-block">--</b></div>
+      <div><span>VALIDATORS</span><b id="network-validators">-- / 3</b></div>
+      <div><span>PEERS</span><b id="network-peers">--</b></div>
+    </section>
+
     <aside class="proof-rail" aria-label="Proof modes">
       <div class="rail-heading">
-        <span>PUBLIC PROOF ARRAY</span>
-        <b>05</b>
+        <span>VERIFICATION ARRAY</span>
+        <b>05 PUBLIC PATHS</b>
       </div>
 
       <div id="proof-modes" class="proof-modes">
@@ -109,6 +121,11 @@
         <span><small>RUST</small><code>cargo add power_house</code></span>
         <span data-icon="copy"></span>
       </button>
+
+      <div class="rail-status" aria-label="Release state">
+        <div><span>RELEASE</span><b>v0.3.3</b></div>
+        <div><span>CORE</span><b>DETERMINISTIC</b></div>
+      </div>
     </aside>
 
     <main class="center-stage">
@@ -123,7 +140,10 @@
 
       <section class="proof-monument" aria-label="Selected proof scale">
         <span id="orbit-kicker">DETERMINISTIC PROVENANCE GRAPH</span>
-        <h1>POWER HOUSE</h1>
+        <div class="monument-title">
+          <h1>POWER HOUSE</h1>
+          <b id="monument-index">01</b>
+        </div>
         <div class="domain-equation">
           <small id="domain-caption">PUBLIC STRUCTURE</small>
           <strong id="domain-label">DAG<sup>4</sup></strong>
@@ -145,6 +165,18 @@
     <div class="scene-controls" aria-label="Scene controls">
       <button id="focus-toggle" class="icon-button" type="button" aria-label="Focus selected city" title="Focus selected city">
         <span data-icon="crosshair"></span>
+      </button>
+      <button id="network-toggle" class="icon-button" type="button" aria-label="Open network topology" title="Network topology">
+        <span data-icon="package"></span>
+      </button>
+      <button id="zoom-in" class="icon-button symbol-button" type="button" aria-label="Zoom in" title="Zoom in">
+        <b>+</b>
+      </button>
+      <button id="zoom-out" class="icon-button symbol-button" type="button" aria-label="Zoom out" title="Zoom out">
+        <b>-</b>
+      </button>
+      <button id="view-reset" class="icon-button" type="button" aria-label="Reset orbital view" title="Reset orbital view">
+        <span data-icon="rotate-ccw"></span>
       </button>
       <button id="sound-toggle" class="icon-button" type="button" aria-label="Enable interface sound" title="Toggle interface sound">
         <span data-icon="volume-x"></span>
@@ -174,6 +206,10 @@
           <span id="solar-state">DAYLIGHT</span>
           <b id="solar-altitude">+00.0°</b>
           <small>SOLAR ALTITUDE</small>
+        </div>
+        <div id="solar-arc" class="solar-arc" aria-hidden="true">
+          <i></i>
+          <span></span>
         </div>
         <dl>
           <div><dt>SUNRISE</dt><dd id="sunrise-value">--:--</dd></div>
@@ -206,6 +242,28 @@
         <input id="time-slider" type="range" min="-24" max="24" step="1" value="0" aria-label="Time offset from live, in hours">
         <div class="time-scale" aria-hidden="true"><span>-24H</span><span>NOW</span><span>+24H</span></div>
       </section>
+
+      <section id="network-console" class="network-console" aria-label="Validator topology">
+        <div class="network-console-heading">
+          <span>REGIONAL QUORUM</span>
+          <b id="network-console-state">SYNCING</b>
+        </div>
+        <div class="network-node-list">
+          <button type="button" data-network-city="0">
+            <i></i><span><b>SFO3</b><small>SAN FRANCISCO</small></span><strong id="node-sfo-state">CHECK</strong>
+          </button>
+          <button type="button" data-network-city="3">
+            <i></i><span><b>NYC3</b><small>NEW YORK</small></span><strong id="node-nyc-state">CHECK</strong>
+          </button>
+          <button type="button" data-network-city="7">
+            <i></i><span><b>AMS3</b><small>AMSTERDAM</small></span><strong id="node-ams-state">CHECK</strong>
+          </button>
+        </div>
+        <a href="status.html">
+          <span>OPEN NETWORK CONTROL</span>
+          <span data-icon="chevron-right"></span>
+        </a>
+      </section>
     </aside>
 
     <aside id="evaluation-panel" class="instrument-drawer evaluation-drawer" aria-label="Technical evaluation">
@@ -236,7 +294,7 @@
       <div class="evaluation-links">
         <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
-        <a href="https://crates.io/crates/power_house">CRATE v0.3.2</a>
+        <a href="https://crates.io/crates/power_house">CRATE v0.3.3</a>
       </div>
     </aside>
 
@@ -277,7 +335,7 @@
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
         <div><span>MODE</span><b id="mode-value">ROOTPRINT</b></div>
-        <div><span>RELEASE</span><b>v0.3.2</b></div>
+        <div><span>RELEASE</span><b>v0.3.3</b></div>
       </div>
     </section>
 
