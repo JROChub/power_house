@@ -1,6 +1,6 @@
-# Production RPC Deployment
+# LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.3.1.
+Release scope: Power House v0.3.2.
 
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
@@ -8,7 +8,7 @@ configuration, and public edge are independently verifiable.
 
 ## Target architecture
 
-- Three DigitalOcean Droplets in separate regions.
+- Three DigitalOcean Droplets in `nyc3`, `sfo3`, and `ams3`.
 - Static validator membership with quorum `2`.
 - Authenticated libp2p validator traffic on TCP `7001`, restricted by tag.
 - Finalized RPC bound to `127.0.0.1:8545` on each validator.
@@ -16,6 +16,8 @@ configuration, and public edge are independently verifiable.
 - Global ingress and managed TLS for a delegated `rpc.mfenx.com` DNS zone.
 - Weekly Droplet backups plus application-level state backups.
 - External probes comparing finalized height, block hash, and state root.
+- Prometheus, Alertmanager, blackbox exporter, node exporter, and Grafana.
+- A public status API at `/network-status.json`.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
 internet. Limit SSH to the operator's public CIDR and permit HTTP only from the
@@ -92,7 +94,7 @@ The provisioner creates or preserves:
 - `mfenx-validator-1` in `nyc3`
 - `mfenx-validator-2` in `sfo3`
 - `mfenx-validator-3` in `ams3`
-- Global Load Balancer `mfenx-rpc-global`
+- Global Load Balancer `lax-mfenx-rpc`, publicly named **LAX MFENX RPC**
 
 It refuses an existing validator whose region or size disagrees with the
 requested production topology. Infrastructure metadata is written to
@@ -138,7 +140,30 @@ scripts/deploy_rpc_cluster.sh \
 
 The deployer installs the same binary and policy on all validators, copies only
 the matching private key to each node, refuses to replace a conflicting genesis
-registry, and preserves existing finalized chain state during upgrades.
+registry, and preserves existing finalized chain state during upgrades. It then
+restarts one validator at a time, waits for RPC health, verifies
+`web3_clientVersion`, and rolls back that validator if validation fails.
+
+## Deploy monitoring
+
+Allow validator-tag traffic to TCP `9090`, `9100`, and `9101`, then run:
+
+```bash
+POWER_HOUSE_RELEASE=0.3.2 \
+SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
+scripts/deploy_monitoring_stack.sh \
+  root@<validator-1-ipv4> \
+  root@<validator-2-ipv4> \
+  root@<validator-3-ipv4>
+```
+
+Grafana binds to `127.0.0.1:3000`; open it through an SSH tunnel. Alertmanager
+always delivers to the local journal. Set `PH_SLACK_WEBHOOK_URL` or
+`PH_PAGERDUTY_ROUTING_KEY` in the root-only monitoring alert environment to
+add an external destination.
+
+The corresponding Terraform declaration is under
+[`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).
 
 ## Publish DNS and verify
 
@@ -154,6 +179,9 @@ python3 scripts/check_rpc.py \
 ```
 
 Update ChainList only after this probe passes from an independent network.
+The public display name is **LAX MFENX RPC**. Publish
+`https://rpc.mfenx.com` in ChainList. Do not advertise an alternate hostname
+until its DNS, managed TLS, health check, and publication probe all pass.
 
 ## Protocol limitation
 

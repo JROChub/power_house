@@ -94,4 +94,4 @@ PY
 
 echo "rpc_host=$RPC_HOST"
 echo "rpc_dns=${addresses:-not-configured}"
-echo "DigitalOcean RPC preflight: READY"
+echo "LAX MFENX RPC infrastructure preflight: READY"

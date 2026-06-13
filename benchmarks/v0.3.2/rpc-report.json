@@ -1,0 +1,129 @@
+{
+  "acceptance": {
+    "automatic_recovery": {
+      "connected_peers_after_restart": 2,
+      "finalized_hash_preserved": true,
+      "process_restarted": true
+    },
+    "backend_failover": {
+      "backend": "ams3",
+      "public_requests": 12,
+      "successful_requests": 12
+    },
+    "public_status": {
+      "peer_connections": 6,
+      "status": "operational",
+      "system_exporters_healthy": 3,
+      "validators_healthy": 3,
+      "validators_total": 3
+    }
+  },
+  "environment": {
+    "date": "2026-06-12",
+    "edge": "DigitalOcean Global Load Balancer",
+    "endpoint": "https://rpc.mfenx.com",
+    "origin_count": 1,
+    "profile": "read-only JSON-RPC"
+  },
+  "load_profiles": [
+    {
+      "concurrency": 6,
+      "duration_seconds": 45.07,
+      "error_rate": 0.0,
+      "errors": {},
+      "latency_ms": {
+        "p50": 84.611,
+        "p95": 106.354,
+        "p99": 123.447
+      },
+      "requests": 3115,
+      "requests_per_second": 69.114,
+      "result": "zero-error baseline",
+      "successful": 3115
+    },
+    {
+      "concurrency": 20,
+      "duration_seconds": 10.1,
+      "error_rate": 0.128205,
+      "errors": {
+        "HTTP 429": 185
+      },
+      "latency_ms": {
+        "p50": 136.365,
+        "p95": 184.366,
+        "p99": 206.491
+      },
+      "requests": 1443,
+      "requests_per_second": 142.876,
+      "result": "429 overload response verified",
+      "successful": 1258
+    },
+    {
+      "concurrency": 32,
+      "duration_seconds": 60.207,
+      "error_rate": 0.164157,
+      "latency_ms": {
+        "p50": 191.508,
+        "p95": 304.635,
+        "p99": 376.541
+      },
+      "requests": 9631,
+      "requests_per_second": 159.966,
+      "result": "rate-limit boundary",
+      "successful": 8050
+    },
+    {
+      "concurrency": 20,
+      "duration_seconds": 45.209,
+      "error_rate": 0.119362,
+      "errors": {
+        "HTTP 503": 733
+      },
+      "latency_ms": {
+        "p50": 132.296,
+        "p95": 250.853,
+        "p99": 320.127
+      },
+      "requests": 6141,
+      "requests_per_second": 135.835,
+      "result": "rate-limit boundary before 429 response correction",
+      "successful": 5408
+    },
+    {
+      "concurrency": 12,
+      "duration_seconds": 45.138,
+      "error_rate": 0.017767,
+      "errors": {
+        "HTTP 503": 81
+      },
+      "latency_ms": {
+        "p50": 101.573,
+        "p95": 226.631,
+        "p99": 291.64
+      },
+      "requests": 4559,
+      "requests_per_second": 101.002,
+      "result": "rate-limit boundary before 429 response correction",
+      "successful": 4478
+    },
+    {
+      "concurrency": 10,
+      "duration_seconds": 45.143,
+      "error_rate": 0.002421,
+      "errors": {
+        "HTTP 503": 10
+      },
+      "latency_ms": {
+        "p50": 97.181,
+        "p95": 192.992,
+        "p99": 277.419
+      },
+      "requests": 4131,
+      "requests_per_second": 91.51,
+      "result": "pass",
+      "successful": 4121
+    }
+  ],
+  "release": "0.3.2",
+  "schema": "power-house-rpc-acceptance-v1"
+}

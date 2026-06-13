@@ -10,6 +10,8 @@ combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
 proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
 and an optional quorum network.
 
+Current release: **v0.3.2**
+
 The primary workflow is **Power House + Rootprint**:
 
 - **Power House Archive (`.pha`)** binds proof data and provenance to a
@@ -162,6 +164,18 @@ The optional `net` feature enables libp2p transport, signed envelopes, data
 availability services, governance policies, stake accounting, migration tools,
 and a quorum-finalized native JSON-RPC lane.
 
+| Public network | Value |
+| --- | --- |
+| RPC name | **LAX MFENX RPC** |
+| Chain ID | `177155` (`0x2b403`) |
+| Canonical endpoint | `https://rpc.mfenx.com` |
+| ChainList endpoint | `https://rpc.mfenx.com` |
+| Status | `https://mfenx.com/status.html` |
+
+The production edge uses health-aware global routing across validators in
+New York, San Francisco, and Amsterdam. Public traffic is rate-limited at
+Nginx and removed from a backend automatically when `/healthz` fails.
+
 ```bash
 julian net start \
   --node-id validator-1 \
@@ -191,6 +205,11 @@ Start with the [Documentation Index](docs/README.md).
 - [Sparse Security Model](docs/security_model.md)
 - [RPC Operations](docs/rpc_operations.md)
 - [Production RPC Deployment](docs/production_rpc_deployment.md)
+- [Stable Public Network Roadmap](docs/network_roadmap.md)
+- [Node Operator Guide](docs/node_operator.md)
+- [Incident Response](docs/incident_response.md)
+- [Load Testing](docs/load_testing.md)
+- [Testnet to Mainnet](docs/testnet_mainnet.md)
 - [Orbital Observatory](docs/orbital_observatory.md)
 - [v0.3.0 Benchmark Report](benchmarks/v0.3.0/report.json)
 
@@ -200,6 +219,7 @@ Start with the [Documentation Index](docs/README.md).
 - Package: <https://crates.io/crates/power_house>
 - Repository: <https://github.com/JROChub/power_house>
 - Public verifier: <https://mfenx.com>
+- Network status: <https://mfenx.com/status.html>
 
 ## License
 

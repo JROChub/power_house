@@ -13,6 +13,8 @@ RPC_HEALTH_URL = os.environ.get("PH_RPC_HEALTH_URL", "")
 AUTH_TOKEN = os.environ.get("PH_BLOB_AUTH_TOKEN", "")
 STATE_PATH = os.environ.get("PH_HEALTH_STATE", "/var/lib/powerhouse/ops/health_state.json")
 STALL_MINUTES = int(os.environ.get("PH_METRICS_STALL_MINUTES", "20"))
+AUTO_RECOVERY = os.environ.get("PH_AUTO_RECOVERY", "1") not in {"0", "false", "False"}
+RECOVERY_COOLDOWN = int(os.environ.get("PH_RECOVERY_COOLDOWN_SECONDS", "900"))
 
 ALERT_SCRIPT = os.environ.get("PH_ALERT_SCRIPT", "/usr/local/lib/powerhouse/alert.sh")
 
@@ -120,6 +122,7 @@ except Exception as exc:
 
 last = state.get("last", {})
 last_seen = state.get("last_seen", now)
+last_recovery = int(state.get("last_recovery", 0))
 
 if metrics:
     current_finality = metrics.get("finality_events_total", 0.0)
@@ -140,11 +143,44 @@ if metrics:
             "anchors_verified_total": metrics.get("anchors_verified_total", 0.0),
         },
         "last_seen": last_seen,
+        "last_recovery": last_recovery,
         "updated": now,
     }
-    os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
-    with open(STATE_PATH, "w", encoding="utf-8") as fh:
-        json.dump(state, fh)
+
+recoverable = any(
+    message.startswith(("service ", "healthz failed", "rpc healthz failed"))
+    for message in errors
+)
+if errors and recoverable and AUTO_RECOVERY:
+    if now - last_recovery >= RECOVERY_COOLDOWN:
+        restart = subprocess.run(
+            ["systemctl", "restart", SERVICE],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        state["last_recovery"] = now
+        if restart.returncode == 0:
+            time.sleep(5)
+            recovered = call_systemctl(SERVICE) == "active"
+            recovered = recovered and http_get(HEALTH_URL, AUTH_TOKEN or None)[0] == 200
+            if RPC_HEALTH_URL:
+                recovered = recovered and http_get(RPC_HEALTH_URL)[0] == 200
+            if recovered:
+                errors.clear()
+                warnings.append(f"automatic recovery restarted {SERVICE}")
+            else:
+                errors.append(f"automatic recovery did not restore {SERVICE}")
+        else:
+            detail = restart.stderr.strip() or restart.stdout.strip()
+            errors.append(f"automatic recovery failed for {SERVICE}: {detail}")
+    else:
+        remaining = RECOVERY_COOLDOWN - (now - last_recovery)
+        warnings.append(f"automatic recovery cooldown active ({remaining}s remaining)")
+
+os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
+with open(STATE_PATH, "w", encoding="utf-8") as fh:
+    json.dump(state, fh)
 
 exit_code = 0
 if warnings:

@@ -1,0 +1,18 @@
+[Unit]
+Description=Power House public status API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/powerhouse/status-api.env
+ExecStart=/usr/local/lib/powerhouse/status_api.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

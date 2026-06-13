@@ -18,11 +18,35 @@ jobs:
         with:
           components: clippy,rustfmt
 
+      - name: Terraform toolchain
+        uses: hashicorp/setup-terraform@v4
+
       - name: Cache
         uses: Swatinem/rust-cache@v2
 
       - name: Format
         run: cargo fmt --check
+
+      - name: Release version and naming consistency
+        run: python3 scripts/check_release_consistency.py
+
+      - name: Operational configuration
+        run: |
+          bash -n \
+            scripts/deploy_rpc_cluster.sh \
+            scripts/deploy_monitoring_stack.sh \
+            scripts/provision_digitalocean_rpc.sh \
+            infra/ops/alert.sh
+          python3 -m py_compile \
+            scripts/check_release_consistency.py \
+            scripts/rpc_load_test.py \
+            infra/ops/healthcheck.py \
+            infra/monitoring/alert_receiver.py \
+            infra/monitoring/status_api.py
+          jq empty configs/network.json contrib/grafana/mfenx_powerhouse_dashboard.json
+          terraform -chdir=infra/terraform/digitalocean fmt -check
+          terraform -chdir=infra/terraform/digitalocean init -backend=false
+          terraform -chdir=infra/terraform/digitalocean validate
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings

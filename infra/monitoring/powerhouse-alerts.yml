@@ -1,0 +1,44 @@
+groups:
+  - name: powerhouse
+    rules:
+      - alert: PowerHouseValidatorDown
+        expr: up{job="powerhouse"} == 0
+        for: 2m
+        labels: { severity: "critical" }
+        annotations:
+          summary: "Power House validator {{ $labels.node }} is unavailable"
+
+      - alert: PowerHouseNodeExporterDown
+        expr: up{job="node"} == 0
+        for: 5m
+        labels: { severity: "warning" }
+        annotations:
+          summary: "System metrics unavailable for {{ $labels.node }}"
+
+      - alert: PowerHouseRpcUnavailable
+        expr: probe_success{job="blackbox-rpc"} == 0
+        for: 2m
+        labels: { severity: "critical" }
+        annotations:
+          summary: "LAX MFENX RPC publication probe is failing"
+
+      - alert: PowerHousePeerIsolation
+        expr: powerhouse_connected_peers < 1
+        for: 5m
+        labels: { severity: "critical" }
+        annotations:
+          summary: "Power House validator {{ $labels.node }} has no peers"
+
+      - alert: PowerHouseDiskPressure
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.15
+        for: 10m
+        labels: { severity: "warning" }
+        annotations:
+          summary: "Disk space below 15% on {{ $labels.node }}"
+
+      - alert: PowerHouseMemoryPressure
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+        for: 10m
+        labels: { severity: "warning" }
+        annotations:
+          summary: "Available memory below 10% on {{ $labels.node }}"

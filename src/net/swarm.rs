@@ -1650,6 +1650,7 @@ impl PayloadCache {
 
 #[derive(Default)]
 struct Metrics {
+    connected_peers: AtomicU64,
     anchors_received_total: AtomicU64,
     anchors_verified_total: AtomicU64,
     invalid_envelopes_total: AtomicU64,
@@ -1662,6 +1663,18 @@ struct Metrics {
 }
 
 impl Metrics {
+    fn peer_connected(&self) {
+        self.connected_peers.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn peer_disconnected(&self) {
+        let _ = self
+            .connected_peers
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
+                Some(value.saturating_sub(1))
+            });
+    }
+
     fn inc_anchors_received(&self) {
         self.anchors_received_total.fetch_add(1, Ordering::Relaxed);
     }
@@ -1704,7 +1717,8 @@ impl Metrics {
 
     fn render(&self) -> String {
         format!(
-            "# TYPE anchors_received_total counter\nanchors_received_total {}\n\
+            "# TYPE powerhouse_connected_peers gauge\npowerhouse_connected_peers {}\n\
+# TYPE anchors_received_total counter\nanchors_received_total {}\n\
 # TYPE anchors_verified_total counter\nanchors_verified_total {}\n\
 # TYPE invalid_envelopes_total counter\ninvalid_envelopes_total {}\n\
 # TYPE lrucache_evictions_total counter\nlrucache_evictions_total {}\n\
@@ -1713,6 +1727,7 @@ impl Metrics {
 # TYPE native_transactions_accepted_total counter\nnative_transactions_accepted_total {}\n\
 # TYPE native_blocks_finalized_total counter\nnative_blocks_finalized_total {}\n\
 # TYPE native_sync_blocks_applied_total counter\nnative_sync_blocks_applied_total {}\n",
+            self.connected_peers.load(Ordering::Relaxed),
             self.anchors_received_total.load(Ordering::Relaxed),
             self.anchors_verified_total.load(Ordering::Relaxed),
             self.invalid_envelopes_total.load(Ordering::Relaxed),
@@ -2583,6 +2598,26 @@ async fn handle_event(
     match event {
         SwarmEvent::NewListenAddr { address, .. } => {
             println!("QSYS|mod=NET|evt=LISTEN|addr={address}");
+        }
+        SwarmEvent::ConnectionEstablished {
+            peer_id,
+            num_established,
+            ..
+        } => {
+            if num_established.get() == 1 {
+                metrics.peer_connected();
+                println!("QSYS|mod=NET|evt=PEER_UP|peer={peer_id}");
+            }
+        }
+        SwarmEvent::ConnectionClosed {
+            peer_id,
+            num_established,
+            ..
+        } => {
+            if num_established == 0 {
+                metrics.peer_disconnected();
+                println!("QSYS|mod=NET|evt=PEER_DOWN|peer={peer_id}");
+            }
         }
         SwarmEvent::Behaviour(JrocBehaviourEvent::Gossipsub(event)) => match event {
             gossipsub::Event::Message {
@@ -3520,6 +3555,16 @@ mod tests {
             cache.insert(digest);
         }
         assert!(metrics.lrucache_evictions_total.load(Ordering::Relaxed) >= 1);
+    }
+
+    #[test]
+    fn connected_peer_metric_never_underflows() {
+        let metrics = Metrics::default();
+        metrics.peer_disconnected();
+        assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
+        metrics.peer_connected();
+        metrics.peer_disconnected();
+        assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
     }
 
     #[test]

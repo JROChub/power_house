@@ -41,6 +41,7 @@ required_bundle_files=(
   echo "run: cargo build --release --locked --features net --bin julian" >&2
   exit 1
 }
+EXPECTED_VERSION=$("$JULIAN_BIN" --version | awk '{print $2}')
 for file in "${required_bundle_files[@]}"; do
   [[ -f "$BUNDLE/$file" ]] || {
     echo "missing bundle file: $BUNDLE/$file" >&2
@@ -129,7 +130,6 @@ deploy_node() {
 set -euo pipefail
 state="/var/lib/powerhouse/$NODE"
 install -d -m 0750 "$state/logs"
-install -m 0755 /tmp/julian-powerhouse.new /usr/local/bin/julian
 install -m 0640 /etc/powerhouse/.powerhouse-common.env.upload /etc/powerhouse/powerhouse-common.env
 install -m 0640 "/etc/powerhouse/.powerhouse-$NODE.env.upload" "/etc/powerhouse/powerhouse-$NODE.env"
 install -m 0600 "/etc/powerhouse/.$NODE.key.upload" "/etc/powerhouse/$NODE.key"
@@ -147,7 +147,6 @@ else
 fi
 
 rm -f \
-  /tmp/julian-powerhouse.new \
   /etc/powerhouse/.powerhouse-common.env.upload \
   "/etc/powerhouse/.powerhouse-$NODE.env.upload" \
   "/etc/powerhouse/.$NODE.key.upload" \
@@ -166,23 +165,66 @@ done
 for index in 1 2 3; do
   node="validator-$index"
   host="${HOSTS[$((index - 1))]}"
-  echo "-> starting $node on $host"
-  ssh "${SSH_ARGS[@]}" "$host" \
-    "systemctl enable --now powerhouse-node@$node.service \
-      powerhouse-healthcheck@$node.timer \
-      powerhouse-backup@$node.timer \
-      powerhouse-log-export@$node.timer \
-      powerhouse-metrics@$node.timer"
+  echo "-> rolling $node on $host to $EXPECTED_VERSION"
+  ssh "${SSH_ARGS[@]}" "$host" env \
+    "NODE=$node" "EXPECTED_VERSION=$EXPECTED_VERSION" bash -s <<'REMOTE'
+set -euo pipefail
+service="powerhouse-node@$NODE.service"
+release_root=/opt/powerhouse/releases
+install -d -m 0750 "$release_root"
+backup="$release_root/julian-before-$EXPECTED_VERSION-$(date -u +%Y%m%dT%H%M%SZ)"
+
+if [[ -x /usr/local/bin/julian ]]; then
+  cp -p /usr/local/bin/julian "$backup"
+fi
+
+rollback() {
+  echo "rolling back $NODE" >&2
+  if [[ -x "$backup" ]]; then
+    install -m 0755 "$backup" /usr/local/bin/julian
+    systemctl restart "$service" || true
+  fi
+}
+trap rollback ERR
+
+install -m 0755 /tmp/julian-powerhouse.new /usr/local/bin/julian
+systemctl daemon-reload
+systemctl enable \
+  "$service" \
+  "powerhouse-healthcheck@$NODE.timer" \
+  "powerhouse-backup@$NODE.timer" \
+  "powerhouse-log-export@$NODE.timer" \
+  "powerhouse-metrics@$NODE.timer" >/dev/null
+systemctl restart "$service"
+systemctl start \
+  "powerhouse-healthcheck@$NODE.timer" \
+  "powerhouse-backup@$NODE.timer" \
+  "powerhouse-log-export@$NODE.timer" \
+  "powerhouse-metrics@$NODE.timer"
+
+for _ in $(seq 1 30); do
+  if systemctl is-active --quiet "$service" \
+    && curl --fail --silent http://127.0.0.1:8545/healthz >/dev/null; then
+    break
+  fi
+  sleep 2
 done
 
-for index in 1 2 3; do
-  node="validator-$index"
-  host="${HOSTS[$((index - 1))]}"
-  echo "-> verifying $node on $host"
-  ssh "${SSH_ARGS[@]}" "$host" \
-    "systemctl is-active powerhouse-node@$node.service && \
-     curl --fail --silent --show-error http://127.0.0.1:8545/healthz"
-  echo
+systemctl is-active --quiet "$service"
+curl --fail --silent --show-error http://127.0.0.1:8545/healthz >/dev/null
+actual=$(/usr/local/bin/julian --version | awk '{print $2}')
+[[ "$actual" == "$EXPECTED_VERSION" ]]
+client=$(
+  curl --fail --silent --show-error \
+    -H 'content-type: application/json' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"web3_clientVersion","params":[]}' \
+    http://127.0.0.1:8545
+)
+grep -q "power-house/$EXPECTED_VERSION/" <<<"$client"
+rm -f /tmp/julian-powerhouse.new
+trap - ERR
+echo "$NODE healthy on Power House $EXPECTED_VERSION"
+REMOTE
 done
 
-echo "RPC cluster deployment completed."
+echo "RPC cluster deployment completed at Power House $EXPECTED_VERSION."
