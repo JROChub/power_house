@@ -1,5 +1,16 @@
 # Release Notes
 
+## v0.3.5 - 2026-06-13
+
+### Monitoring Hotfix
+- Corrected Prometheus file-discovery permissions from private health-state
+  mode to world-readable public target metadata mode.
+- Retained `0640` protection for detailed validator health state.
+- Added regression assertions for validator discovery, system discovery, and
+  private state-file permissions.
+- Verified all three production validator and system targets are dynamically
+  discovered and reporting `up`.
+
 ## v0.3.4 - 2026-06-13
 
 ### Signed Validator Registry

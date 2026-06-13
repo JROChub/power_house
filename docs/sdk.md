@@ -1,6 +1,6 @@
 # SDKs
 
-Power House v0.3.4 ships matching Rust and zero-dependency Python interfaces
+Power House v0.3.5 ships matching Rust and zero-dependency Python interfaces
 for `.pha` and Rootprint v1.
 
 ## Rust

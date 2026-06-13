@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 import sys
 import tempfile
@@ -192,6 +193,9 @@ def main() -> None:
             assert all(item["identity_verified"] for item in health["validators"])
             assert len(json.loads(powerhouse_discovery.read_text())) == 3
             assert len(json.loads(node_discovery.read_text())) == 3
+            assert stat.S_IMODE(powerhouse_discovery.stat().st_mode) == 0o644
+            assert stat.S_IMODE(node_discovery.stat().st_mode) == 0o644
+            assert stat.S_IMODE(state.stat().st_mode) == 0o640
 
             servers[1].body = metric_body(
                 {**nodes[1], "peer_id": nodes[0]["peer_id"]}
