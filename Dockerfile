@@ -1,7 +1,7 @@
-FROM rust:1.78 as builder
+FROM rust:1.88-bookworm AS builder
 WORKDIR /app
 COPY . .
-RUN cargo build --release --features net --bin julian
+RUN cargo build --release --locked --features net --bin julian
 
 FROM debian:bookworm-slim
 ARG POWER_HOUSE_VERSION=0.3.2
