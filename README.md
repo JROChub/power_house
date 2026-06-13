@@ -10,7 +10,7 @@ combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
 proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
 and an optional quorum network.
 
-Current release: **v0.3.4**
+Current release: **v0.3.5**
 
 The primary workflow is **Power House + Rootprint**:
 

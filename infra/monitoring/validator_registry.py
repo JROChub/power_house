@@ -264,8 +264,8 @@ def reconcile(args: argparse.Namespace) -> dict:
         "validators": validators,
         "error": None,
     }
-    atomic_json(args.powerhouse_discovery, powerhouse_discovery)
-    atomic_json(args.node_discovery, node_discovery)
+    atomic_json(args.powerhouse_discovery, powerhouse_discovery, mode=0o644)
+    atomic_json(args.node_discovery, node_discovery, mode=0o644)
     atomic_json(args.state, state)
     return state
 

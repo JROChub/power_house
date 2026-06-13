@@ -4,7 +4,7 @@ COPY . .
 RUN cargo build --release --locked --features net --bin julian
 
 FROM debian:bookworm-slim
-ARG POWER_HOUSE_VERSION=0.3.4
+ARG POWER_HOUSE_VERSION=0.3.5
 LABEL org.opencontainers.image.title="Power House" \
   org.opencontainers.image.version="${POWER_HOUSE_VERSION}" \
   org.opencontainers.image.source="https://github.com/JROChub/power_house"

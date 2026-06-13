@@ -2521,7 +2521,7 @@ dependencies = [
 
 [[package]]
 name = "power_house"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
