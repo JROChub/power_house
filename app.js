@@ -56,10 +56,10 @@ const modes = {
     verifierPath: "CORE-ONLY DAG REPLAY",
     allocation: "EPA STRICTLY OPTIONAL",
     dossierArtifact: "ROOTPRINT v1 JSON",
-    kicker: "DETERMINISTIC PROVENANCE GRAPH",
+    kicker: "DETERMINISTIC IDENTITY GRAPH",
     description:
-      "Navigate, fork, merge, and verify proof history while optional external attachments remain outside core identity.",
-    title: "Verify the public provenance graph",
+      "Replay portable computational identity lineage while optional external attachments remain outside core validity.",
+    title: "Verify the public identity graph",
     detail:
       "The browser recalculates every PHA fingerprint and deterministic branch identifier.",
     button: "VERIFY GRAPH",
