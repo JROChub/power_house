@@ -1,6 +1,6 @@
 # Provenance Security Model
 
-Status: active security statement for Power House v0.3.5.
+Status: active security statement for Power House v0.3.6.
 
 This document defines the integrity boundary for Power House Archive (`.pha`)
 v1, Rootprint v1, and optional external proof attachments.
@@ -15,8 +15,8 @@ A `.pha` core fingerprint commits to:
 - public inputs;
 - the embedded Power House proof payload.
 
-The stored fingerprint and `external_proof_attachments` are excluded from the
-fingerprint projection.
+The stored fingerprint, `identity_root`, and `external_proof_attachments` are
+excluded from the fingerprint projection.
 
 Rootprint branch identity commits to:
 
@@ -39,6 +39,11 @@ rejected by `PhaArtifact::verify()`.
 Rust, Python, and browser implementations use domain-separated SHA-256 over
 canonical JSON. Canonical objects use lexicographically sorted keys, UTF-8,
 compact encoding, and integer-only JSON numbers.
+
+Identity verification separately binds the artifact `identity_root`, immutable
+identity envelope, and resolved Rootprint branch. This graph-context binding
+avoids a circular dependency between an artifact fingerprint and the branch ID
+derived from that fingerprint.
 
 ### EPA isolation
 
@@ -85,7 +90,8 @@ requires a caller-supplied verifier through
 
 ## Conformance And Mutation Tests
 
-The Rust integration suite and Python SDK consume `conformance/pha-v1`.
+The Rust integration suite and Python SDK consume `conformance/pha-v1` and
+`conformance/identity-v1`.
 Coverage includes:
 
 - valid core-only artifacts;
@@ -94,12 +100,14 @@ Coverage includes:
 - core-field mutation rejection;
 - EPA mutation isolation;
 - matching Rust and Python fingerprints and branch IDs;
+- matching Rust and Python identity replay state;
+- identity-root mutation and resolution rejection;
 - complete CLI navigation, fork, merge, and verification workflows.
 
 Run:
 
 ```bash
-cargo test --test provenance_protocol --test rootprint_cli
+cargo test --test provenance_protocol --test rootprint_cli --test identity_cli
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
@@ -110,6 +118,7 @@ Rootprint vector's core fingerprints, branch IDs, ordering, and reachability.
 
 - [Power House Archive v1](pha_spec.md)
 - [Rootprint v1](rootprint.md)
+- [Identity Layer](identity.md)
 - [SDKs](sdk.md)
 - [Verification Guide](verification_guide.md)
 - [Sparse Certificate Security Model](security_model.md)

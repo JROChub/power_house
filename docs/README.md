@@ -1,6 +1,6 @@
 # Power House Documentation
 
-This index is the authoritative map for Power House v0.3.5 documentation.
+This index is the authoritative map for Power House v0.3.6 documentation.
 
 ## Start Here
 
@@ -8,6 +8,7 @@ This index is the authoritative map for Power House v0.3.5 documentation.
 | --- | --- |
 | [Repository README](../README.md) | Installation, architecture, examples, and public links |
 | [Verification Guide](verification_guide.md) | Reproduce proof modes, conformance vectors, and rejection tests |
+| [Identity Layer](identity.md) | Immutable identity API, CLI, `.pha` binding, verification, and replay |
 | [Power House Archive v1](pha_spec.md) | Normative `.pha` core identity and optional EPA format |
 | [Rootprint v1](rootprint.md) | Normative branching, merging, navigation, and graph verification |
 | [Provenance Security Model](provenance_security.md) | Integrity boundary, assumptions, mutation behavior, and EPA isolation |
@@ -44,6 +45,7 @@ production configuration must never be committed.
 ## Benchmarks And Conformance
 
 - [`conformance/pha-v1`](../conformance/pha-v1): `.pha` and Rootprint vectors
+- [`conformance/identity-v1`](../conformance/identity-v1): identity and replay vectors
 - [`conformance/v1`](../conformance/v1): sparse proof vectors
 - [`benchmarks/v0.3.0/report.json`](../benchmarks/v0.3.0/report.json):
   measured v0.3.0 report

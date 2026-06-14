@@ -24,9 +24,9 @@ use power_house::net::{
 };
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
-    compute_fold_digest, julian_genesis_anchor, parse_log_file, read_fold_digest_hint,
-    reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor, Field, GeneralSumProof,
-    LedgerAnchor, ProofStats,
+    compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
+    read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor,
+    Field, GeneralSumProof, LedgerAnchor, ProofStats,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -63,6 +63,7 @@ fn print_cli_help() {
     println!("Usage: julian <command> [options]");
     println!();
     println!("Core commands:");
+    println!("  identity         Create, branch, merge, replay, and verify identities");
     println!("  rootprint        Navigate, fork, merge, and verify Power House provenance");
     println!("  node             Replay logs, derive anchors, and verify Merkle proofs");
     println!("  scale_sumcheck   Benchmark streaming sum-check verification");
@@ -112,6 +113,22 @@ fn print_rootprint_help() {
     println!("  equivalent <rootprint.json> <left> <right>");
     println!();
     println!("Rootprint commands verify Power House core data only.");
+}
+
+fn print_identity_help() {
+    println!("Usage: julian identity <create|fork|merge|verify|replay|equivalent> ...");
+    println!("  create <artifact.pha> --label <name> --identity-output <identity.json> \\");
+    println!("         --rootprint-output <rootprint.json> [--artifact-output <bound.pha>]");
+    println!("  fork <identity.json> <rootprint.json> <artifact.pha> --label <name> \\");
+    println!("       --identity-output <identity.json> [--rootprint-output <rootprint.json>]");
+    println!("  merge <left.identity.json> <right.identity.json> <rootprint.json> \\");
+    println!("        <artifact.pha> --label <name> --identity-output <identity.json> \\");
+    println!("        [--rootprint-output <rootprint.json>]");
+    println!("  verify <identity.json> <rootprint.json>");
+    println!("  replay <identity.json> <rootprint.json> [--output <state.json>]");
+    println!("  equivalent <left.identity.json> <right.identity.json> <rootprint.json>");
+    println!();
+    println!("Identity verification is deterministic and requires no network access.");
 }
 
 fn print_attach_external_proof_help() {
@@ -295,6 +312,13 @@ fn main() {
                 print_rootprint_help();
             }
         }
+        Some("identity") => {
+            if let Some(sub) = args.next() {
+                handle_identity(&sub, args.collect());
+            } else {
+                print_identity_help();
+            }
+        }
         Some("attach-external-proof") => {
             cmd_attach_external_proof(args.collect());
         }
@@ -375,6 +399,19 @@ fn handle_rootprint(sub: &str, tail: Vec<String>) {
     }
 }
 
+fn handle_identity(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_identity_help(),
+        "create" => cmd_identity_create(tail),
+        "fork" => cmd_identity_fork(tail),
+        "merge" => cmd_identity_merge(tail),
+        "verify" => cmd_identity_verify(tail),
+        "replay" => cmd_identity_replay(tail),
+        "equivalent" => cmd_identity_equivalent(tail),
+        _ => fatal(&format!("unknown identity subcommand: {sub}")),
+    }
+}
+
 fn read_pha(path: &Path) -> PhaArtifact {
     let contents = fs::read_to_string(path)
         .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
@@ -388,6 +425,17 @@ fn read_rootprint(path: &Path) -> Rootprint {
     serde_json::from_str(&contents).unwrap_or_else(|err| {
         fatal(&format!(
             "invalid Rootprint JSON in {}: {err}",
+            path.display()
+        ))
+    })
+}
+
+fn read_identity(path: &Path) -> Identity {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid identity JSON in {}: {err}",
             path.display()
         ))
     })
@@ -582,6 +630,221 @@ fn cmd_rootprint_equivalent(args: Vec<String>) {
     let equivalent = graph
         .equivalent(&args[1], &args[2])
         .unwrap_or_else(|err| fatal(&err.to_string()));
+    println!(
+        "{}",
+        if equivalent {
+            "equivalent"
+        } else {
+            "different"
+        }
+    );
+}
+
+fn cmd_identity_create(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    let mut artifact_path = None;
+    let mut label = None;
+    let mut identity_output = None;
+    let mut rootprint_output = None;
+    let mut artifact_output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--label" => label = Some(take_option(&mut iter, "--label")),
+            "--identity-output" => {
+                identity_output = Some(PathBuf::from(take_option(&mut iter, "--identity-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            value if artifact_path.is_none() => artifact_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let artifact_path = artifact_path.unwrap_or_else(|| fatal("artifact.pha is required"));
+    let label = label.unwrap_or_else(|| fatal("--label is required"));
+    let identity_output = identity_output.unwrap_or_else(|| fatal("--identity-output is required"));
+    let rootprint_output =
+        rootprint_output.unwrap_or_else(|| fatal("--rootprint-output is required"));
+
+    let (identity, graph) = Identity::create(label, read_pha(&artifact_path))
+        .unwrap_or_else(|error| fatal(&format!("identity creation failed: {error}")));
+    write_json(&identity_output, &identity);
+    write_json(&rootprint_output, &graph);
+    if let Some(path) = artifact_output {
+        write_json(&path, identity.pha());
+    }
+    println!("identity: {}", identity.rootprint_id());
+    println!("identity_file: {}", identity_output.display());
+    println!("rootprint: {}", rootprint_output.display());
+}
+
+fn cmd_identity_fork(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut label = None;
+    let mut identity_output = None;
+    let mut rootprint_output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--label" => label = Some(take_option(&mut iter, "--label")),
+            "--identity-output" => {
+                identity_output = Some(PathBuf::from(take_option(&mut iter, "--identity-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 3 {
+        fatal("fork requires <identity.json> <rootprint.json> <artifact.pha>");
+    }
+    let label = label.unwrap_or_else(|| fatal("--label is required"));
+    let identity_output = identity_output.unwrap_or_else(|| fatal("--identity-output is required"));
+    let graph_input = PathBuf::from(&positionals[1]);
+    let graph_output = rootprint_output.unwrap_or_else(|| graph_input.clone());
+    let parent = read_identity(Path::new(&positionals[0]));
+    let mut graph = read_rootprint(&graph_input);
+    let identity = parent
+        .fork(&mut graph, label, read_pha(Path::new(&positionals[2])))
+        .unwrap_or_else(|error| fatal(&format!("identity fork failed: {error}")));
+    write_json(&identity_output, &identity);
+    write_json(&graph_output, &graph);
+    println!("identity: {}", identity.rootprint_id());
+    println!("identity_file: {}", identity_output.display());
+    println!("rootprint: {}", graph_output.display());
+}
+
+fn cmd_identity_merge(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut label = None;
+    let mut identity_output = None;
+    let mut rootprint_output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--label" => label = Some(take_option(&mut iter, "--label")),
+            "--identity-output" => {
+                identity_output = Some(PathBuf::from(take_option(&mut iter, "--identity-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 4 {
+        fatal(
+            "merge requires <left.identity.json> <right.identity.json> <rootprint.json> <artifact.pha>",
+        );
+    }
+    let label = label.unwrap_or_else(|| fatal("--label is required"));
+    let identity_output = identity_output.unwrap_or_else(|| fatal("--identity-output is required"));
+    let graph_input = PathBuf::from(&positionals[2]);
+    let graph_output = rootprint_output.unwrap_or_else(|| graph_input.clone());
+    let left = read_identity(Path::new(&positionals[0]));
+    let right = read_identity(Path::new(&positionals[1]));
+    let mut graph = read_rootprint(&graph_input);
+    let identity = Identity::merge(
+        &left,
+        &right,
+        &mut graph,
+        label,
+        read_pha(Path::new(&positionals[3])),
+    )
+    .unwrap_or_else(|error| fatal(&format!("identity merge failed: {error}")));
+    write_json(&identity_output, &identity);
+    write_json(&graph_output, &graph);
+    println!("identity: {}", identity.rootprint_id());
+    println!("identity_file: {}", identity_output.display());
+    println!("rootprint: {}", graph_output.display());
+}
+
+fn cmd_identity_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    if args.len() != 2 {
+        fatal("verify requires <identity.json> <rootprint.json>");
+    }
+    let identity = read_identity(Path::new(&args[0]));
+    let graph = read_rootprint(Path::new(&args[1]));
+    identity
+        .verify(&graph)
+        .unwrap_or_else(|error| fatal(&format!("identity verification failed: {error}")));
+    println!(
+        "PASS: identity {} verified offline.",
+        identity.rootprint_id()
+    );
+}
+
+fn cmd_identity_replay(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 2 {
+        fatal("replay requires <identity.json> <rootprint.json>");
+    }
+    let identity = read_identity(Path::new(&positionals[0]));
+    let graph = read_rootprint(Path::new(&positionals[1]));
+    let state = identity
+        .replay(&graph)
+        .unwrap_or_else(|error| fatal(&format!("identity replay failed: {error}")));
+    if let Some(path) = output {
+        write_json(&path, &state);
+        println!("replay_state: {}", path.display());
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&state)
+                .unwrap_or_else(|error| fatal(&format!("failed to encode replay state: {error}")))
+        );
+    }
+}
+
+fn cmd_identity_equivalent(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_identity_help();
+        return;
+    }
+    if args.len() != 3 {
+        fatal("equivalent requires <left.identity.json> <right.identity.json> <rootprint.json>");
+    }
+    let left = read_identity(Path::new(&args[0]));
+    let right = read_identity(Path::new(&args[1]));
+    let graph = read_rootprint(Path::new(&args[2]));
+    let equivalent = left
+        .equivalent(&right, &graph)
+        .unwrap_or_else(|error| fatal(&format!("identity equivalence failed: {error}")));
     println!(
         "{}",
         if equivalent {

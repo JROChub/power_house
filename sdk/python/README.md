@@ -1,9 +1,10 @@
 # Power House Python SDK
 
-Version: 0.3.5
+Version: 0.3.6
 
-The default `power_house` namespace implements `.pha` v1 and Rootprint v1
-without requiring or interpreting external proof attachments.
+The default `power_house` namespace implements immutable identity operations,
+`.pha` v1, and Rootprint v1 without requiring network access or interpreting
+external proof attachments.
 
 ```python
 from power_house import create_artifact, new_rootprint, verify_rootprint
@@ -16,6 +17,16 @@ artifact = create_artifact(
 )
 graph = new_rootprint("main", artifact)
 verify_rootprint(graph)
+```
+
+Identity operations use the same canonical format and replay digest as Rust:
+
+```python
+from power_house import create_identity, replay_identity, verify_identity
+
+identity, graph = create_identity(artifact, "main")
+verify_identity(identity, graph)
+state = replay_identity(identity, graph)
 ```
 
 EPA transport helpers are deliberately separated:

@@ -1,6 +1,6 @@
 # LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.3.5.
+Release scope: Power House v0.3.6.
 
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
@@ -151,7 +151,7 @@ restarts one validator at a time, waits for RPC health, verifies
 Allow validator-tag traffic to TCP `9090`, `9100`, and `9101`, then run:
 
 ```bash
-POWER_HOUSE_RELEASE=0.3.5 \
+POWER_HOUSE_RELEASE=0.3.6 \
 SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
 scripts/deploy_monitoring_stack.sh \
   root@<validator-1-ipv4> \

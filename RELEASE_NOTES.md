@@ -1,5 +1,34 @@
 # Release Notes
 
+## v0.3.6 - 2026-06-14
+
+### Identity Layer
+- Added immutable `Identity` envelopes over `.pha` artifacts and validated
+  `RootprintId` values.
+- Added deterministic create, fork, merge, verify, replay, and equivalence
+  operations without requiring network connectivity.
+- Added `julian identity` commands for the complete identity lifecycle.
+
+### Rootprint And `.pha`
+- Added canonical Rootprint replay state and domain-separated replay
+  fingerprints.
+- Added deterministic whole-graph union and graph equivalence.
+- Canonicalized replay sequence from graph ancestry while retaining backward
+  compatibility with larger parent-before-child sequence gaps.
+- Added optional `.pha` `identity_root` bindings while preserving every legacy
+  v1 core fingerprint and keeping external attachments outside core identity.
+
+### SDK And Conformance
+- Added matching Rust and Python identity operations.
+- Added identity, graph, replay, CLI, merge reproducibility, mutation, and
+  cross-SDK conformance tests and vectors.
+- Added identity API examples and normative identity documentation.
+
+### Licensing
+- Standardized Power House v0.3.6 and later on `AGPL-3.0-only`.
+- Added `LICENSE-CHANGE.md` to preserve the licensing history of releases
+  through v0.3.5.
+
 ## v0.3.5 - 2026-06-13
 
 ### Monitoring Hotfix

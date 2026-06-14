@@ -5,6 +5,7 @@
 //! deliberately outside that core identity. They can be transported alongside
 //! the artifact without changing whether the Power House artifact is valid.
 
+use super::rootprint::RootprintId;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -109,6 +110,13 @@ pub struct PhaArtifact {
     pub provenance: Value,
     /// Embedded Power House proof and optional external attachments.
     pub embedded_proof: EmbeddedProof,
+    /// Optional Rootprint node binding for identity-aware workflows.
+    ///
+    /// This additive v1 field is excluded from `phx_fingerprint` to preserve
+    /// legacy fingerprints and avoid a circular hash with Rootprint branch
+    /// identifiers. Graph-context identity verification resolves the pointer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub identity_root: Option<RootprintId>,
     /// Domain-separated SHA-256 identity of core fields.
     pub phx_fingerprint: String,
 }
@@ -130,6 +138,7 @@ impl PhaArtifact {
                 proof,
                 external_proof_attachments: None,
             },
+            identity_root: None,
             phx_fingerprint: String::new(),
         };
         artifact.phx_fingerprint = artifact.calculate_phx_fingerprint()?;
@@ -138,8 +147,9 @@ impl PhaArtifact {
 
     /// Calculates the fingerprint over Power House core fields only.
     ///
-    /// `external_proof_attachments` and the stored `phx_fingerprint` are
-    /// intentionally excluded.
+    /// `external_proof_attachments`, `identity_root`, and the stored
+    /// `phx_fingerprint` are intentionally excluded. Identity-aware callers
+    /// validate the Rootprint pointer separately.
     pub fn calculate_phx_fingerprint(&self) -> Result<String, PhaError> {
         for (name, value) in [
             ("provenance", &self.provenance),
@@ -189,6 +199,11 @@ impl PhaArtifact {
                 "embedded proof protocol must not be empty".to_string(),
             ));
         }
+        if let Some(identity_root) = &self.identity_root {
+            RootprintId::new(identity_root.as_str()).map_err(|error| {
+                PhaError::InvalidCore(format!("identity_root is invalid: {error}"))
+            })?;
+        }
         validate_sha256(&self.phx_fingerprint)?;
         let expected = self.calculate_phx_fingerprint()?;
         if expected != self.phx_fingerprint {
@@ -198,6 +213,14 @@ impl PhaArtifact {
             });
         }
         Ok(())
+    }
+
+    /// Returns an identity-aware copy bound to a Rootprint node.
+    ///
+    /// The established v1 core fingerprint is unchanged.
+    pub fn with_identity_root(mut self, identity_root: RootprintId) -> Self {
+        self.identity_root = Some(identity_root);
+        self
     }
 
     /// Explicitly verifies attachment integrity after core verification.
@@ -419,6 +442,18 @@ mod tests {
             attached.verify_external_proof_attachments(),
             Err(PhaError::AttachmentDigestMismatch { .. })
         ));
+    }
+
+    #[test]
+    fn identity_root_is_additive_and_does_not_change_v1_fingerprint() {
+        let base = artifact();
+        let fingerprint = base.phx_fingerprint.clone();
+        let bound = base
+            .with_identity_root(RootprintId::new(format!("sha256:{}", "1".repeat(64))).unwrap());
+
+        assert_eq!(bound.calculate_phx_fingerprint().unwrap(), fingerprint);
+        assert_eq!(bound.phx_fingerprint, fingerprint);
+        assert!(bound.verify().is_ok());
     }
 
     #[test]

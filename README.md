@@ -5,15 +5,21 @@
 [![docs.rs](https://img.shields.io/docsrs/power_house)](https://docs.rs/power_house)
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
-Power House is a deterministic verification and provenance stack for Rust. It
-combines structured sum-check proofs, portable `.pha` artifacts, Rootprint
-proof-history graphs, commitment-bound sparse workloads, transcript anchoring,
-and an optional quorum network.
+Power House is a deterministic verification and provenance system for portable
+computational identities.
 
-Current release: **v0.3.5**
+`.pha` artifacts provide self-verifying identity containers with deterministic
+fingerprints that bind proof data, provenance metadata, and verification state.
 
-The primary workflow is **Power House + Rootprint**:
+Rootprint provides a directed acyclic graph (DAG) for identity lineage,
+branching, merging, replay, navigation, and equivalence verification.
 
+Current release: **v0.3.6**
+
+The primary workflow is **Power House Identity + Rootprint**:
+
+- **Identity** provides immutable create, fork, merge, verify, replay, and
+  equivalence operations over `.pha` and Rootprint.
 - **Power House Archive (`.pha`)** binds proof data and provenance to a
   deterministic `phx_fingerprint`.
 - **Rootprint** provides verifiable navigation, forks, merges, and equivalence
@@ -54,13 +60,14 @@ Install the `julian` CLI with the network feature:
 cargo install power_house --features net
 ```
 
-The primary provenance commands are:
+The primary identity commands are:
 
 ```bash
-julian rootprint init main.pha --label main --output proof.rootprint.json
-julian rootprint fork proof.rootprint.json main candidate.pha --label candidate
-julian rootprint navigate proof.rootprint.json candidate
-julian rootprint verify proof.rootprint.json
+julian identity create main.pha --label main \
+  --identity-output main.identity.json \
+  --rootprint-output proof.rootprint.json
+julian identity verify main.identity.json proof.rootprint.json
+julian identity replay main.identity.json proof.rootprint.json
 ```
 
 ## Verification Profiles
@@ -117,6 +124,8 @@ The complete procedure and expected rejection behavior are documented in the
 
 ## Primary Rust APIs
 
+- [`Identity`](https://docs.rs/power_house/latest/power_house/identity/struct.Identity.html):
+  immutable `.pha` and Rootprint identity abstraction.
 - [`PhaArtifact`](https://docs.rs/power_house/latest/power_house/provenance/pha/struct.PhaArtifact.html):
   portable Power House core identity.
 - [`Rootprint`](https://docs.rs/power_house/latest/power_house/provenance/rootprint/struct.Rootprint.html):
@@ -201,6 +210,7 @@ Use `scripts/test_native_rpc_cluster.sh` to verify replica finality and
 
 Start with the [Documentation Index](docs/README.md).
 
+- [Identity Layer](docs/identity.md)
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
 - [Provenance Security Model](docs/provenance_security.md)
@@ -229,4 +239,6 @@ Start with the [Documentation Index](docs/README.md).
 
 ## License
 
-MIT OR BSD-2-Clause.
+Power House v0.3.6 and later is licensed under
+[AGPL-3.0-only](LICENSE). Earlier releases retain their original licenses; see
+[LICENSE-CHANGE.md](LICENSE-CHANGE.md).

@@ -2,7 +2,7 @@
 
 ## Status
 
-Normative for Power House v0.3.5.
+Normative for Power House v0.3.6.
 
 This document defines the portable Power House Archive v1 JSON format. The
 schema identifier is:
@@ -26,6 +26,7 @@ Power House identity, proof validity, branching, or equivalence.
     "public_inputs": {},
     "proof": {}
   },
+  "identity_root": "sha256:<optional Rootprint node ID>",
   "phx_fingerprint": "sha256:<64 lowercase hex characters>"
 }
 ```
@@ -35,6 +36,7 @@ Power House identity, proof validity, branching, or equivalence.
 | `schema` | yes | Must equal `power-house/pha/v1`. |
 | `provenance` | yes | JSON provenance committed by the core fingerprint. |
 | `embedded_proof` | yes | Power House protocol identifier, public inputs, proof, and optional attachments. |
+| `identity_root` | no | Identity-aware Rootprint node reference, verified in graph context. |
 | `phx_fingerprint` | yes | Domain-separated SHA-256 identity of core fields. |
 
 ## Embedded proof
@@ -104,16 +106,24 @@ sha256(
 The following are excluded:
 
 - `phx_fingerprint` itself
+- `identity_root`
 - `embedded_proof.external_proof_attachments`
 - every EPA payload, digest, verifier hint, and metadata value
 
 Adding, removing, reordering, or mutating EPA data cannot change the core
 fingerprint. Mutating a core field must change it.
 
+`identity_root` is an additive lineage pointer and is also excluded to preserve
+all pre-v0.3.6 v1 fingerprints. Including a Rootprint node ID in the artifact
+fingerprint that determines that same node ID would be circular. The identity
+layer resolves and verifies this pointer against a Rootprint graph.
+
 ## Verification modes
 
 `PhaArtifact::verify()` validates only the Power House core schema and
-fingerprint. It does not read EPA data.
+fingerprint. It does not read EPA data. When present, it also validates the
+syntax of `identity_root`, but graph resolution is performed by
+`Identity::verify()`.
 
 `PhaArtifact::verify_external_proof_attachments()` first validates the core,
 then explicitly checks EPA structure and payload integrity.
@@ -140,7 +150,8 @@ cargo run --example pha_conformance_vectors
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
-See [Rootprint v1](rootprint.md) for graph identity and
-[SDKs](sdk.md) for cross-language interfaces. Security assumptions and
-mutation behavior are defined in the
+See [Rootprint v1](rootprint.md) for graph identity,
+[Identity](identity.md) for graph-bound artifact verification, and
+[SDKs](sdk.md) for cross-language interfaces. Security assumptions and mutation
+behavior are defined in the
 [Provenance Security Model](provenance_security.md).

@@ -1,7 +1,7 @@
 # SDKs
 
-Power House v0.3.5 ships matching Rust and zero-dependency Python interfaces
-for `.pha` and Rootprint v1.
+Power House v0.3.6 ships matching Rust and zero-dependency Python interfaces
+for identities, `.pha` v1, Rootprint v1, and deterministic replay.
 
 ## Rust
 
@@ -46,6 +46,8 @@ The default Python namespace contains no EPA functions. Optional attachment
 transport requires an explicit import from `power_house.external`.
 
 Both implementations consume the vectors in `conformance/pha-v1`.
+Identity and replay outputs are cross-checked through
+`conformance/identity-v1`.
 
 ## Core API mapping
 
@@ -59,13 +61,23 @@ Both implementations consume the vectors in `conformance/pha-v1`.
 | Merge | `Rootprint::merge` | `merge` |
 | Compare core identity | `Rootprint::equivalent` | `equivalent` |
 | Verify graph | `Rootprint::verify` | `verify_rootprint` |
+| Replay graph | `Rootprint::replay` | `replay_rootprint` |
+| Merge graphs | `provenance::merge_rootprints` | `merge_rootprints` |
+| Create identity | `Identity::create` | `create_identity` |
+| Fork identity | `Identity::fork` | `fork_identity` |
+| Merge identity | `Identity::merge` | `merge_identity` |
+| Verify identity | `Identity::verify` | `verify_identity` |
+| Replay identity | `Identity::replay` | `replay_identity` |
+| Compare identities | `Identity::equivalent` | `equivalent_identity` |
 
 ## Conformance
 
 ```bash
 cargo run --example pha_conformance_vectors
+cargo run --example identity_conformance_vectors
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
-The suite verifies matching fingerprints and branch IDs, rejects core
-mutations, and confirms that EPA mutation remains outside core validity.
+The suite verifies matching fingerprints, branch IDs, replay state
+fingerprints, and identity outcomes; rejects core and binding mutations; and
+confirms that EPA mutation remains outside core validity.

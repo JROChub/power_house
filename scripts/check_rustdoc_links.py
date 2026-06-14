@@ -11,6 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_RS_PREFIX = "https://docs.rs/power_house/latest/power_house/"
 EXPECTED_API_PAGES = (
+    "identity/struct.Identity.html",
     "provenance/pha/struct.PhaArtifact.html",
     "provenance/rootprint/struct.Rootprint.html",
     "macro.prove_with_rootprint.html",
