@@ -1,0 +1,16 @@
+{
+  "files": {
+    "identity-valid.json": "ed36921b42e255ca27325eb5b8d60e961260d8597ba4c076305871a69fdb9aa2",
+    "replay-valid.json": "d4fb86fcd63335410d6ede596a3e5408f59494b2a8034278f1178a18ceb813d1",
+    "rootprint-valid.json": "8daa5943c53635f898b42930709ef3a814dfddd527ea002738f5d7f06a8b5b84"
+  },
+  "identity_root": "sha256:e0c2daa3b270e158999631bb1a1419f9390d6906081a5f9252f2b8b45cff49ff",
+  "requirements": {
+    "fingerprint_deterministic": true,
+    "graph_dag": true,
+    "network_required": false,
+    "replay_deterministic": true
+  },
+  "schema": "power-house-identity-conformance-v1",
+  "state_fingerprint": "sha256:fbd340bf07a8d9ed2b2d69dde73ff2575802eee7553c5d9a6922479d1d94b6cc"
+}

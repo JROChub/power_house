@@ -1,6 +1,6 @@
 # Rootprint v1
 
-Status: normative for Power House v0.3.5.
+Status: normative for Power House v0.3.6.
 
 Rootprint is the primary Power House provenance workflow. It is a deterministic
 directed acyclic graph whose nodes carry `.pha` artifacts and whose edges record
@@ -18,6 +18,9 @@ External proof attachments are never inputs to branch IDs, graph verification,
 navigation, equivalence, forking, or merging. A branch can carry EPA because
 its `.pha` artifact can carry EPA, but Rootprint does not require or interpret
 it.
+
+Identity-aware `identity_root` pointers are also excluded from branch IDs and
+logical replay. They are resolved by the identity layer.
 
 ## Document model
 
@@ -85,6 +88,10 @@ prove_with_rootprint!(
 )?;
 ```
 
+`Rootprint::replay()` reconstructs canonical logical state. The module-level
+`merge(left, right)` deterministically unions valid graphs with the same root,
+and `equivalent(left, right)` compares replay outcomes.
+
 ## CLI workflow
 
 ```bash
@@ -148,7 +155,11 @@ Core verification requires:
 7. every parent has a lower sequence than its child;
 8. every branch is reachable from the root.
 
-Canonical vectors are published under `conformance/pha-v1`.
+Replay derives canonical depth from parent links, so older valid graphs with
+larger monotonic sequence gaps reconstruct the same logical state.
+
+Canonical vectors are published under `conformance/pha-v1` and
+`conformance/identity-v1`.
 
 Security assumptions and mutation behavior are defined in the
 [Provenance Security Model](provenance_security.md).

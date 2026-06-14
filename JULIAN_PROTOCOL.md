@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.3.5 - June 2026
+Version 0.3.6 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -37,6 +37,7 @@ The JULIAN Protocol is implemented in the `power_house` crate. The key architect
 | `GeneralSumProof` | Non-interactive sum-check prover/verifier with deterministic Fiat–Shamir transcripts | `src/sumcheck.rs` |
 | `PhaArtifact` | Portable proof and provenance identity with optional non-core attachments | `src/provenance/pha.rs` |
 | `Rootprint` | Deterministic provenance graph for navigation, forks, merges, and equivalence | `src/provenance/rootprint.rs` |
+| `Identity` | Immutable `.pha` and Rootprint abstraction with deterministic replay | `src/identity/mod.rs` |
 | `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/julian.rs` |
 | Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/julian.rs` |
 | Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/julian.rs` |

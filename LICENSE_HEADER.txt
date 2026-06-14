@@ -1,2 +1,2 @@
-// SPDX-License-Identifier: MIT OR BSD-2-Clause
+// SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 mfenx LLC

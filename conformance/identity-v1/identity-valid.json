@@ -1,0 +1,22 @@
+{
+  "pha": {
+    "schema": "power-house/pha/v1",
+    "provenance": {
+      "producer": "power-house-identity-conformance",
+      "stage": "accepted"
+    },
+    "embedded_proof": {
+      "protocol": "power-house/identity-conformance/v1",
+      "public_inputs": {
+        "claim": 36,
+        "stage": "accepted"
+      },
+      "proof": {
+        "accepted": true
+      }
+    },
+    "identity_root": "sha256:e0c2daa3b270e158999631bb1a1419f9390d6906081a5f9252f2b8b45cff49ff",
+    "phx_fingerprint": "sha256:fb7c00a6f26df423ac1a8bb42a1a562bf9fe852d3c04ba31383a355df50a4ce9"
+  },
+  "rootprint_id": "sha256:e0c2daa3b270e158999631bb1a1419f9390d6906081a5f9252f2b8b45cff49ff"
+}

@@ -3,8 +3,10 @@
 //! Deterministic verification, portable proof provenance, and optional quorum
 //! networking.
 //!
-//! Power House combines five interoperable layers:
+//! Power House combines six interoperable layers:
 //!
+//! - [`identity`] provides immutable computational identities over `.pha` and
+//!   Rootprint.
 //! - [`provenance`] defines Power House Archive (`.pha`) and Rootprint v1.
 //! - [`sumcheck`] implements dense, streaming, constant, and seeded-affine
 //!   sum-check workflows.
@@ -94,6 +96,7 @@ pub mod consensus;
 mod data;
 pub mod economics;
 mod field;
+pub mod identity;
 mod io;
 pub mod julian;
 mod log_parser;
@@ -121,6 +124,7 @@ pub use data::{
     TranscriptDigest,
 };
 pub use field::Field;
+pub use identity::{Identity, IdentityError, IdentityState};
 pub use io::write_text_series;
 pub use julian::{
     compute_fold_digest, julian_genesis_anchor, julian_genesis_hash, reconcile_anchors,

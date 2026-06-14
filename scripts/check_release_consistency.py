@@ -17,6 +17,7 @@ ACTIVE_DOCS = [
     "docs/README.md",
     "docs/committed_workload.md",
     "docs/hyperscale_proof.md",
+    "docs/identity.md",
     "docs/incident_response.md",
     "docs/load_testing.md",
     "docs/network_roadmap.md",
@@ -69,12 +70,39 @@ def main() -> int:
     release = f"v{version}"
 
     require(errors, cargo_lock_version() == version, "Cargo.lock package version differs")
+    require(
+        errors,
+        cargo["package"].get("license") == "AGPL-3.0-only",
+        "Cargo license is not AGPL-3.0-only",
+    )
+    require(
+        errors,
+        len(cargo["package"].get("keywords", [])) <= 5,
+        "Cargo keywords exceed the crates.io limit",
+    )
+    require(errors, (ROOT / "LICENSE").is_file(), "LICENSE is missing")
+    require(
+        errors,
+        "GNU AFFERO GENERAL PUBLIC LICENSE" in read("LICENSE"),
+        "LICENSE is not the GNU Affero GPL v3 text",
+    )
+    require(
+        errors,
+        (ROOT / "LICENSE-CHANGE.md").is_file(),
+        "LICENSE-CHANGE.md is missing",
+    )
 
     python_project = tomllib.loads(read("sdk/python/pyproject.toml"))
     require(
         errors,
         python_project["project"]["version"] == version,
         "Python package version differs",
+    )
+    require(
+        errors,
+        python_project["project"].get("license", {}).get("text")
+        == "AGPL-3.0-only",
+        "Python package license differs",
     )
     require(
         errors,

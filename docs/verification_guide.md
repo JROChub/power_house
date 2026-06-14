@@ -1,6 +1,6 @@
 # Verification Guide
 
-This guide reproduces the Power House v0.3.5 provenance and proof workflows.
+This guide reproduces the Power House v0.3.6 provenance and proof workflows.
 
 ## Requirements
 
@@ -26,6 +26,7 @@ Regenerate the canonical artifacts:
 
 ```bash
 cargo run --example pha_conformance_vectors
+cargo run --example identity_conformance_vectors
 git diff --exit-code -- \
   conformance/pha-v1 \
   publicpower/artifacts/rootprint-valid.json
@@ -35,6 +36,7 @@ Run Rust and Python core-independence tests:
 
 ```bash
 cargo test --test provenance_protocol --test rootprint_cli
+cargo test --test identity_cli
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 

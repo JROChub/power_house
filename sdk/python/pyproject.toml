@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "power-house-sdk"
-version = "0.3.5"
-description = "Zero-dependency Python SDK for Power House Archive and Rootprint v1"
+version = "0.3.6"
+description = "Zero-dependency Python SDK for Power House identities, Archive, and Rootprint v1"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT OR BSD-2-Clause" }
+license = { text = "AGPL-3.0-only" }
 authors = [{ name = "MFENX LLC" }]
 classifiers = [
+  "License :: OSI Approved :: GNU Affero General Public License v3",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
 ]
