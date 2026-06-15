@@ -290,6 +290,7 @@ const el = Object.fromEntries(
     "monument-index",
     "network-console",
     "luminous-explorer",
+    "luminous-toggle",
     "luminous-core-state",
     "luminous-sidecar-state",
     "luminous-packet-count",
@@ -323,6 +324,7 @@ const state = {
   luminousGraph: null,
   luminousSidecar: null,
   luminousBranch: null,
+  luminousExpanded: false,
 };
 
 const formatterCache = new Map();
@@ -356,6 +358,8 @@ let animationFrame;
 let audioContext;
 let latestSolar = null;
 let autoProofTimer = 0;
+let sceneResizeFrame = 0;
+let sceneResizeObserver;
 const networkLinks = [];
 const networkCityIndexes = [0, 3, 7];
 
@@ -1024,9 +1028,9 @@ async function createEarth() {
 }
 
 function createOrbitTrack(name, index) {
-  const radius = [1.78, 1.98, 2.17, 2.36][index];
-  const tiltX = [0.4, 1.04, -0.68, 0.78][index];
-  const tiltZ = [0.16, -0.3, 0.52, -0.62][index];
+  const radius = [1.72, 1.88, 2.04, 2.2, 2.36][index];
+  const tiltX = [0.4, 1.04, -0.68, 0.78, -1.02][index];
+  const tiltZ = [0.16, -0.3, 0.52, -0.62, 0.34][index];
   const points = [];
   for (let point = 0; point <= 256; point += 1) {
     const angle = (point / 256) * Math.PI * 2;
@@ -1162,7 +1166,10 @@ async function initScene() {
   renderer.setPixelRatio(
     Math.min(window.devicePixelRatio, window.innerWidth <= 760 ? 1.15 : 1.5),
   );
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  const canvasBounds = el.canvas.getBoundingClientRect();
+  const canvasWidth = Math.max(1, Math.round(canvasBounds.width));
+  const canvasHeight = Math.max(1, Math.round(canvasBounds.height));
+  renderer.setSize(canvasWidth, canvasHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.28;
@@ -1170,7 +1177,7 @@ async function initScene() {
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x020607, 0.022);
-  camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(42, canvasWidth / canvasHeight, 0.1, 100);
   camera.position.set(0, 0, state.zoom);
 
   createStars();
@@ -1184,6 +1191,10 @@ async function initScene() {
     showToast("Earth textures could not load; verification remains available.");
   }
   bindGlobeInput();
+  if ("ResizeObserver" in window) {
+    sceneResizeObserver = new ResizeObserver(scheduleSceneResize);
+    sceneResizeObserver.observe(el.canvas);
+  }
   selectMode(state.mode, false);
   selectCity(state.activeCity, false);
   setBootProgress(90);
@@ -1377,13 +1388,31 @@ function animate(time = 0) {
 
 function resize() {
   if (!renderer || !camera) return;
+  const bounds = el.canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.round(bounds.width));
+  const height = Math.max(1, Math.round(bounds.height));
   renderer.setPixelRatio(
     Math.min(window.devicePixelRatio, window.innerWidth <= 760 ? 1.15 : 1.5),
   );
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
   camera.fov = window.innerWidth <= 760 ? 50 : 42;
   camera.updateProjectionMatrix();
+}
+
+function scheduleSceneResize() {
+  window.cancelAnimationFrame(sceneResizeFrame);
+  sceneResizeFrame = window.requestAnimationFrame(resize);
+}
+
+function setLuminousExpanded(expanded) {
+  state.luminousExpanded = Boolean(expanded);
+  document.body.classList.toggle("luminous-expanded", state.luminousExpanded);
+  el.luminousToggle.setAttribute("aria-expanded", String(state.luminousExpanded));
+  const action = state.luminousExpanded ? "Collapse" : "Expand";
+  el.luminousToggle.setAttribute("aria-label", `${action} proof explorer`);
+  el.luminousToggle.title = `${action} proof explorer`;
+  scheduleSceneResize();
 }
 
 function updateOrbitSelection() {
@@ -1429,6 +1458,7 @@ function selectMode(name, withTone = true) {
   state.mode = name;
   state.lastResult = null;
   document.body.classList.toggle("luminous-mode", name === "rootprint");
+  scheduleSceneResize();
   const mode = modes[name];
   document.documentElement.style.setProperty(
     "--mode-color",
@@ -2518,6 +2548,12 @@ function bindInterface() {
   el.observatoryClose.addEventListener("click", () =>
     document.body.classList.remove("observatory-open"),
   );
+  el.luminousToggle.addEventListener("click", () =>
+    setLuminousExpanded(!state.luminousExpanded),
+  );
+  el.luminousExplorer.addEventListener("transitionend", (event) => {
+    if (event.propertyName === "height") resize();
+  });
   el.evaluationToggle.addEventListener("click", () => {
     document.body.classList.remove("observatory-open");
     document.body.classList.add("evaluation-open");
