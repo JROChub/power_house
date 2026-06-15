@@ -1,0 +1,131 @@
+{
+  "schema": "power-house/observatory-sidecar/v1",
+  "rootprint_state_fingerprint": "sha256:a3390eead1a21bbdd06259cd48c1ab09d7fce3595095115c06cfa51f1f91bccb",
+  "nodes": {
+    "sha256:699a058e048208946b879ffe7b59d538f1e2586677585d3adb63e783d8480fd4": {
+      "bit_width": 4096,
+      "claim_id": "vision-frame-7842",
+      "packet_digest": "sha256:237aeade1f2f00a062b5f5025347610d0f381dfb224830e912b64d733ced14d5",
+      "rounds": [
+        {
+          "component": "sensor-processing",
+          "note": "Raw sensor frame converted into normalized features",
+          "payload_sha256": "sha256:ce16e9decc84edb9429320d8e0570d8b9f83f726cda7b22886d730c003730bc4",
+          "round": 0
+        },
+        {
+          "component": "calibration",
+          "note": "Lens and exposure calibration passed",
+          "payload_sha256": "sha256:a12086e5867d6c6369d0b85354a174273d15fb17adb49c37bafe313d544ed590",
+          "round": 1
+        }
+      ],
+      "schema": "slbit/viz-packet/v1",
+      "seed_commitment": "sha256:8c78eb3c7c560f4e8de955ff0027897687e77a7c2070ba81787eaaaa9c2c0da4",
+      "transcript_digest": "sha256:c0b83fac5418ea6c84615463e57f61bf4fc576eb95ccba57c4900e71c3f1da70",
+      "viz_hints": {
+        "color": [
+          0,
+          200,
+          255
+        ],
+        "icon": "camera",
+        "layer_name": "sensor-ingest"
+      }
+    },
+    "sha256:7741da3abefbe66fcd8bd547be0f5c16544154437b031b93a78da7266f38e4ba": {
+      "bit_width": 4096,
+      "claim_id": "independent-evidence-audit",
+      "packet_digest": "sha256:5d1e48bf8ab8f31770228a3bb1c322ce95f4000dada0e270baac6d71a9995046",
+      "rounds": [
+        {
+          "component": "provenance-index",
+          "note": "Source frame and model revision matched the audit record",
+          "payload_sha256": "sha256:c0024ca533f6f219d77d4f1d07f6e43bf6ea925f25e709d89e83c202e94fa069",
+          "round": 0
+        },
+        {
+          "component": "policy-check",
+          "note": "Independent evidence satisfied the acceptance policy",
+          "payload_sha256": "sha256:87683fe848ca2be9ca9569307c0277f2e9e8a6295b94762f53d6c7c6413646d0",
+          "round": 1
+        }
+      ],
+      "schema": "slbit/viz-packet/v1",
+      "seed_commitment": "sha256:bc25bf7e0f3634eddbded5b460814e65ca49aab10528e314589410d75e66b9f3",
+      "transcript_digest": "sha256:4a7d6643ecea7836c0968b8418355b38538f3b6ecf4d270cd5a5413c9cd311c5",
+      "viz_hints": {
+        "color": [
+          255,
+          193,
+          77
+        ],
+        "icon": "database",
+        "layer_name": "evidence-audit"
+      }
+    },
+    "sha256:8ff2524d624945a81bc89934213b2652672f827bdd6fd32b5cce9be987231711": {
+      "bit_width": 4096,
+      "claim_id": "classification-accepted",
+      "packet_digest": "sha256:7ac20291f58739e3130cec705fe2c1de6a000458d0996f5ac2bf7c8c019303c4",
+      "rounds": [
+        {
+          "component": "reconciliation",
+          "note": "Candidate and audit branches reconciled",
+          "payload_sha256": "sha256:90b4daf08ee27263c6c76f5ecf0dab9706a31f270043b4a020eb7e3b8be6c81c",
+          "round": 0
+        },
+        {
+          "component": "classification",
+          "note": "Stop-sign classification completed and accepted",
+          "payload_sha256": "sha256:08767770bf524d4eecc85f464963fbc1dd13cd62c48ed95179322f3e9f6776aa",
+          "round": 1
+        }
+      ],
+      "schema": "slbit/viz-packet/v1",
+      "seed_commitment": "sha256:048dfe20addc0ed18af990dcb085ec0fd83768449b98aef2084e25d7b3ddd157",
+      "transcript_digest": "sha256:3edf074120d589838b47d3f9e825b86c08044f83b686d3f86815db51c8e34073",
+      "viz_hints": {
+        "color": [
+          255,
+          113,
+          103
+        ],
+        "icon": "bot",
+        "layer_name": "classification"
+      }
+    },
+    "sha256:f223e4ec43c132b0729dbf9b00ca32a639d00c00278bc71c5adc340d663e6a17": {
+      "bit_width": 4096,
+      "claim_id": "stop-sign-candidate",
+      "packet_digest": "sha256:f5612cf1116cdc5982d1804c9df83ecfd0edf336c14f97a4c4994fc8729dfcb8",
+      "rounds": [
+        {
+          "component": "feature-routing",
+          "note": "Edges and color regions entered attention head 7",
+          "payload_sha256": "sha256:97334fb04378798e5749ce0306df43fb8bc79395b4b412129d284eba79246ca3",
+          "round": 0
+        },
+        {
+          "component": "attention-head-7",
+          "note": "Stop-sign feature strongly activated",
+          "payload_sha256": "sha256:46e2660e9fab453c6fb15ec884a986568dc4aa18da2f8a08b8827d8f1f1a996b",
+          "round": 1
+        }
+      ],
+      "schema": "slbit/viz-packet/v1",
+      "seed_commitment": "sha256:5523b5267d5d0db86f60cebba6a359781989b9ef1a2b4813399efd2452812557",
+      "transcript_digest": "sha256:b21947b6d8bbf5e5bd722399e0be31adb793a5b6b824a7e2a72268cdfc7db294",
+      "viz_hints": {
+        "color": [
+          185,
+          255,
+          61
+        ],
+        "icon": "brain-circuit",
+        "layer_name": "attention-head-7"
+      }
+    }
+  },
+  "sidecar_sha256": "sha256:ce6d2d30ac25d5e3d34ac4b747ec3750bbb1d13c734423aad3c4de82fcd7c780"
+}

@@ -106,6 +106,13 @@ jobs:
           cargo run --example identity_conformance_vectors
           git diff --exit-code -- conformance/identity-v1
 
+      - name: Reproduce slbit Observatory conformance vectors
+        run: |
+          cargo run --example slbit_conformance_vectors
+          git diff --exit-code -- \
+            conformance/slbit-v1 \
+            publicpower/artifacts/luminous-valid.json
+
       - name: Cross-language PHA and Rootprint verification
         run: PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 

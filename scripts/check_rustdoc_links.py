@@ -14,6 +14,7 @@ EXPECTED_API_PAGES = (
     "identity/struct.Identity.html",
     "provenance/pha/struct.PhaArtifact.html",
     "provenance/rootprint/struct.Rootprint.html",
+    "observatory/struct.ObservatorySidecar.html",
     "macro.prove_with_rootprint.html",
     "sumcheck/struct.GeneralSumProof.html",
     "sparse_sumcheck/struct.SeededSparseProof.html",

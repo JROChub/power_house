@@ -1,6 +1,6 @@
 # Provenance Security Model
 
-Status: active security statement for Power House v0.3.6.
+Status: active security statement for Power House v0.3.7.
 
 This document defines the integrity boundary for Power House Archive (`.pha`)
 v1, Rootprint v1, and optional external proof attachments.
@@ -57,6 +57,20 @@ Adding, removing, reordering, or mutating EPA data does not alter:
 EPA payload integrity is checked only through an explicit attachment
 verification operation.
 
+### Observatory isolation
+
+An Observatory sidecar commits to:
+
+- a canonical Rootprint replay fingerprint;
+- exact Rootprint branch IDs;
+- opaque semantic packet objects;
+- a domain-separated sidecar SHA-256 digest.
+
+Sidecars and `slbit` packets are not stored in `.pha` core projections or
+Rootprint branches. Adding, removing, or mutating semantic data cannot change
+Power House verification outcomes. A mutation rejects sidecar integrity while
+the unchanged Power House graph continues to verify.
+
 ### Graph mutation rejection
 
 Rootprint verification rejects:
@@ -103,16 +117,21 @@ Coverage includes:
 - matching Rust and Python identity replay state;
 - identity-root mutation and resolution rejection;
 - complete CLI navigation, fork, merge, and verification workflows.
+- sidecar replay-binding, branch-reference, digest, and isolation behavior;
+- deterministic `slbit` transcript and packet verification in the browser.
 
 Run:
 
 ```bash
 cargo test --test provenance_protocol --test rootprint_cli --test identity_cli
+cargo test --test observatory_protocol --test observatory_cli
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 ```
 
 The browser verifier at `mfenx.com` independently recalculates the published
 Rootprint vector's core fingerprints, branch IDs, ordering, and reachability.
+It separately verifies the published Observatory sidecar and `slbit` packet
+digests before rendering semantic transcripts.
 
 ## Related Documents
 
@@ -121,4 +140,5 @@ Rootprint vector's core fingerprints, branch IDs, ordering, and reachability.
 - [Identity Layer](identity.md)
 - [SDKs](sdk.md)
 - [Verification Guide](verification_guide.md)
+- [Power House + slbit Observatory](slbit.md)
 - [Sparse Certificate Security Model](security_model.md)

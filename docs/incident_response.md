@@ -1,6 +1,6 @@
 # MFENX Incident Response
 
-Release scope: Power House v0.3.6.
+Release scope: Power House v0.3.7.
 
 ## Severity
 

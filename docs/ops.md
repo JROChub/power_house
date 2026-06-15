@@ -1,9 +1,9 @@
 # Power-House Operations Guide
 
-Release scope: Power House v0.3.6.
+Release scope: Power House v0.3.7.
 
 This guide documents the retained boot-node, JULIAN network, and blob-service
-operations in v0.3.6. For the current three-validator native RPC topology and
+operations in v0.3.7. For the current three-validator native RPC topology and
 public HTTPS edge, use
 [Production RPC Deployment](production_rpc_deployment.md). Commands here
 assume explicit operator control so each change remains auditable.

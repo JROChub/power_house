@@ -26,7 +26,7 @@ use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
     read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor,
-    Field, GeneralSumProof, LedgerAnchor, ProofStats,
+    Field, GeneralSumProof, LedgerAnchor, ObservatorySidecar, ProofStats,
 };
 #[cfg(feature = "net")]
 use std::net::SocketAddr;
@@ -70,6 +70,7 @@ fn print_cli_help() {
     println!();
     println!("Optional external integration:");
     println!("  attach-external-proof  Attach non-core proof data to a .pha artifact");
+    println!("  observatory      Verify non-core semantic sidecars against Rootprint");
     #[cfg(feature = "net")]
     {
         println!();
@@ -141,6 +142,14 @@ fn print_attach_external_proof_help() {
     println!("  --output <artifact.pha>   Output path; defaults to the input artifact");
     println!();
     println!("This optional command never changes the Power House core fingerprint.");
+}
+
+fn print_observatory_help() {
+    println!("Usage: julian observatory <verify> ...");
+    println!("  verify <rootprint.json> <observatory-sidecar.json>");
+    println!();
+    println!("Rootprint core verification completes before the optional sidecar is checked.");
+    println!("Semantic packets never alter Power House proof identity or validity.");
 }
 
 #[cfg(feature = "net")]
@@ -322,6 +331,13 @@ fn main() {
         Some("attach-external-proof") => {
             cmd_attach_external_proof(args.collect());
         }
+        Some("observatory") => {
+            if let Some(sub) = args.next() {
+                handle_observatory(&sub, args.collect());
+            } else {
+                print_observatory_help();
+            }
+        }
         #[cfg(feature = "net")]
         Some("keygen") => {
             cmd_keygen(args.collect());
@@ -412,6 +428,14 @@ fn handle_identity(sub: &str, tail: Vec<String>) {
     }
 }
 
+fn handle_observatory(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_observatory_help(),
+        "verify" => cmd_observatory_verify(tail),
+        _ => fatal(&format!("unknown observatory subcommand: {sub}")),
+    }
+}
+
 fn read_pha(path: &Path) -> PhaArtifact {
     let contents = fs::read_to_string(path)
         .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
@@ -436,6 +460,17 @@ fn read_identity(path: &Path) -> Identity {
     serde_json::from_str(&contents).unwrap_or_else(|err| {
         fatal(&format!(
             "invalid identity JSON in {}: {err}",
+            path.display()
+        ))
+    })
+}
+
+fn read_observatory_sidecar(path: &Path) -> ObservatorySidecar {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid Observatory sidecar JSON in {}: {err}",
             path.display()
         ))
     })
@@ -637,6 +672,29 @@ fn cmd_rootprint_equivalent(args: Vec<String>) {
         } else {
             "different"
         }
+    );
+}
+
+fn cmd_observatory_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observatory_help();
+        return;
+    }
+    if args.len() != 2 {
+        fatal("observatory verify requires <rootprint.json> <observatory-sidecar.json>");
+    }
+    let graph = read_rootprint(Path::new(&args[0]));
+    graph
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("Rootprint verification failed: {err}")));
+    let sidecar = read_observatory_sidecar(Path::new(&args[1]));
+    sidecar
+        .verify(&graph)
+        .unwrap_or_else(|err| fatal(&format!("Observatory sidecar verification failed: {err}")));
+    println!(
+        "PASS: Rootprint core and Observatory sidecar verified ({} semantic nodes, {}).",
+        sidecar.nodes.len(),
+        sidecar.rootprint_state_fingerprint
     );
 }
 

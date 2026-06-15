@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.3.6 - June 2026
+Version 0.3.7 - June 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors
@@ -38,6 +38,7 @@ The JULIAN Protocol is implemented in the `power_house` crate. The key architect
 | `PhaArtifact` | Portable proof and provenance identity with optional non-core attachments | `src/provenance/pha.rs` |
 | `Rootprint` | Deterministic provenance graph for navigation, forks, merges, and equivalence | `src/provenance/rootprint.rs` |
 | `Identity` | Immutable `.pha` and Rootprint abstraction with deterministic replay | `src/identity/mod.rs` |
+| `ObservatorySidecar` | Optional non-core binding from Rootprint replay state to semantic packets | `src/observatory.rs` |
 | `ProofLedger` | Ledger that stores statements, proofs, transcript hashes, Merkle roots, and audit logs | `src/julian.rs` |
 | Ledger Anchors | `EntryAnchor` (statements, transcripts, Merkle root) aggregated into `LedgerAnchor` | `src/julian.rs` |
 | Quorum Reconciliation | `reconcile_anchors` and `reconcile_anchors_with_quorum` determine validity/finality | `src/julian.rs` |
@@ -144,6 +145,7 @@ same anchor state.
 - **Examples**:
   - `rootprint_workflow`: creates and verifies a forked and merged provenance graph.
   - `pha_conformance_vectors`: regenerates Rust/Python `.pha` and Rootprint vectors.
+  - `slbit_conformance_vectors`: regenerates Rootprint-bound semantic sidecars.
   - `hash_pipeline`: illustrates the end-to-end protocol on two nodes, including log directories.
   - `scale_sumcheck`: streaming benchmark with optional CSV output (`POWER_HOUSE_SCALE_OUT`).
   - `sextillion_verify`: closed-form constant-polynomial certificate over `2^70` Boolean points.

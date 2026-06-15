@@ -14,7 +14,7 @@ fingerprints that bind proof data, provenance metadata, and verification state.
 Rootprint provides a directed acyclic graph (DAG) for identity lineage,
 branching, merging, replay, navigation, and equivalence verification.
 
-Current release: **v0.3.6**
+Current release: **v0.3.7**
 
 The primary workflow is **Power House Identity + Rootprint**:
 
@@ -26,6 +26,8 @@ The primary workflow is **Power House Identity + Rootprint**:
   over `.pha` core identities.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
+- **Observatory sidecars** optionally bind human-readable semantic packets to
+  verified Rootprint replay state without changing proof identity.
 
 ## Quick Start
 
@@ -70,6 +72,31 @@ julian identity verify main.identity.json proof.rootprint.json
 julian identity replay main.identity.json proof.rootprint.json
 ```
 
+## Human-Observable Proofs
+
+[`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency
+crate for luminous claims, semantic transcripts, and visualization packets.
+Power House remains the verification and provenance authority; `slbit` adds
+human-readable meaning beside it.
+
+```bash
+cargo add power_house
+cargo add slbit
+cargo run --example slbit_observatory
+```
+
+The optional sidecar can be verified offline:
+
+```bash
+julian observatory verify \
+  proof.rootprint.json \
+  proof.observatory.json
+```
+
+See the [Power House + slbit Observatory guide](docs/slbit.md) for the complete
+Rust workflow, schemas, trust boundary, browser rendering, and conformance
+vectors.
+
 ## Verification Profiles
 
 | Profile | Public statement | Verifier path | Reproduce |
@@ -90,6 +117,7 @@ not allocate the expanded Boolean hypercube.
 | --- | --- |
 | `.pha` v1 | Portable proof, public inputs, provenance, and core fingerprint |
 | Rootprint v1 | Deterministic proof-history graph with forks and merges |
+| Observatory sidecar v1 | Non-core binding from replay state and branch IDs to semantic packets |
 | `PHSPv1` | Seeded sparse polynomial certificate |
 | `PHSMv1` | Canonical external sparse polynomial |
 | `PHCPv1` | Certificate bound to a `PHSMv1` commitment |
@@ -108,7 +136,9 @@ cargo test --all-targets --locked
 cargo test --all-targets --features net --locked
 
 cargo run --example pha_conformance_vectors
+cargo run --example slbit_conformance_vectors
 cargo run --example rootprint_workflow
+cargo run --example slbit_observatory
 cargo run --release --example sextillion_verify
 cargo run --release --example hyperscale_affine
 cargo run --release --example sparse_record
@@ -116,6 +146,7 @@ cargo run --release --example committed_workload
 
 PYTHONPATH=sdk/python python3 -m unittest discover -s sdk/python/tests -v
 python3 scripts/test_sparse_verifier.py
+python3 scripts/test_observatory_contract.py
 python3 scripts/soundness_budget.py
 ```
 
@@ -130,6 +161,8 @@ The complete procedure and expected rejection behavior are documented in the
   portable Power House core identity.
 - [`Rootprint`](https://docs.rs/power_house/latest/power_house/provenance/rootprint/struct.Rootprint.html):
   deterministic proof-history branching and verification.
+- [`ObservatorySidecar`](https://docs.rs/power_house/latest/power_house/observatory/struct.ObservatorySidecar.html):
+  non-core semantic packet binding to verified Rootprint replay state.
 - [`prove_with_rootprint!`](https://docs.rs/power_house/latest/power_house/macro.prove_with_rootprint.html):
   recommended provenance-aware construction interface.
 - [`GeneralSumProof`](https://docs.rs/power_house/latest/power_house/sumcheck/struct.GeneralSumProof.html):
@@ -211,6 +244,7 @@ Use `scripts/test_native_rpc_cluster.sh` to verify replica finality and
 Start with the [Documentation Index](docs/README.md).
 
 - [Identity Layer](docs/identity.md)
+- [Power House + slbit Observatory](docs/slbit.md)
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
 - [Provenance Security Model](docs/provenance_security.md)
