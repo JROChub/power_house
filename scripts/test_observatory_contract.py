@@ -18,6 +18,10 @@ ARTIFACTS = {
         4_232,
         "eeb33450c6473c082675b8fcdaf70abfb0e6070fe739eeda5c839070d13750a3",
     ),
+    "artifacts/luminous-valid.json": (
+        5_065,
+        "4809cd8e937ae975d6ecc34ce4398ea75e6d9404bca84822f6b6bb1f33faa265",
+    ),
     "artifacts/power_house_sparse_record.phsp": (
         16_000_171,
         "2b219ba189c3a38f1073c7797629e9aaf44a36820abb64c7628129480eb43f3b",
@@ -100,6 +104,8 @@ def main() -> int:
         "proofParticlesMaterial",
         "refreshNetworkStatus",
         "verifyReleaseArtifacts",
+        "verifyObservatorySidecar",
+        "renderLuminousGraph",
     )
     for contract in required_visual_contracts:
         if contract not in javascript:

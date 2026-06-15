@@ -1,6 +1,6 @@
 # Rootprint v1
 
-Status: normative for Power House v0.3.6.
+Status: normative for Power House v0.3.7.
 
 Rootprint is the primary Power House provenance workflow. It is a deterministic
 directed acyclic graph whose nodes carry `.pha` artifacts and whose edges record
@@ -21,6 +21,11 @@ it.
 
 Identity-aware `identity_root` pointers are also excluded from branch IDs and
 logical replay. They are resolved by the identity layer.
+
+Observatory sidecars and `slbit` visualization packets are also excluded from
+Rootprint documents and every core identity calculation. A sidecar may bind
+semantic packets to exact branch IDs and a replay fingerprint after the graph
+has been verified.
 
 ## Document model
 
@@ -116,6 +121,10 @@ Selectors resolve exact branch IDs, unique ID prefixes, or unique labels.
 `julian attach-external-proof` is a separate optional operation. It may add EPA
 transport data to a `.pha` artifact without changing its `phx_fingerprint`.
 
+`julian observatory verify` is another separate optional operation. It verifies
+the Rootprint first, then checks a semantic sidecar without interpreting packet
+meaning or changing core validity.
+
 ## Deterministic branch ID
 
 Every branch ID is domain-separated SHA-256 over canonical JSON with
@@ -159,7 +168,8 @@ Replay derives canonical depth from parent links, so older valid graphs with
 larger monotonic sequence gaps reconstruct the same logical state.
 
 Canonical vectors are published under `conformance/pha-v1` and
-`conformance/identity-v1`.
+`conformance/identity-v1`. Optional semantic binding vectors are published
+under `conformance/slbit-v1`.
 
 Security assumptions and mutation behavior are defined in the
 [Provenance Security Model](provenance_security.md).

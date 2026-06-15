@@ -2521,7 +2521,7 @@ dependencies = [
 
 [[package]]
 name = "power_house"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
@@ -2551,6 +2551,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sha3",
+ "slbit",
  "thiserror 1.0.69",
  "tokio",
 ]
@@ -3301,6 +3302,12 @@ name = "slab"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
+
+[[package]]
+name = "slbit"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95af16fe689d8d9775a8c06d651a5dce1254c7acd7804cebd8adaabb18d5056a"
 
 [[package]]
 name = "smallvec"

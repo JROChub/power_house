@@ -32,6 +32,7 @@ ACTIVE_DOCS = [
     "docs/rootprint.md",
     "docs/rpc_operations.md",
     "docs/sdk.md",
+    "docs/slbit.md",
     "docs/security_model.md",
     "docs/sextillion_proof.md",
     "docs/sparse_record.md",

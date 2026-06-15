@@ -1,6 +1,6 @@
 # Prior-Art Review
 
-Status: active technical review for Power House v0.3.6.
+Status: active technical review for Power House v0.3.7.
 
 ## Question Under Review
 

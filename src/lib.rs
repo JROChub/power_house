@@ -3,10 +3,12 @@
 //! Deterministic verification, portable proof provenance, and optional quorum
 //! networking.
 //!
-//! Power House combines six interoperable layers:
+//! Power House combines seven interoperable layers:
 //!
 //! - [`identity`] provides immutable computational identities over `.pha` and
 //!   Rootprint.
+//! - [`observatory`] binds optional human-readable visualization sidecars to
+//!   verified Rootprint replay state.
 //! - [`provenance`] defines Power House Archive (`.pha`) and Rootprint v1.
 //! - [`sumcheck`] implements dense, streaming, constant, and seeded-affine
 //!   sum-check workflows.
@@ -102,6 +104,7 @@ pub mod julian;
 mod log_parser;
 mod merkle;
 mod multilinear;
+pub mod observatory;
 mod prng;
 pub mod provenance;
 pub mod rollup;
@@ -137,6 +140,7 @@ pub use merkle::{
     MerkleProof, MerkleProofNode,
 };
 pub use multilinear::MultilinearPolynomial;
+pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
 pub use sparse_sumcheck::{
     CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,

@@ -1,6 +1,6 @@
 # MFENX Orbital Observatory
 
-Release surface: Power House v0.3.6.
+Release surface: Power House v0.3.7.
 
 `mfenx.com` presents Power House as an interactive planetary proof
 observatory. It combines live celestial telemetry, world time, published proof
@@ -46,7 +46,9 @@ time offset, or drawer directly:
 The five instrument modes are:
 
 1. Browser-native `.pha` and Rootprint core verification, including
-   deterministic fingerprint, branch ID, ordering, and reachability checks.
+   deterministic fingerprint, branch ID, ordering, reachability, and canonical
+   replay checks. The same mode separately verifies and renders the published
+   `slbit` semantic sidecar.
 2. A 70-round constant-polynomial equation replay over field
    `1,000,000,007`.
 3. A 4,096-round seeded-affine structural replay.
@@ -57,9 +59,15 @@ The five instrument modes are:
 Proof progress is reflected in both the verification dock and the active
 orbital beacon. Successful runs can be shared through the Web Share API or
 copied to the clipboard. The local-file control accepts `.pha`, Rootprint JSON,
-the published `PHSPv1` certificate, or a paired `PHSMv1`/`PHCPv1` workload and
-certificate. Portable JSON files receive core verification; binary release
-artifacts receive exact-length and SHA-256 verification.
+Observatory sidecar JSON, the published `PHSPv1` certificate, or a paired
+`PHSMv1`/`PHCPv1` workload and certificate. Portable JSON files receive core
+verification; binary release artifacts receive exact-length and SHA-256
+verification.
+
+When a Rootprint and matching Observatory sidecar are selected together, the
+browser verifies both layers and renders a selectable semantic DAG. Node color,
+icon, layer label, claim, and transcript notes come from `slbit`; graph identity
+and validity continue to come exclusively from Power House.
 
 The browser replays provide immediate interactive checks. The canonical Rust
 and Python tooling provides full artifact parsing, transcript validation,
@@ -81,15 +89,16 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in the
 - The public status feed refreshes every 15 seconds without blocking local
   proof verification.
 - CI validates every control-to-DOM binding and recomputes the size and
-  SHA-256 digest of all four bundled public artifacts.
+  SHA-256 digest of all five bundled public artifacts.
 
 ## Deployment
 
 The static site is stored under `publicpower/` and deployed from the
 `gh-pages` branch. `publicpower/CNAME` maps GitHub Pages to `mfenx.com`.
 
-Release artifacts and the canonical Rootprint vector are bundled under
-`publicpower/artifacts/` so the browser can verify them from the same origin.
+Release artifacts, the canonical Rootprint vector, and its non-core semantic
+sidecar are bundled under `publicpower/artifacts/` so the browser can verify
+them from the same origin.
 
 ## Visual sources
 

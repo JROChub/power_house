@@ -1,0 +1,10 @@
+{
+  "files": {
+    "observatory-valid.json": "4809cd8e937ae975d6ecc34ce4398ea75e6d9404bca84822f6b6bb1f33faa265",
+    "rootprint-valid.json": "eeb33450c6473c082675b8fcdaf70abfb0e6070fe739eeda5c839070d13750a3"
+  },
+  "rootprint_state_fingerprint": "sha256:a3390eead1a21bbdd06259cd48c1ab09d7fce3595095115c06cfa51f1f91bccb",
+  "schema": "power-house-slbit-conformance-v1",
+  "semantic_packets_affect_core_identity": false,
+  "slbit_version": "0.1.0"
+}

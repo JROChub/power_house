@@ -1,5 +1,32 @@
 # Release Notes
 
+## v0.3.7 - 2026-06-14
+
+### Human-Observable Proofs
+- Added the non-core `ObservatorySidecar` format for binding opaque semantic
+  packets to exact Rootprint branch IDs and canonical replay state.
+- Integrated the independent zero-dependency `slbit` crate through examples,
+  tests, and conformance vectors without adding it to Power House runtime
+  dependencies.
+- Added deterministic semantic mutation tests proving that sidecar changes
+  reject presentation integrity while Power House core verification remains
+  unchanged.
+
+### CLI And Observatory
+- Added offline `julian observatory verify` for Rootprint-first sidecar
+  verification.
+- Added a browser-verified semantic DAG with node colors, icons, layer labels,
+  claims, packet digests, and expandable transcript rounds.
+- Added browser verification for Rootprint replay, sidecar, `slbit` transcript,
+  and packet digests before semantic rendering.
+
+### Conformance And Documentation
+- Added reproducible `conformance/slbit-v1` vectors and the bundled
+  `luminous-valid.json` public artifact.
+- Added the complete Power House + `slbit` integration guide and rustdoc links.
+- Extended CI and the public Observatory contract gate across the new artifact
+  and rendering path.
+
 ## v0.3.6 - 2026-06-14
 
 ### Identity Layer

@@ -1,12 +1,16 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { StreamBuffer } from "./stream-buffer.js";
 import BookOpen from "./vendor/lucide/book-open.mjs";
+import Bot from "./vendor/lucide/bot.mjs";
+import BrainCircuit from "./vendor/lucide/brain-circuit.mjs";
 import Building2 from "./vendor/lucide/building-2.mjs";
+import Camera from "./vendor/lucide/camera.mjs";
 import ChevronLeft from "./vendor/lucide/chevron-left.mjs";
 import ChevronRight from "./vendor/lucide/chevron-right.mjs";
 import Code from "./vendor/lucide/code.mjs";
 import Copy from "./vendor/lucide/copy.mjs";
 import Crosshair from "./vendor/lucide/crosshair.mjs";
+import Database from "./vendor/lucide/database.mjs";
 import Download from "./vendor/lucide/download.mjs";
 import Globe from "./vendor/lucide/globe.mjs";
 import Pause from "./vendor/lucide/pause.mjs";
@@ -26,12 +30,16 @@ const EARTH_RADIUS = 1.36;
 const DEG = Math.PI / 180;
 const iconLibrary = {
   "book-open": BookOpen,
+  bot: Bot,
+  "brain-circuit": BrainCircuit,
   "building-2": Building2,
+  camera: Camera,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   code: Code,
   copy: Copy,
   crosshair: Crosshair,
+  database: Database,
   download: Download,
   globe: Globe,
   pause: Pause,
@@ -53,15 +61,15 @@ const modes = {
     domainCaption: "PUBLIC STRUCTURE",
     dossierDomain: "4-BRANCH DAG",
     domain: "4 VERIFIED BRANCHES",
-    verifierPath: "CORE-ONLY DAG REPLAY",
-    allocation: "EPA STRICTLY OPTIONAL",
-    dossierArtifact: "ROOTPRINT v1 JSON",
-    kicker: "DETERMINISTIC IDENTITY GRAPH",
+    verifierPath: "CORE DAG + SEMANTIC SIDECAR",
+    allocation: "SLBIT NON-CORE",
+    dossierArtifact: "ROOTPRINT + SLBIT JSON",
+    kicker: "HUMAN-OBSERVABLE IDENTITY GRAPH",
     description:
-      "Replay portable computational identity lineage while optional external attachments remain outside core validity.",
-    title: "Verify the public identity graph",
+      "Verify deterministic identity lineage, then open its independently bound human-readable transcript.",
+    title: "Verify the public graph and semantic sidecar",
     detail:
-      "The browser recalculates every PHA fingerprint and deterministic branch identifier.",
+      "The browser verifies PHA, Rootprint replay, sidecar binding, and every slbit packet digest.",
     button: "VERIFY GRAPH",
     status: "ROOTPRINT VERIFIER READY",
     downloadHref: "artifacts/rootprint-valid.json",
@@ -153,6 +161,11 @@ const knownArtifacts = {
     size: 4_232,
     hash: "eeb33450c6473c082675b8fcdaf70abfb0e6070fe739eeda5c839070d13750a3",
     label: "ROOTPRINT v1",
+  },
+  luminous: {
+    size: 5_065,
+    hash: "4809cd8e937ae975d6ecc34ce4398ea75e6d9404bca84822f6b6bb1f33faa265",
+    label: "OBSERVATORY SIDECAR v1",
   },
   phsp: {
     size: 16_000_171,
@@ -276,6 +289,17 @@ const el = Object.fromEntries(
     "globe-tooltip",
     "monument-index",
     "network-console",
+    "luminous-explorer",
+    "luminous-core-state",
+    "luminous-sidecar-state",
+    "luminous-packet-count",
+    "luminous-binding",
+    "luminous-graph",
+    "luminous-node-icon",
+    "luminous-node-layer",
+    "luminous-node-title",
+    "luminous-packet-digest",
+    "luminous-rounds",
   ].map((id) => [camelCase(id), document.querySelector(`#${id}`)]),
 );
 el.canvas = el.orbitalCanvas;
@@ -296,6 +320,9 @@ const state = {
   lastResult: null,
   pointerDown: null,
   userInteracted: false,
+  luminousGraph: null,
+  luminousSidecar: null,
+  luminousBranch: null,
 };
 
 const formatterCache = new Map();
@@ -1401,6 +1428,7 @@ function selectMode(name, withTone = true) {
   if (state.running || !modes[name]) return;
   state.mode = name;
   state.lastResult = null;
+  document.body.classList.toggle("luminous-mode", name === "rootprint");
   const mode = modes[name];
   document.documentElement.style.setProperty(
     "--mode-color",
@@ -1573,7 +1601,7 @@ async function verifyRootprintGraph(graph) {
     });
     if (branch.id !== expectedId) throw new Error("Rootprint branch identifier mismatch");
     el.roundValue.textContent = `${index + 1} / ${branchEntries.length}`;
-    setProgress(35 + ((index + 1) / branchEntries.length) * 55);
+    setProgress(10 + ((index + 1) / branchEntries.length) * 32);
   }
 
   const reachable = new Set([graph.root_branch]);
@@ -1593,6 +1621,332 @@ async function verifyRootprintGraph(graph) {
   return branchEntries.length;
 }
 
+function concatBytes(parts) {
+  const length = parts.reduce((total, part) => total + part.length, 0);
+  const output = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    output.set(part, offset);
+    offset += part.length;
+  }
+  return output;
+}
+
+function unsigned64(value) {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error("Semantic transcript integer is out of browser range");
+  }
+  const bytes = new Uint8Array(8);
+  new DataView(bytes.buffer).setBigUint64(0, BigInt(value));
+  return bytes;
+}
+
+function lengthPrefix(value) {
+  const bytes = value instanceof Uint8Array ? value : new TextEncoder().encode(value);
+  return concatBytes([unsigned64(bytes.length), bytes]);
+}
+
+function assertSha256(value, field) {
+  if (!/^sha256:[0-9a-f]{64}$/.test(value ?? "")) {
+    throw new Error(`${field} is not a canonical SHA-256 digest`);
+  }
+}
+
+function compareText(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function assertSemanticText(value, maximumBytes, field) {
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    new TextEncoder().encode(value).length > maximumBytes ||
+    /[\u0000-\u001f\u007f]/.test(value)
+  ) {
+    throw new Error(`${field} is invalid`);
+  }
+}
+
+async function domainSeparatedByteHash(domain, bytes) {
+  const prefix = new TextEncoder().encode(`${domain}\0`);
+  return `sha256:${await sha256Hex(concatBytes([prefix, bytes]))}`;
+}
+
+async function replayRootprintGraph(graph) {
+  const branches = Object.values(graph.branches);
+  const ordered = [...branches].sort(
+    (left, right) => left.sequence - right.sequence || compareText(left.id, right.id),
+  );
+  const depths = new Map();
+  for (const branch of ordered) {
+    const parentDepths = branch.parents.map((parent) => depths.get(parent));
+    if (parentDepths.some((depth) => depth === undefined)) {
+      throw new Error("Rootprint replay parent is unavailable");
+    }
+    depths.set(branch.id, branch.parents.length ? Math.max(...parentDepths) + 1 : 0);
+  }
+  ordered.sort(
+    (left, right) =>
+      depths.get(left.id) - depths.get(right.id) || compareText(left.id, right.id),
+  );
+  const replayBranches = ordered.map((branch) => ({
+    artifact_phx_fingerprint: branch.artifact.phx_fingerprint,
+    id: branch.id,
+    label: branch.label,
+    parents: branch.parents,
+    sequence: depths.get(branch.id),
+  }));
+  const parentIds = new Set(branches.flatMap((branch) => branch.parents));
+  const tips = Object.keys(graph.branches)
+    .filter((id) => !parentIds.has(id))
+    .sort();
+  const stateFingerprint = await domainSeparatedHash("power-house:rootprint:v1:replay-state", {
+    branches: replayBranches,
+    root_branch: graph.root_branch,
+    tips,
+  });
+  return { branches: replayBranches, depths, stateFingerprint, tips };
+}
+
+async function verifySlbitPacket(packet) {
+  if (packet?.schema !== "slbit/viz-packet/v1") {
+    throw new Error("Unsupported slbit visualization packet");
+  }
+  if (
+    !Number.isSafeInteger(packet.bit_width) ||
+    packet.bit_width <= 0 ||
+    !Array.isArray(packet.rounds) ||
+    packet.rounds.length > 1_000_000 ||
+    !packet.viz_hints ||
+    typeof packet.viz_hints !== "object"
+  ) {
+    throw new Error("Malformed slbit claim packet");
+  }
+  assertSemanticText(packet.claim_id, 256, "slbit claim identifier");
+  if (packet.viz_hints.icon !== undefined) {
+    assertSemanticText(packet.viz_hints.icon, 128, "slbit icon");
+    if (!/^[a-z0-9-]+$/.test(packet.viz_hints.icon)) {
+      throw new Error("slbit icon is not a lowercase identifier");
+    }
+  }
+  if (packet.viz_hints.layer_name !== undefined) {
+    assertSemanticText(packet.viz_hints.layer_name, 128, "slbit layer name");
+  }
+  if (
+    packet.viz_hints.color !== undefined &&
+    (!Array.isArray(packet.viz_hints.color) ||
+      packet.viz_hints.color.length !== 3 ||
+      packet.viz_hints.color.some(
+        (value) => !Number.isInteger(value) || value < 0 || value > 255,
+      ))
+  ) {
+    throw new Error("slbit color is not a canonical RGB triplet");
+  }
+  assertSha256(packet.seed_commitment, "slbit seed commitment");
+  assertSha256(packet.transcript_digest, "slbit transcript digest");
+  assertSha256(packet.packet_digest, "slbit packet digest");
+
+  let previous = -1;
+  const transcriptParts = [
+    lengthPrefix(packet.seed_commitment),
+    lengthPrefix(unsigned64(packet.rounds.length)),
+  ];
+  for (const round of packet.rounds) {
+    if (
+      !Number.isSafeInteger(round.round) ||
+      round.round <= previous ||
+      typeof round.component !== "string" ||
+      typeof round.note !== "string"
+    ) {
+      throw new Error("Malformed slbit transcript round");
+    }
+    previous = round.round;
+    assertSemanticText(round.component, 128, "slbit round component");
+    assertSemanticText(round.note, 4096, "slbit round note");
+    assertSha256(round.payload_sha256, "slbit round payload digest");
+    transcriptParts.push(
+      lengthPrefix(unsigned64(round.round)),
+      lengthPrefix(round.component),
+      lengthPrefix(round.note),
+      lengthPrefix(round.payload_sha256),
+    );
+  }
+  const transcriptDigest = await domainSeparatedByteHash(
+    "slbit:transcript:v1",
+    concatBytes(transcriptParts),
+  );
+  if (transcriptDigest !== packet.transcript_digest) {
+    throw new Error("slbit transcript digest mismatch");
+  }
+
+  const packetCore = {
+    bit_width: packet.bit_width,
+    claim_id: packet.claim_id,
+    rounds: packet.rounds,
+    schema: packet.schema,
+    seed_commitment: packet.seed_commitment,
+    transcript_digest: packet.transcript_digest,
+    viz_hints: packet.viz_hints,
+  };
+  const packetDigest = await domainSeparatedByteHash(
+    "slbit:viz-packet:v1",
+    new TextEncoder().encode(canonicalJson(packetCore)),
+  );
+  if (packetDigest !== packet.packet_digest) {
+    throw new Error("slbit packet digest mismatch");
+  }
+}
+
+async function verifyObservatorySidecar(graph, sidecar) {
+  if (sidecar?.schema !== "power-house/observatory-sidecar/v1") {
+    throw new Error("Unsupported Observatory sidecar schema");
+  }
+  if (!sidecar.nodes || typeof sidecar.nodes !== "object" || Array.isArray(sidecar.nodes)) {
+    throw new Error("Observatory sidecar nodes are malformed");
+  }
+  assertSha256(sidecar.rootprint_state_fingerprint, "Rootprint replay fingerprint");
+  assertSha256(sidecar.sidecar_sha256, "Observatory sidecar digest");
+  const replay = await replayRootprintGraph(graph);
+  if (replay.stateFingerprint !== sidecar.rootprint_state_fingerprint) {
+    throw new Error("Observatory sidecar replay binding mismatch");
+  }
+
+  const entries = Object.entries(sidecar.nodes);
+  for (let index = 0; index < entries.length; index += 1) {
+    const [branchId, packet] = entries[index];
+    if (!graph.branches[branchId]) {
+      throw new Error("Observatory sidecar references an unknown branch");
+    }
+    await verifySlbitPacket(packet);
+    el.luminousPacketCount.textContent = `${index + 1} / ${entries.length}`;
+    setProgress(58 + ((index + 1) / entries.length) * 34);
+  }
+
+  const sidecarDigest = await domainSeparatedHash("power-house:observatory-sidecar:v1", {
+    nodes: sidecar.nodes,
+    rootprint_state_fingerprint: sidecar.rootprint_state_fingerprint,
+    schema: sidecar.schema,
+  });
+  if (sidecarDigest !== sidecar.sidecar_sha256) {
+    throw new Error("Observatory sidecar digest mismatch");
+  }
+  return replay;
+}
+
+function selectLuminousBranch(branchId) {
+  const packet = state.luminousSidecar?.nodes?.[branchId];
+  const branch = state.luminousGraph?.branches?.[branchId];
+  if (!packet || !branch) return;
+  state.luminousBranch = branchId;
+  document.querySelectorAll(".luminous-node").forEach((button) => {
+    const selected = button.dataset.branchId === branchId;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+  const hints = packet.viz_hints ?? {};
+  const icon = iconLibrary[hints.icon] ? hints.icon : "package";
+  el.luminousNodeIcon.dataset.icon = icon;
+  mountIcon(el.luminousNodeIcon, icon);
+  el.luminousNodeLayer.textContent = hints.layer_name ?? branch.label;
+  el.luminousNodeTitle.textContent = packet.claim_id;
+  el.luminousPacketDigest.textContent = packet.packet_digest.slice(7, 19).toUpperCase();
+  const fragment = document.createDocumentFragment();
+  packet.rounds.forEach((round) => {
+    const item = document.createElement("li");
+    const index = document.createElement("span");
+    index.textContent = String(round.round).padStart(2, "0");
+    const copy = document.createElement("div");
+    const component = document.createElement("b");
+    component.textContent = round.component;
+    const note = document.createElement("p");
+    note.textContent = round.note;
+    copy.append(component, note);
+    item.append(index, copy);
+    fragment.append(item);
+  });
+  el.luminousRounds.replaceChildren(fragment);
+}
+
+function renderLuminousGraph(graph, sidecar, replay) {
+  state.luminousGraph = graph;
+  state.luminousSidecar = sidecar;
+  const groups = new Map();
+  for (const branch of replay.branches) {
+    if (!groups.has(branch.sequence)) groups.set(branch.sequence, []);
+    groups.get(branch.sequence).push(branch);
+  }
+  const maxDepth = Math.max(...groups.keys(), 0);
+  const coordinates = new Map();
+  for (const [depth, group] of groups) {
+    group.forEach((branch, index) => {
+      coordinates.set(branch.id, {
+        x: maxDepth ? 15 + (depth / maxDepth) * 70 : 50,
+        y: group.length === 1 ? 50 : 24 + (index / (group.length - 1)) * 52,
+      });
+    });
+  }
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("aria-hidden", "true");
+  svg.classList.add("luminous-edges");
+  for (const branch of replay.branches) {
+    const child = coordinates.get(branch.id);
+    for (const parentId of branch.parents) {
+      const parent = coordinates.get(parentId);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", parent.x);
+      line.setAttribute("y1", parent.y);
+      line.setAttribute("x2", child.x);
+      line.setAttribute("y2", child.y);
+      svg.append(line);
+    }
+  }
+
+  const fragment = document.createDocumentFragment();
+  fragment.append(svg);
+  for (const branch of replay.branches) {
+    const packet = sidecar.nodes[branch.id];
+    if (!packet) continue;
+    const position = coordinates.get(branch.id);
+    const hints = packet.viz_hints ?? {};
+    const color = Array.isArray(hints.color)
+      ? `rgb(${hints.color.map((value) => Math.max(0, Math.min(255, value))).join(",")})`
+      : "var(--cyan)";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "luminous-node";
+    button.dataset.branchId = branch.id;
+    button.setAttribute("aria-pressed", "false");
+    button.style.left = `${position.x}%`;
+    button.style.top = `${position.y}%`;
+    button.style.setProperty("--node-color", color);
+    const icon = document.createElement("span");
+    icon.dataset.icon = iconLibrary[hints.icon] ? hints.icon : "package";
+    const copy = document.createElement("span");
+    const layer = document.createElement("b");
+    layer.textContent = hints.layer_name ?? branch.label;
+    const claim = document.createElement("small");
+    claim.textContent = packet.claim_id;
+    copy.append(layer, claim);
+    button.append(icon, copy);
+    button.addEventListener("click", () => selectLuminousBranch(branch.id));
+    fragment.append(button);
+  }
+  el.luminousGraph.replaceChildren(fragment);
+  el.luminousGraph.querySelectorAll("[data-icon]").forEach((target) => {
+    mountIcon(target, target.dataset.icon);
+  });
+  el.luminousCoreState.textContent = "VERIFIED";
+  el.luminousSidecarState.textContent = "VERIFIED";
+  el.luminousBinding.textContent =
+    `REPLAY ${sidecar.rootprint_state_fingerprint.slice(7, 19).toUpperCase()}`;
+  const selected =
+    replay.tips.find((branchId) => sidecar.nodes[branchId]) ??
+    Object.keys(sidecar.nodes).sort()[0];
+  if (selected) selectLuminousBranch(selected);
+}
+
 function sleep(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
@@ -1606,6 +1960,12 @@ function beginRun() {
   el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
   el.digestValue.textContent = "WORKING";
+  if (state.mode === "rootprint") {
+    el.luminousCoreState.textContent = "VERIFYING";
+    el.luminousSidecarState.textContent = "WAITING";
+    el.luminousPacketCount.textContent = "0 / 4";
+    el.luminousBinding.textContent = "REPLAY BINDING PENDING";
+  }
   setProgress(0);
 }
 
@@ -1638,6 +1998,9 @@ function failRun(message) {
   el.verificationStatus.textContent = "VERIFICATION STOPPED";
   el.claimValue.textContent = "FAILED";
   el.digestValue.textContent = "REJECTED";
+  if (state.mode === "rootprint") {
+    el.luminousSidecarState.textContent = "REJECTED";
+  }
   el.eventPhase.textContent = "VERIFICATION REJECTED";
   el.eventValue.textContent = "INSPECT FAILURE";
   showToast(message);
@@ -1843,10 +2206,26 @@ async function verifyRootprintRelease() {
     el.verificationStatus.textContent = "REPLAYING CORE IDENTITIES";
     const graph = JSON.parse(new TextDecoder().decode(bytes));
     const branchCount = await verifyRootprintGraph(graph);
-    completeRun(digest, `${branchCount} BRANCHES OK`);
-    el.verificationTitle.textContent = "Rootprint graph and every PHA core accepted";
+    el.luminousCoreState.textContent = "VERIFIED";
+    el.verificationStatus.textContent = "DOWNLOADING SEMANTIC SIDECAR";
+    const sidecarBytes = await fetchWithProgress(
+      "artifacts/luminous-valid.json",
+      knownArtifacts.luminous.size,
+      44,
+      12,
+    );
+    const sidecarFileDigest = await sha256Hex(sidecarBytes);
+    if (sidecarFileDigest !== knownArtifacts.luminous.hash) {
+      throw new Error("Observatory sidecar release SHA-256 mismatch");
+    }
+    el.verificationStatus.textContent = "VERIFYING SLBIT TRANSCRIPTS";
+    const sidecar = JSON.parse(new TextDecoder().decode(sidecarBytes));
+    const replay = await verifyObservatorySidecar(graph, sidecar);
+    renderLuminousGraph(graph, sidecar, replay);
+    completeRun(sidecarFileDigest, `${branchCount} NODES OK`);
+    el.verificationTitle.textContent = "Cryptographic graph and semantic layer accepted";
     el.verificationDetail.textContent =
-      "EPA data was transported but deliberately excluded from all core identities.";
+      "Power House verified identity; slbit independently verified the human-readable transcript.";
   } catch (error) {
     failRun(error.message);
   }
@@ -1884,27 +2263,57 @@ async function readLocalFile(file, start, span) {
 async function verifyLocalArtifacts(fileList) {
   const files = [...fileList];
   const byType = new Map(files.map((file) => [artifactType(file), file]));
-  const portable = byType.get("json") ?? byType.get("pha");
-  if (portable) {
-    if (portable.size > 2_000_000) {
+  const portableFiles = files.filter((file) => ["json", "pha"].includes(artifactType(file)));
+  if (portableFiles.length) {
+    if (portableFiles.some((file) => file.size > 2_000_000)) {
       showToast("PHA and Rootprint JSON files must be 2 MB or smaller.");
       return;
     }
     selectMode("rootprint");
     beginRun();
     try {
-      const bytes = new Uint8Array(await portable.arrayBuffer());
-      const value = JSON.parse(new TextDecoder().decode(bytes));
-      if (value.schema === "power-house/rootprint/v1") {
-        const branchCount = await verifyRootprintGraph(value);
-        completeRun(await sha256Hex(bytes), `${branchCount} BRANCHES OK`);
+      const values = [];
+      for (const file of portableFiles) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        values.push({
+          bytes,
+          value: JSON.parse(new TextDecoder().decode(bytes)),
+        });
+      }
+      const graphEntry = values.find(
+        ({ value }) => value.schema === "power-house/rootprint/v1",
+      );
+      const sidecarEntry = values.find(
+        ({ value }) => value.schema === "power-house/observatory-sidecar/v1",
+      );
+      const phaEntry = values.find(({ value }) => value.schema === "power-house/pha/v1");
+      if (graphEntry) {
+        const branchCount = await verifyRootprintGraph(graphEntry.value);
+        el.luminousCoreState.textContent = "VERIFIED";
+        if (sidecarEntry) {
+          const replay = await verifyObservatorySidecar(
+            graphEntry.value,
+            sidecarEntry.value,
+          );
+          renderLuminousGraph(graphEntry.value, sidecarEntry.value, replay);
+          completeRun(await sha256Hex(sidecarEntry.bytes), `${branchCount} NODES OK`);
+        } else {
+          completeRun(await sha256Hex(graphEntry.bytes), `${branchCount} BRANCHES OK`);
+          el.luminousSidecarState.textContent = "NOT PROVIDED";
+          el.luminousPacketCount.textContent = "0 / 0";
+        }
+      } else if (phaEntry) {
+        await verifyPhaArtifact(phaEntry.value);
+        completeRun(await sha256Hex(phaEntry.bytes), "PHA CORE OK");
+        el.luminousSidecarState.textContent = "NOT APPLICABLE";
       } else {
-        await verifyPhaArtifact(value);
-        completeRun(await sha256Hex(bytes), "PHA CORE OK");
+        throw new Error("Select a Rootprint with its sidecar, or a .pha artifact");
       }
       el.verificationTitle.textContent = "Local Power House identity accepted";
       el.verificationDetail.textContent =
-        "Verification used only Power House core fields; EPA remained optional.";
+        sidecarEntry && graphEntry
+          ? "The local Rootprint and every semantic transcript were verified together."
+          : "Verification used only Power House core fields; semantic data remained optional.";
     } catch (error) {
       failRun(error.message);
     } finally {
