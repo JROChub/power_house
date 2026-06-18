@@ -1,6 +1,10 @@
 const state = {
   kind: "observer",
   lastPackage: "",
+  lastData: null,
+  lastAnalysis: null,
+  lastProbe: null,
+  probeRun: 0,
 };
 
 const el = {
@@ -21,6 +25,8 @@ const el = {
   package: document.querySelector("#submission-package"),
   copyPackage: document.querySelector("#copy-package"),
   githubSubmit: document.querySelector("#github-submit"),
+  probeState: document.querySelector("#probe-state"),
+  probeReport: document.querySelector("#probe-report"),
 };
 
 function shell(value) {
@@ -41,31 +47,61 @@ function renderCommand() {
   const operator = el.operator.value.trim();
   const region = el.region.value.trim() || "self-hosted";
   const p2pPort = el.p2pPort.value.trim() || "7001";
-  const metricsPort = el.metricsPort.value.trim() || "9100";
+  const metricsPort = el.metricsPort.value.trim() || "9102";
   const keyPath = el.keyPath.value.trim() || "$HOME/.powerhouse/node.key";
   const output = `${nodeId}.${kind}.registration.json`;
-  const lines = [
-    `julian ${kind}-registry register \\`,
+  const common = [
     `  --node-id ${shell(nodeId)} \\`,
     `  --public-host ${shell(host)} \\`,
     `  --key ${shell(keyPath)} \\`,
   ];
-  if (operator) {
-    lines.push(`  --operator ${shell(operator)} \\`);
-  }
-  lines.push(
+  if (operator) common.push(`  --operator ${shell(operator)} \\`);
+  common.push(
     `  --region ${shell(region)} \\`,
     `  --p2p-port ${shell(p2pPort)} \\`,
     `  --metrics-port ${shell(metricsPort)} \\`
   );
-  if (kind === "validator") {
-    lines.push(`  --system-metrics-port 9101 \\`);
+
+  if (kind === "observer") {
+    const setup = [
+      "julian observer setup \\",
+      ...common,
+      `  --output ${shell(output)}`,
+    ].join("\n");
+    const start = [
+      "julian net start \\",
+      `  --node-id ${shell(nodeId)} \\`,
+      `  --log-dir ./logs/${shell(`${nodeId}-observer`)} \\`,
+      `  --blob-dir ./data/${shell(`${nodeId}-observer`)} \\`,
+      `  --listen /ip4/0.0.0.0/tcp/${shell(p2pPort)} \\`,
+      `  --key ${shell(keyPath)} \\`,
+      `  --metrics 0.0.0.0:${shell(metricsPort)}`,
+    ].join("\n");
+    const doctor = [
+      "julian observer doctor \\",
+      ...common.slice(0, -1),
+      `  --metrics-port ${shell(metricsPort)}`,
+    ].join("\n");
+    const submit = `julian observer submit ${shell(output)}`;
+    el.command.textContent = `${setup}\n\n${start}\n\n${doctor}\n\n${submit}`;
+    return;
   }
-  lines.push(`  --output ${shell(output)}`);
+
+  const lines = [
+    "julian validator-registry register \\",
+    ...common,
+    "  --system-metrics-port 9101 \\",
+    `  --output ${shell(output)}`,
+  ];
   el.command.textContent = lines.join("\n");
 }
 
 function setKind(kind) {
+  if (kind !== state.kind) {
+    const metricsValue = el.metricsPort.value.trim();
+    if (kind === "validator" && metricsValue === "9102") el.metricsPort.value = "9100";
+    if (kind === "observer" && metricsValue === "9100") el.metricsPort.value = "9102";
+  }
   state.kind = kind;
   document.body.dataset.kind = kind;
   el.kindButtons.forEach((button) => {
@@ -97,6 +133,21 @@ function urlHost(url) {
     return new URL(url).hostname.toLowerCase();
   } catch (_) {
     return "";
+  }
+}
+
+function p2pPort(address) {
+  const match = String(address || "").match(/\/tcp\/([0-9]+)/);
+  return match ? Number(match[1]) : 7001;
+}
+
+function metricsPort(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.port) return Number(parsed.port);
+    return parsed.protocol === "https:" ? 443 : 80;
+  } catch (_) {
+    return 9102;
   }
 }
 
@@ -187,7 +238,17 @@ function renderAnalysis(data, analysis) {
     ),
   ];
   el.report.innerHTML = cards.join("");
+  state.lastData = data;
+  state.lastAnalysis = analysis;
+  updateSubmission(data, analysis, null);
+}
 
+function updateSubmission(data, analysis, probe) {
+  const status = analysis.errors.length
+    ? "ERROR"
+    : analysis.warnings.length
+      ? "REVIEW"
+      : "READY";
   const submission = {
     schema: "mfenx-node-registration-submission-v1",
     created_at: new Date().toISOString(),
@@ -195,6 +256,7 @@ function renderAnalysis(data, analysis) {
     client_side_status: status.toLowerCase(),
     client_side_errors: analysis.errors,
     client_side_warnings: analysis.warnings,
+    external_probe: probe,
     registration: data,
   };
   state.lastPackage = JSON.stringify(submission, null, 2);
@@ -216,15 +278,88 @@ function renderAnalysis(data, analysis) {
   el.githubSubmit.classList.remove("disabled");
 }
 
+function setProbe(status, text, mode = "") {
+  el.probeState.textContent = status;
+  el.probeState.className = mode;
+  el.probeReport.textContent = text;
+}
+
+function probeSummary(probe) {
+  if (probe.error) return probe.error;
+  const target = probe.target || {};
+  const metrics = probe.metrics || {};
+  const p2p = probe.p2p || {};
+  const lines = [
+    `target: ${target.host || "unknown"} metrics:${target.metrics_port || "?"} p2p:${target.p2p_port || "?"}`,
+    `metrics: ${metrics.reachable ? "reachable" : "blocked"} identity:${metrics.identity_found ? "found" : "missing"} peers:${metrics.connected_peers ?? 0}`,
+    `p2p: ${p2p.reachable ? "reachable" : "blocked"}`,
+  ];
+  if (metrics.error) lines.push(`metrics error: ${metrics.error}`);
+  if (p2p.error) lines.push(`p2p error: ${p2p.error}`);
+  if (metrics.identity) {
+    lines.push(`identity node: ${metrics.identity.node_id || "unknown"}`);
+    lines.push(`identity peer: ${metrics.identity.peer_id || "unknown"}`);
+  }
+  return lines.join("\n");
+}
+
+async function runExternalProbe(data, analysis) {
+  const run = ++state.probeRun;
+  if (analysis.type !== "observer") {
+    setProbe("SKIPPED", "The external reachability probe is only used for public observer registrations.");
+    updateSubmission(data, analysis, null);
+    return;
+  }
+  if (analysis.errors.length) {
+    setProbe("SKIPPED", "Fix the signed registration errors before testing external reachability.");
+    updateSubmission(data, analysis, null);
+    return;
+  }
+  const host = analysis.hostFromMetrics || analysis.hostFromP2p;
+  if (!host || privateHost(host)) {
+    setProbe("SKIPPED", "Registration uses a private/local host. Use a public IPv4 or DNS name before submission.", "error");
+    updateSubmission(data, analysis, null);
+    return;
+  }
+  const params = new URLSearchParams({
+    host,
+    metrics_port: String(metricsPort(data.metrics_url)),
+    p2p_port: String(p2pPort(data.p2p_address)),
+  });
+  setProbe("CHECKING", "Production is testing the public metrics and p2p ports now.");
+  try {
+    const response = await fetch(`https://rpc.mfenx.com/observer-probe?${params}`, {
+      cache: "no-store",
+    });
+    const probe = await response.json();
+    if (run !== state.probeRun) return;
+    state.lastProbe = probe;
+    setProbe(probe.ok ? "PASS" : "FIX", probeSummary(probe), probe.ok ? "ok" : "error");
+    updateSubmission(data, analysis, probe);
+  } catch (error) {
+    if (run !== state.probeRun) return;
+    const probe = { ok: false, error: error.message };
+    state.lastProbe = probe;
+    setProbe("RETRY", `External probe request failed: ${error.message}`, "error");
+    updateSubmission(data, analysis, probe);
+  }
+}
+
 async function readRegistration(file) {
   try {
+    state.probeRun += 1;
+    state.lastProbe = null;
+    setProbe("WAITING", "Upload parsed. External reachability test will run after client-side checks.");
     const text = await file.text();
     const data = JSON.parse(text);
     const analysis = analyzeRegistration(data);
     renderAnalysis(data, analysis);
+    runExternalProbe(data, analysis);
   } catch (error) {
+    state.probeRun += 1;
     el.fileState.textContent = "ERROR";
     el.report.innerHTML = card("STATUS", `INVALID JSON: ${error.message}`, "error");
+    setProbe("ERROR", "Upload must be valid signed registration JSON.", "error");
     el.package.value = "";
     el.copyPackage.disabled = true;
     el.githubSubmit.classList.add("disabled");
