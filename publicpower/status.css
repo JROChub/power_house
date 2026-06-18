@@ -131,7 +131,7 @@ h1 b { color: var(--warn); }
 .regions { margin-top: 36px; border: 1px solid var(--line); background: var(--panel); }
 .region-head { display: flex; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .region-head time { color: var(--teal); font-size: 10px; }
-.regions ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.regions ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .regions li { display: grid; grid-template-columns: 9px 1fr; gap: 5px 10px; padding: 18px; border-right: 1px solid var(--line); }
 .regions li:last-child { border-right: 0; }
 .regions i { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: var(--live); }
@@ -158,8 +158,13 @@ body.outage .pulse i { border-color: var(--down); }
   .telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .telemetry-grid article { min-height: 130px; padding: 16px; }
   .telemetry-grid b { font-size: 18px; }
-  .regions ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .regions li:nth-child(2) { border-right: 0; }
-  .regions li:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .regions ol { grid-template-columns: 1fr; }
+  .regions li,
+  .regions li:nth-child(2),
+  .regions li:nth-child(-n+2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .regions li:last-child { border-bottom: 0; }
   footer { flex-wrap: wrap; gap: 16px; }
 }

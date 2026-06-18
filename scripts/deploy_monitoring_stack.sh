@@ -9,6 +9,7 @@ fi
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 HOSTS=("$@")
 VALIDATOR_REGISTRY="${VALIDATOR_REGISTRY:-$ROOT/deployment/generated/mfenx-production/validator-registry.json}"
+OBSERVER_REGISTRY="${OBSERVER_REGISTRY:-$ROOT/deployment/generated/mfenx-production/observer-registry.json}"
 SSH_ARGS=()
 if [[ -n "${SSH_OPTS:-}" ]]; then
   read -r -a SSH_ARGS <<<"$SSH_OPTS"
@@ -37,22 +38,37 @@ for index in 0 1 2; do
     "$host:/usr/local/lib/powerhouse/status_api.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/validator_registry.py" \
     "$host:/usr/local/lib/powerhouse/validator_registry.py"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/observer_registry.py" \
+    "$host:/usr/local/lib/powerhouse/observer_registry.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-status-api.service" \
     "$host:/etc/systemd/system/powerhouse-status-api.service"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-validator-registry.service" \
     "$host:/etc/systemd/system/powerhouse-validator-registry.service"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-validator-registry.timer" \
     "$host:/etc/systemd/system/powerhouse-validator-registry.timer"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-observer-registry.service" \
+    "$host:/etc/systemd/system/powerhouse-observer-registry.service"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-observer-registry.timer" \
+    "$host:/etc/systemd/system/powerhouse-observer-registry.timer"
   scp "${SSH_ARGS[@]}" "$VALIDATOR_REGISTRY" \
     "$host:/etc/powerhouse/validator-registry.json"
+  if [[ -f "$OBSERVER_REGISTRY" ]]; then
+    scp "${SSH_ARGS[@]}" "$OBSERVER_REGISTRY" \
+      "$host:/etc/powerhouse/observer-registry.json"
+  else
+    ssh "${SSH_ARGS[@]}" "$host" "rm -f /etc/powerhouse/observer-registry.json"
+  fi
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/nginx-mfenx-rpc.conf" \
     "$host:/etc/nginx/sites-available/mfenx-rpc"
   ssh "${SSH_ARGS[@]}" "$host" env \
     "PROMETHEUS_URL=$prometheus_url" \
     "POWER_HOUSE_RELEASE=${POWER_HOUSE_RELEASE:?set POWER_HOUSE_RELEASE}" bash -s <<'REMOTE'
 set -euo pipefail
-chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py
+chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py /usr/local/lib/powerhouse/observer_registry.py
 chmod 0640 /etc/powerhouse/validator-registry.json
+if [[ -f /etc/powerhouse/observer-registry.json ]]; then
+  chmod 0640 /etc/powerhouse/observer-registry.json
+fi
 cat >/etc/default/prometheus-node-exporter <<'EOF'
 ARGS="--web.listen-address=0.0.0.0:9101"
 EOF
@@ -62,6 +78,8 @@ RPC_URL=https://rpc.mfenx.com
 POWER_HOUSE_RELEASE=$POWER_HOUSE_RELEASE
 VALIDATOR_REGISTRY_STATE=/var/lib/powerhouse/monitoring/validator-registry-state.json
 VALIDATOR_REGISTRY_MAX_AGE=45
+OBSERVER_REGISTRY_STATE=/var/lib/powerhouse/monitoring/observer-registry-state.json
+OBSERVER_REGISTRY_MAX_AGE=45
 EOF
 chmod 0640 /etc/powerhouse/status-api.env
 ln -sfn /etc/nginx/sites-available/mfenx-rpc /etc/nginx/sites-enabled/mfenx-rpc
@@ -71,9 +89,11 @@ systemctl daemon-reload
 systemctl enable --now \
   prometheus-node-exporter \
   powerhouse-validator-registry.timer \
+  powerhouse-observer-registry.timer \
   powerhouse-status-api
 systemctl restart prometheus-node-exporter
 systemctl start powerhouse-validator-registry.service
+systemctl start powerhouse-observer-registry.service
 systemctl restart powerhouse-status-api
 systemctl reload nginx
 REMOTE

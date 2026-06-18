@@ -19,8 +19,8 @@ use power_house::net::{
     decode_public_key_base64, encrypt_identity_base64, load_encrypted_identity,
     load_or_derive_keypair, refresh_migration_mode_from_env, run_network, verify_signature_base64,
     AnchorEnvelope, AnchorJson, Ed25519KeySource, MembershipPolicy, MultisigPolicy, NamespaceRule,
-    NetConfig, StakePolicy, StakeRegistry, StaticPolicy, ValidatorRegistration, ValidatorRegistry,
-    VALIDATOR_REGISTRY_SCHEMA,
+    NetConfig, ObserverRegistration, ObserverRegistry, StakePolicy, StakeRegistry, StaticPolicy,
+    ValidatorRegistration, ValidatorRegistry, OBSERVER_REGISTRY_SCHEMA, VALIDATOR_REGISTRY_SCHEMA,
 };
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
@@ -83,6 +83,7 @@ fn print_cli_help() {
         println!("  keygen           Create an encrypted network identity");
         println!("  key-info         Inspect a network identity without exposing its secret");
         println!("  validator-registry  Sign, assemble, and verify validator registrations");
+        println!("  observer-registry   Sign, assemble, and verify public observer registrations");
     }
     println!();
     println!("Use 'julian <command> --help' for command details.");
@@ -276,6 +277,19 @@ fn print_validator_registry_help() {
 }
 
 #[cfg(feature = "net")]
+fn print_observer_registry_help() {
+    println!("Usage: julian observer-registry <create|assemble|verify> ...");
+    println!("  create --key <key> --node-id <id> --operator <name> --region <id>");
+    println!("         --p2p-address <multiaddr> --metrics-url <url>");
+    println!("         [--system-metrics-url <url>] [--chain-id <id>]");
+    println!("         [--issued-at <unix>] [--valid-until <unix>] --output <file>");
+    println!("  assemble --registration <file>... [--chain-id <id>] --output <registry.json>");
+    println!("  verify <registry.json> [--now <unix>] [--json]");
+    println!();
+    println!("Observer records are signed identity declarations and never count as validators.");
+}
+
+#[cfg(feature = "net")]
 fn append_rollup_fault(path: &Path, ev: &power_house::rollup::RollupFaultEvidence) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -352,6 +366,14 @@ fn main() {
                 handle_validator_registry(&sub, args.collect());
             } else {
                 print_validator_registry_help();
+            }
+        }
+        #[cfg(feature = "net")]
+        Some("observer-registry") => {
+            if let Some(sub) = args.next() {
+                handle_observer_registry(&sub, args.collect());
+            } else {
+                print_observer_registry_help();
             }
         }
         #[cfg(feature = "net")]
@@ -1478,6 +1500,190 @@ fn cmd_validator_registry_verify(args: Vec<String>) {
     } else {
         println!(
             "validator registry verified: {} admitted identities on chain {}",
+            registry.registrations.len(),
+            registry.chain_id
+        );
+    }
+}
+
+#[cfg(feature = "net")]
+fn handle_observer_registry(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_observer_registry_help(),
+        "create" => cmd_observer_registry_create(tail),
+        "assemble" => cmd_observer_registry_assemble(tail),
+        "verify" => cmd_observer_registry_verify(tail),
+        _ => fatal(&format!("unknown observer-registry subcommand: {sub}")),
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_registry_create(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_registry_help();
+        return;
+    }
+    let mut values = HashMap::new();
+    let mut iter = args.into_iter();
+    while let Some(flag) = iter.next() {
+        let value = iter
+            .next()
+            .unwrap_or_else(|| fatal(&format!("{flag} expects a value")));
+        if !matches!(
+            flag.as_str(),
+            "--key"
+                | "--node-id"
+                | "--operator"
+                | "--region"
+                | "--p2p-address"
+                | "--metrics-url"
+                | "--system-metrics-url"
+                | "--chain-id"
+                | "--issued-at"
+                | "--valid-until"
+                | "--output"
+        ) {
+            fatal(&format!("unknown argument: {flag}"));
+        }
+        if values.insert(flag.clone(), value).is_some() {
+            fatal(&format!("duplicate argument: {flag}"));
+        }
+    }
+
+    let now = unix_seconds();
+    let chain_id = parse_u64_option(values.get("--chain-id"), 177155, "--chain-id");
+    let issued_at = parse_u64_option(values.get("--issued-at"), now, "--issued-at");
+    let valid_until = parse_u64_option(
+        values.get("--valid-until"),
+        issued_at.saturating_add(365 * 24 * 60 * 60),
+        "--valid-until",
+    );
+    let key = required_option(&values, "--key");
+    let material = load_or_derive_keypair(&Ed25519KeySource::from_spec(Some(key)))
+        .unwrap_or_else(|err| fatal(&format!("failed to load observer key: {err}")));
+    let registration = ObserverRegistration::sign(
+        chain_id,
+        required_option(&values, "--node-id").to_string(),
+        required_option(&values, "--operator").to_string(),
+        required_option(&values, "--region").to_string(),
+        required_option(&values, "--p2p-address").to_string(),
+        required_option(&values, "--metrics-url").to_string(),
+        values.get("--system-metrics-url").cloned(),
+        issued_at,
+        valid_until,
+        &material,
+    )
+    .unwrap_or_else(|err| fatal(&format!("failed to create observer registration: {err}")));
+    write_json_file(
+        Path::new(required_option(&values, "--output")),
+        &registration,
+        "observer registration",
+    );
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_registry_assemble(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_registry_help();
+        return;
+    }
+    let mut registrations = Vec::new();
+    let mut output = None;
+    let mut chain_id = 177155;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--registration" => registrations.push(PathBuf::from(
+                iter.next()
+                    .unwrap_or_else(|| fatal("--registration expects a value")),
+            )),
+            "--output" => {
+                output = Some(PathBuf::from(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                ))
+            }
+            "--chain-id" => {
+                chain_id = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--chain-id expects a value"))
+                    .parse()
+                    .unwrap_or_else(|_| fatal("invalid --chain-id"))
+            }
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    if registrations.is_empty() {
+        fatal("assemble requires at least one --registration");
+    }
+    let entries = registrations
+        .iter()
+        .map(|path| read_json_file::<ObserverRegistration>(path, "observer registration"))
+        .collect();
+    let registry = ObserverRegistry {
+        schema: OBSERVER_REGISTRY_SCHEMA.to_string(),
+        chain_id,
+        registrations: entries,
+    };
+    registry
+        .verify(unix_seconds())
+        .unwrap_or_else(|err| fatal(&format!("observer registry verification failed: {err}")));
+    write_json_file(
+        output
+            .as_deref()
+            .unwrap_or_else(|| fatal("assemble requires --output")),
+        &registry,
+        "observer registry",
+    );
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_registry_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_registry_help();
+        return;
+    }
+    let mut registry_path = None;
+    let mut now = unix_seconds();
+    let mut json = false;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--now" => {
+                now = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--now expects a value"))
+                    .parse()
+                    .unwrap_or_else(|_| fatal("invalid --now"))
+            }
+            "--json" => json = true,
+            value if registry_path.is_none() => registry_path = Some(PathBuf::from(value)),
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    let registry = read_json_file::<ObserverRegistry>(
+        registry_path
+            .as_deref()
+            .unwrap_or_else(|| fatal("verify requires a registry path")),
+        "observer registry",
+    );
+    registry
+        .verify(now)
+        .unwrap_or_else(|err| fatal(&format!("observer registry verification failed: {err}")));
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "chain_id": registry.chain_id,
+                "registrations": registry.registrations,
+                "schema": registry.schema,
+                "observers_verified": registry.registrations.len(),
+                "verified": true,
+            })
+        );
+    } else {
+        println!(
+            "observer registry verified: {} signed identities on chain {}",
             registry.registrations.len(),
             registry.chain_id
         );

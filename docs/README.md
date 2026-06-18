@@ -17,6 +17,7 @@ This index is the authoritative map for Power House v0.3.7 documentation.
 | [JULIAN Protocol](../JULIAN_PROTOCOL.md) | Transcript anchoring, quorum reconciliation, and network architecture |
 | [Stable Public Network Roadmap](network_roadmap.md) | Production topology, completion evidence, and remaining decentralization work |
 | [Signed Validator Registry](validator_registry.md) | Identity-bound validator enrollment, health reconciliation, and dynamic monitoring discovery |
+| [Public Observer Registry](observer_registry.md) | Permissionless observer enrollment, identity health checks, and public peer telemetry |
 
 ## Proof Systems And Formats
 

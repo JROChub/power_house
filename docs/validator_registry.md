@@ -81,8 +81,12 @@ The production cluster generator performs these steps automatically.
 - preserves the last known-good discovery files if registry verification fails
 
 The public API reports dynamic `validators_healthy`, `validators_total`,
-`peer_connections`, and `validator_registry` fields. `peer_connections`
-remains a link observation count and is not used as validator membership.
+`peer_connections`, `validator_peer_links`, and `validator_registry` fields.
+`peer_connections` is retained as the legacy validator mesh link observation
+count. It is not used as validator membership and does not include public
+observers. Public observer growth is reported through the separate
+`observer_peers`, `observer_registry`, and `public_peer_connections` fields.
+See [Public Observer Registry](observer_registry.md).
 
 ## Adding A Validator
 

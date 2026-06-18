@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Power House public observer registry health
+
+[Timer]
+OnBootSec=25s
+OnUnitActiveSec=15s
+AccuracySec=1s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

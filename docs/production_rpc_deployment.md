@@ -18,6 +18,7 @@ configuration, and public edge are independently verifiable.
 - External probes comparing finalized height, block hash, and state root.
 - Prometheus, Alertmanager, blackbox exporter, node exporter, and Grafana.
 - Signed validator identity registry with dynamic Prometheus discovery.
+- Optional signed public observer registry with separate public peer telemetry.
 - A public status API at `/network-status.json`.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
@@ -169,6 +170,14 @@ Every 15 seconds it verifies signatures and policy admission, checks live
 identity and health, then atomically updates the status state. Only the primary
 monitor uses the generated Prometheus discovery files, but every RPC replica
 can serve the same independently reconciled public status.
+
+The deployment also enables `powerhouse-observer-registry.timer`. If
+`/etc/powerhouse/observer-registry.json` is absent, the public API reports the
+observer layer as staged without changing RPC health. When a signed observer
+registry is present, the observer reconciler verifies signatures and live
+identity metrics, then publishes `observer_peers`,
+`public_peer_connections`, and observer Prometheus discovery independently from
+validator quorum.
 
 The corresponding Terraform declaration is under
 [`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).

@@ -5,6 +5,9 @@ const fields = {
   validators: document.querySelector("#validators"),
   block: document.querySelector("#block-height"),
   peers: document.querySelector("#peer-count"),
+  observers: document.querySelector("#observer-count"),
+  observerRegistry: document.querySelector("#observer-registry"),
+  observerLinks: document.querySelector("#observer-links"),
   uptime: document.querySelector("#uptime"),
   client: document.querySelector("#client-version"),
   updated: document.querySelector("#updated-at"),
@@ -37,7 +40,23 @@ async function refreshStatus() {
         ? `${data.validator_registry.identity_verified} IDENTITIES VERIFIED`
         : "SIGNED REGISTRY UNAVAILABLE";
     setText("block", Number(data.block_height).toLocaleString("en-US"));
-    setText("peers", Number(data.peer_connections).toLocaleString("en-US"));
+    const validatorLinks = Number(data.validator_peer_links ?? data.peer_connections) || 0;
+    const observer = data.observer_peers || {};
+    const observerRegistry = data.observer_registry || {};
+    const observerHealthy = Number(observer.healthy) || 0;
+    const observerTotal = Number(observer.total) || 0;
+    const observerConnections = Number(observer.connected ?? data.public_peer_connections) || 0;
+    setText("peers", validatorLinks.toLocaleString("en-US"));
+    setText("observers", `${observerHealthy} / ${observerTotal}`);
+    setText(
+      "observerRegistry",
+      observerRegistry.verified && observerRegistry.fresh
+        ? `${observerRegistry.identity_verified} IDENTITIES VERIFIED`
+        : observerRegistry.configured
+          ? "OBSERVER REGISTRY CHECKING"
+          : "OBSERVER REGISTRY OPEN"
+    );
+    setText("observerLinks", `${observerConnections.toLocaleString("en-US")} CONNECTIONS`);
     setText(
       "uptime",
       data.uptime_24h == null ? "COLLECTING" : `${data.uptime_24h.toFixed(3)}%`
