@@ -39,15 +39,18 @@ separate values.
 
 ## Fast Registration
 
-Run this on the observer operator machine. Do not share the private key.
+Run this on the observer operator machine. Do not share the private key. The
+guided command creates the default key if needed, writes the signed observer
+registration, prints the node start command, and runs the doctor checks.
 
 ```bash
-julian observer-registry register \
+julian observer setup \
   --node-id external-observer-1 \
   --operator "Operator Name" \
   --region <region> \
   --public-host <host> \
-  --metrics-port 9100 \
+  --p2p-port 7001 \
+  --metrics-port 9102 \
   --output observer.registration.json
 ```
 
@@ -55,18 +58,51 @@ The command signs locally with `$HOME/.powerhouse/node.key` by default. The
 private key is never written into the registration file. Use
 `--key <path-or-key-spec>` when the node identity lives somewhere else.
 
-For a local node using a custom metrics port:
+Then start the observer with the command printed by setup. The common shape is:
 
 ```bash
-julian observer-registry register \
+julian net start \
   --node-id mynode \
-  --public-host <public-ip-or-dns> \
-  --metrics-port 9102 \
-  --output mynode.observer.registration.json
+  --log-dir ./logs/mynode-observer \
+  --blob-dir ./data/mynode-observer \
+  --listen /ip4/0.0.0.0/tcp/7001 \
+  --key "$HOME/.powerhouse/node.key" \
+  --metrics 0.0.0.0:9102
 ```
 
+After the observer is running, use the doctor. It checks the local key, local
+ports, local metrics identity, and the production-side public reachability
+probe.
+
+```bash
+julian observer doctor \
+  --node-id mynode \
+  --public-host <public-ip-or-dns> \
+  --p2p-port 7001 \
+  --metrics-port 9102
+```
+
+If the doctor reports a reachability failure, forward these ports from the
+router or cloud firewall to the machine running the observer:
+
+```text
+TCP 7001 -> observer machine TCP 7001
+TCP 9102 -> observer machine TCP 9102
+```
+
+`127.0.0.1`, `10.x.x.x`, `172.16-31.x.x`, and `192.168.x.x` addresses are
+local/private addresses. They can work on the operator machine, but they cannot
+be used for public registry admission.
+
 The signed JSON can be checked on `https://mfenx.com/register.html` before it
-is submitted for public observer registry assembly.
+is submitted for public observer registry assembly. The page never asks for the
+private key.
+
+The CLI can also package the signed JSON and print a submission URL:
+
+```bash
+julian observer submit mynode.observer.registration.json
+```
 
 ## Manual Registration
 
@@ -82,7 +118,7 @@ julian observer-registry create \
   --operator "Operator Name" \
   --region <region> \
   --p2p-address /dns4/<host>/tcp/7001/p2p/<peer-id> \
-  --metrics-url http://<host>:9100/metrics \
+  --metrics-url http://<host>:9102/metrics \
   --output observer.registration.json
 ```
 
@@ -131,7 +167,7 @@ julian net start \
   --listen /ip4/0.0.0.0/tcp/7001 \
   --bootstrap /dns4/<bootstrap-host>/tcp/7001/p2p/<peer-id> \
   --key "$HOME/.powerhouse/node.key" \
-  --metrics 0.0.0.0:9100
+  --metrics 0.0.0.0:9102
 ```
 
 Protect metrics with firewall rules or an authenticated reverse proxy when the
