@@ -41,6 +41,24 @@ julian key-info "$HOME/.powerhouse/node.key" --json
 Never send the private key. Share only the peer ID and public key when
 requesting validator admission.
 
+For a public observer to appear on mfenx.com without validator admission,
+create a signed observer registration instead:
+
+```bash
+julian observer-registry create \
+  --key "$HOME/.powerhouse/node.key" \
+  --node-id external-observer-1 \
+  --operator "Operator Name" \
+  --region <region> \
+  --p2p-address /dns4/<host>/tcp/7001/p2p/<peer-id> \
+  --metrics-url http://<host>:9100/metrics \
+  --output observer.registration.json
+```
+
+The public observer registry requires a matching live
+`powerhouse_node_identity` metric before the observer is counted. See
+[Public Observer Registry](observer_registry.md).
+
 After admission is approved, create a signed monitoring registration:
 
 ```bash

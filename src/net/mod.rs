@@ -62,6 +62,7 @@ pub use sign::{
 pub use stake_registry::StakeRegistry;
 pub use swarm::{run_network, NamespaceRule, NetConfig, NetworkError};
 pub use validator_registry::{
-    ValidatorRegistration, ValidatorRegistry, ValidatorRegistryError,
+    ObserverRegistration, ObserverRegistry, ValidatorRegistration, ValidatorRegistry,
+    ValidatorRegistryError, OBSERVER_REGISTRATION_SCHEMA, OBSERVER_REGISTRY_SCHEMA,
     VALIDATOR_REGISTRATION_SCHEMA, VALIDATOR_REGISTRY_SCHEMA,
 };

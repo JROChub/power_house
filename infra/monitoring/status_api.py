@@ -14,6 +14,11 @@ REGISTRY_STATE_PATH = os.environ.get(
     "/var/lib/powerhouse/monitoring/validator-registry-state.json",
 )
 REGISTRY_MAX_AGE_SECONDS = int(os.environ.get("VALIDATOR_REGISTRY_MAX_AGE", "45"))
+OBSERVER_STATE_PATH = os.environ.get(
+    "OBSERVER_REGISTRY_STATE",
+    "/var/lib/powerhouse/monitoring/observer-registry-state.json",
+)
+OBSERVER_MAX_AGE_SECONDS = int(os.environ.get("OBSERVER_REGISTRY_MAX_AGE", "45"))
 
 
 def fetch_json(url, data=None, headers=None):
@@ -55,8 +60,33 @@ def registry_health():
     return state
 
 
+def observer_health():
+    try:
+        with open(OBSERVER_STATE_PATH, encoding="utf-8") as handle:
+            state = json.load(handle)
+    except FileNotFoundError:
+        return {
+            "configured": False,
+            "fresh": False,
+            "registry_verified": False,
+            "observers_total": 0,
+            "observers_healthy": 0,
+            "observer_connections": 0,
+            "observers": [],
+        }
+    generated = datetime.fromisoformat(state["generated_at"].replace("Z", "+00:00"))
+    age = (datetime.now(timezone.utc) - generated).total_seconds()
+    state["fresh"] = (
+        state.get("configured") is True
+        and state.get("registry_verified") is True
+        and 0 <= age <= OBSERVER_MAX_AGE_SECONDS
+    )
+    return state
+
+
 def snapshot():
     registry = registry_health()
+    observer = observer_health()
     validators = int(registry.get("validators_healthy", 0))
     validators_total = int(registry.get("validators_total", 0))
     systems = sum(
@@ -65,7 +95,8 @@ def snapshot():
         if item.get("system_metrics_reachable") is True
     )
     rpc_probe = int(query('min(probe_success{job="blackbox-rpc"})') or 0)
-    peers = int(registry.get("peer_link_observations", 0))
+    validator_links = int(registry.get("peer_link_observations", 0))
+    observer_connections = int(observer.get("observer_connections", 0))
     uptime = query(
         'avg_over_time(probe_success{job="blackbox-rpc"}[24h])'
     )
@@ -99,7 +130,25 @@ def snapshot():
         "client": client,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "network": "MFENX Power House",
-        "peer_connections": peers,
+        "observer_peers": {
+            "configured": observer.get("configured") is True,
+            "connected": observer_connections,
+            "fresh": observer.get("fresh") is True,
+            "healthy": int(observer.get("observers_healthy", 0)),
+            "total": int(observer.get("observers_total", 0)),
+        },
+        "observer_registry": {
+            "configured": observer.get("configured") is True,
+            "fresh": observer.get("fresh") is True,
+            "identity_verified": sum(
+                1
+                for item in observer.get("observers", [])
+                if item.get("identity_verified") is True
+            ),
+            "verified": observer.get("registry_verified") is True,
+        },
+        "peer_connections": validator_links,
+        "public_peer_connections": observer_connections,
         "release": RELEASE,
         "rpc": {
             "endpoint": RPC_URL,
@@ -115,6 +164,7 @@ def snapshot():
         ),
         "validators_healthy": validators,
         "validators_total": validators_total,
+        "validator_peer_links": validator_links,
         "validator_registry": {
             "fresh": registry["fresh"],
             "identity_verified": sum(

@@ -55,9 +55,9 @@ measured network outcome.
 
 | Outcome | Acceptance criterion |
 | --- | --- |
-| External operators | At least two independently administered nodes |
+| External operators | At least two independently administered public observers with signed registry health |
 | Validator diversity | At least five validators across three providers and three regions |
-| Public status | Current RPC, validator, peer, block, and 24-hour probe state |
+| Public status | Current RPC, validator, validator-link, observer, block, and 24-hour probe state |
 | Mainnet governance | Published launch, upgrade, rollback, and migration criteria |
 | EVM integration | Wallet metadata, ChainList endpoint, examples, and publication probe |
 

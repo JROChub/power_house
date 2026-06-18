@@ -16,6 +16,11 @@ scrape_configs:
       - files: ["/etc/prometheus/file_sd/powerhouse-validators.json"]
         refresh_interval: 15s
 
+  - job_name: powerhouse-observers
+    file_sd_configs:
+      - files: ["/etc/prometheus/file_sd/powerhouse-observers.json"]
+        refresh_interval: 15s
+
   - job_name: node
     file_sd_configs:
       - files: ["/etc/prometheus/file_sd/powerhouse-systems.json"]

@@ -80,7 +80,8 @@
       <div><span>CHAIN</span><b>177155</b></div>
       <div><span>BLOCK</span><b id="network-block">--</b></div>
       <div><span>VALIDATORS</span><b id="network-validators">-- / --</b></div>
-      <div><span>PEERS</span><b id="network-peers">--</b></div>
+      <div><span>LINKS</span><b id="network-peers">--</b></div>
+      <div><span>OBSERVERS</span><b id="network-observers">-- / --</b></div>
     </section>
 
     <aside class="proof-rail" aria-label="Proof modes">
@@ -258,6 +259,17 @@
           <button type="button" data-network-city="7">
             <i></i><span><b>AMS3</b><small>AMSTERDAM</small></span><strong id="node-ams-state">CHECK</strong>
           </button>
+        </div>
+        <div class="observer-matrix" aria-label="Public observer registry">
+          <div class="observer-matrix-head">
+            <span>PUBLIC OBSERVER LAYER</span>
+            <b id="observer-state">STAGED</b>
+          </div>
+          <dl>
+            <div><dt>IDENTITIES</dt><dd id="observer-count">0 / 0</dd></div>
+            <div><dt>CONNECTIONS</dt><dd id="observer-links">0</dd></div>
+            <div><dt>REGISTRY</dt><dd id="observer-registry">AWAITING</dd></div>
+          </dl>
         </div>
         <a href="status.html">
           <span>OPEN NETWORK CONTROL</span>
