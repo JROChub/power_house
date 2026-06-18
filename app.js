@@ -217,10 +217,15 @@ const el = Object.fromEntries(
     "network-block",
     "network-validators",
     "network-peers",
+    "network-observers",
     "network-console-state",
     "node-sfo-state",
     "node-nyc-state",
     "node-ams-state",
+    "observer-state",
+    "observer-count",
+    "observer-links",
+    "observer-registry",
     "utc-date",
     "utc-time",
     "city-list",
@@ -2439,6 +2444,22 @@ function updateNetworkNodeStates(healthy) {
   });
 }
 
+function updateObserverLayer(data) {
+  const observer = data.observer_peers || {};
+  const registry = data.observer_registry || {};
+  const healthy = Number(observer.healthy) || 0;
+  const total = Number(observer.total) || 0;
+  const connected = Number(observer.connected ?? data.public_peer_connections) || 0;
+  const configured = registry.configured === true || observer.configured === true;
+  const fresh = registry.fresh === true || observer.fresh === true;
+  const verified = registry.verified === true;
+  el.networkObservers.textContent = `${healthy} / ${total}`;
+  el.observerCount.textContent = `${healthy} / ${total}`;
+  el.observerLinks.textContent = connected.toLocaleString("en-US");
+  el.observerState.textContent = fresh ? "LIVE" : configured ? "CHECK" : "STAGED";
+  el.observerRegistry.textContent = verified && fresh ? "SIGNED" : configured ? "VERIFY" : "OPEN";
+}
+
 async function refreshNetworkStatus() {
   try {
     const response = await fetch("https://rpc.mfenx.com/network-status.json", {
@@ -2454,12 +2475,15 @@ async function refreshNetworkStatus() {
     el.networkConsoleState.textContent = networkState.toUpperCase();
     el.networkBlock.textContent = Number(data.block_height).toLocaleString("en-US");
     el.networkValidators.textContent = `${healthy} / ${Number(data.validators_total) || 0}`;
-    el.networkPeers.textContent = Number(data.peer_connections).toLocaleString("en-US");
+    const validatorLinks = Number(data.validator_peer_links ?? data.peer_connections) || 0;
+    el.networkPeers.textContent = validatorLinks.toLocaleString("en-US");
+    updateObserverLayer(data);
     updateNetworkNodeStates(healthy);
   } catch {
     document.body.dataset.network = "unknown";
     el.networkState.textContent = "FEED CHECK";
     el.networkConsoleState.textContent = "FEED CHECK";
+    updateObserverLayer({});
     updateNetworkNodeStates(0);
   }
 }

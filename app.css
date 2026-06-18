@@ -306,6 +306,7 @@ body.proof-verified .proof-flash {
 .city-row small,
 .celestial-readout,
 .time-lab,
+.observer-matrix,
 .evaluation-lead > span,
 .evaluation-spec,
 .evaluation-links,
@@ -768,6 +769,10 @@ body.proof-verified .proof-event b {
   border-left: 1px solid var(--line-strong);
   background: rgba(2, 8, 9, 0.97);
   backdrop-filter: blur(22px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(62, 228, 213, 0.28) transparent;
+  scrollbar-width: thin;
   transform: translateX(102%);
   transition: transform 280ms cubic-bezier(0.16, 0.78, 0.22, 1);
 }
@@ -846,7 +851,7 @@ body.proof-verified .proof-event b {
   display: grid;
   align-content: start;
   flex: 1 1 auto;
-  min-height: 90px;
+  min-height: 52px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: rgba(62, 228, 213, 0.3) transparent;
@@ -2456,7 +2461,7 @@ body.luminous-expanded .luminous-toggle svg {
   right: 70px;
   z-index: 24;
   display: grid;
-  grid-template-columns: 1.55fr repeat(4, minmax(64px, auto));
+  grid-template-columns: 1.55fr repeat(5, minmax(64px, auto));
   min-height: 44px;
   color: #7f8d88;
   font-size: 8px;
@@ -2954,6 +2959,64 @@ body[data-network="outage"] .network-ribbon-state i {
   border-color: rgba(69, 221, 210, 0.4);
 }
 
+.observer-matrix {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(186, 255, 53, 0.055), transparent 48%),
+    rgba(255, 255, 255, 0.018);
+}
+
+.observer-matrix-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px 8px;
+  color: #788681;
+  border-bottom: 1px solid var(--line);
+}
+
+.observer-matrix-head b {
+  color: var(--cyan);
+  font-weight: 500;
+}
+
+.observer-matrix dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.observer-matrix dl div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+}
+
+.observer-matrix dl div:last-child {
+  border-right: 0;
+}
+
+.observer-matrix dt,
+.observer-matrix dd {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.observer-matrix dt {
+  color: #52605b;
+  font-size: 8px;
+}
+
+.observer-matrix dd {
+  color: #c3cec9;
+  font-size: 10px;
+}
+
 .verification-dock {
   grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.5fr) auto;
   grid-template-rows: 114px 52px;
@@ -3009,7 +3072,7 @@ body[data-network="outage"] .network-ribbon-state i {
 @media (max-width: 1180px) {
   .network-ribbon {
     right: 62px;
-    grid-template-columns: 1.4fr repeat(3, minmax(60px, auto));
+    grid-template-columns: 1.4fr repeat(4, minmax(60px, auto));
   }
 
   .network-ribbon > div:last-child {
@@ -3222,6 +3285,21 @@ body[data-network="outage"] .network-ribbon-state i {
     grid-column: 3;
     grid-row: 1;
     align-self: center;
+  }
+
+  .observer-matrix dl {
+    grid-template-columns: 1fr;
+  }
+
+  .observer-matrix dl div {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .observer-matrix dl div:last-child {
+    border-bottom: 0;
   }
 
   .verification-dock {
