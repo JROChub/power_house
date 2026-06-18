@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import json
 import os
+import ipaddress
+import re
+import socket
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qs, urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "http://127.0.0.1:9090")
@@ -19,12 +23,146 @@ OBSERVER_STATE_PATH = os.environ.get(
     "/var/lib/powerhouse/monitoring/observer-registry-state.json",
 )
 OBSERVER_MAX_AGE_SECONDS = int(os.environ.get("OBSERVER_REGISTRY_MAX_AGE", "45"))
+MAX_PROBE_BYTES = 2 * 1024 * 1024
+IDENTITY_METRIC = re.compile(
+    r'^powerhouse_node_identity\{(?P<labels>.+)\}\s+(?P<value>[0-9.eE+-]+)$'
+)
+SIMPLE_METRIC = re.compile(
+    r"^(?P<name>[a-zA-Z_:][a-zA-Z0-9_:]*)\s+(?P<value>[0-9.eE+-]+)$"
+)
+LABEL = re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)="((?:\\.|[^"])*)"')
+
+
+class RejectRedirects(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise RuntimeError(f"redirect rejected: HTTP {code}")
 
 
 def fetch_json(url, data=None, headers=None):
     request = Request(url, data=data, headers=headers or {})
     with urlopen(request, timeout=5) as response:
         return json.loads(response.read())
+
+
+def decode_label(value):
+    return (
+        value.replace(r"\\", "\0")
+        .replace(r"\"", '"')
+        .replace(r"\n", "\n")
+        .replace("\0", "\\")
+    )
+
+
+def parse_metrics(body):
+    identity = None
+    metrics = {}
+    for line in body.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        match = IDENTITY_METRIC.fullmatch(line)
+        if match:
+            labels = {
+                name: decode_label(value)
+                for name, value in LABEL.findall(match.group("labels"))
+            }
+            if float(match.group("value")) == 1:
+                identity = labels
+            continue
+        metric = SIMPLE_METRIC.fullmatch(line)
+        if metric:
+            metrics[metric.group("name")] = float(metric.group("value"))
+    return identity, metrics
+
+
+def public_addresses_for_host(host):
+    if not host:
+        raise ValueError("host is required")
+    if "://" in host or "/" in host:
+        raise ValueError("host must be a bare public DNS name or IP address")
+    try:
+        addresses = [ipaddress.ip_address(host.strip("[]"))]
+    except ValueError:
+        records = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+        addresses = sorted({ipaddress.ip_address(record[4][0]) for record in records})
+    if not addresses:
+        raise ValueError("host did not resolve")
+    for address in addresses:
+        if not address.is_global:
+            raise ValueError(f"refusing non-public target address {address}")
+    return addresses
+
+
+def parse_probe_port(raw, default):
+    if raw is None:
+        return default
+    port = int(raw)
+    if port < 1 or port > 65535:
+        raise ValueError("port must be between 1 and 65535")
+    return port
+
+
+def probe_tcp(host, port, timeout):
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return {"reachable": True, "error": None}
+    except Exception as exc:
+        return {"reachable": False, "error": str(exc)}
+
+
+def probe_metrics(host, port, timeout):
+    target = f"http://{host}:{port}/metrics"
+    if ":" in host and not host.startswith("["):
+        target = f"http://[{host}]:{port}/metrics"
+    request = Request(target, headers={"User-Agent": "power-house-observer-probe/1"})
+    opener = build_opener(RejectRedirects)
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            body = response.read(MAX_PROBE_BYTES + 1)
+            if len(body) > MAX_PROBE_BYTES:
+                raise RuntimeError("metrics response exceeds maximum size")
+        text = body.decode("utf-8", "replace")
+        identity, metrics = parse_metrics(text)
+        return {
+            "reachable": True,
+            "identity_found": identity is not None,
+            "identity": identity,
+            "connected_peers": int(metrics.get("powerhouse_connected_peers", 0)),
+            "error": None,
+        }
+    except Exception as exc:
+        return {
+            "reachable": False,
+            "identity_found": False,
+            "identity": None,
+            "connected_peers": 0,
+            "error": str(exc),
+        }
+
+
+def observer_probe(query):
+    values = parse_qs(query)
+    host = values.get("host", [""])[0].strip()
+    metrics_port = parse_probe_port(values.get("metrics_port", [None])[0], 9102)
+    p2p_port = parse_probe_port(values.get("p2p_port", [None])[0], 7001)
+    timeout = min(parse_probe_port(values.get("timeout", [None])[0], 5), 10)
+    addresses = public_addresses_for_host(host)
+    metrics = probe_metrics(host, metrics_port, timeout)
+    p2p = probe_tcp(host, p2p_port, timeout)
+    return {
+        "schema": "power-house-observer-probe-v1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "target": {
+            "host": host,
+            "resolved_addresses": [str(address) for address in addresses],
+            "metrics_port": metrics_port,
+            "p2p_port": p2p_port,
+        },
+        "metrics": metrics,
+        "p2p": p2p,
+        "ok": metrics.get("reachable") is True
+        and metrics.get("identity_found") is True
+        and p2p.get("reachable") is True,
+    }
 
 
 def query(expression):
@@ -179,7 +317,31 @@ def snapshot():
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path not in {"/", "/status.json", "/healthz"}:
+        parsed = urlparse(self.path)
+        if parsed.path == "/observer-probe":
+            try:
+                body = json.dumps(observer_probe(parsed.query), sort_keys=True).encode()
+                status = 200
+            except Exception as exc:
+                body = json.dumps(
+                    {
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "schema": "power-house-observer-probe-v1",
+                        "ok": False,
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ).encode()
+                status = 400
+            self.send_response(status)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if parsed.path not in {"/", "/status.json", "/healthz"}:
             self.send_error(404)
             return
         try:

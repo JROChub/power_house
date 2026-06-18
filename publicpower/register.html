@@ -29,7 +29,7 @@
       <div>
         <span class="eyebrow">SIGNED IDENTITY / CHAIN 177155</span>
         <h1 id="registration-title">REGISTER A PUBLIC NODE</h1>
-        <p>Generate a signed observer or validator registration locally, inspect it here, then submit the signed JSON for registry assembly.</p>
+        <p>Run the guided observer setup, let the doctor diagnose firewall/NAT/metrics issues, then submit signed JSON for registry assembly.</p>
       </div>
       <div class="security-meter" aria-label="Security model">
         <span>PRIVATE KEY</span>
@@ -37,10 +37,17 @@
       </div>
     </section>
 
+    <section class="onboarding-steps" aria-label="Observer onboarding steps">
+      <article><span>01</span><b>SETUP</b><p>Create or reuse a local key and generate a signed observer registration.</p></article>
+      <article><span>02</span><b>DOCTOR</b><p>Detect occupied ports, local firewall, NAT, metrics identity, and public reachability.</p></article>
+      <article><span>03</span><b>PROBE</b><p>Use the production-side external probe so router hairpin failures do not mislead operators.</p></article>
+      <article><span>04</span><b>SUBMIT</b><p>Submit only signed JSON. Production still verifies identity before counting the observer.</p></article>
+    </section>
+
     <section class="registration-grid" aria-label="Registration workspace">
       <article class="command-panel">
         <div class="panel-head">
-          <span>CLI BUILDER</span>
+          <span>GUIDED CLI</span>
           <div class="segmented" role="group" aria-label="Registration type">
             <button class="active" type="button" data-kind="observer">OBSERVER</button>
             <button type="button" data-kind="validator">VALIDATOR</button>
@@ -70,7 +77,7 @@
           </label>
           <label>
             <span>METRICS PORT</span>
-            <input id="metrics-port" value="9100" inputmode="numeric">
+            <input id="metrics-port" value="9102" inputmode="numeric">
           </label>
           <label class="wide">
             <span>NODE KEY PATH</span>
@@ -80,7 +87,7 @@
 
         <div class="command-output">
           <pre id="register-command"></pre>
-          <button id="copy-command" type="button">COPY COMMAND</button>
+          <button id="copy-command" type="button">COPY COMMANDS</button>
         </div>
       </article>
 
@@ -97,6 +104,11 @@
         </label>
 
         <div id="registration-report" class="registration-report" aria-live="polite"></div>
+
+        <div class="probe-panel" aria-label="External probe result">
+          <div><span>EXTERNAL PROBE</span><b id="probe-state">WAITING</b></div>
+          <pre id="probe-report">Upload a signed observer registration to test metrics and p2p reachability from production.</pre>
+        </div>
 
         <div class="submission-panel">
           <div>

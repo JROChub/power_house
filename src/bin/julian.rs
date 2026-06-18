@@ -29,14 +29,14 @@ use power_house::{
     Field, GeneralSumProof, LedgerAnchor, ObservatorySidecar, ProofStats,
 };
 #[cfg(feature = "net")]
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
 #[cfg(feature = "net")]
 use std::sync::Arc;
 #[cfg(feature = "net")]
 use std::time::Duration;
 use std::{
     env, fs,
-    io::{self, Read},
+    io::{self, Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -45,11 +45,13 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 #[cfg(feature = "net")]
 use libp2p::Multiaddr;
 #[cfg(feature = "net")]
+use rand::RngCore;
+#[cfg(feature = "net")]
 use rpassword::prompt_password;
 #[cfg(feature = "net")]
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "net")]
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const NETWORK_ID: &str = "MFENX-POWERHOUSE";
 
@@ -82,6 +84,7 @@ fn print_cli_help() {
         println!("  rollup           Settle rollup requests");
         println!("  keygen           Create an encrypted network identity");
         println!("  key-info         Inspect a network identity without exposing its secret");
+        println!("  observer         Diagnose, set up, register, and package public observers");
         println!("  validator-registry  Sign, assemble, and verify validator registrations");
         println!("  observer-registry   Sign, assemble, and verify public observer registrations");
     }
@@ -263,6 +266,31 @@ fn print_key_info_help() {
 }
 
 #[cfg(feature = "net")]
+fn print_observer_help() {
+    println!("Usage: julian observer <doctor|setup|register|submit> ...");
+    println!("  Diagnose, set up, register, and package public observers.");
+    println!("  doctor   Diagnose local identity, ports, metrics, NAT, and external reachability");
+    println!("  setup    Create a local key if needed, print the node command, and write registration JSON");
+    println!("  register Write a signed observer registration using safe observer defaults");
+    println!("  submit   Validate/package a signed registration for registry review");
+    println!();
+    println!("Common options:");
+    println!("  --node-id <id>             Observer node id (default: mynode)");
+    println!(
+        "  --key <key>                Node key path/spec (default: $HOME/.powerhouse/node.key)"
+    );
+    println!("  --operator <name>          Operator name (default: node id)");
+    println!("  --region <id>              Region label (default: self-hosted)");
+    println!("  --public-host <host>       Public IPv4/DNS; auto-detected when possible");
+    println!("  --p2p-port <port>          Public p2p port (default: 7001)");
+    println!("  --metrics-port <port>      Public metrics port (default: 9102)");
+    println!("  --output <file>            Registration/submission output path");
+    println!("  --probe-url <url>          External probe endpoint (default: https://rpc.mfenx.com/observer-probe)");
+    println!("  --no-probe                 Skip the production-side external probe");
+    println!("  --json                     Machine-readable doctor/submit output");
+}
+
+#[cfg(feature = "net")]
 fn print_validator_registry_help() {
     println!("Usage: julian validator-registry <register|create|assemble|verify> ...");
     println!("  register --node-id <id> --public-host <host>");
@@ -372,6 +400,14 @@ fn main() {
         #[cfg(feature = "net")]
         Some("key-info") => {
             cmd_key_info(args.collect());
+        }
+        #[cfg(feature = "net")]
+        Some("observer") => {
+            if let Some(sub) = args.next() {
+                handle_observer(&sub, args.collect());
+            } else {
+                print_observer_help();
+            }
         }
         #[cfg(feature = "net")]
         Some("validator-registry") => {
@@ -1309,6 +1345,820 @@ fn cmd_key_info(args: Vec<String>) {
         println!("public_key_b64: {public_key}");
         println!("peer_id: {peer_id}");
     }
+}
+
+#[cfg(feature = "net")]
+fn handle_observer(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_observer_help(),
+        "doctor" => cmd_observer_doctor(tail),
+        "setup" => cmd_observer_setup(tail),
+        "register" => cmd_observer_register(tail),
+        "submit" => cmd_observer_submit(tail),
+        _ => fatal(&format!("unknown observer subcommand: {sub}")),
+    }
+}
+
+#[cfg(feature = "net")]
+#[derive(Debug, Clone)]
+struct ObserverCliOptions {
+    node_id: String,
+    operator: String,
+    region: String,
+    key_spec: String,
+    p2p_port: u16,
+    metrics_port: u16,
+    public_host: Option<String>,
+    probe_url: Option<String>,
+    output: PathBuf,
+    json: bool,
+}
+
+#[cfg(feature = "net")]
+#[derive(Debug, Clone, Serialize)]
+struct ObserverCheck {
+    name: String,
+    status: String,
+    detail: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fix: Option<String>,
+}
+
+#[cfg(feature = "net")]
+#[derive(Debug, Clone, Serialize)]
+struct ObserverDiagnosis {
+    schema: String,
+    node_id: String,
+    key_spec: String,
+    local_ip: Option<String>,
+    public_host: Option<String>,
+    p2p_port: u16,
+    metrics_port: u16,
+    peer_id: Option<String>,
+    public_key_b64: Option<String>,
+    checks: Vec<ObserverCheck>,
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_doctor(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_help();
+        return;
+    }
+    let (values, switches) = parse_observer_options(
+        args,
+        &[
+            "--node-id",
+            "--key",
+            "--operator",
+            "--region",
+            "--public-host",
+            "--p2p-port",
+            "--metrics-port",
+            "--probe-url",
+        ],
+        &["--json", "--no-probe"],
+    );
+    let options = observer_cli_options(&values, &switches, false);
+    let diagnosis = diagnose_observer(&options);
+    print_observer_diagnosis(&diagnosis, options.json);
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_setup(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_help();
+        return;
+    }
+    let (values, switches) = parse_observer_options(
+        args,
+        &[
+            "--node-id",
+            "--key",
+            "--operator",
+            "--region",
+            "--public-host",
+            "--p2p-port",
+            "--metrics-port",
+            "--probe-url",
+            "--output",
+        ],
+        &["--json", "--no-probe"],
+    );
+    let options = observer_cli_options(&values, &switches, true);
+    let created_key = ensure_default_node_key(&options.key_spec);
+    let registration = observer_registration_from_options(&options);
+    write_json_file(&options.output, &registration, "observer registration");
+    let diagnosis = diagnose_observer(&options);
+    if options.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "schema": "power-house-observer-setup-v1",
+                "created_node_key": created_key.as_ref().map(|path| path.display().to_string()),
+                "registration_output": options.output,
+                "diagnosis": diagnosis,
+                "start_command": observer_start_command(&options),
+            }))
+            .unwrap_or_else(|err| fatal(&format!("failed to encode setup JSON: {err}")))
+        );
+    } else {
+        if let Some(path) = created_key {
+            println!("created node key: {}", path.display());
+        }
+        println!("observer registration: {}", options.output.display());
+        println!();
+        println!("Start the observer with:");
+        println!("{}", observer_start_command(&options));
+        println!();
+        print_observer_diagnosis(&diagnosis, false);
+        println!();
+        println!("Submit/check the signed JSON at https://mfenx.com/register.html");
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_register(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_help();
+        return;
+    }
+    let (values, switches) = parse_observer_options(
+        args,
+        &[
+            "--node-id",
+            "--key",
+            "--operator",
+            "--region",
+            "--public-host",
+            "--p2p-port",
+            "--metrics-port",
+            "--output",
+        ],
+        &["--json"],
+    );
+    let options = observer_cli_options(&values, &switches, true);
+    let registration = observer_registration_from_options(&options);
+    write_json_file(&options.output, &registration, "observer registration");
+    if options.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&registration)
+                .unwrap_or_else(|err| fatal(&format!("failed to encode registration: {err}")))
+        );
+    } else {
+        print_registration_summary(
+            "observer",
+            &options.output,
+            &registration.node_id,
+            &registration.peer_id,
+            &registration.p2p_address,
+            &registration.metrics_url,
+        );
+        println!("next: run `julian observer doctor` or upload the signed JSON at https://mfenx.com/register.html");
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_submit(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_help();
+        return;
+    }
+    let mut input = None;
+    let mut output = None;
+    let mut json = false;
+    let mut probe_url = Some("https://rpc.mfenx.com/observer-probe".to_string());
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--output" => {
+                output = Some(PathBuf::from(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--output expects a value")),
+                ))
+            }
+            "--probe-url" => {
+                probe_url = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--probe-url expects a value")),
+                )
+            }
+            "--no-probe" => probe_url = None,
+            "--json" => json = true,
+            value if !value.starts_with("--") && input.is_none() => {
+                input = Some(PathBuf::from(value))
+            }
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    let input = input.unwrap_or_else(|| fatal("submit requires <observer-registration.json>"));
+    let registration = read_observer_registration_or_package(&input);
+    registration
+        .verify(177155, unix_seconds())
+        .unwrap_or_else(|err| fatal(&format!("observer registration verification failed: {err}")));
+    let probe = probe_url
+        .as_deref()
+        .and_then(|url| observer_probe_for_registration(url, &registration).ok());
+    let package = serde_json::json!({
+        "schema": "mfenx-node-registration-submission-v1",
+        "created_at_unix": unix_seconds(),
+        "registration_type": "observer",
+        "client_side_status": "ready",
+        "client_side_errors": [],
+        "client_side_warnings": [],
+        "probe": probe,
+        "registration": registration,
+    });
+    if let Some(path) = output {
+        write_json_file(&path, &package, "observer submission package");
+        if !json {
+            println!("submission package: {}", path.display());
+        }
+    }
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&package)
+                .unwrap_or_else(|err| fatal(&format!("failed to encode package: {err}")))
+        );
+    } else {
+        println!("observer registration verified locally");
+        if !package["probe"].is_null() {
+            println!("external probe: {}", package["probe"]);
+        } else {
+            println!("external probe: skipped or unavailable");
+        }
+        println!("GitHub issue URL:");
+        println!("{}", observer_issue_url(&registration));
+    }
+}
+
+#[cfg(feature = "net")]
+fn parse_observer_options(
+    args: Vec<String>,
+    value_flags: &[&str],
+    switches: &[&str],
+) -> (HashMap<String, String>, HashSet<String>) {
+    let mut values = HashMap::new();
+    let mut present = HashSet::new();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        if switches.contains(&arg.as_str()) {
+            present.insert(arg);
+            continue;
+        }
+        if !value_flags.contains(&arg.as_str()) {
+            fatal(&format!("unknown argument: {arg}"));
+        }
+        let value = iter
+            .next()
+            .unwrap_or_else(|| fatal(&format!("{arg} expects a value")));
+        if values.insert(arg.clone(), value).is_some() {
+            fatal(&format!("duplicate argument: {arg}"));
+        }
+    }
+    (values, present)
+}
+
+#[cfg(feature = "net")]
+fn observer_cli_options(
+    values: &HashMap<String, String>,
+    switches: &HashSet<String>,
+    require_public_host: bool,
+) -> ObserverCliOptions {
+    let node_id = values
+        .get("--node-id")
+        .cloned()
+        .unwrap_or_else(|| "mynode".to_string());
+    let operator = values
+        .get("--operator")
+        .cloned()
+        .unwrap_or_else(|| node_id.clone());
+    let region = values
+        .get("--region")
+        .cloned()
+        .unwrap_or_else(|| "self-hosted".to_string());
+    let key_spec = values
+        .get("--key")
+        .cloned()
+        .unwrap_or_else(default_node_key_spec);
+    let p2p_port = parse_port_option(values.get("--p2p-port"), 7001, "--p2p-port");
+    let metrics_port = parse_port_option(values.get("--metrics-port"), 9102, "--metrics-port");
+    let public_host = values
+        .get("--public-host")
+        .map(|host| normalize_public_host(host))
+        .or_else(|| detect_public_host().ok());
+    if require_public_host && public_host.is_none() {
+        fatal("--public-host is required because public IP auto-detection failed");
+    }
+    let probe_url = if switches.contains("--no-probe") {
+        None
+    } else {
+        Some(
+            values
+                .get("--probe-url")
+                .cloned()
+                .unwrap_or_else(|| "https://rpc.mfenx.com/observer-probe".to_string()),
+        )
+    };
+    let output = values
+        .get("--output")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| default_registration_output(&node_id, "observer"));
+    ObserverCliOptions {
+        node_id,
+        operator,
+        region,
+        key_spec,
+        p2p_port,
+        metrics_port,
+        public_host,
+        probe_url,
+        output,
+        json: switches.contains("--json"),
+    }
+}
+
+#[cfg(feature = "net")]
+fn observer_registration_from_options(options: &ObserverCliOptions) -> ObserverRegistration {
+    let mut values = HashMap::new();
+    values.insert("--key".to_string(), options.key_spec.clone());
+    values.insert("--node-id".to_string(), options.node_id.clone());
+    values.insert("--operator".to_string(), options.operator.clone());
+    values.insert("--region".to_string(), options.region.clone());
+    values.insert(
+        "--public-host".to_string(),
+        options
+            .public_host
+            .clone()
+            .unwrap_or_else(|| fatal("public host is required")),
+    );
+    values.insert("--p2p-port".to_string(), options.p2p_port.to_string());
+    values.insert(
+        "--metrics-port".to_string(),
+        options.metrics_port.to_string(),
+    );
+    build_observer_registration(&values)
+}
+
+#[cfg(feature = "net")]
+fn diagnose_observer(options: &ObserverCliOptions) -> ObserverDiagnosis {
+    let mut checks = Vec::new();
+    let local_ip = local_ipv4_guess();
+    let key_result = load_or_derive_keypair(&Ed25519KeySource::from_spec(Some(&options.key_spec)));
+    let (peer_id, public_key_b64) = match key_result {
+        Ok(material) => {
+            let public_key = power_house::net::encode_public_key_base64(&material.verifying);
+            let peer_id = material.libp2p.public().to_peer_id().to_string();
+            checks.push(observer_check(
+                "node key",
+                "OK",
+                format!("loaded identity {peer_id}"),
+                None,
+            ));
+            (Some(peer_id), Some(public_key))
+        }
+        Err(err) => {
+            checks.push(observer_check(
+                "node key",
+                "FAIL",
+                format!("failed to load {}: {err}", options.key_spec),
+                Some("run `julian observer setup` to create the default key".to_string()),
+            ));
+            (None, None)
+        }
+    };
+    checks.push(observer_check(
+        "local ip",
+        if local_ip.is_some() { "OK" } else { "WARN" },
+        local_ip
+            .clone()
+            .unwrap_or_else(|| "could not infer local LAN IP".to_string()),
+        None,
+    ));
+    checks.push(port_check("p2p port", options.p2p_port));
+    checks.push(port_check("metrics port", options.metrics_port));
+    match fetch_local_metrics(options.metrics_port) {
+        Ok(metrics) => {
+            if let (Some(peer_id), Some(public_key)) = (&peer_id, &public_key_b64) {
+                if metrics_contains_identity(&metrics, &options.node_id, peer_id, public_key) {
+                    checks.push(observer_check(
+                        "local metrics identity",
+                        "OK",
+                        "metrics exposes matching node_id, peer_id, public key, and chain"
+                            .to_string(),
+                        None,
+                    ));
+                } else {
+                    checks.push(observer_check(
+                        "local metrics identity",
+                        "FAIL",
+                        "metrics endpoint is reachable but does not match this node identity".to_string(),
+                        Some("restart the observer with the same --node-id and --key used for registration".to_string()),
+                    ));
+                }
+            } else {
+                checks.push(observer_check(
+                    "local metrics",
+                    "OK",
+                    "metrics endpoint is reachable".to_string(),
+                    None,
+                ));
+            }
+        }
+        Err(err) => checks.push(observer_check(
+            "local metrics",
+            "WARN",
+            format!("not reachable at 127.0.0.1:{}: {err}", options.metrics_port),
+            Some(observer_start_command(options)),
+        )),
+    }
+    if let (Some(host), Some(probe_url)) = (&options.public_host, &options.probe_url) {
+        match fetch_observer_probe(probe_url, host, options.metrics_port, options.p2p_port) {
+            Ok(probe) => add_probe_checks(&mut checks, &probe),
+            Err(err) => checks.push(observer_check(
+                "external probe",
+                "WARN",
+                format!("probe unavailable: {err}"),
+                Some("verify from phone cellular data or retry with --probe-url".to_string()),
+            )),
+        }
+    } else {
+        checks.push(observer_check(
+            "external probe",
+            "WARN",
+            "public host or probe URL unavailable".to_string(),
+            Some(
+                "pass --public-host <public-ip-or-dns> or run after internet access is available"
+                    .to_string(),
+            ),
+        ));
+    }
+    ObserverDiagnosis {
+        schema: "power-house-observer-doctor-v1".to_string(),
+        node_id: options.node_id.clone(),
+        key_spec: options.key_spec.clone(),
+        local_ip,
+        public_host: options.public_host.clone(),
+        p2p_port: options.p2p_port,
+        metrics_port: options.metrics_port,
+        peer_id,
+        public_key_b64,
+        checks,
+    }
+}
+
+#[cfg(feature = "net")]
+fn observer_check(
+    name: impl Into<String>,
+    status: impl Into<String>,
+    detail: impl Into<String>,
+    fix: Option<String>,
+) -> ObserverCheck {
+    ObserverCheck {
+        name: name.into(),
+        status: status.into(),
+        detail: detail.into(),
+        fix,
+    }
+}
+
+#[cfg(feature = "net")]
+fn port_check(name: &str, port: u16) -> ObserverCheck {
+    match TcpListener::bind(("0.0.0.0", port)) {
+        Ok(listener) => {
+            drop(listener);
+            observer_check(
+                name,
+                "OK",
+                format!("tcp/{port} is available"),
+                None,
+            )
+        }
+        Err(err) => observer_check(
+            name,
+            "INFO",
+            format!("tcp/{port} is already in use: {err}"),
+            Some("this is expected when the observer is already running; otherwise choose another port".to_string()),
+        ),
+    }
+}
+
+#[cfg(feature = "net")]
+fn print_observer_diagnosis(diagnosis: &ObserverDiagnosis, json: bool) {
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(diagnosis)
+                .unwrap_or_else(|err| fatal(&format!("failed to encode diagnosis: {err}")))
+        );
+        return;
+    }
+    println!("Power House Observer Doctor");
+    println!("node_id: {}", diagnosis.node_id);
+    if let Some(host) = &diagnosis.public_host {
+        println!("public_host: {host}");
+    }
+    for check in &diagnosis.checks {
+        println!("[{}] {}: {}", check.status, check.name, check.detail);
+        if let Some(fix) = &check.fix {
+            println!("    fix: {fix}");
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn ensure_default_node_key(key_spec: &str) -> Option<PathBuf> {
+    if key_spec.contains("://") {
+        return None;
+    }
+    let path = Path::new(key_spec);
+    if path.exists() {
+        return None;
+    }
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .unwrap_or_else(|err| fatal(&format!("failed to create {}: {err}", parent.display())));
+    }
+    let mut seed = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut seed);
+    fs::write(path, seed)
+        .unwrap_or_else(|err| fatal(&format!("failed to write key {}: {err}", path.display())));
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600)).unwrap_or_else(|err| {
+            fatal(&format!(
+                "failed to set key permissions {}: {err}",
+                path.display()
+            ))
+        });
+    }
+    Some(path.to_path_buf())
+}
+
+#[cfg(feature = "net")]
+fn observer_start_command(options: &ObserverCliOptions) -> String {
+    format!(
+        "julian net start \\\n  --node-id {} \\\n  --log-dir ./logs/{}-observer \\\n  --blob-dir ./data/{}-observer \\\n  --listen /ip4/0.0.0.0/tcp/{} \\\n  --key \"{}\" \\\n  --metrics 0.0.0.0:{}",
+        shell_word(&options.node_id),
+        options.node_id,
+        options.node_id,
+        options.p2p_port,
+        options.key_spec,
+        options.metrics_port
+    )
+}
+
+#[cfg(feature = "net")]
+fn shell_word(value: &str) -> String {
+    if value
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/' | ':'))
+    {
+        value.to_string()
+    } else {
+        format!("'{}'", value.replace('\'', "'\\''"))
+    }
+}
+
+#[cfg(feature = "net")]
+fn local_ipv4_guess() -> Option<String> {
+    let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("1.1.1.1:80").ok()?;
+    match socket.local_addr().ok()?.ip() {
+        IpAddr::V4(value) => Some(value.to_string()),
+        IpAddr::V6(_) => None,
+    }
+}
+
+#[cfg(feature = "net")]
+fn detect_public_host() -> Result<String, String> {
+    let text = https_get_text("https://api.ipify.org", 4)?;
+    Ok(normalize_public_host(text.trim()))
+}
+
+#[cfg(feature = "net")]
+fn https_get_text(url: &str, timeout_secs: u64) -> Result<String, String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|err| err.to_string())?;
+    runtime.block_on(async {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(timeout_secs))
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|err| err.to_string())?;
+        let response = client
+            .get(url)
+            .send()
+            .await
+            .map_err(|err| err.to_string())?
+            .error_for_status()
+            .map_err(|err| err.to_string())?;
+        response.text().await.map_err(|err| err.to_string())
+    })
+}
+
+#[cfg(feature = "net")]
+fn fetch_local_metrics(port: u16) -> Result<String, String> {
+    let mut stream = TcpStream::connect(("127.0.0.1", port)).map_err(|err| err.to_string())?;
+    stream
+        .set_read_timeout(Some(Duration::from_secs(3)))
+        .map_err(|err| err.to_string())?;
+    stream
+        .set_write_timeout(Some(Duration::from_secs(3)))
+        .map_err(|err| err.to_string())?;
+    stream
+        .write_all(b"GET /metrics HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+        .map_err(|err| err.to_string())?;
+    let mut response = String::new();
+    stream
+        .read_to_string(&mut response)
+        .map_err(|err| err.to_string())?;
+    if !response.starts_with("HTTP/1.1 200") && !response.starts_with("HTTP/1.0 200") {
+        return Err(response.lines().next().unwrap_or("HTTP error").to_string());
+    }
+    Ok(response
+        .split("\r\n\r\n")
+        .nth(1)
+        .unwrap_or(response.as_str())
+        .to_string())
+}
+
+#[cfg(feature = "net")]
+fn metrics_contains_identity(
+    body: &str,
+    node_id: &str,
+    peer_id: &str,
+    public_key_b64: &str,
+) -> bool {
+    body.lines().any(|line| {
+        line.starts_with("powerhouse_node_identity{")
+            && line.contains(&format!("node_id=\"{node_id}\""))
+            && line.contains(&format!("peer_id=\"{peer_id}\""))
+            && line.contains(&format!("public_key_b64=\"{public_key_b64}\""))
+            && line.contains("chain_id=\"177155\"")
+    })
+}
+
+#[cfg(feature = "net")]
+fn fetch_observer_probe(
+    probe_url: &str,
+    host: &str,
+    metrics_port: u16,
+    p2p_port: u16,
+) -> Result<serde_json::Value, String> {
+    let separator = if probe_url.contains('?') { '&' } else { '?' };
+    let url = format!(
+        "{probe_url}{separator}host={}&metrics_port={metrics_port}&p2p_port={p2p_port}",
+        percent_encode_query(host)
+    );
+    let text = https_get_text(&url, 8)?;
+    serde_json::from_str(&text).map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "net")]
+fn percent_encode_query(value: &str) -> String {
+    let mut encoded = String::new();
+    for byte in value.bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_') {
+            encoded.push(byte as char);
+        } else {
+            encoded.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    encoded
+}
+
+#[cfg(feature = "net")]
+fn add_probe_checks(checks: &mut Vec<ObserverCheck>, probe: &serde_json::Value) {
+    let metrics_ok = probe
+        .pointer("/metrics/reachable")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    let identity_ok = probe
+        .pointer("/metrics/identity_found")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    let p2p_ok = probe
+        .pointer("/p2p/reachable")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    checks.push(observer_check(
+        "external metrics",
+        if metrics_ok && identity_ok {
+            "OK"
+        } else {
+            "FAIL"
+        },
+        if metrics_ok && identity_ok {
+            "public metrics endpoint is reachable and exposes identity".to_string()
+        } else {
+            probe
+                .pointer("/metrics/error")
+                .and_then(|value| value.as_str())
+                .unwrap_or("metrics identity not reachable from external probe")
+                .to_string()
+        },
+        if metrics_ok && identity_ok {
+            None
+        } else {
+            Some(
+                "forward TCP metrics port to this machine and keep the observer running"
+                    .to_string(),
+            )
+        },
+    ));
+    checks.push(observer_check(
+        "external p2p",
+        if p2p_ok { "OK" } else { "FAIL" },
+        if p2p_ok {
+            "public p2p port accepts TCP connections".to_string()
+        } else {
+            probe
+                .pointer("/p2p/error")
+                .and_then(|value| value.as_str())
+                .unwrap_or("p2p port not reachable from external probe")
+                .to_string()
+        },
+        if p2p_ok {
+            None
+        } else {
+            Some("forward TCP p2p port to this machine".to_string())
+        },
+    ));
+}
+
+#[cfg(feature = "net")]
+fn read_observer_registration_or_package(path: &Path) -> ObserverRegistration {
+    let value: serde_json::Value = read_json_file(path, "observer registration package");
+    if value.get("schema").and_then(|schema| schema.as_str())
+        == Some("power-house-observer-registration-v1")
+    {
+        return serde_json::from_value(value)
+            .unwrap_or_else(|err| fatal(&format!("invalid observer registration: {err}")));
+    }
+    if let Some(registration) = value.get("registration") {
+        return serde_json::from_value(registration.clone()).unwrap_or_else(|err| {
+            fatal(&format!("invalid packaged observer registration: {err}"))
+        });
+    }
+    fatal("input must be an observer registration or mfenx submission package")
+}
+
+#[cfg(feature = "net")]
+fn observer_probe_for_registration(
+    probe_url: &str,
+    registration: &ObserverRegistration,
+) -> Result<serde_json::Value, String> {
+    let host = metrics_host_from_url(&registration.metrics_url)?;
+    let metrics_port = metrics_port_from_url(&registration.metrics_url).unwrap_or(80);
+    let p2p_port = p2p_port_from_multiaddr(&registration.p2p_address).unwrap_or(7001);
+    fetch_observer_probe(probe_url, &host, metrics_port, p2p_port)
+}
+
+#[cfg(feature = "net")]
+fn metrics_host_from_url(url: &str) -> Result<String, String> {
+    let parsed = reqwest::Url::parse(url).map_err(|err| err.to_string())?;
+    parsed
+        .host_str()
+        .map(|host| host.to_string())
+        .ok_or_else(|| "metrics URL has no host".to_string())
+}
+
+#[cfg(feature = "net")]
+fn metrics_port_from_url(url: &str) -> Option<u16> {
+    reqwest::Url::parse(url)
+        .ok()
+        .and_then(|parsed| parsed.port_or_known_default())
+}
+
+#[cfg(feature = "net")]
+fn p2p_port_from_multiaddr(address: &str) -> Option<u16> {
+    let mut parts = address.split('/');
+    while let Some(part) = parts.next() {
+        if part == "tcp" {
+            return parts.next().and_then(|port| port.parse().ok());
+        }
+    }
+    None
+}
+
+#[cfg(feature = "net")]
+fn observer_issue_url(registration: &ObserverRegistration) -> String {
+    let title = format!("Observer registration: {}", registration.node_id);
+    let body = format!(
+        "Observer registration submitted for review.\\n\\nNode ID: {}\\nPeer ID: {}\\nMetrics: {}\\n\\nAttach or paste the signed JSON generated by julian. Do not include a private key.",
+        registration.node_id, registration.peer_id, registration.metrics_url
+    );
+    format!(
+        "https://github.com/JROChub/power_house/issues/new?title={}&body={}",
+        percent_encode_query(&title),
+        percent_encode_query(&body)
+    )
 }
 
 #[cfg(feature = "net")]

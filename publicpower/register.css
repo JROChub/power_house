@@ -162,6 +162,46 @@ main {
   margin-top: 22px;
 }
 
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.onboarding-steps article {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 126px;
+  padding: 16px;
+  border-right: 1px solid var(--line);
+}
+
+.onboarding-steps article:last-child {
+  border-right: 0;
+}
+
+.onboarding-steps span {
+  color: var(--teal);
+  font-size: 10px;
+}
+
+.onboarding-steps b {
+  font-size: 14px;
+}
+
+.onboarding-steps p {
+  margin: 0;
+  color: var(--muted);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .command-panel,
 .file-panel {
   min-width: 0;
@@ -377,6 +417,45 @@ pre {
   border-top: 1px solid var(--line);
 }
 
+.probe-panel {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.probe-panel > div {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.probe-panel span {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.probe-panel b {
+  color: var(--warn);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.probe-panel b.ok {
+  color: var(--acid);
+}
+
+.probe-panel b.error {
+  color: var(--down);
+}
+
+#probe-report {
+  min-height: 86px;
+  color: #aebdb7;
+}
+
 .submission-panel > div {
   display: flex;
   min-height: 42px;
@@ -433,6 +512,7 @@ body[data-kind="validator"] .segmented button.active {
   }
 
   .registration-hero,
+  .onboarding-steps,
   .registration-grid {
     grid-template-columns: 1fr;
   }
@@ -474,6 +554,16 @@ body[data-kind="validator"] .segmented button.active {
     grid-template-columns: 1fr;
   }
 
+  .onboarding-steps article {
+    min-height: 96px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .onboarding-steps article:last-child {
+    border-bottom: 0;
+  }
+
   .report-card,
   .report-card:nth-child(2n) {
     border-right: 0;
@@ -509,6 +599,21 @@ body[data-kind="validator"] .segmented button.active {
     grid-template-columns: minmax(0, 1fr) minmax(310px, 1fr);
     gap: 12px;
     margin-top: 12px;
+  }
+
+  .onboarding-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .onboarding-steps article {
+    min-height: 78px;
+    padding: 10px;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+
+  .onboarding-steps p {
+    display: none;
   }
 
   .panel-head {

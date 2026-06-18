@@ -150,6 +150,56 @@ def main() -> None:
                 registrations.append(registration)
                 server.body = metric_body(node, peer_links=index)
 
+                if index == 1:
+                    doctor = json.loads(
+                        run(
+                            "observer",
+                            "doctor",
+                            "--key",
+                            str(key),
+                            "--node-id",
+                            node["node_id"],
+                            "--public-host",
+                            "127.0.0.1",
+                            "--p2p-port",
+                            str(7100 + index),
+                            "--metrics-port",
+                            str(server.server.server_port),
+                            "--no-probe",
+                            "--json",
+                        ).stdout
+                    )
+                    assert doctor["schema"] == "power-house-observer-doctor-v1"
+                    assert doctor["peer_id"] == info["peer_id"]
+                    checks = {item["name"]: item for item in doctor["checks"]}
+                    assert checks["node key"]["status"] == "OK"
+                    assert checks["local metrics identity"]["status"] == "OK"
+
+                    friendly = base / "observer-friendly.registration.json"
+                    run(
+                        "observer",
+                        "register",
+                        "--key",
+                        str(key),
+                        "--node-id",
+                        node["node_id"],
+                        "--operator",
+                        "Public Observer",
+                        "--region",
+                        node["region"],
+                        "--public-host",
+                        "127.0.0.1",
+                        "--p2p-port",
+                        str(7100 + index),
+                        "--metrics-port",
+                        str(server.server.server_port),
+                        "--output",
+                        str(friendly),
+                    )
+                    assert json.loads(friendly.read_text())["schema"] == (
+                        "power-house-observer-registration-v1"
+                    )
+
             registry = base / "observer-registry.json"
             assemble = ["observer-registry", "assemble", "--output", str(registry)]
             for registration in registrations:

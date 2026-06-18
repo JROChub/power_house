@@ -41,16 +41,17 @@ julian key-info "$HOME/.powerhouse/node.key" --json
 Never send the private key. Share only the peer ID and public key when
 requesting validator admission.
 
-For a public observer to appear on mfenx.com without validator admission,
-create a signed observer registration instead:
+For a public observer to appear on mfenx.com without validator admission, use
+the guided observer setup:
 
 ```bash
-julian observer-registry register \
+julian observer setup \
   --node-id external-observer-1 \
   --operator "Operator Name" \
   --region <region> \
   --public-host <host> \
-  --metrics-port 9100 \
+  --p2p-port 7001 \
+  --metrics-port 9102 \
   --output observer.registration.json
 ```
 
@@ -58,6 +59,20 @@ The public observer registry requires a matching live
 `powerhouse_node_identity` metric before the observer is counted. See
 [Public Observer Registry](observer_registry.md). You can inspect the signed
 registration before submitting it at `https://mfenx.com/register.html`.
+
+After the observer is running, run the doctor:
+
+```bash
+julian observer doctor \
+  --node-id external-observer-1 \
+  --public-host <host> \
+  --p2p-port 7001 \
+  --metrics-port 9102
+```
+
+If the external probe fails, forward TCP `7001` and TCP `9102` from the router
+or cloud firewall to the observer machine. Do not use a private LAN address as
+the public host.
 
 After admission is approved, create a signed monitoring registration:
 
@@ -86,7 +101,7 @@ julian net start \
   --listen /ip4/0.0.0.0/tcp/7001 \
   --bootstrap /dns4/<bootstrap-host>/tcp/7001/p2p/<peer-id> \
   --key "$HOME/.powerhouse/node.key" \
-  --metrics 127.0.0.1:9100
+  --metrics 0.0.0.0:9102
 ```
 
 An observer verifies and relays network data but does not count toward

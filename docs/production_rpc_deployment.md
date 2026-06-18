@@ -20,6 +20,7 @@ configuration, and public edge are independently verifiable.
 - Signed validator identity registry with dynamic Prometheus discovery.
 - Optional signed public observer registry with separate public peer telemetry.
 - A public status API at `/network-status.json`.
+- A public observer reachability probe at `/observer-probe`.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
 internet. Limit SSH to the operator's public CIDR and permit HTTP only from the
@@ -178,6 +179,11 @@ registry is present, the observer reconciler verifies signatures and live
 identity metrics, then publishes `observer_peers`,
 `public_peer_connections`, and observer Prometheus discovery independently from
 validator quorum.
+
+The status API also serves `/observer-probe`. The registration page and
+`julian observer doctor` use this route to test an operator's public metrics
+and p2p ports from the production edge. The probe refuses private or local
+targets, follows no redirects, and never receives a private key.
 
 The corresponding Terraform declaration is under
 [`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).
