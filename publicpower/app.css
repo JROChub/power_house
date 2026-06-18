@@ -2941,7 +2941,14 @@ body[data-network="outage"] .network-ribbon-state i {
   color: var(--acid);
 }
 
-.network-console > a {
+.network-console-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-top: 0;
+}
+
+.network-console-actions a {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2950,13 +2957,15 @@ body[data-network="outage"] .network-ribbon-state i {
   color: #9eaca7;
   font-size: 8px;
   letter-spacing: 0.08em;
-  border: 1px solid var(--line);
-  border-top: 0;
 }
 
-.network-console > a:hover {
+.network-console-actions a + a {
+  border-left: 1px solid var(--line);
+}
+
+.network-console-actions a:hover {
   color: var(--paper);
-  border-color: rgba(69, 221, 210, 0.4);
+  background: rgba(69, 221, 210, 0.06);
 }
 
 .observer-matrix {
@@ -3335,5 +3344,251 @@ body[data-network="outage"] .network-ribbon-state i {
   :root {
     --explorer-closed: 36px;
     --explorer-open: 232px;
+  }
+}
+
+/* Registration and proof-header polish. These rules intentionally sit last so
+   the v0.3.7 command-surface overrides cannot reintroduce overlap. */
+.proof-monument {
+  bottom: clamp(64px, 8vh, 112px);
+  z-index: 18;
+}
+
+.domain-equation {
+  position: static;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  margin-top: 9px;
+  padding: 8px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--mode-color) 34%, transparent);
+  border-left: 0;
+}
+
+.domain-equation strong {
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1181px) {
+  .proof-monument {
+    width: min(640px, 48vw);
+  }
+}
+
+@media (max-height: 720px) and (min-width: 901px) {
+  .proof-monument {
+    bottom: 72px;
+  }
+}
+
+@media (max-width: 600px) {
+  .network-console-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .network-console-actions a + a {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+  :root {
+    --top: 52px;
+    --dock: 104px;
+    --proof-stack: 0px;
+    --explorer-closed: 32px;
+    --explorer-open: 168px;
+  }
+
+  .topbar {
+    height: var(--top);
+    padding: 0 10px;
+  }
+
+  .brand img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand small,
+  .mission-clock,
+  .stage-label,
+  .mode-metrics,
+  .proof-monument p,
+  .rail-heading,
+  .install-command,
+  .rail-status,
+  .proof-event,
+  #sound-toggle,
+  #motion-toggle {
+    display: none;
+  }
+
+  .top-actions {
+    gap: 1px;
+  }
+
+  .top-actions a,
+  .top-actions button {
+    min-height: 32px;
+    padding: 0 8px;
+  }
+
+  .top-actions a:not(:last-of-type) {
+    display: none;
+  }
+
+  .proof-rail {
+    top: auto;
+    right: 0;
+    bottom: var(--dock);
+    left: 0;
+    z-index: 26;
+    width: auto;
+    padding: 4px 6px;
+    background: rgba(2, 8, 9, 0.78);
+  }
+
+  .proof-modes {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .proof-mode {
+    min-height: 38px;
+    padding: 4px 3px;
+  }
+
+  .proof-mode small {
+    display: none;
+  }
+
+  .proof-mode b {
+    font-size: 8px;
+  }
+
+  .center-stage {
+    inset: var(--top) 0 calc(var(--dock) + 40px);
+  }
+
+  .proof-monument {
+    bottom: 56px;
+    left: 76px;
+    width: calc(100% - 150px);
+  }
+
+  .monument-title {
+    align-items: center;
+    gap: 8px;
+  }
+
+  .proof-monument h1 {
+    max-width: none;
+    margin: 2px 0 0;
+    font-size: 28px;
+    white-space: nowrap;
+  }
+
+  .monument-title > b {
+    margin-bottom: 0;
+    padding: 3px 5px;
+    font-size: 8px;
+  }
+
+  .domain-equation {
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .domain-equation small {
+    font-size: 7px;
+  }
+
+  .domain-equation strong {
+    font-size: 19px;
+  }
+
+  .scene-controls {
+    top: calc(var(--top) + 8px);
+    right: auto;
+    left: 8px;
+    grid-template-columns: 32px;
+    gap: 4px;
+  }
+
+  .icon-button,
+  .scene-controls .icon-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .verification-dock {
+    grid-template-columns: minmax(0, 1fr) 132px;
+    grid-template-rows: 64px 40px;
+    height: var(--dock);
+  }
+
+  .trace-header {
+    padding: 8px 10px;
+  }
+
+  .trace-header b {
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .trace-header p,
+  .artifact-button,
+  .download-button,
+  .share-button {
+    display: none;
+  }
+
+  .verification-actions {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+
+  .verify-button {
+    min-height: 38px;
+  }
+
+  .telemetry {
+    height: 40px;
+    grid-template-columns: 52px repeat(3, minmax(0, 1fr));
+  }
+
+  .status-seal {
+    width: 38px;
+    height: 38px;
+    font-size: 9px;
+  }
+
+  .telemetry > div:not(.status-seal) {
+    padding: 0 8px;
+  }
+
+  .telemetry dt {
+    font-size: 7px;
+  }
+
+  .telemetry dd {
+    font-size: 10px;
+  }
+
+  .luminous-explorer {
+    left: 0;
+    height: var(--explorer-closed);
+  }
+
+  body.luminous-expanded .luminous-explorer {
+    height: var(--explorer-open);
   }
 }

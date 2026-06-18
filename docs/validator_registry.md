@@ -34,9 +34,48 @@ Verification requires all of the following:
 An ordinary connected peer cannot increase the validator count. A signed but
 unadmitted identity cannot increase it either.
 
-## Create A Registration
+## Fast Registration
 
 Run this on a protected operator machine with the validator key:
+
+```bash
+julian validator-registry register \
+  --node-id validator-4 \
+  --operator "Example Operator" \
+  --region fra1 \
+  --public-host validator-4.example \
+  --metrics-port 9100 \
+  --system-metrics-port 9101 \
+  --output validator-4.registration.json
+```
+
+The command signs locally with `$HOME/.powerhouse/node.key` by default. Use
+`--key /etc/powerhouse/validator-4.key` when the validator identity is stored
+elsewhere. The output contains no private key.
+
+Maintainers can refresh an existing assembled registry in one command after the
+validator identity has been admitted by policy:
+
+```bash
+julian validator-registry register \
+  --key /etc/powerhouse/validator-4.key \
+  --node-id validator-4 \
+  --operator "Example Operator" \
+  --region fra1 \
+  --public-host validator-4.example \
+  --metrics-port 9100 \
+  --system-metrics-port 9101 \
+  --policy /etc/powerhouse/native-validators.json \
+  --registry /etc/powerhouse/validator-registry.json \
+  --registry-output /etc/powerhouse/validator-registry.json
+```
+
+The write is refused unless the full registry verifies against the allowlist.
+
+## Manual Registration
+
+The lower-level command remains available when p2p and metrics endpoints must
+be specified directly:
 
 ```bash
 julian validator-registry create \
@@ -45,13 +84,14 @@ julian validator-registry create \
   --operator "Example Operator" \
   --region fra1 \
   --p2p-address /dns4/validator-4.example/tcp/7001/p2p/<peer-id> \
-  --metrics-url http://validator-4.internal:9100/metrics \
-  --system-metrics-url http://validator-4.internal:9101/metrics \
+  --metrics-url http://validator-4.example:9100/metrics \
+  --system-metrics-url http://validator-4.example:9101/metrics \
   --output validator-4.registration.json
 ```
 
-The output contains no private key. Keep metrics endpoints restricted to the
-monitoring network.
+Keep metrics endpoints restricted to the monitoring network. If a private
+monitoring address is required, use the same host in both the p2p address and
+the metrics URL so endpoint identity binding remains deterministic.
 
 ## Assemble And Verify
 

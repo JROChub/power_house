@@ -29,7 +29,7 @@ use power_house::{
     Field, GeneralSumProof, LedgerAnchor, ObservatorySidecar, ProofStats,
 };
 #[cfg(feature = "net")]
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 #[cfg(feature = "net")]
 use std::sync::Arc;
 #[cfg(feature = "net")]
@@ -264,7 +264,14 @@ fn print_key_info_help() {
 
 #[cfg(feature = "net")]
 fn print_validator_registry_help() {
-    println!("Usage: julian validator-registry <create|assemble|verify> ...");
+    println!("Usage: julian validator-registry <register|create|assemble|verify> ...");
+    println!("  register --node-id <id> --public-host <host>");
+    println!("           [--key <key>] [--operator <name>] [--region <id>]");
+    println!("           [--p2p-port <port>] [--metrics-port <port>]");
+    println!("           [--p2p-address <multiaddr>] [--metrics-url <url>]");
+    println!("           [--system-metrics-url <url>] [--policy <allowlist.json>]");
+    println!("           [--registry <existing.json>] [--registry-output <registry.json>]");
+    println!("           [--chain-id <id>] [--output <file>]");
     println!("  create --key <key> --node-id <id> --operator <name> --region <id>");
     println!("         --p2p-address <multiaddr> --metrics-url <url>");
     println!("         [--system-metrics-url <url>] [--chain-id <id>]");
@@ -278,7 +285,13 @@ fn print_validator_registry_help() {
 
 #[cfg(feature = "net")]
 fn print_observer_registry_help() {
-    println!("Usage: julian observer-registry <create|assemble|verify> ...");
+    println!("Usage: julian observer-registry <register|create|assemble|verify> ...");
+    println!("  register --node-id <id> --public-host <host>");
+    println!("           [--key <key>] [--operator <name>] [--region <id>]");
+    println!("           [--p2p-port <port>] [--metrics-port <port>]");
+    println!("           [--p2p-address <multiaddr>] [--metrics-url <url>]");
+    println!("           [--system-metrics-url <url>] [--registry <existing.json>]");
+    println!("           [--registry-output <registry.json>] [--chain-id <id>] [--output <file>]");
     println!("  create --key <key> --node-id <id> --operator <name> --region <id>");
     println!("         --p2p-address <multiaddr> --metrics-url <url>");
     println!("         [--system-metrics-url <url>] [--chain-id <id>]");
@@ -1302,10 +1315,102 @@ fn cmd_key_info(args: Vec<String>) {
 fn handle_validator_registry(sub: &str, tail: Vec<String>) {
     match sub {
         "-h" | "--help" => print_validator_registry_help(),
+        "register" => cmd_validator_registry_register(tail),
         "create" => cmd_validator_registry_create(tail),
         "assemble" => cmd_validator_registry_assemble(tail),
         "verify" => cmd_validator_registry_verify(tail),
         _ => fatal(&format!("unknown validator-registry subcommand: {sub}")),
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_validator_registry_register(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_validator_registry_help();
+        return;
+    }
+    let values = parse_registry_options(
+        args,
+        &[
+            "--key",
+            "--node-id",
+            "--operator",
+            "--region",
+            "--public-host",
+            "--host",
+            "--p2p-port",
+            "--metrics-port",
+            "--p2p-address",
+            "--metrics-url",
+            "--system-metrics-port",
+            "--system-metrics-url",
+            "--chain-id",
+            "--issued-at",
+            "--valid-until",
+            "--output",
+            "--policy",
+            "--registry",
+            "--registry-output",
+        ],
+    );
+    let registration = build_validator_registration(&values);
+    let output = values
+        .get("--output")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| default_registration_output(&registration.node_id, "validator"));
+    write_json_file(&output, &registration, "validator registration");
+    print_registration_summary(
+        "validator",
+        &output,
+        &registration.node_id,
+        &registration.peer_id,
+        &registration.p2p_address,
+        &registration.metrics_url,
+    );
+
+    if values.contains_key("--registry") && !values.contains_key("--registry-output") {
+        fatal("--registry requires --registry-output so the assembled registry is explicit");
+    }
+
+    if let Some(registry_output) = values.get("--registry-output") {
+        let policy = read_validator_policy(Path::new(
+            values
+                .get("--policy")
+                .map(String::as_str)
+                .unwrap_or_else(|| fatal("--registry-output requires --policy")),
+        ));
+        let mut registrations = values
+            .get("--registry")
+            .map(|path| read_json_file::<ValidatorRegistry>(Path::new(path), "validator registry"))
+            .map(|registry| {
+                if registry.chain_id != registration.chain_id {
+                    fatal("existing registry chain ID differs from the new registration");
+                }
+                registry.registrations
+            })
+            .unwrap_or_default();
+        registrations.retain(|entry| {
+            entry.node_id != registration.node_id
+                && entry.public_key_b64 != registration.public_key_b64
+                && entry.peer_id != registration.peer_id
+        });
+        registrations.push(registration.clone());
+        let registry = ValidatorRegistry {
+            schema: VALIDATOR_REGISTRY_SCHEMA.to_string(),
+            chain_id: registration.chain_id,
+            registrations,
+        };
+        registry
+            .verify(&policy, unix_seconds())
+            .unwrap_or_else(|err| fatal(&format!("validator registry verification failed: {err}")));
+        write_json_file(Path::new(registry_output), &registry, "validator registry");
+        println!("validator registry: {registry_output}");
+        println!(
+            "verified validator identities: {}",
+            registry.registrations.len()
+        );
+    } else {
+        println!("next: submit the signed registration for policy admission and registry assembly");
     }
 }
 
@@ -1510,10 +1615,95 @@ fn cmd_validator_registry_verify(args: Vec<String>) {
 fn handle_observer_registry(sub: &str, tail: Vec<String>) {
     match sub {
         "-h" | "--help" => print_observer_registry_help(),
+        "register" => cmd_observer_registry_register(tail),
         "create" => cmd_observer_registry_create(tail),
         "assemble" => cmd_observer_registry_assemble(tail),
         "verify" => cmd_observer_registry_verify(tail),
         _ => fatal(&format!("unknown observer-registry subcommand: {sub}")),
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_registry_register(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_registry_help();
+        return;
+    }
+    let values = parse_registry_options(
+        args,
+        &[
+            "--key",
+            "--node-id",
+            "--operator",
+            "--region",
+            "--public-host",
+            "--host",
+            "--p2p-port",
+            "--metrics-port",
+            "--p2p-address",
+            "--metrics-url",
+            "--system-metrics-port",
+            "--system-metrics-url",
+            "--chain-id",
+            "--issued-at",
+            "--valid-until",
+            "--output",
+            "--registry",
+            "--registry-output",
+        ],
+    );
+    let registration = build_observer_registration(&values);
+    let output = values
+        .get("--output")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| default_registration_output(&registration.node_id, "observer"));
+    write_json_file(&output, &registration, "observer registration");
+    print_registration_summary(
+        "observer",
+        &output,
+        &registration.node_id,
+        &registration.peer_id,
+        &registration.p2p_address,
+        &registration.metrics_url,
+    );
+
+    if values.contains_key("--registry") && !values.contains_key("--registry-output") {
+        fatal("--registry requires --registry-output so the assembled registry is explicit");
+    }
+
+    if let Some(registry_output) = values.get("--registry-output") {
+        let mut registrations = values
+            .get("--registry")
+            .map(|path| read_json_file::<ObserverRegistry>(Path::new(path), "observer registry"))
+            .map(|registry| {
+                if registry.chain_id != registration.chain_id {
+                    fatal("existing registry chain ID differs from the new registration");
+                }
+                registry.registrations
+            })
+            .unwrap_or_default();
+        registrations.retain(|entry| {
+            entry.node_id != registration.node_id
+                && entry.public_key_b64 != registration.public_key_b64
+                && entry.peer_id != registration.peer_id
+        });
+        registrations.push(registration.clone());
+        let registry = ObserverRegistry {
+            schema: OBSERVER_REGISTRY_SCHEMA.to_string(),
+            chain_id: registration.chain_id,
+            registrations,
+        };
+        registry
+            .verify(unix_seconds())
+            .unwrap_or_else(|err| fatal(&format!("observer registry verification failed: {err}")));
+        write_json_file(Path::new(registry_output), &registry, "observer registry");
+        println!("observer registry: {registry_output}");
+        println!(
+            "verified observer identities: {}",
+            registry.registrations.len()
+        );
+    } else {
+        println!("next: upload the signed registration on mfenx.com/register.html or send it for observer registry assembly");
     }
 }
 
@@ -1688,6 +1878,250 @@ fn cmd_observer_registry_verify(args: Vec<String>) {
             registry.chain_id
         );
     }
+}
+
+#[cfg(feature = "net")]
+fn parse_registry_options(args: Vec<String>, allowed: &[&str]) -> HashMap<String, String> {
+    let mut values = HashMap::new();
+    let mut iter = args.into_iter();
+    while let Some(flag) = iter.next() {
+        if !flag.starts_with("--") {
+            fatal(&format!("unexpected positional argument: {flag}"));
+        }
+        if !allowed.contains(&flag.as_str()) {
+            fatal(&format!("unknown argument: {flag}"));
+        }
+        let value = iter
+            .next()
+            .unwrap_or_else(|| fatal(&format!("{flag} expects a value")));
+        if value.starts_with("--") {
+            fatal(&format!("{flag} expects a value"));
+        }
+        if values.insert(flag.clone(), value).is_some() {
+            fatal(&format!("duplicate argument: {flag}"));
+        }
+    }
+    values
+}
+
+#[cfg(feature = "net")]
+fn build_validator_registration(values: &HashMap<String, String>) -> ValidatorRegistration {
+    let input = registration_input(values, "validator");
+    ValidatorRegistration::sign(
+        input.chain_id,
+        input.node_id,
+        input.operator,
+        input.region,
+        input.p2p_address,
+        input.metrics_url,
+        input.system_metrics_url,
+        input.issued_at,
+        input.valid_until,
+        &input.material,
+    )
+    .unwrap_or_else(|err| fatal(&format!("failed to create validator registration: {err}")))
+}
+
+#[cfg(feature = "net")]
+fn build_observer_registration(values: &HashMap<String, String>) -> ObserverRegistration {
+    let input = registration_input(values, "observer");
+    ObserverRegistration::sign(
+        input.chain_id,
+        input.node_id,
+        input.operator,
+        input.region,
+        input.p2p_address,
+        input.metrics_url,
+        input.system_metrics_url,
+        input.issued_at,
+        input.valid_until,
+        &input.material,
+    )
+    .unwrap_or_else(|err| fatal(&format!("failed to create observer registration: {err}")))
+}
+
+#[cfg(feature = "net")]
+struct RegistrationInput {
+    chain_id: u64,
+    node_id: String,
+    operator: String,
+    region: String,
+    p2p_address: String,
+    metrics_url: String,
+    system_metrics_url: Option<String>,
+    issued_at: u64,
+    valid_until: u64,
+    material: power_house::net::KeyMaterial,
+}
+
+#[cfg(feature = "net")]
+fn registration_input(values: &HashMap<String, String>, label: &str) -> RegistrationInput {
+    let now = unix_seconds();
+    let chain_id = parse_u64_option(values.get("--chain-id"), 177155, "--chain-id");
+    let issued_at = parse_u64_option(values.get("--issued-at"), now, "--issued-at");
+    let valid_until = parse_u64_option(
+        values.get("--valid-until"),
+        issued_at.saturating_add(365 * 24 * 60 * 60),
+        "--valid-until",
+    );
+    let node_id = required_option(values, "--node-id").to_string();
+    let operator = values
+        .get("--operator")
+        .cloned()
+        .unwrap_or_else(|| node_id.clone());
+    let region = values
+        .get("--region")
+        .cloned()
+        .unwrap_or_else(|| "self-hosted".to_string());
+    let key_spec = values
+        .get("--key")
+        .cloned()
+        .unwrap_or_else(default_node_key_spec);
+    let material = load_or_derive_keypair(&Ed25519KeySource::from_spec(Some(&key_spec)))
+        .unwrap_or_else(|err| fatal(&format!("failed to load {label} key {key_spec}: {err}")));
+    let peer_id = material.libp2p.public().to_peer_id().to_string();
+
+    let public_host = registry_public_host(values);
+    let p2p_address = values.get("--p2p-address").cloned().unwrap_or_else(|| {
+        let host = public_host
+            .clone()
+            .unwrap_or_else(|| fatal("--public-host is required unless --p2p-address is provided"));
+        build_p2p_address(
+            &host,
+            parse_port_option(values.get("--p2p-port"), 7001, "--p2p-port"),
+            &peer_id,
+        )
+    });
+    let metrics_url = values.get("--metrics-url").cloned().unwrap_or_else(|| {
+        let host = public_host
+            .as_deref()
+            .unwrap_or_else(|| fatal("--public-host is required unless --metrics-url is provided"));
+        build_metrics_url(
+            host,
+            parse_port_option(values.get("--metrics-port"), 9100, "--metrics-port"),
+        )
+    });
+    let system_metrics_url = values.get("--system-metrics-url").cloned().or_else(|| {
+        values.get("--system-metrics-port").map(|_| {
+            let host = public_host.as_deref().unwrap_or_else(|| {
+                fatal("--public-host is required when --system-metrics-port is used")
+            });
+            build_metrics_url(
+                host,
+                parse_port_option(
+                    values.get("--system-metrics-port"),
+                    9101,
+                    "--system-metrics-port",
+                ),
+            )
+        })
+    });
+
+    RegistrationInput {
+        chain_id,
+        node_id,
+        operator,
+        region,
+        p2p_address,
+        metrics_url,
+        system_metrics_url,
+        issued_at,
+        valid_until,
+        material,
+    }
+}
+
+#[cfg(feature = "net")]
+fn registry_public_host(values: &HashMap<String, String>) -> Option<String> {
+    values
+        .get("--public-host")
+        .or_else(|| values.get("--host"))
+        .map(|host| normalize_public_host(host))
+}
+
+#[cfg(feature = "net")]
+fn default_node_key_spec() -> String {
+    env::var("POWERHOUSE_NODE_KEY").unwrap_or_else(|_| {
+        env::var("HOME")
+            .map(|home| format!("{home}/.powerhouse/node.key"))
+            .unwrap_or_else(|_| "$HOME/.powerhouse/node.key".to_string())
+    })
+}
+
+#[cfg(feature = "net")]
+fn default_registration_output(node_id: &str, kind: &str) -> PathBuf {
+    PathBuf::from(format!("{node_id}.{kind}.registration.json"))
+}
+
+#[cfg(feature = "net")]
+fn parse_port_option(value: Option<&String>, default: u16, name: &str) -> u16 {
+    value.map_or(default, |raw| {
+        let port: u16 = raw
+            .parse()
+            .unwrap_or_else(|_| fatal(&format!("invalid {name}")));
+        if port == 0 {
+            fatal(&format!("{name} must be between 1 and 65535"));
+        }
+        port
+    })
+}
+
+#[cfg(feature = "net")]
+fn normalize_public_host(host: &str) -> String {
+    let trimmed = host
+        .trim()
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .trim_end_matches('.');
+    if trimmed.is_empty() {
+        fatal("--public-host cannot be empty");
+    }
+    if trimmed.contains("://") || trimmed.contains('/') {
+        fatal("--public-host must be a bare DNS name, IPv4 address, or IPv6 address");
+    }
+    if trimmed.parse::<Ipv4Addr>().is_ok() || trimmed.parse::<Ipv6Addr>().is_ok() {
+        trimmed.to_string()
+    } else {
+        trimmed.to_ascii_lowercase()
+    }
+}
+
+#[cfg(feature = "net")]
+fn build_p2p_address(host: &str, port: u16, peer_id: &str) -> String {
+    let protocol = if host.parse::<Ipv4Addr>().is_ok() {
+        format!("/ip4/{host}")
+    } else if host.parse::<Ipv6Addr>().is_ok() {
+        format!("/ip6/{host}")
+    } else {
+        format!("/dns4/{host}")
+    };
+    format!("{protocol}/tcp/{port}/p2p/{peer_id}")
+}
+
+#[cfg(feature = "net")]
+fn build_metrics_url(host: &str, port: u16) -> String {
+    let host_for_url = if host.parse::<Ipv6Addr>().is_ok() {
+        format!("[{host}]")
+    } else {
+        host.to_string()
+    };
+    format!("http://{host_for_url}:{port}/metrics")
+}
+
+#[cfg(feature = "net")]
+fn print_registration_summary(
+    kind: &str,
+    output: &Path,
+    node_id: &str,
+    peer_id: &str,
+    p2p_address: &str,
+    metrics_url: &str,
+) {
+    println!("{kind} registration: {}", output.display());
+    println!("node_id: {node_id}");
+    println!("peer_id: {peer_id}");
+    println!("p2p_address: {p2p_address}");
+    println!("metrics_url: {metrics_url}");
 }
 
 #[cfg(feature = "net")]

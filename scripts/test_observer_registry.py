@@ -169,6 +169,49 @@ def main() -> None:
             assert verified["verified"] is True
             assert verified["observers_verified"] == 2
 
+            refresh = base / "observer-1.refresh.registration.json"
+            refresh_registry = base / "observer-refresh-registry.json"
+            run(
+                "observer-registry",
+                "register",
+                "--key",
+                str(base / "observer-1.key"),
+                "--node-id",
+                nodes[0]["node_id"],
+                "--operator",
+                "Public Observer",
+                "--region",
+                nodes[0]["region"],
+                "--public-host",
+                "127.0.0.1",
+                "--p2p-port",
+                "7101",
+                "--metrics-url",
+                servers[0].url,
+                "--issued-at",
+                str(now),
+                "--valid-until",
+                str(now + 3600),
+                "--output",
+                str(refresh),
+                "--registry",
+                str(registry),
+                "--registry-output",
+                str(refresh_registry),
+            )
+            refreshed = json.loads(
+                run(
+                    "observer-registry",
+                    "verify",
+                    str(refresh_registry),
+                    "--now",
+                    str(now),
+                    "--json",
+                ).stdout
+            )
+            assert refreshed["verified"] is True
+            assert refreshed["observers_verified"] == 2
+
             state = base / "state.json"
             discovery = base / "observers.json"
             reconcile = [

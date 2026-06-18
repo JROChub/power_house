@@ -38,6 +38,8 @@ expect_output "settle-file" rollup --help
 expect_output "encrypted Ed25519 identity" keygen --help
 expect_output "libp2p peer ID" key-info --help
 expect_output "signed by the validator identity" validator-registry --help
+expect_output "register --node-id" validator-registry --help
+expect_output "register --node-id" observer-registry --help
 
 KEY_INFO=$("$JULIAN" key-info ed25519://cli-test-validator --json)
 python3 -c '

@@ -163,6 +163,55 @@ def main() -> None:
             assert verified["verified"] is True
             assert verified["validators_verified"] == 3
 
+            refresh = base / "validator-1.refresh.registration.json"
+            refresh_registry = base / "validator-refresh-registry.json"
+            run(
+                "validator-registry",
+                "register",
+                "--key",
+                str(base / "validator-1.key"),
+                "--node-id",
+                nodes[0]["node_id"],
+                "--operator",
+                "MFENX LLC",
+                "--region",
+                nodes[0]["region"],
+                "--public-host",
+                "127.0.0.1",
+                "--p2p-port",
+                "7001",
+                "--metrics-url",
+                servers[0].url,
+                "--system-metrics-url",
+                servers[0].url,
+                "--issued-at",
+                str(now),
+                "--valid-until",
+                str(now + 3600),
+                "--output",
+                str(refresh),
+                "--policy",
+                str(policy),
+                "--registry",
+                str(registry),
+                "--registry-output",
+                str(refresh_registry),
+            )
+            refreshed = json.loads(
+                run(
+                    "validator-registry",
+                    "verify",
+                    str(refresh_registry),
+                    "--policy",
+                    str(policy),
+                    "--now",
+                    str(now),
+                    "--json",
+                ).stdout
+            )
+            assert refreshed["verified"] is True
+            assert refreshed["validators_verified"] == 3
+
             state = base / "state.json"
             powerhouse_discovery = base / "powerhouse.json"
             node_discovery = base / "systems.json"
