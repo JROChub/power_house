@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050807">
+  <meta name="description" content="Signed observer and validator registration for the MFENX Power House network.">
+  <title>MFENX Node Registration</title>
+  <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/earth-night.jpg" as="image">
+  <link rel="stylesheet" href="register.css">
+</head>
+<body>
+  <div class="earth-field" aria-hidden="true"></div>
+
+  <header>
+    <a class="brand" href="/">
+      <img src="assets/powerhouse-logo.png" alt="">
+      <span><b>MFENX</b><small>NODE REGISTRY</small></span>
+    </a>
+    <nav aria-label="Registration navigation">
+      <a href="status.html">STATUS</a>
+      <a href="https://github.com/JROChub/power_house/blob/main/docs/observer_registry.md">DOCS</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="registration-hero" aria-labelledby="registration-title">
+      <div>
+        <span class="eyebrow">SIGNED IDENTITY / CHAIN 177155</span>
+        <h1 id="registration-title">REGISTER A PUBLIC NODE</h1>
+        <p>Generate a signed observer or validator registration locally, inspect it here, then submit the signed JSON for registry assembly.</p>
+      </div>
+      <div class="security-meter" aria-label="Security model">
+        <span>PRIVATE KEY</span>
+        <b>LOCAL ONLY</b>
+      </div>
+    </section>
+
+    <section class="registration-grid" aria-label="Registration workspace">
+      <article class="command-panel">
+        <div class="panel-head">
+          <span>CLI BUILDER</span>
+          <div class="segmented" role="group" aria-label="Registration type">
+            <button class="active" type="button" data-kind="observer">OBSERVER</button>
+            <button type="button" data-kind="validator">VALIDATOR</button>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <label>
+            <span>NODE ID</span>
+            <input id="node-id" value="mynode" autocomplete="off">
+          </label>
+          <label>
+            <span>PUBLIC HOST</span>
+            <input id="public-host" placeholder="node.example.com" autocomplete="off">
+          </label>
+          <label>
+            <span>OPERATOR</span>
+            <input id="operator" placeholder="Operator Name" autocomplete="off">
+          </label>
+          <label>
+            <span>REGION</span>
+            <input id="region" value="self-hosted" autocomplete="off">
+          </label>
+          <label>
+            <span>P2P PORT</span>
+            <input id="p2p-port" value="7001" inputmode="numeric">
+          </label>
+          <label>
+            <span>METRICS PORT</span>
+            <input id="metrics-port" value="9100" inputmode="numeric">
+          </label>
+          <label class="wide">
+            <span>NODE KEY PATH</span>
+            <input id="key-path" value="$HOME/.powerhouse/node.key" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="command-output">
+          <pre id="register-command"></pre>
+          <button id="copy-command" type="button">COPY COMMAND</button>
+        </div>
+      </article>
+
+      <article class="file-panel">
+        <div class="panel-head">
+          <span>SIGNED JSON CHECK</span>
+          <b id="file-state">WAITING</b>
+        </div>
+
+        <label id="drop-zone" class="drop-zone">
+          <input id="registration-file" type="file" accept="application/json,.json">
+          <span>DROP OR SELECT REGISTRATION JSON</span>
+          <b>NO PRIVATE KEY INPUT</b>
+        </label>
+
+        <div id="registration-report" class="registration-report" aria-live="polite"></div>
+
+        <div class="submission-panel">
+          <div>
+            <span>SUBMISSION PACKAGE</span>
+            <button id="copy-package" type="button" disabled>COPY PACKAGE</button>
+          </div>
+          <textarea id="submission-package" readonly spellcheck="false"></textarea>
+          <a id="github-submit" class="disabled" href="https://github.com/JROChub/power_house/issues/new" target="_blank" rel="noreferrer">OPEN SUBMISSION ISSUE</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="register.js" defer></script>
+</body>
+</html>

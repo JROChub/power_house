@@ -45,31 +45,30 @@ For a public observer to appear on mfenx.com without validator admission,
 create a signed observer registration instead:
 
 ```bash
-julian observer-registry create \
-  --key "$HOME/.powerhouse/node.key" \
+julian observer-registry register \
   --node-id external-observer-1 \
   --operator "Operator Name" \
   --region <region> \
-  --p2p-address /dns4/<host>/tcp/7001/p2p/<peer-id> \
-  --metrics-url http://<host>:9100/metrics \
+  --public-host <host> \
+  --metrics-port 9100 \
   --output observer.registration.json
 ```
 
 The public observer registry requires a matching live
 `powerhouse_node_identity` metric before the observer is counted. See
-[Public Observer Registry](observer_registry.md).
+[Public Observer Registry](observer_registry.md). You can inspect the signed
+registration before submitting it at `https://mfenx.com/register.html`.
 
 After admission is approved, create a signed monitoring registration:
 
 ```bash
-julian validator-registry create \
-  --key "$HOME/.powerhouse/node.key" \
+julian validator-registry register \
   --node-id external-validator-1 \
   --operator "Operator Name" \
   --region <region> \
-  --p2p-address /dns4/<host>/tcp/7001/p2p/<peer-id> \
-  --metrics-url http://<monitoring-address>:9100/metrics \
-  --system-metrics-url http://<monitoring-address>:9101/metrics \
+  --public-host <host> \
+  --metrics-port 9100 \
+  --system-metrics-port 9101 \
   --output validator.registration.json
 ```
 

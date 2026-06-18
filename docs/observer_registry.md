@@ -37,9 +37,41 @@ observer telemetry:
 The website and status page display validator links and public observers as
 separate values.
 
-## Create A Signed Observer Registration
+## Fast Registration
 
 Run this on the observer operator machine. Do not share the private key.
+
+```bash
+julian observer-registry register \
+  --node-id external-observer-1 \
+  --operator "Operator Name" \
+  --region <region> \
+  --public-host <host> \
+  --metrics-port 9100 \
+  --output observer.registration.json
+```
+
+The command signs locally with `$HOME/.powerhouse/node.key` by default. The
+private key is never written into the registration file. Use
+`--key <path-or-key-spec>` when the node identity lives somewhere else.
+
+For a local node using a custom metrics port:
+
+```bash
+julian observer-registry register \
+  --node-id mynode \
+  --public-host <public-ip-or-dns> \
+  --metrics-port 9102 \
+  --output mynode.observer.registration.json
+```
+
+The signed JSON can be checked on `https://mfenx.com/register.html` before it
+is submitted for public observer registry assembly.
+
+## Manual Registration
+
+The lower-level command remains available when p2p and metrics endpoints must
+be specified directly:
 
 ```bash
 julian key-info "$HOME/.powerhouse/node.key" --json
@@ -72,6 +104,17 @@ julian observer-registry assemble \
 julian observer-registry verify \
   /etc/powerhouse/observer-registry.json \
   --json
+```
+
+For maintainers assembling a registry from an existing file and one refreshed
+registration, the shortcut can write the assembled registry in one step:
+
+```bash
+julian observer-registry register \
+  --node-id external-observer-1 \
+  --public-host <host> \
+  --registry /etc/powerhouse/observer-registry.json \
+  --registry-output /etc/powerhouse/observer-registry.json
 ```
 
 The monitoring stack runs `powerhouse-observer-registry.timer` every 15
