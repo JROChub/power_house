@@ -29,7 +29,7 @@
       <div>
         <span class="eyebrow">SIGNED IDENTITY / CHAIN 177155</span>
         <h1 id="registration-title">REGISTER A PUBLIC NODE</h1>
-        <p>Run the guided observer setup, let the doctor diagnose firewall/NAT/metrics issues, then submit signed JSON for registry assembly.</p>
+        <p>Run the guided observer setup, diagnose firewall and NAT issues, then submit signed JSON directly to the cryptographically verified public registry.</p>
       </div>
       <div class="security-meter" aria-label="Security model">
         <span>PRIVATE KEY</span>
@@ -116,7 +116,15 @@
             <button id="copy-package" type="button" disabled>COPY PACKAGE</button>
           </div>
           <textarea id="submission-package" readonly spellcheck="false"></textarea>
-          <a id="github-submit" class="disabled" href="https://github.com/JROChub/power_house/issues/new" target="_blank" rel="noreferrer">OPEN SUBMISSION ISSUE</a>
+          <button id="submit-registration" class="primary" type="button" disabled>SUBMIT SIGNED REGISTRATION</button>
+          <section id="admission-panel" class="admission-panel" aria-live="polite" hidden>
+            <div><span>ADMISSION</span><b id="admission-state">WAITING</b></div>
+            <dl>
+              <div><dt>TRACKING ID</dt><dd id="admission-tracking">--</dd></div>
+              <div><dt>DETAIL</dt><dd id="admission-detail">--</dd></div>
+            </dl>
+            <button id="retry-admission" type="button" hidden>RETRY HEALTH CHECKS</button>
+          </section>
         </div>
       </article>
     </section>

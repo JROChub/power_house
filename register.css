@@ -496,6 +496,86 @@ textarea {
   text-decoration: none;
 }
 
+.submission-panel .primary {
+  color: var(--ink);
+  border-top: 1px solid rgba(199, 255, 69, 0.42);
+  background: var(--acid);
+}
+
+.submission-panel .primary:hover {
+  color: var(--ink);
+  background: #d8ff79;
+}
+
+.submission-panel .primary:disabled {
+  color: #65706c;
+  border-color: var(--line);
+  background: rgba(80, 94, 89, 0.2);
+}
+
+.admission-panel {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.admission-panel[hidden] {
+  display: none;
+}
+
+.admission-panel > div:first-child {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admission-panel span,
+.admission-panel dt {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.admission-panel b {
+  color: var(--warn);
+  font-size: 10px;
+}
+
+.admission-panel b.ok {
+  color: var(--acid);
+}
+
+.admission-panel b.error {
+  color: var(--down);
+}
+
+.admission-panel dl {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  margin: 0;
+}
+
+.admission-panel dl div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-right: 1px solid var(--line);
+}
+
+.admission-panel dl div:last-child {
+  border-right: 0;
+}
+
+.admission-panel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 10px;
+}
+
 body[data-kind="validator"] .security-meter,
 body[data-kind="validator"] .drop-zone {
   border-color: rgba(255, 193, 90, 0.34);
