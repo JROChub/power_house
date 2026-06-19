@@ -96,6 +96,7 @@ def main() -> None:
     nginx = (ROOT / "infra" / "monitoring" / "nginx-mfenx-rpc.conf").read_text()
     assert "/observer-probe" in nginx
     assert "/observer-registrations" in nginx
+    assert 'location ~ "^/observer-registrations/obs_[a-f0-9]{32}(/retry)?$"' in nginx
     assert "/observer-intake-healthz" in nginx
     assert "__OBSERVER_INTAKE_UPSTREAM__" in nginx
     provisioner = (ROOT / "scripts" / "provision_digitalocean_rpc.sh").read_text()
