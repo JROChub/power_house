@@ -93,6 +93,12 @@ def main() -> None:
     assert "validators_total) || 3" not in website
     nginx = (ROOT / "infra" / "monitoring" / "nginx-mfenx-rpc.conf").read_text()
     assert "/observer-probe" in nginx
+    provisioner = (ROOT / "scripts" / "provision_digitalocean_rpc.sh").read_text()
+    assert "ports:7002,address:0.0.0.0/0" in provisioner
+    terraform = (ROOT / "infra" / "terraform" / "digitalocean" / "main.tf").read_text()
+    assert 'port_range       = "7002"' in terraform
+    boot_unit = (ROOT / "infra" / "systemd" / "powerhouse-observer-boot.service").read_text()
+    assert "powerhouse-common.env" not in boot_unit
 
     module = load_module()
     now = datetime.now(timezone.utc)

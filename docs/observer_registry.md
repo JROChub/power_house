@@ -66,9 +66,16 @@ julian net start \
   --log-dir ./logs/mynode-observer \
   --blob-dir ./data/mynode-observer \
   --listen /ip4/0.0.0.0/tcp/7001 \
+  --bootstrap /ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR \
+  --bootstrap /ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ \
+  --bootstrap /ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8 \
   --key "$HOME/.powerhouse/node.key" \
   --metrics 0.0.0.0:9102
 ```
+
+The default public observer bootnodes listen on TCP `7002`. They are separate
+from validator TCP `7001`; validator transport remains restricted to the
+validator mesh and is not opened to arbitrary public peers.
 
 After the observer is running, use the doctor. It checks the local key, local
 ports, local metrics identity, and the production-side public reachability
@@ -165,7 +172,9 @@ julian net start \
   --log-dir "$HOME/.powerhouse/logs" \
   --blob-dir "$HOME/.powerhouse/data" \
   --listen /ip4/0.0.0.0/tcp/7001 \
-  --bootstrap /dns4/<bootstrap-host>/tcp/7001/p2p/<peer-id> \
+  --bootstrap /ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR \
+  --bootstrap /ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ \
+  --bootstrap /ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8 \
   --key "$HOME/.powerhouse/node.key" \
   --metrics 0.0.0.0:9102
 ```

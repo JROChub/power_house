@@ -21,6 +21,8 @@ configuration, and public edge are independently verifiable.
 - Optional signed public observer registry with separate public peer telemetry.
 - A public status API at `/network-status.json`.
 - A public observer reachability probe at `/observer-probe`.
+- Dedicated public observer bootnodes on TCP `7002`, separate from validator
+  TCP `7001`.
 
 Do not expose TCP `8545`, metrics, blob storage, or SSH directly to the
 internet. Limit SSH to the operator's public CIDR and permit HTTP only from the
@@ -184,6 +186,17 @@ The status API also serves `/observer-probe`. The registration page and
 `julian observer doctor` use this route to test an operator's public metrics
 and p2p ports from the production edge. The probe refuses private or local
 targets, follows no redirects, and never receives a private key.
+
+Public observers bootstrap through the dedicated observer bootnode layer:
+
+```text
+/ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR
+/ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ
+/ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8
+```
+
+The DigitalOcean firewall permits TCP `7002` publicly for observer bootnodes.
+Validator TCP `7001` remains restricted to the validator tag.
 
 The corresponding Terraform declaration is under
 [`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).

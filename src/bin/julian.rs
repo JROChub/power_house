@@ -54,6 +54,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 const NETWORK_ID: &str = "MFENX-POWERHOUSE";
+#[cfg(feature = "net")]
+const DEFAULT_OBSERVER_BOOTSTRAPS: &[&str] = &[
+    "/ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR",
+    "/ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ",
+    "/ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8",
+];
 
 fn fatal(message: &str) -> ! {
     eprintln!("{message}");
@@ -288,6 +294,8 @@ fn print_observer_help() {
     println!("  --probe-url <url>          External probe endpoint (default: https://rpc.mfenx.com/observer-probe)");
     println!("  --no-probe                 Skip the production-side external probe");
     println!("  --json                     Machine-readable doctor/submit output");
+    println!();
+    println!("Observer setup includes the default public observer bootnodes on TCP 7002.");
 }
 
 #[cfg(feature = "net")]
@@ -1900,12 +1908,23 @@ fn ensure_default_node_key(key_spec: &str) -> Option<PathBuf> {
 
 #[cfg(feature = "net")]
 fn observer_start_command(options: &ObserverCliOptions) -> String {
+    let bootstrap_lines = DEFAULT_OBSERVER_BOOTSTRAPS
+        .iter()
+        .map(|addr| format!("  --bootstrap {} \\", shell_word(addr)))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let bootstrap_section = if bootstrap_lines.is_empty() {
+        String::new()
+    } else {
+        format!("{bootstrap_lines}\n")
+    };
     format!(
-        "julian net start \\\n  --node-id {} \\\n  --log-dir ./logs/{}-observer \\\n  --blob-dir ./data/{}-observer \\\n  --listen /ip4/0.0.0.0/tcp/{} \\\n  --key \"{}\" \\\n  --metrics 0.0.0.0:{}",
+        "julian net start \\\n  --node-id {} \\\n  --log-dir ./logs/{}-observer \\\n  --blob-dir ./data/{}-observer \\\n  --listen /ip4/0.0.0.0/tcp/{} \\\n{}  --key \"{}\" \\\n  --metrics 0.0.0.0:{}",
         shell_word(&options.node_id),
         options.node_id,
         options.node_id,
         options.p2p_port,
+        bootstrap_section,
         options.key_spec,
         options.metrics_port
     )
