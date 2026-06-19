@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.3.10 - 2026-06-19
+
+### Intake Service Hardening
+- Made the executable monitoring library path traversable by the dedicated
+  unprivileged intake user while keeping configuration and state restricted.
+- Moved verified secondary observer-registry replicas into the monitoring
+  service's existing writable state directory instead of weakening
+  `ProtectSystem=strict`.
+- Added deployment contract checks for both systemd hardening boundaries.
+
 ## v0.3.9 - 2026-06-19
 
 ### Deployment Hotfix

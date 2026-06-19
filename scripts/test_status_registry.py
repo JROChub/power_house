@@ -91,6 +91,9 @@ def main() -> None:
     assert "powerhouse-observer-intake" in deployment
     assert "OBSERVER_REGISTRY_URL" in deployment
     assert "validator-registry.json" in deployment
+    assert "install -d -m 0755 /usr/local/lib/powerhouse" in deployment
+    assert "/var/lib/powerhouse/monitoring/observer-registry.json" in deployment
+    assert "printf /etc/powerhouse/observer-registry.json" not in deployment
     website = (ROOT / "publicpower" / "app.js").read_text()
     assert "validators_total) || 3" not in website
     nginx = (ROOT / "infra" / "monitoring" / "nginx-mfenx-rpc.conf").read_text()
