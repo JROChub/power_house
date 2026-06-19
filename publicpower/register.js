@@ -7,6 +7,12 @@ const state = {
   probeRun: 0,
 };
 
+const OBSERVER_BOOTSTRAPS = [
+  "/ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR",
+  "/ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ",
+  "/ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8",
+];
+
 const el = {
   kindButtons: [...document.querySelectorAll("[data-kind]")],
   nodeId: document.querySelector("#node-id"),
@@ -74,6 +80,7 @@ function renderCommand() {
       `  --log-dir ./logs/${shell(`${nodeId}-observer`)} \\`,
       `  --blob-dir ./data/${shell(`${nodeId}-observer`)} \\`,
       `  --listen /ip4/0.0.0.0/tcp/${shell(p2pPort)} \\`,
+      ...OBSERVER_BOOTSTRAPS.map((addr) => `  --bootstrap ${shell(addr)} \\`),
       `  --key ${shell(keyPath)} \\`,
       `  --metrics 0.0.0.0:${shell(metricsPort)}`,
     ].join("\n");

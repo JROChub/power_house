@@ -1,0 +1,33 @@
+[Unit]
+Description=Power House public observer bootnode
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/var/lib/powerhouse/observer-boot
+StateDirectory=powerhouse/observer-boot
+StateDirectoryMode=0750
+LogsDirectory=powerhouse
+LogsDirectoryMode=0750
+Environment=RUST_LOG=info
+EnvironmentFile=/etc/powerhouse/powerhouse-observer-boot.env
+ExecStartPre=/usr/bin/install -d -m 0750 /var/lib/powerhouse/observer-boot/logs /var/lib/powerhouse/observer-boot/blobs
+ExecStart=/usr/local/bin/powerhouse-boot.sh
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGINT
+LimitNOFILE=65536
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/powerhouse/observer-boot /var/log/powerhouse
+
+[Install]
+WantedBy=multi-user.target

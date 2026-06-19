@@ -99,13 +99,19 @@ julian net start \
   --log-dir "$HOME/.powerhouse/logs" \
   --blob-dir "$HOME/.powerhouse/data" \
   --listen /ip4/0.0.0.0/tcp/7001 \
-  --bootstrap /dns4/<bootstrap-host>/tcp/7001/p2p/<peer-id> \
+  --bootstrap /ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR \
+  --bootstrap /ip4/64.23.182.213/tcp/7002/p2p/12D3KooWGEHbPAQ9ZVB9Uqg1j8CnsNqKvS2xmAe5cmT4w3idUtmQ \
+  --bootstrap /ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8 \
   --key "$HOME/.powerhouse/node.key" \
   --metrics 0.0.0.0:9102
 ```
 
 An observer verifies and relays network data but does not count toward
 validator quorum.
+
+Public observer bootnodes use TCP `7002`. Validator TCP `7001` remains a
+restricted validator mesh port and should not be opened to arbitrary public
+peers.
 
 ## Run Under systemd
 

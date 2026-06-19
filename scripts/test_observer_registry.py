@@ -200,6 +200,32 @@ def main() -> None:
                         "power-house-observer-registration-v1"
                     )
 
+                    setup = json.loads(
+                        run(
+                            "observer",
+                            "setup",
+                            "--key",
+                            str(key),
+                            "--node-id",
+                            node["node_id"],
+                            "--operator",
+                            "Public Observer",
+                            "--region",
+                            node["region"],
+                            "--public-host",
+                            "127.0.0.1",
+                            "--p2p-port",
+                            str(7100 + index),
+                            "--metrics-port",
+                            str(server.server.server_port),
+                            "--output",
+                            str(base / "observer-setup.registration.json"),
+                            "--no-probe",
+                            "--json",
+                        ).stdout
+                    )
+                    assert "/tcp/7002/p2p/" in setup["start_command"]
+
             registry = base / "observer-registry.json"
             assemble = ["observer-registry", "assemble", "--output", str(registry)]
             for registration in registrations:

@@ -100,6 +100,12 @@ resource "digitalocean_firewall" "validator" {
   }
 
   inbound_rule {
+    protocol         = "tcp"
+    port_range       = "7002"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
     protocol    = "tcp"
     port_range  = "9090"
     source_tags = [digitalocean_tag.validator.name]

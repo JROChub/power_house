@@ -87,7 +87,7 @@ MFENX DigitalOcean production plan
   project: $PROJECT_NAME
   regions: $REGIONS_CSV
   droplets: 3 x $SIZE ($IMAGE), weekly backups, monitoring
-  firewall: SSH from $SSH_CIDR; P2P among validator tag; HTTP from load balancer
+  firewall: SSH from $SSH_CIDR; validator P2P among validator tag; observer bootnode TCP 7002 public; HTTP from load balancer
   edge: global HTTPS load balancer and delegated DNS zone for $RPC_HOST
   estimated base: three Droplets + backups + \$15/month global load balancer
 EOF
@@ -212,7 +212,7 @@ if [[ -z "$firewall_id" ]]; then
       --name "$FIREWALL_NAME" \
       --tag-names "$TAG" \
       --inbound-rules \
-        "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
+        "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:7002,address:0.0.0.0/0 protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
       --outbound-rules \
         "protocol:tcp,ports:all,address:0.0.0.0/0 protocol:udp,ports:all,address:0.0.0.0/0" \
       --output json | first_json_field id
@@ -342,7 +342,7 @@ doctl_cmd compute firewall update "$firewall_id" \
   --name "$FIREWALL_NAME" \
   --tag-names "$TAG" \
   --inbound-rules \
-    "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
+    "protocol:tcp,ports:22,address:$SSH_CIDR protocol:tcp,ports:80,load_balancer_uid:$load_balancer_id protocol:tcp,ports:7001,tag:$TAG protocol:tcp,ports:7002,address:0.0.0.0/0 protocol:tcp,ports:9090,tag:$TAG protocol:tcp,ports:9100-9101,tag:$TAG" \
   --outbound-rules \
     "protocol:tcp,ports:all,address:0.0.0.0/0 protocol:udp,ports:all,address:0.0.0.0/0" \
   >/dev/null
