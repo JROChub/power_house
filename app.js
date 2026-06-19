@@ -310,6 +310,36 @@ const el = Object.fromEntries(
 );
 el.canvas = el.orbitalCanvas;
 
+function isCompactLandscape() {
+  return (
+    window.innerWidth <= 950 &&
+    window.innerHeight <= 520 &&
+    window.innerWidth > window.innerHeight
+  );
+}
+
+function minViewportZoom() {
+  return isCompactLandscape() ? 4.8 : 3.45;
+}
+
+function maxViewportZoom() {
+  return isCompactLandscape() ? 7.4 : 6.8;
+}
+
+function defaultViewportZoom() {
+  if (isCompactLandscape()) return 6.35;
+  if (window.innerWidth < 760) return 5.32;
+  if (window.innerWidth < 1180) return 5.05;
+  return 4.92;
+}
+
+function focusedViewportZoom() {
+  if (isCompactLandscape()) return 6.05;
+  if (window.innerWidth < 760) return 5.18;
+  if (window.innerWidth < 1180) return 4.92;
+  return 4.72;
+}
+
 const state = {
   mode: "rootprint",
   activeCity: 5,
@@ -320,7 +350,7 @@ const state = {
   timeOffsetHours: 0,
   targetRotationX: cities[5].lat * DEG,
   targetRotationY: -Math.PI / 2 - cities[5].lon * DEG,
-  zoom: window.innerWidth < 760 ? 4.85 : 4.55,
+  zoom: defaultViewportZoom(),
   toastTimer: 0,
   proofProgress: 0,
   lastResult: null,
@@ -330,6 +360,7 @@ const state = {
   luminousSidecar: null,
   luminousBranch: null,
   luminousExpanded: false,
+  observerConnections: 0,
 };
 
 const formatterCache = new Map();
@@ -359,6 +390,11 @@ let proofParticlesMaterial;
 let selectedCityHalo;
 let selectedCityBeam;
 let networkGroup;
+let terminatorRing;
+let terminatorOuterRing;
+let auroraGroup;
+let orbitalDust;
+let orbitalDustMaterial;
 let animationFrame;
 let audioContext;
 let latestSolar = null;
@@ -367,6 +403,9 @@ let sceneResizeFrame = 0;
 let sceneResizeObserver;
 const networkLinks = [];
 const networkCityIndexes = [0, 3, 7];
+const starLayers = [];
+const observerMeshLinks = [];
+const observerBootBeacons = [];
 
 function camelCase(value) {
   return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -607,10 +646,13 @@ function updateAstronomy() {
     "W",
   )}`;
 
+  const sunVector = latLonVector(latestSolar.lat, latestSolar.lon).normalize();
   if (earthMaterial) {
-    earthMaterial.uniforms.sunDirection.value.copy(
-      latLonVector(latestSolar.lat, latestSolar.lon).normalize(),
-    );
+    earthMaterial.uniforms.sunDirection.value.copy(sunVector);
+  }
+  if (terminatorRing && terminatorOuterRing) {
+    terminatorRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), sunVector);
+    terminatorOuterRing.quaternion.copy(terminatorRing.quaternion);
   }
   if (subsolarMarker) {
     const position = latLonVector(latestSolar.lat, latestSolar.lon, EARTH_RADIUS + 0.025);
@@ -696,7 +738,7 @@ function focusSelectedCity() {
   const city = cities[state.activeCity];
   state.targetRotationX = THREE.MathUtils.clamp(city.lat * DEG, -1.18, 1.18);
   state.targetRotationY = -Math.PI / 2 - city.lon * DEG;
-  state.zoom = window.innerWidth < 760 ? 4.45 : 4.2;
+  state.zoom = focusedViewportZoom();
 }
 
 function seededRandom() {
@@ -711,32 +753,122 @@ function seededRandom() {
 
 function createStars() {
   const random = seededRandom();
-  const count = window.innerWidth < 760 ? 850 : 1800;
+  const mobile = window.innerWidth < 760;
+  const layers = [
+    { count: mobile ? 700 : 1600, near: 7.5, far: 18, size: 0.018, opacity: 0.68 },
+    { count: mobile ? 280 : 720, near: 18, far: 34, size: 0.032, opacity: 0.38 },
+  ];
+  layers.forEach((layer, layerIndex) => {
+    const positions = new Float32Array(layer.count * 3);
+    const colors = new Float32Array(layer.count * 3);
+    for (let index = 0; index < layer.count; index += 1) {
+      const radius = layer.near + random() * (layer.far - layer.near);
+      const theta = random() * Math.PI * 2;
+      const phi = Math.acos(2 * random() - 1);
+      positions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[index * 3 + 1] = radius * Math.cos(phi);
+      positions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+      const brightness = 0.34 + random() * 0.66;
+      colors[index * 3] = brightness * (layerIndex ? 0.54 : 0.72);
+      colors[index * 3 + 1] = brightness * (layerIndex ? 0.8 : 0.94);
+      colors[index * 3 + 2] = brightness * (layerIndex ? 1.0 : 0.88);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    const material = new THREE.PointsMaterial({
+      size: layer.size,
+      vertexColors: true,
+      transparent: true,
+      opacity: layer.opacity,
+      sizeAttenuation: true,
+      depthWrite: false,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.userData = { baseOpacity: layer.opacity, drift: layerIndex ? -0.002 : 0.0014 };
+    starLayers.push(points);
+    scene.add(points);
+  });
+}
+
+function createOrbitalDust() {
+  const random = seededRandom();
+  const count = window.innerWidth <= 760 ? 900 : 2200;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   for (let index = 0; index < count; index += 1) {
-    const radius = 8 + random() * 18;
-    const theta = random() * Math.PI * 2;
-    const phi = Math.acos(2 * random() - 1);
-    positions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[index * 3 + 1] = radius * Math.cos(phi);
-    positions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
-    const brightness = 0.42 + random() * 0.58;
-    colors[index * 3] = brightness * 0.76;
-    colors[index * 3 + 1] = brightness * 0.92;
-    colors[index * 3 + 2] = brightness * 0.86;
+    const angle = random() * Math.PI * 2;
+    const band = (random() - 0.5) * 1.25;
+    const radius = 2.1 + random() * 1.3 + Math.abs(band) * 0.38;
+    positions[index * 3] = Math.cos(angle) * radius;
+    positions[index * 3 + 1] = band;
+    positions[index * 3 + 2] = Math.sin(angle) * radius;
+    const accent = random();
+    colors[index * 3] = 0.18 + accent * 0.22;
+    colors[index * 3 + 1] = 0.72 + accent * 0.28;
+    colors[index * 3 + 2] = 0.68 + accent * 0.22;
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  const material = new THREE.PointsMaterial({
-    size: 0.018,
+  orbitalDustMaterial = new THREE.PointsMaterial({
+    size: window.innerWidth <= 760 ? 0.011 : 0.008,
     vertexColors: true,
     transparent: true,
-    opacity: 0.72,
+    opacity: 0.18,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
     sizeAttenuation: true,
   });
-  scene.add(new THREE.Points(geometry, material));
+  orbitalDust = new THREE.Points(geometry, orbitalDustMaterial);
+  orbitalDust.rotation.set(0.34, 0, -0.18);
+  scene.add(orbitalDust);
+}
+
+function createTerminatorAndAurora() {
+  const terminatorMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffc15a,
+    transparent: true,
+    opacity: 0.28,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  terminatorRing = new THREE.Mesh(
+    new THREE.TorusGeometry(EARTH_RADIUS + 0.012, 0.004, 6, 220),
+    terminatorMaterial,
+  );
+  terminatorOuterRing = new THREE.Mesh(
+    new THREE.TorusGeometry(EARTH_RADIUS + 0.13, 0.0025, 5, 220),
+    new THREE.MeshBasicMaterial({
+      color: 0x45ddd2,
+      transparent: true,
+      opacity: 0.11,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  earthGroup.add(terminatorRing, terminatorOuterRing);
+
+  auroraGroup = new THREE.Group();
+  [-1, 1].forEach((pole) => {
+    for (let ringIndex = 0; ringIndex < 4; ringIndex += 1) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.24 + ringIndex * 0.055, 0.0035, 5, 96),
+        new THREE.MeshBasicMaterial({
+          color: ringIndex % 2 ? 0xb9ff3d : 0x45ddd2,
+          transparent: true,
+          opacity: 0.16 - ringIndex * 0.018,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      );
+      ring.position.y = pole * (EARTH_RADIUS - 0.13 + ringIndex * 0.018);
+      ring.rotation.x = Math.PI / 2;
+      ring.userData = { pole, ringIndex };
+      auroraGroup.add(ring);
+    }
+  });
+  earthGroup.add(auroraGroup);
 }
 
 function loadTexture(url, progress) {
@@ -853,6 +985,77 @@ function createNetworkTopology() {
   earthGroup.add(networkGroup);
 }
 
+function createObserverBootMesh() {
+  const group = new THREE.Group();
+  const pairs = [
+    [0, 3],
+    [3, 7],
+    [7, 0],
+  ];
+  pairs.forEach(([fromIndex, toIndex], index) => {
+    const curve = elevatedArc(
+      latLonVector(cities[fromIndex].lat, cities[fromIndex].lon),
+      latLonVector(cities[toIndex].lat, cities[toIndex].lon),
+      0.48 + index * 0.08,
+    );
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(128)),
+      new THREE.LineBasicMaterial({
+        color: index === 2 ? 0xffc15a : 0xb9ff3d,
+        transparent: true,
+        opacity: 0.18,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    const pulse = new THREE.Mesh(
+      new THREE.SphereGeometry(0.021, 12, 8),
+      new THREE.MeshBasicMaterial({
+        color: 0xb9ff3d,
+        transparent: true,
+        opacity: 0.88,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    observerMeshLinks.push({ curve, line, pulse, phase: index / pairs.length });
+    group.add(line, pulse);
+  });
+
+  networkCityIndexes.forEach((cityIndex, index) => {
+    const city = cities[cityIndex];
+    const surface = latLonVector(city.lat, city.lon, EARTH_RADIUS + 0.06);
+    const apex = surface.clone().normalize().multiplyScalar(EARTH_RADIUS + 0.72);
+    const beam = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([surface, apex]),
+      new THREE.LineBasicMaterial({
+        color: 0xb9ff3d,
+        transparent: true,
+        opacity: 0.22,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    const beacon = new THREE.Mesh(
+      new THREE.RingGeometry(0.047, 0.071, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xb9ff3d,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    beacon.position.copy(apex);
+    beacon.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), apex.clone().normalize());
+    beacon.userData = { index };
+    observerBootBeacons.push(beacon);
+    group.add(beam, beacon);
+  });
+  earthGroup.add(group);
+}
+
 function createSelectedCityGeometry() {
   selectedCityHalo = new THREE.Mesh(
     new THREE.RingGeometry(0.052, 0.083, 36),
@@ -954,6 +1157,7 @@ async function createEarth() {
     earthMaterial,
   );
   earthGroup.add(globe, createEarthGrid());
+  createTerminatorAndAurora();
 
   atmosphereMaterial = new THREE.ShaderMaterial({
     transparent: true,
@@ -1008,6 +1212,7 @@ async function createEarth() {
   });
 
   createNetworkTopology();
+  createObserverBootMesh();
   createSelectedCityGeometry();
 
   const solarGroup = new THREE.Group();
@@ -1186,6 +1391,7 @@ async function initScene() {
   camera.position.set(0, 0, state.zoom);
 
   createStars();
+  createOrbitalDust();
   createOrbits();
   createProofField();
   createMoon();
@@ -1316,7 +1522,11 @@ function bindGlobeInput() {
     "wheel",
     (event) => {
       event.preventDefault();
-      state.zoom = THREE.MathUtils.clamp(state.zoom + event.deltaY * 0.002, 3.45, 6.2);
+      state.zoom = THREE.MathUtils.clamp(
+        state.zoom + event.deltaY * 0.002,
+        minViewportZoom(),
+        maxViewportZoom(),
+      );
     },
     { passive: false },
   );
@@ -1326,6 +1536,19 @@ function animate(time = 0) {
   animationFrame = requestAnimationFrame(animate);
   if (!renderer || !scene || !camera || !state.visible) return;
   const seconds = time * 0.001;
+  starLayers.forEach((layer, index) => {
+    layer.rotation.y += state.motion ? layer.userData.drift : 0;
+    layer.rotation.x += state.motion ? layer.userData.drift * 0.16 : 0;
+    layer.material.opacity =
+      layer.userData.baseOpacity + Math.sin(seconds * (0.45 + index * 0.18)) * 0.045;
+  });
+  if (orbitalDust) {
+    const observerBoost = Math.min(state.observerConnections, 9) / 9;
+    orbitalDust.rotation.y += state.motion ? 0.0009 + observerBoost * 0.0008 : 0;
+    orbitalDust.rotation.z += state.motion ? -0.00022 : 0;
+    orbitalDustMaterial.opacity =
+      0.12 + state.proofProgress * 0.36 + observerBoost * 0.18 + (state.running ? 0.1 : 0);
+  }
   if (earthGroup) {
     if (state.motion && !state.pointerDown) state.targetRotationY += 0.00024;
     earthGroup.rotation.x += (state.targetRotationX - earthGroup.rotation.x) * 0.045;
@@ -1355,6 +1578,32 @@ function animate(time = 0) {
       pulse.position.copy(curve.getPoint(progress));
       pulse.scale.setScalar(0.85 + Math.sin(seconds * 7 + index) * 0.24);
       line.material.opacity = 0.38 + Math.sin(seconds * 1.4 + index) * 0.13;
+    });
+  }
+  if (observerMeshLinks.length) {
+    const observerBoost = Math.min(state.observerConnections, 9) / 9;
+    observerMeshLinks.forEach(({ curve, pulse, line, phase }, index) => {
+      const progress = (phase + seconds * (0.078 + observerBoost * 0.04 + index * 0.006)) % 1;
+      pulse.position.copy(curve.getPoint(progress));
+      pulse.scale.setScalar(0.9 + observerBoost * 0.65 + Math.sin(seconds * 5 + index) * 0.18);
+      pulse.material.opacity = 0.42 + observerBoost * 0.48;
+      line.material.opacity = 0.1 + observerBoost * 0.34 + Math.sin(seconds * 1.2 + index) * 0.05;
+    });
+  }
+  observerBootBeacons.forEach((beacon, index) => {
+    const pulse = 1 + Math.sin(seconds * 3.8 + index * 1.7) * 0.16;
+    beacon.scale.setScalar(pulse + Math.min(state.observerConnections, 6) * 0.035);
+    beacon.material.opacity = 0.38 + Math.min(state.observerConnections, 6) * 0.07;
+  });
+  if (terminatorRing && terminatorOuterRing) {
+    terminatorRing.material.opacity = 0.22 + Math.sin(seconds * 1.8) * 0.04;
+    terminatorOuterRing.material.opacity = 0.08 + state.proofProgress * 0.08;
+  }
+  if (auroraGroup) {
+    auroraGroup.children.forEach((ring, index) => {
+      ring.rotation.z += state.motion ? 0.0012 * (ring.userData.pole || 1) * (1 + index * 0.12) : 0;
+      ring.material.opacity =
+        0.09 + Math.sin(seconds * 1.7 + index * 0.8) * 0.035 + state.proofProgress * 0.05;
     });
   }
   if (selectedCityHalo) {
@@ -1401,8 +1650,9 @@ function resize() {
   );
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
-  camera.fov = window.innerWidth <= 760 ? 50 : 42;
+  camera.fov = isCompactLandscape() ? 50 : window.innerWidth <= 760 ? 50 : 42;
   camera.updateProjectionMatrix();
+  state.zoom = THREE.MathUtils.clamp(state.zoom, minViewportZoom(), maxViewportZoom());
 }
 
 function scheduleSceneResize() {
@@ -2453,6 +2703,7 @@ function updateObserverLayer(data) {
   const configured = registry.configured === true || observer.configured === true;
   const fresh = registry.fresh === true || observer.fresh === true;
   const verified = registry.verified === true;
+  state.observerConnections = connected;
   el.networkObservers.textContent = `${healthy} / ${total}`;
   el.observerCount.textContent = `${healthy} / ${total}`;
   el.observerLinks.textContent = connected.toLocaleString("en-US");
@@ -2602,15 +2853,15 @@ function bindInterface() {
     );
   });
   el.zoomIn.addEventListener("click", () => {
-    state.zoom = Math.max(3.45, state.zoom - 0.32);
+    state.zoom = Math.max(minViewportZoom(), state.zoom - 0.32);
   });
   el.zoomOut.addEventListener("click", () => {
-    state.zoom = Math.min(6.2, state.zoom + 0.32);
+    state.zoom = Math.min(maxViewportZoom(), state.zoom + 0.32);
   });
   el.viewReset.addEventListener("click", () => {
     setTimeOffset(0);
     focusSelectedCity();
-    state.zoom = window.innerWidth < 760 ? 4.85 : 4.55;
+    state.zoom = defaultViewportZoom();
     showToast("Orbital view reset");
   });
   document.querySelectorAll("[data-network-city]").forEach((button) => {
@@ -2648,8 +2899,10 @@ function bindInterface() {
     if (event.key === "ArrowDown") {
       state.targetRotationX = THREE.MathUtils.clamp(state.targetRotationX + 0.08, -1.18, 1.18);
     }
-    if (event.key === "+" || event.key === "=") state.zoom = Math.max(3.45, state.zoom - 0.2);
-    if (event.key === "-") state.zoom = Math.min(6.2, state.zoom + 0.2);
+    if (event.key === "+" || event.key === "=") {
+      state.zoom = Math.max(minViewportZoom(), state.zoom - 0.2);
+    }
+    if (event.key === "-") state.zoom = Math.min(maxViewportZoom(), state.zoom + 0.2);
   });
 }
 
