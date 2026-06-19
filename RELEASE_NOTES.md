@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.3.9 - 2026-06-19
+
+### Deployment Hotfix
+- Quoted the observer admission tracking-route expression so Nginx parses the
+  `{32}` tracking ID length as a regular-expression quantifier.
+- Added a deployment contract assertion for the quoted route before production
+  rollout.
+
 ## v0.3.8 - 2026-06-19
 
 ### Secure Observer Admission

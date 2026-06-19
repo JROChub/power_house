@@ -1873,7 +1873,7 @@ body.proof-verified .proof-event b {
   }
 }
 
-/* v0.3.8 human-observable Rootprint */
+/* v0.3.9 human-observable Rootprint */
 .luminous-explorer {
   position: absolute;
   right: 0;
@@ -2369,7 +2369,7 @@ body.luminous-expanded .luminous-toggle svg {
   }
 }
 
-/* v0.3.8 Observatory command surface */
+/* v0.3.9 Observatory command surface */
 :root {
   --mode-color: #45ddd2;
   --top: 68px;
@@ -3348,7 +3348,7 @@ body[data-network="outage"] .network-ribbon-state i {
 }
 
 /* Registration and proof-header polish. These rules intentionally sit last so
-   the v0.3.8 command-surface overrides cannot reintroduce overlap. */
+   the v0.3.9 command-surface overrides cannot reintroduce overlap. */
 .proof-monument {
   bottom: clamp(64px, 8vh, 112px);
   z-index: 18;

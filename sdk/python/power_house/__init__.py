@@ -52,4 +52,4 @@ __all__ = [
     "verify_rootprint",
 ]
 
-__version__ = "0.3.8"
+__version__ = "0.3.9"
