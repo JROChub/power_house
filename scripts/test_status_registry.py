@@ -88,17 +88,33 @@ def main() -> None:
     deployment = (ROOT / "scripts" / "deploy_monitoring_stack.sh").read_text()
     assert "powerhouse-validator-registry.timer" in deployment
     assert "powerhouse-observer-registry.timer" in deployment
+    assert "powerhouse-observer-intake" in deployment
+    assert "OBSERVER_REGISTRY_URL" in deployment
     assert "validator-registry.json" in deployment
     website = (ROOT / "publicpower" / "app.js").read_text()
     assert "validators_total) || 3" not in website
     nginx = (ROOT / "infra" / "monitoring" / "nginx-mfenx-rpc.conf").read_text()
     assert "/observer-probe" in nginx
+    assert "/observer-registrations" in nginx
+    assert "/observer-intake-healthz" in nginx
+    assert "__OBSERVER_INTAKE_UPSTREAM__" in nginx
     provisioner = (ROOT / "scripts" / "provision_digitalocean_rpc.sh").read_text()
     assert "ports:7002,address:0.0.0.0/0" in provisioner
+    assert "ports:9195,tag:$TAG" in provisioner
     terraform = (ROOT / "infra" / "terraform" / "digitalocean" / "main.tf").read_text()
     assert 'port_range       = "7002"' in terraform
+    assert 'port_range  = "9195"' in terraform
+    intake_unit = (ROOT / "infra" / "monitoring" / "powerhouse-observer-intake.service").read_text()
+    assert "User=powerhouse-intake" in intake_unit
+    assert "ReadWritePaths=/var/lib/powerhouse/observer-intake" in intake_unit
+    assert "/etc/powerhouse" not in next(
+        line for line in intake_unit.splitlines() if line.startswith("ReadWritePaths=")
+    )
     boot_unit = (ROOT / "infra" / "systemd" / "powerhouse-observer-boot.service").read_text()
     assert "powerhouse-common.env" not in boot_unit
+    assert "blackbox-observer-intake" in prometheus
+    alerts = (ROOT / "infra" / "monitoring" / "powerhouse-alerts.yml").read_text()
+    assert "PowerHouseObserverIntakeUnavailable" in alerts
 
     module = load_module()
     now = datetime.now(timezone.utc)

@@ -10,3 +10,11 @@ modules:
       fail_if_body_not_matches_regexp:
         - '"result":"0x2b403"'
       preferred_ip_protocol: ip4
+  observer_intake:
+    prober: http
+    timeout: 8s
+    http:
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - '"status": "ok"'
+      preferred_ip_protocol: ip4

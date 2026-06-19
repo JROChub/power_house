@@ -42,10 +42,14 @@ jobs:
             scripts/check_rustdoc_links.py \
             scripts/rpc_load_test.py \
             scripts/test_observatory_contract.py \
+            scripts/test_observer_intake.py \
+            scripts/test_observer_registry.py \
             scripts/test_status_registry.py \
             scripts/test_validator_registry.py \
             infra/ops/healthcheck.py \
             infra/monitoring/alert_receiver.py \
+            infra/monitoring/observer_intake.py \
+            infra/monitoring/observer_registry.py \
             infra/monitoring/status_api.py \
             infra/monitoring/validator_registry.py
           jq empty configs/network.json contrib/grafana/mfenx_powerhouse_dashboard.json
@@ -78,7 +82,9 @@ jobs:
       - name: Signed validator registry
         run: |
           python3 scripts/test_validator_registry.py
+          python3 scripts/test_observer_registry.py
           python3 scripts/test_status_registry.py
+          python3 scripts/test_observer_intake.py
 
       - name: DigitalOcean provisioning contract
         run: scripts/test_digitalocean_provision.sh

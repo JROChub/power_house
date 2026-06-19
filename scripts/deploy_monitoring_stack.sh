@@ -20,6 +20,11 @@ host_address() {
 }
 
 NODE1=$(host_address "${HOSTS[0]}")
+NODE_ADDRESSES=()
+for configured_host in "${HOSTS[@]}"; do
+  NODE_ADDRESSES+=("$(host_address "$configured_host")")
+done
+TRUSTED_PROXIES=$(IFS=,; echo "${NODE_ADDRESSES[*]}")
 [[ -f "$VALIDATOR_REGISTRY" ]] || {
   echo "signed validator registry not found: $VALIDATOR_REGISTRY" >&2
   exit 1
@@ -40,6 +45,8 @@ for index in 0 1 2; do
     "$host:/usr/local/lib/powerhouse/validator_registry.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/observer_registry.py" \
     "$host:/usr/local/lib/powerhouse/observer_registry.py"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/observer_intake.py" \
+    "$host:/usr/local/lib/powerhouse/observer_intake.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-status-api.service" \
     "$host:/etc/systemd/system/powerhouse-status-api.service"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-validator-registry.service" \
@@ -50,6 +57,8 @@ for index in 0 1 2; do
     "$host:/etc/systemd/system/powerhouse-observer-registry.service"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-observer-registry.timer" \
     "$host:/etc/systemd/system/powerhouse-observer-registry.timer"
+  scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/powerhouse-observer-intake.service" \
+    "$host:/etc/systemd/system/powerhouse-observer-intake.service"
   scp "${SSH_ARGS[@]}" "$VALIDATOR_REGISTRY" \
     "$host:/etc/powerhouse/validator-registry.json"
   if [[ -f "$OBSERVER_REGISTRY" ]]; then
@@ -60,11 +69,17 @@ for index in 0 1 2; do
   fi
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/nginx-mfenx-rpc.conf" \
     "$host:/etc/nginx/sites-available/mfenx-rpc"
+  intake_upstream="$NODE1:9195"
+  [[ "$index" -eq 0 ]] && intake_upstream="127.0.0.1:9195"
   ssh "${SSH_ARGS[@]}" "$host" env \
     "PROMETHEUS_URL=$prometheus_url" \
+    "OBSERVER_INTAKE_UPSTREAM=$intake_upstream" \
+    "OBSERVER_REGISTRY_URL=$([[ "$index" -eq 0 ]] && printf '' || printf 'http://%s:9195/observer-registry.json' "$NODE1")" \
+    "OBSERVER_INTAKE_PRIMARY=$([[ "$index" -eq 0 ]] && printf 1 || printf 0)" \
+    "OBSERVER_INTAKE_TRUSTED_PROXIES=127.0.0.1,::1,$TRUSTED_PROXIES" \
     "POWER_HOUSE_RELEASE=${POWER_HOUSE_RELEASE:?set POWER_HOUSE_RELEASE}" bash -s <<'REMOTE'
 set -euo pipefail
-chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py /usr/local/lib/powerhouse/observer_registry.py
+chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py /usr/local/lib/powerhouse/observer_registry.py /usr/local/lib/powerhouse/observer_intake.py
 chmod 0640 /etc/powerhouse/validator-registry.json
 if [[ -f /etc/powerhouse/observer-registry.json ]]; then
   chmod 0640 /etc/powerhouse/observer-registry.json
@@ -82,6 +97,27 @@ OBSERVER_REGISTRY_STATE=/var/lib/powerhouse/monitoring/observer-registry-state.j
 OBSERVER_REGISTRY_MAX_AGE=45
 EOF
 chmod 0640 /etc/powerhouse/status-api.env
+cat >/etc/powerhouse/observer-registry.env <<EOF
+OBSERVER_REGISTRY_URL=$OBSERVER_REGISTRY_URL
+OBSERVER_REGISTRY_PATH=$([[ "$OBSERVER_INTAKE_PRIMARY" == 1 ]] && printf /var/lib/powerhouse/observer-intake/observer-registry.json || printf /etc/powerhouse/observer-registry.json)
+EOF
+chmod 0640 /etc/powerhouse/observer-registry.env
+cat >/etc/powerhouse/observer-intake.env <<EOF
+OBSERVER_INTAKE_BINARY=/usr/local/bin/julian
+OBSERVER_INTAKE_REGISTRY=/var/lib/powerhouse/observer-intake/observer-registry.json
+OBSERVER_INTAKE_STATE_DIR=/var/lib/powerhouse/observer-intake
+OBSERVER_INTAKE_CHAIN_ID=177155
+OBSERVER_INTAKE_HOST=0.0.0.0
+OBSERVER_INTAKE_PORT=9195
+OBSERVER_INTAKE_AUTO_PROMOTE=1
+OBSERVER_INTAKE_QUEUE_LIMIT=1000
+OBSERVER_INTAKE_MAX_SUBMISSIONS=10000
+OBSERVER_INTAKE_RETENTION_SECONDS=2592000
+OBSERVER_INTAKE_ALLOWED_ORIGINS=https://mfenx.com
+OBSERVER_INTAKE_TRUSTED_PROXIES=$OBSERVER_INTAKE_TRUSTED_PROXIES
+EOF
+chmod 0640 /etc/powerhouse/observer-intake.env
+sed -i "s/__OBSERVER_INTAKE_UPSTREAM__/$OBSERVER_INTAKE_UPSTREAM/g" /etc/nginx/sites-available/mfenx-rpc
 ln -sfn /etc/nginx/sites-available/mfenx-rpc /etc/nginx/sites-enabled/mfenx-rpc
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
@@ -91,6 +127,20 @@ systemctl enable --now \
   powerhouse-validator-registry.timer \
   powerhouse-observer-registry.timer \
   powerhouse-status-api
+if [[ "$OBSERVER_INTAKE_PRIMARY" == 1 ]]; then
+  id -u powerhouse-intake >/dev/null 2>&1 || useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin powerhouse-intake
+  install -d -o powerhouse-intake -g powerhouse-intake -m 0750 /var/lib/powerhouse/observer-intake
+  if [[ -f /etc/powerhouse/observer-registry.json && ! -f /var/lib/powerhouse/observer-intake/observer-registry.json ]]; then
+    install -o powerhouse-intake -g powerhouse-intake -m 0640 \
+      /etc/powerhouse/observer-registry.json \
+      /var/lib/powerhouse/observer-intake/observer-registry.json
+  fi
+  chown -R powerhouse-intake:powerhouse-intake /var/lib/powerhouse/observer-intake
+  systemctl enable --now powerhouse-observer-intake
+  systemctl restart powerhouse-observer-intake
+else
+  systemctl disable --now powerhouse-observer-intake 2>/dev/null || true
+fi
 systemctl restart prometheus-node-exporter
 systemctl start powerhouse-validator-registry.service
 systemctl start powerhouse-observer-registry.service

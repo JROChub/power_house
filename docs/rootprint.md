@@ -1,6 +1,6 @@
 # Rootprint v1
 
-Status: normative for Power House v0.3.7.
+Status: normative for Power House v0.3.8.
 
 Rootprint is the primary Power House provenance workflow. It is a deterministic
 directed acyclic graph whose nodes carry `.pha` artifacts and whose edges record

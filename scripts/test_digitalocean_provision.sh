@@ -18,6 +18,8 @@ grep -q -- "--domains \"name:\$RPC_HOST is_managed:true\"" \
   "$ROOT/scripts/provision_digitalocean_rpc.sh"
 grep -q -- "--redirect-http-to-https" \
   "$ROOT/scripts/provision_digitalocean_rpc.sh"
+grep -q 'ports:9195,tag:\$TAG' \
+  "$ROOT/scripts/provision_digitalocean_rpc.sh"
 if grep -q -- "--enable-backend-keepalive" \
   "$ROOT/scripts/provision_digitalocean_rpc.sh"; then
   echo "global load balancer cannot enable backend keepalive" >&2

@@ -14,7 +14,7 @@ fingerprints that bind proof data, provenance metadata, and verification state.
 Rootprint provides a directed acyclic graph (DAG) for identity lineage,
 branching, merging, replay, navigation, and equivalence verification.
 
-Current release: **v0.3.7**
+Current release: **v0.3.8**
 
 The primary workflow is **Power House Identity + Rootprint**:
 

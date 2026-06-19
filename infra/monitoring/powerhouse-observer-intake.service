@@ -1,0 +1,28 @@
+[Unit]
+Description=Power House public observer registration intake
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/powerhouse/observer-intake.env
+ExecStart=/usr/local/lib/powerhouse/observer_intake.py
+User=powerhouse-intake
+Group=powerhouse-intake
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+PrivateDevices=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/var/lib/powerhouse/observer-intake
+
+[Install]
+WantedBy=multi-user.target
