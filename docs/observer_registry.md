@@ -1,6 +1,6 @@
 # Public Observer Registry
 
-Release scope: Power House v0.3.7.
+Release scope: Power House v0.3.8.
 
 The public observer registry is the permissionless monitoring layer for nodes
 that verify or relay public network data without joining validator quorum. It
@@ -101,15 +101,54 @@ TCP 9102 -> observer machine TCP 9102
 local/private addresses. They can work on the operator machine, but they cannot
 be used for public registry admission.
 
-The signed JSON can be checked on `https://mfenx.com/register.html` before it
-is submitted for public observer registry assembly. The page never asks for the
-private key.
+The signed JSON can be submitted directly at `https://mfenx.com/register.html`.
+The page sends only the signed public registration. It never asks for or reads
+the private key.
 
-The CLI can also package the signed JSON and print a submission URL:
+The CLI performs the same direct submission and prints a tracking ID:
 
 ```bash
 julian observer submit mynode.observer.registration.json
+julian observer status <tracking-id>
 ```
+
+Use `--no-upload` to validate and package the registration without submitting
+it. Use `--intake-url` with either command when testing a non-production intake
+service.
+
+## Admission API
+
+The production edge exposes:
+
+```text
+POST /observer-registrations
+GET  /observer-registrations/<tracking-id>
+POST /observer-registrations/<tracking-id>/retry
+```
+
+POST accepts either a signed `power-house-observer-registration-v1` object or a
+package containing that object under `registration`. Successful intake returns
+HTTP 202 and a random tracking ID. Exact duplicate submissions are idempotent:
+they return the original tracking ID without creating another queue entry.
+
+Admission states are:
+
+- `queued`: persisted and waiting for verification.
+- `verifying`: Rust signature, identity, timing, and endpoint checks are active.
+- `approved`: all checks passed and registry promotion is pending.
+- `promoted`: the verified canonical observer registry was atomically replaced.
+- `rejected`: a permanent or retryable check failed.
+
+The retry endpoint accepts only submissions marked retryable, such as temporary
+metrics or p2p reachability failures. A registration at or below the last
+admitted `issued_at_unix` for that peer is rejected as a replay. Node ID, peer
+ID, public key, and metrics URL uniqueness are re-verified against the complete
+candidate registry before promotion.
+
+The intake service runs as the unprivileged `powerhouse-intake` account. Its
+only writable production path is `/var/lib/powerhouse/observer-intake`. It has
+no access to validator keys and never writes validator membership, genesis, or
+quorum configuration.
 
 ## Manual Registration
 
@@ -136,7 +175,10 @@ powerhouse_node_identity{node_id="external-observer-1",peer_id="<peer-id>",publi
 powerhouse_connected_peers <integer>
 ```
 
-## Assemble And Verify
+## Manual Recovery And Verification
+
+The automated intake is the primary workflow. Manual assembly remains a
+recovery tool for maintainers:
 
 ```bash
 julian observer-registry assemble \
@@ -160,9 +202,12 @@ julian observer-registry register \
   --registry-output /etc/powerhouse/observer-registry.json
 ```
 
-The monitoring stack runs `powerhouse-observer-registry.timer` every 15
-seconds. If `/etc/powerhouse/observer-registry.json` is absent, the public API
-reports the observer layer as not configured without degrading RPC status.
+The primary monitoring node stores the canonical registry at
+`/var/lib/powerhouse/observer-intake/observer-registry.json`. Secondary RPC
+nodes fetch it over the tag-restricted internal intake port, verify it with
+`julian observer-registry verify`, and atomically replace their local
+`/etc/powerhouse/observer-registry.json`. The timer runs every 15 seconds. A
+failed fetch or verification never replaces the last valid local registry.
 
 ## Start An Observer
 

@@ -1,6 +1,6 @@
 # Signed Validator Registry
 
-Release scope: Power House v0.3.7.
+Release scope: Power House v0.3.8.
 
 The validator registry replaces hardcoded monitoring totals with signed,
 policy-admitted, live identity checks. It controls monitoring discovery and

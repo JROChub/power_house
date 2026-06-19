@@ -36,9 +36,12 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::{
     env, fs,
-    io::{self, Read, Write},
+    io::{self, Read},
     path::{Path, PathBuf},
 };
+
+#[cfg(feature = "net")]
+use std::io::Write;
 
 #[cfg(feature = "net")]
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -273,12 +276,13 @@ fn print_key_info_help() {
 
 #[cfg(feature = "net")]
 fn print_observer_help() {
-    println!("Usage: julian observer <doctor|setup|register|submit> ...");
-    println!("  Diagnose, set up, register, and package public observers.");
+    println!("Usage: julian observer <doctor|setup|register|submit|status> ...");
+    println!("  Diagnose, set up, register, and submit public observers.");
     println!("  doctor   Diagnose local identity, ports, metrics, NAT, and external reachability");
     println!("  setup    Create a local key if needed, print the node command, and write registration JSON");
     println!("  register Write a signed observer registration using safe observer defaults");
-    println!("  submit   Validate/package a signed registration for registry review");
+    println!("  submit   Validate and upload a signed registration for admission");
+    println!("  status   Read live admission status using a tracking ID");
     println!();
     println!("Common options:");
     println!("  --node-id <id>             Observer node id (default: mynode)");
@@ -292,7 +296,9 @@ fn print_observer_help() {
     println!("  --metrics-port <port>      Public metrics port (default: 9102)");
     println!("  --output <file>            Registration/submission output path");
     println!("  --probe-url <url>          External probe endpoint (default: https://rpc.mfenx.com/observer-probe)");
+    println!("  --intake-url <url>         Admission endpoint (default: https://rpc.mfenx.com/observer-registrations)");
     println!("  --no-probe                 Skip the production-side external probe");
+    println!("  --no-upload                Validate/package without submitting");
     println!("  --json                     Machine-readable doctor/submit output");
     println!();
     println!("Observer setup includes the default public observer bootnodes on TCP 7002.");
@@ -1363,6 +1369,7 @@ fn handle_observer(sub: &str, tail: Vec<String>) {
         "setup" => cmd_observer_setup(tail),
         "register" => cmd_observer_register(tail),
         "submit" => cmd_observer_submit(tail),
+        "status" => cmd_observer_status(tail),
         _ => fatal(&format!("unknown observer subcommand: {sub}")),
     }
 }
@@ -1537,6 +1544,7 @@ fn cmd_observer_submit(args: Vec<String>) {
     let mut output = None;
     let mut json = false;
     let mut probe_url = Some("https://rpc.mfenx.com/observer-probe".to_string());
+    let mut intake_url = Some("https://rpc.mfenx.com/observer-registrations".to_string());
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
         match arg.as_str() {
@@ -1552,7 +1560,14 @@ fn cmd_observer_submit(args: Vec<String>) {
                         .unwrap_or_else(|| fatal("--probe-url expects a value")),
                 )
             }
+            "--intake-url" => {
+                intake_url = Some(
+                    iter.next()
+                        .unwrap_or_else(|| fatal("--intake-url expects a value")),
+                )
+            }
             "--no-probe" => probe_url = None,
+            "--no-upload" => intake_url = None,
             "--json" => json = true,
             value if !value.starts_with("--") && input.is_none() => {
                 input = Some(PathBuf::from(value))
@@ -1568,6 +1583,10 @@ fn cmd_observer_submit(args: Vec<String>) {
     let probe = probe_url
         .as_deref()
         .and_then(|url| observer_probe_for_registration(url, &registration).ok());
+    let admission = intake_url.as_deref().map(|url| {
+        observer_intake_request("POST", url, Some(&registration))
+            .unwrap_or_else(|err| fatal(&format!("observer registration submission failed: {err}")))
+    });
     let package = serde_json::json!({
         "schema": "mfenx-node-registration-submission-v1",
         "created_at_unix": unix_seconds(),
@@ -1577,6 +1596,7 @@ fn cmd_observer_submit(args: Vec<String>) {
         "client_side_warnings": [],
         "probe": probe,
         "registration": registration,
+        "admission": admission,
     });
     if let Some(path) = output {
         write_json_file(&path, &package, "observer submission package");
@@ -1597,8 +1617,74 @@ fn cmd_observer_submit(args: Vec<String>) {
         } else {
             println!("external probe: skipped or unavailable");
         }
-        println!("GitHub issue URL:");
-        println!("{}", observer_issue_url(&registration));
+        if let Some(admission) = package.get("admission").filter(|value| !value.is_null()) {
+            println!(
+                "tracking id: {}",
+                admission["tracking_id"].as_str().unwrap_or("unavailable")
+            );
+            println!(
+                "admission status: {}",
+                admission["status"].as_str().unwrap_or("unknown")
+            );
+            println!(
+                "next: julian observer status {}",
+                admission["tracking_id"].as_str().unwrap_or("<tracking-id>")
+            );
+        } else {
+            println!("upload skipped; package is ready for https://mfenx.com/register.html");
+        }
+    }
+}
+
+#[cfg(feature = "net")]
+fn cmd_observer_status(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_observer_help();
+        return;
+    }
+    let mut tracking_id = None;
+    let mut intake_url = "https://rpc.mfenx.com/observer-registrations".to_string();
+    let mut json = false;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--intake-url" => {
+                intake_url = iter
+                    .next()
+                    .unwrap_or_else(|| fatal("--intake-url expects a value"))
+            }
+            "--json" => json = true,
+            value if !value.starts_with("--") && tracking_id.is_none() => {
+                tracking_id = Some(value.to_string())
+            }
+            value => fatal(&format!("unknown argument: {value}")),
+        }
+    }
+    let tracking_id = tracking_id.unwrap_or_else(|| fatal("status requires <tracking-id>"));
+    let url = format!("{}/{}", intake_url.trim_end_matches('/'), tracking_id);
+    let status = observer_intake_request::<serde_json::Value>("GET", &url, None)
+        .unwrap_or_else(|err| fatal(&format!("observer admission status failed: {err}")));
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&status)
+                .unwrap_or_else(|err| fatal(&format!("failed to encode status: {err}")))
+        );
+    } else {
+        println!("tracking id: {tracking_id}");
+        println!(
+            "admission status: {}",
+            status["status"].as_str().unwrap_or("unknown")
+        );
+        if let Some(revision) = status["registry_revision"].as_str() {
+            println!("registry revision: {revision}");
+        }
+        if let Some(message) = status
+            .pointer("/error/message")
+            .and_then(|value| value.as_str())
+        {
+            println!("error: {message}");
+        }
     }
 }
 
@@ -1982,6 +2068,44 @@ fn https_get_text(url: &str, timeout_secs: u64) -> Result<String, String> {
 }
 
 #[cfg(feature = "net")]
+fn observer_intake_request<T: Serialize>(
+    method: &str,
+    url: &str,
+    body: Option<&T>,
+) -> Result<serde_json::Value, String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|err| err.to_string())?;
+    runtime.block_on(async {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(15))
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|err| err.to_string())?;
+        let method =
+            reqwest::Method::from_bytes(method.as_bytes()).map_err(|err| err.to_string())?;
+        let mut request = client.request(method, url);
+        if let Some(value) = body {
+            request = request.json(value);
+        }
+        let response = request.send().await.map_err(|err| err.to_string())?;
+        let status = response.status();
+        let text = response.text().await.map_err(|err| err.to_string())?;
+        let value: serde_json::Value =
+            serde_json::from_str(&text).map_err(|err| format!("invalid intake response: {err}"))?;
+        if !status.is_success() {
+            let message = value
+                .pointer("/error/message")
+                .and_then(|item| item.as_str())
+                .unwrap_or("registration intake rejected the request");
+            return Err(format!("HTTP {status}: {message}"));
+        }
+        Ok(value)
+    })
+}
+
+#[cfg(feature = "net")]
 fn fetch_local_metrics(port: u16) -> Result<String, String> {
     let mut stream = TcpStream::connect(("127.0.0.1", port)).map_err(|err| err.to_string())?;
     stream
@@ -2059,7 +2183,7 @@ fn add_probe_checks(checks: &mut Vec<ObserverCheck>, probe: &serde_json::Value) 
         .and_then(|value| value.as_bool())
         .unwrap_or(false);
     let identity_ok = probe
-        .pointer("/metrics/identity_found")
+        .get("registration_identity_matches")
         .and_then(|value| value.as_bool())
         .unwrap_or(false);
     let p2p_ok = probe
@@ -2136,7 +2260,26 @@ fn observer_probe_for_registration(
     let host = metrics_host_from_url(&registration.metrics_url)?;
     let metrics_port = metrics_port_from_url(&registration.metrics_url).unwrap_or(80);
     let p2p_port = p2p_port_from_multiaddr(&registration.p2p_address).unwrap_or(7001);
-    fetch_observer_probe(probe_url, &host, metrics_port, p2p_port)
+    let mut probe = fetch_observer_probe(probe_url, &host, metrics_port, p2p_port)?;
+    let identity = probe.pointer("/metrics/identity");
+    let identity_matches = identity.is_some_and(|value| {
+        value.get("node_id").and_then(|item| item.as_str()) == Some(&registration.node_id)
+            && value.get("peer_id").and_then(|item| item.as_str()) == Some(&registration.peer_id)
+            && value.get("public_key_b64").and_then(|item| item.as_str())
+                == Some(&registration.public_key_b64)
+            && value
+                .get("chain_id")
+                .and_then(|item| item.as_str())
+                .and_then(|item| item.parse::<u64>().ok())
+                == Some(registration.chain_id)
+    });
+    probe["registration_identity_matches"] = serde_json::Value::Bool(identity_matches);
+    let probe_ok = probe
+        .get("ok")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    probe["ok"] = serde_json::Value::Bool(probe_ok && identity_matches);
+    Ok(probe)
 }
 
 #[cfg(feature = "net")]
@@ -2164,20 +2307,6 @@ fn p2p_port_from_multiaddr(address: &str) -> Option<u16> {
         }
     }
     None
-}
-
-#[cfg(feature = "net")]
-fn observer_issue_url(registration: &ObserverRegistration) -> String {
-    let title = format!("Observer registration: {}", registration.node_id);
-    let body = format!(
-        "Observer registration submitted for review.\\n\\nNode ID: {}\\nPeer ID: {}\\nMetrics: {}\\n\\nAttach or paste the signed JSON generated by julian. Do not include a private key.",
-        registration.node_id, registration.peer_id, registration.metrics_url
-    );
-    format!(
-        "https://github.com/JROChub/power_house/issues/new?title={}&body={}",
-        percent_encode_query(&title),
-        percent_encode_query(&body)
-    )
 }
 
 #[cfg(feature = "net")]

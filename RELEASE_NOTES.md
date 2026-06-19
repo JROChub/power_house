@@ -1,5 +1,34 @@
 # Release Notes
 
+## v0.3.8 - 2026-06-19
+
+### Secure Observer Admission
+- Added direct signed observer registration intake with persisted tracking IDs,
+  asynchronous verification states, bounded storage, rate limiting, and
+  retryable health checks.
+- Reused the native Rust observer verifier for signature, chain, expiry,
+  public-key, peer-ID, endpoint, and complete-registry uniqueness checks.
+- Added exact live metrics identity and public p2p reachability checks before
+  any observer can be promoted.
+- Added replay rejection, exact-duplicate idempotency, atomic registry
+  replacement, rollback history, and verified import of existing observers.
+
+### Operations And Adoption
+- Added `julian observer submit` direct upload and `julian observer status`
+  tracking while retaining `--no-upload` for offline packaging.
+- Replaced the website's manual issue handoff with direct submission, live
+  status polling, and retry controls that never request a private key.
+- Added a dedicated unprivileged intake service, canonical primary registry,
+  verified secondary replication, tag-restricted internal transport, external
+  health probing, and critical alerting.
+- Kept observer admission structurally separate from validator membership,
+  genesis, quorum, finality, and local verification outcomes.
+
+### Conformance
+- Added signature, chain, peer-ID, expiry, unknown-field, endpoint-identity,
+  duplicate, replay, rate-abuse, CORS, malformed-body, oversized-body, atomic
+  rollback, registry-replication, CLI, browser, and end-to-end HTTP tests.
+
 ## v0.3.7 - 2026-06-14
 
 ### Human-Observable Proofs

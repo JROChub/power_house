@@ -26,6 +26,7 @@ SIMPLE_METRIC = re.compile(
     r"^(?P<name>[a-zA-Z_:][a-zA-Z0-9_:]*)\s+(?P<value>[0-9.eE+-]+)$"
 )
 MAX_METRICS_BYTES = 2 * 1024 * 1024
+MAX_REGISTRY_BYTES = 2 * 1024 * 1024
 
 
 class RejectRedirects(HTTPRedirectHandler):
@@ -38,7 +39,11 @@ def arguments() -> argparse.Namespace:
     parser.add_argument(
         "--registry",
         type=Path,
-        default=Path("/etc/powerhouse/observer-registry.json"),
+        default=Path(
+            os.environ.get(
+                "OBSERVER_REGISTRY_PATH", "/etc/powerhouse/observer-registry.json"
+            )
+        ),
     )
     parser.add_argument("--binary", type=Path, default=Path("/usr/local/bin/julian"))
     parser.add_argument(
@@ -50,6 +55,10 @@ def arguments() -> argparse.Namespace:
         "--observer-discovery",
         type=Path,
         default=Path("/etc/prometheus/file_sd/powerhouse-observers.json"),
+    )
+    parser.add_argument(
+        "--registry-url",
+        default=os.environ.get("OBSERVER_REGISTRY_URL"),
     )
     parser.add_argument("--timeout", type=float, default=5.0)
     return parser.parse_args()
@@ -87,13 +96,13 @@ def not_configured_state(generated_at: str) -> dict:
     }
 
 
-def verify_registry(args: argparse.Namespace, now: int) -> dict:
+def verify_registry(args: argparse.Namespace, now: int, registry: Path | None = None) -> dict:
     process = subprocess.run(
         [
             str(args.binary),
             "observer-registry",
             "verify",
-            str(args.registry),
+            str(registry or args.registry),
             "--now",
             str(now),
             "--json",
@@ -110,6 +119,38 @@ def verify_registry(args: argparse.Namespace, now: int) -> dict:
     if verified.get("verified") is not True:
         raise RuntimeError("observer verifier did not return verified=true")
     return verified
+
+
+def synchronize_registry(args: argparse.Namespace, now: int) -> None:
+    if not args.registry_url:
+        return
+    request = Request(
+        args.registry_url,
+        headers={"User-Agent": "power-house-observer-registry-sync/1"},
+    )
+    with build_opener(RejectRedirects).open(request, timeout=args.timeout) as response:
+        if response.status != 200:
+            raise RuntimeError(f"registry source returned HTTP {response.status}")
+        payload = response.read(MAX_REGISTRY_BYTES + 1)
+    if len(payload) > MAX_REGISTRY_BYTES:
+        raise RuntimeError("registry source exceeds 2 MiB")
+    try:
+        value = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"registry source returned invalid JSON: {exc}") from exc
+    args.registry.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=f".{args.registry.name}.sync.", dir=args.registry.parent
+    )
+    os.close(descriptor)
+    candidate = Path(temporary)
+    try:
+        atomic_json(candidate, value)
+        verify_registry(args, now, candidate)
+        os.replace(candidate, args.registry)
+        os.chmod(args.registry, 0o640)
+    finally:
+        candidate.unlink(missing_ok=True)
 
 
 def decode_label(value: str) -> str:
@@ -225,13 +266,15 @@ def discovery_entry(registration: dict) -> dict:
 
 def reconcile(args: argparse.Namespace) -> dict:
     generated_at = datetime.now(timezone.utc).isoformat()
+    now = int(time.time())
+    if args.registry_url:
+        synchronize_registry(args, now)
     if not args.registry.exists():
         state = not_configured_state(generated_at)
         atomic_json(args.state, state)
         atomic_json(args.observer_discovery, [], mode=0o644)
         return state
 
-    now = int(time.time())
     try:
         verified = verify_registry(args, now)
     except Exception as exc:

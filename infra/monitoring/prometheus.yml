@@ -39,3 +39,17 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: 127.0.0.1:9115
+
+  - job_name: blackbox-observer-intake
+    metrics_path: /probe
+    params:
+      module: [observer_intake]
+    static_configs:
+      - targets: ["https://rpc.mfenx.com/observer-intake-healthz"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115

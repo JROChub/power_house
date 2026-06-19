@@ -53,6 +53,39 @@ class MetricsServer:
         self.thread.join(timeout=2)
 
 
+class RegistryServer:
+    def __init__(self) -> None:
+        self.body = b""
+        owner = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path != "/observer-registry.json":
+                    self.send_error(404)
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(owner.body)))
+                self.end_headers()
+                self.wfile.write(owner.body)
+
+            def log_message(self, format, *args):
+                return
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    @property
+    def url(self) -> str:
+        return f"http://127.0.0.1:{self.server.server_port}/observer-registry.json"
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+
+
 def run(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(
         [str(BINARY), *args],
@@ -82,6 +115,7 @@ def metric_body(node: dict, peer_links: int = 2) -> str:
 def main() -> None:
     now = int(time.time())
     servers = [MetricsServer() for _ in range(2)]
+    registry_server = RegistryServer()
     try:
         with tempfile.TemporaryDirectory(prefix="powerhouse-observer-registry-test-") as temp:
             base = Path(temp)
@@ -245,6 +279,60 @@ def main() -> None:
             assert verified["verified"] is True
             assert verified["observers_verified"] == 2
 
+            registry_server.body = registry.read_bytes()
+            replica = base / "replica-observer-registry.json"
+            replica_state = base / "replica-state.json"
+            replica_discovery = base / "replica-discovery.json"
+            replica_env = {
+                **os.environ,
+                "OBSERVER_REGISTRY_URL": registry_server.url,
+                "OBSERVER_REGISTRY_PATH": str(replica),
+            }
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(RECONCILER),
+                    "--binary",
+                    str(BINARY),
+                    "--state",
+                    str(replica_state),
+                    "--observer-discovery",
+                    str(replica_discovery),
+                    "--timeout",
+                    "1",
+                ],
+                env=replica_env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            verified_replica = replica.read_bytes()
+            assert json.loads(verified_replica) == json.loads(registry.read_bytes())
+
+            tampered_registry = json.loads(registry.read_text())
+            tampered_registry["registrations"][0]["signature_b64"] = "invalid"
+            registry_server.body = json.dumps(tampered_registry).encode()
+            failed_sync = subprocess.run(
+                [
+                    sys.executable,
+                    str(RECONCILER),
+                    "--binary",
+                    str(BINARY),
+                    "--state",
+                    str(replica_state),
+                    "--observer-discovery",
+                    str(replica_discovery),
+                    "--timeout",
+                    "1",
+                ],
+                env=replica_env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            assert failed_sync.returncode == 2
+            assert replica.read_bytes() == verified_replica
+
             refresh = base / "observer-1.refresh.registration.json"
             refresh_registry = base / "observer-refresh-registry.json"
             run(
@@ -327,6 +415,7 @@ def main() -> None:
     finally:
         for server in servers:
             server.close()
+        registry_server.close()
 
     print("test_observer_registry: PASS")
 

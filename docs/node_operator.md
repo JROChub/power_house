@@ -1,6 +1,6 @@
 # MFENX Node Operator Guide
 
-Release scope: Power House v0.3.7.
+Release scope: Power House v0.3.8.
 
 This guide starts a public observer. Validator admission additionally requires
 a consensus identity approved by the active membership policy.
@@ -19,14 +19,14 @@ unless a firewall and authenticated reverse proxy explicitly protect them.
 ## Install
 
 ```bash
-cargo install power_house --version 0.3.7 --features net --locked
+cargo install power_house --version 0.3.8 --features net --locked
 julian --version
 ```
 
 Or use the release container:
 
 ```bash
-docker pull ghcr.io/jrochub/power_house:0.3.7
+docker pull ghcr.io/jrochub/power_house:0.3.8
 ```
 
 ## Create An Identity
@@ -57,8 +57,15 @@ julian observer setup \
 
 The public observer registry requires a matching live
 `powerhouse_node_identity` metric before the observer is counted. See
-[Public Observer Registry](observer_registry.md). You can inspect the signed
-registration before submitting it at `https://mfenx.com/register.html`.
+[Public Observer Registry](observer_registry.md). Submit the signed registration
+at `https://mfenx.com/register.html`, or use:
+
+```bash
+julian observer submit observer.registration.json
+julian observer status <tracking-id>
+```
+
+Only the signed registration is uploaded. The private node key remains local.
 
 After the observer is running, run the doctor:
 

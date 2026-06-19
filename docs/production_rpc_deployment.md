@@ -1,6 +1,6 @@
 # LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.3.7.
+Release scope: Power House v0.3.8.
 
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
@@ -152,10 +152,10 @@ restarts one validator at a time, waits for RPC health, verifies
 
 ## Deploy monitoring
 
-Allow validator-tag traffic to TCP `9090`, `9100`, and `9101`, then run:
+Allow validator-tag traffic to TCP `9090`, `9100`, `9101`, and `9195`, then run:
 
 ```bash
-POWER_HOUSE_RELEASE=0.3.7 \
+POWER_HOUSE_RELEASE=0.3.8 \
 SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
 scripts/deploy_monitoring_stack.sh \
   root@<validator-1-ipv4> \
@@ -174,11 +174,17 @@ identity and health, then atomically updates the status state. Only the primary
 monitor uses the generated Prometheus discovery files, but every RPC replica
 can serve the same independently reconciled public status.
 
-The deployment also enables `powerhouse-observer-registry.timer`. If
-`/etc/powerhouse/observer-registry.json` is absent, the public API reports the
-observer layer as staged without changing RPC health. When a signed observer
-registry is present, the observer reconciler verifies signatures and live
-identity metrics, then publishes `observer_peers`,
+The deployment also enables `powerhouse-observer-registry.timer` and installs
+the canonical observer intake service on the primary monitoring node. The
+intake runs as the locked-down `powerhouse-intake` user and writes only under
+`/var/lib/powerhouse/observer-intake`. All load-balanced RPC backends proxy the
+public admission routes to that canonical service over tag-restricted TCP
+`9195`. Secondary nodes fetch the canonical registry, verify it locally, and
+atomically replace their observer registry copy. A failed fetch or signature
+check preserves the last valid registry.
+
+When a signed observer registry is present, the observer reconciler verifies
+signatures and live identity metrics, then publishes `observer_peers`,
 `public_peer_connections`, and observer Prometheus discovery independently from
 validator quorum.
 
@@ -186,6 +192,11 @@ The status API also serves `/observer-probe`. The registration page and
 `julian observer doctor` use this route to test an operator's public metrics
 and p2p ports from the production edge. The probe refuses private or local
 targets, follows no redirects, and never receives a private key.
+
+Direct admission is available through `POST /observer-registrations`, with
+tracking at `GET /observer-registrations/<tracking-id>`. Nginx enforces body,
+request-rate, and connection limits before the intake service applies its own
+persisted duplicate/replay controls.
 
 Public observers bootstrap through the dedicated observer bootnode layer:
 
