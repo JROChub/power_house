@@ -8,6 +8,11 @@ const fields = Object.fromEntries(
     "ends-at",
     "progress-value",
     "progress-bar",
+    "acceptance-state",
+    "acceptance-uptime",
+    "acceptance-errors",
+    "acceptance-latency",
+    "acceptance-drills",
     "uptime",
     "samples",
     "sample-detail",
@@ -86,6 +91,7 @@ function render(data) {
   const network = campaign.network || {};
   const rpc = campaign.rpc || {};
   const evidence = campaign.evidence || {};
+  const acceptance = campaign.acceptance || {};
   document.body.dataset.state = state;
   fields["campaign-state"].textContent = state.replaceAll("_", " ").toUpperCase();
   fields["campaign-phase"].textContent = String(campaign.phase || "awaiting").replaceAll("_", " ").toUpperCase();
@@ -95,6 +101,25 @@ function render(data) {
   const progress = Math.max(0, Math.min(100, Number(campaign.progress_percent) || 0));
   fields["progress-value"].textContent = `${progress.toFixed(3)}%`;
   fields["progress-bar"].style.width = `${progress}%`;
+  const uptimeRequired = Number(acceptance.required_uptime_percent ?? 100);
+  const maxLatency = Number(acceptance.max_rpc_p95_ms ?? 1000);
+  const requiredErrors = Number(acceptance.required_rpc_errors ?? 0);
+  const requiredDrillFailures = Number(acceptance.required_drill_failures ?? 0);
+  const currentUptime = campaign.uptime_percent;
+  const currentErrors = Number(rpc.errors) || 0;
+  const currentDrillFailures = Number(campaign.drills?.failed) || 0;
+  const gatesOnTrack = currentUptime != null
+    && Number(currentUptime) >= uptimeRequired
+    && currentErrors <= requiredErrors
+    && (rpc.p95_ms == null || Number(rpc.p95_ms) <= maxLatency)
+    && currentDrillFailures <= requiredDrillFailures;
+  const gateState = state === "passed" ? "passed" : state === "failed" ? "failed" : gatesOnTrack ? "on-track" : "off-track";
+  document.querySelector(".acceptance-gates").dataset.gate = gateState;
+  fields["acceptance-state"].textContent = gateState.replaceAll("-", " ").toUpperCase();
+  fields["acceptance-uptime"].textContent = `${uptimeRequired.toFixed(5)}%`;
+  fields["acceptance-errors"].textContent = `${requiredErrors} REQUIRED`;
+  fields["acceptance-latency"].textContent = `\u2264 ${maxLatency.toLocaleString("en-US")} MS`;
+  fields["acceptance-drills"].textContent = `${requiredDrillFailures} REQUIRED`;
   fields.uptime.textContent = campaign.uptime_percent == null
     ? "COLLECTING"
     : `${Number(campaign.uptime_percent).toFixed(5)}%`;

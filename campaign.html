@@ -40,6 +40,14 @@
       <div class="progress-scale"><span>START</span><span>24H</span><span>48H</span><span>72H</span></div>
     </section>
 
+    <section class="acceptance-gates" aria-label="Campaign acceptance gates">
+      <div class="acceptance-lead"><span>LIVE ACCEPTANCE</span><b id="acceptance-state">EVALUATING</b></div>
+      <div><span>UPTIME</span><b id="acceptance-uptime">100.00000%</b></div>
+      <div><span>RPC ERRORS</span><b id="acceptance-errors">0 REQUIRED</b></div>
+      <div><span>RPC P95</span><b id="acceptance-latency">&le; 1,000 MS</b></div>
+      <div><span>DRILL FAILURES</span><b id="acceptance-drills">0 REQUIRED</b></div>
+    </section>
+
     <section class="telemetry" aria-label="Reliability telemetry">
       <article><span>MEASURED UPTIME</span><b id="uptime">COLLECTING</b><small>SUCCESSFUL EXTERNAL SAMPLES</small></article>
       <article><span>SAMPLES</span><b id="samples">0</b><small id="sample-detail">0 FAILED</small></article>

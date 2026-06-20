@@ -71,7 +71,7 @@ main {
   border-bottom: 1px solid var(--line);
 }
 
-.eyebrow, .section-head span, .progress-band span, .telemetry span, .evidence-band span {
+.eyebrow, .section-head span, .progress-band span, .acceptance-gates span, .telemetry span, .evidence-band span {
   color: var(--teal);
   font-size: 10px;
 }
@@ -100,6 +100,15 @@ h1 {
 .progress-track { height: 4px; margin-top: 13px; overflow: hidden; background: rgba(255,255,255,.1); }
 .progress-track i { display: block; width: 0; height: 100%; background: var(--live); box-shadow: 0 0 14px rgba(185,255,61,.65); transition: width .7s ease; }
 .progress-scale { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 8px; }
+
+.acceptance-gates { display: grid; grid-template-columns: 1.35fr repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.acceptance-gates div { min-height: 76px; display: grid; align-content: center; gap: 7px; padding: 14px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(4, 10, 8, .82); }
+.acceptance-gates b { font-size: 11px; overflow-wrap: anywhere; }
+.acceptance-gates .acceptance-lead b { color: var(--warn); font-size: 15px; }
+.acceptance-gates[data-gate="on-track"] .acceptance-lead b,
+.acceptance-gates[data-gate="passed"] .acceptance-lead b { color: var(--live); }
+.acceptance-gates[data-gate="off-track"] .acceptance-lead b,
+.acceptance-gates[data-gate="failed"] .acceptance-lead b { color: var(--down); }
 
 .telemetry { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .telemetry article { min-height: 132px; display: grid; align-content: center; gap: 8px; padding: 20px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -147,6 +156,8 @@ body[data-state="stalled"] .campaign-state b { color: var(--down); }
   main { width: calc(100% - 24px); padding-top: 30px; }
   .campaign-hero { grid-template-columns: 1fr; gap: 28px; }
   h1 { font-size: 38px; }
+  .acceptance-gates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .acceptance-gates .acceptance-lead { grid-column: 1 / -1; }
   .telemetry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .telemetry article { min-height: 120px; padding: 15px; }
   .telemetry b { font-size: 17px; }
@@ -161,5 +172,7 @@ body[data-state="stalled"] .campaign-state b { color: var(--down); }
   h1 { margin: 8px 0 12px; font-size: 31px; }
   .hero-time div { min-height: 60px; }
   .progress-band { padding: 18px 0; }
+  .acceptance-gates { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .acceptance-gates .acceptance-lead { grid-column: auto; }
   .telemetry { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
