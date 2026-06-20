@@ -38,7 +38,7 @@ for index in 0 1 2; do
   ssh "${SSH_ARGS[@]}" "$host" \
     "apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y prometheus-node-exporter"
   ssh "${SSH_ARGS[@]}" "$host" \
-    "install -d -m 0750 /etc/powerhouse /var/lib/powerhouse/monitoring && install -d -m 0755 /usr/local/lib/powerhouse /etc/prometheus/file_sd"
+    "install -d -m 0750 /etc/powerhouse /var/lib/powerhouse/monitoring && install -d -m 0755 /usr/local/lib/powerhouse /etc/prometheus/file_sd /var/lib/powerhouse/reliability"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/status_api.py" \
     "$host:/usr/local/lib/powerhouse/status_api.py"
   scp "${SSH_ARGS[@]}" "$ROOT/infra/monitoring/validator_registry.py" \
@@ -95,6 +95,8 @@ VALIDATOR_REGISTRY_STATE=/var/lib/powerhouse/monitoring/validator-registry-state
 VALIDATOR_REGISTRY_MAX_AGE=45
 OBSERVER_REGISTRY_STATE=/var/lib/powerhouse/monitoring/observer-registry-state.json
 OBSERVER_REGISTRY_MAX_AGE=45
+RELIABILITY_CAMPAIGN_STATE=/var/lib/powerhouse/reliability/campaign-status.json
+RELIABILITY_CAMPAIGN_MAX_AGE=180
 EOF
 chmod 0640 /etc/powerhouse/status-api.env
 cat >/etc/powerhouse/observer-registry.env <<EOF

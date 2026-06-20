@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050807">
+  <meta name="description" content="Live 72-hour reliability and controlled failure campaign for the MFENX Power House network.">
+  <title>MFENX Reliability Campaign</title>
+  <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/earth-night.jpg" as="image">
+  <link rel="stylesheet" href="campaign.css">
+</head>
+<body>
+  <div class="earth-field" aria-hidden="true"></div>
+  <header>
+    <a class="brand" href="status.html">
+      <img src="assets/powerhouse-logo.png" alt="">
+      <span><b>MFENX</b><small>RELIABILITY CONTROL</small></span>
+    </a>
+    <div class="campaign-clock"><span>UTC</span><b id="utc-clock">--:--:--</b></div>
+  </header>
+
+  <main>
+    <section class="campaign-hero" aria-labelledby="campaign-title">
+      <div>
+        <span class="eyebrow">CHAIN 177155 / EXTERNAL CONTROL PLANE</span>
+        <h1 id="campaign-title">72-HOUR RELIABILITY CAMPAIGN</h1>
+        <div class="campaign-state"><i></i><b id="campaign-state">CONNECTING</b><span id="campaign-phase">TELEMETRY HANDSHAKE</span></div>
+      </div>
+      <dl class="hero-time">
+        <div><dt>ELAPSED</dt><dd id="elapsed">--:--:--</dd></div>
+        <div><dt>REMAINING</dt><dd id="remaining">--:--:--</dd></div>
+        <div><dt>COMPLETION</dt><dd id="ends-at">--</dd></div>
+      </dl>
+    </section>
+
+    <section class="progress-band" aria-label="Campaign completion">
+      <div><span>CAMPAIGN PROGRESS</span><b id="progress-value">0.000%</b></div>
+      <div class="progress-track"><i id="progress-bar"></i></div>
+      <div class="progress-scale"><span>START</span><span>24H</span><span>48H</span><span>72H</span></div>
+    </section>
+
+    <section class="telemetry" aria-label="Reliability telemetry">
+      <article><span>MEASURED UPTIME</span><b id="uptime">COLLECTING</b><small>SUCCESSFUL EXTERNAL SAMPLES</small></article>
+      <article><span>SAMPLES</span><b id="samples">0</b><small id="sample-detail">0 FAILED</small></article>
+      <article><span>RPC P95</span><b id="rpc-p95">-- MS</b><small id="rpc-detail">0 REQUESTS / 0 ERRORS</small></article>
+      <article><span>VALIDATORS</span><b id="validators">-- / --</b><small>HASH + FINALITY CONSENSUS</small></article>
+      <article><span>PUBLIC OBSERVERS</span><b id="observers">-- / --</b><small id="observer-detail">-- CONNECTIONS</small></article>
+      <article><span>EVIDENCE EVENTS</span><b id="evidence-events">0</b><small>SHA-256 HASH-CHAINED JOURNAL</small></article>
+    </section>
+
+    <section class="drill-ledger" aria-labelledby="drill-title">
+      <div class="section-head">
+        <div><span>CONTROLLED FAILURE LEDGER</span><h2 id="drill-title">RECOVERY DRILLS</h2></div>
+        <div><span>COMPLETED</span><b id="drill-summary">0 / 0</b></div>
+      </div>
+      <ol id="drill-list">
+        <li class="awaiting"><i></i><span><b>AWAITING CAMPAIGN STATE</b><small>DRILL SCHEDULE NOT YET PUBLISHED</small></span><strong>--</strong></li>
+      </ol>
+    </section>
+
+    <section class="evidence-band" aria-label="Campaign evidence integrity">
+      <div><span>EVIDENCE HEAD</span><code id="evidence-head">AWAITING FIRST EVENT</code></div>
+      <div><span>FINAL REPORT</span><code id="report-hash">PENDING CAMPAIGN COMPLETION</code></div>
+      <time id="updated-at">NOT YET UPDATED</time>
+    </section>
+
+    <footer>
+      <a href="status.html">NETWORK STATUS</a>
+      <a href="https://rpc.mfenx.com/network-status.json">LIVE STATUS API</a>
+      <a href="https://github.com/JROChub/power_house/blob/main/docs/reliability_campaign.md">CAMPAIGN METHOD</a>
+      <a href="https://github.com/JROChub/power_house/blob/main/docs/incident_response.md">INCIDENT PROCESS</a>
+    </footer>
+  </main>
+  <script src="campaign.js" defer></script>
+</body>
+</html>

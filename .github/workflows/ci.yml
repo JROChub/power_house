@@ -35,12 +35,14 @@ jobs:
           bash -n \
             scripts/deploy_rpc_cluster.sh \
             scripts/deploy_monitoring_stack.sh \
+            scripts/install_reliability_campaign.sh \
             scripts/provision_digitalocean_rpc.sh \
             infra/ops/alert.sh
           python3 -m py_compile \
             scripts/check_release_consistency.py \
             scripts/check_rustdoc_links.py \
             scripts/rpc_load_test.py \
+            scripts/test_reliability_campaign.py \
             scripts/test_observatory_contract.py \
             scripts/test_observer_intake.py \
             scripts/test_observer_registry.py \
@@ -50,6 +52,7 @@ jobs:
             infra/monitoring/alert_receiver.py \
             infra/monitoring/observer_intake.py \
             infra/monitoring/observer_registry.py \
+            infra/monitoring/reliability_campaign.py \
             infra/monitoring/status_api.py \
             infra/monitoring/validator_registry.py
           jq empty configs/network.json contrib/grafana/mfenx_powerhouse_dashboard.json
@@ -85,6 +88,7 @@ jobs:
           python3 scripts/test_observer_registry.py
           python3 scripts/test_status_registry.py
           python3 scripts/test_observer_intake.py
+          python3 scripts/test_reliability_campaign.py
 
       - name: DigitalOcean provisioning contract
         run: scripts/test_digitalocean_provision.sh
@@ -142,6 +146,7 @@ jobs:
       - name: Browser artifact stream regression
         run: |
           node --check publicpower/app.js
+          node --check publicpower/campaign.js
           node scripts/test_observatory_stream.mjs
           python3 scripts/test_observatory_contract.py
 

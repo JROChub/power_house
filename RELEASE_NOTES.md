@@ -1,5 +1,19 @@
 # Release Notes
 
+## v0.3.11 - 2026-06-19
+
+### 72-Hour Reliability Campaign
+- Added an external campaign controller with one-minute cross-region samples,
+  bounded hourly RPC bursts, resume-safe state, telemetry-gap accounting, and
+  a SHA-256 hash-chained evidence journal.
+- Added safety-gated validator failover, observer-intake recovery, and
+  observer-registry replica reconstruction drills without changing validator
+  membership, keys, genesis, or quorum.
+- Added atomic live campaign publication to every regional status API and a
+  dedicated responsive campaign page at `mfenx.com/campaign.html`.
+- Added mutation, alert-gate, interrupted-drill, evidence-chain, configuration,
+  status integration, and browser contract tests.
+
 ## v0.3.10 - 2026-06-19
 
 ### Intake Service Hardening

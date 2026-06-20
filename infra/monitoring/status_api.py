@@ -23,6 +23,11 @@ OBSERVER_STATE_PATH = os.environ.get(
     "/var/lib/powerhouse/monitoring/observer-registry-state.json",
 )
 OBSERVER_MAX_AGE_SECONDS = int(os.environ.get("OBSERVER_REGISTRY_MAX_AGE", "45"))
+CAMPAIGN_STATE_PATH = os.environ.get(
+    "RELIABILITY_CAMPAIGN_STATE",
+    "/var/lib/powerhouse/reliability/campaign-status.json",
+)
+CAMPAIGN_MAX_AGE_SECONDS = int(os.environ.get("RELIABILITY_CAMPAIGN_MAX_AGE", "180"))
 MAX_PROBE_BYTES = 2 * 1024 * 1024
 IDENTITY_METRIC = re.compile(
     r'^powerhouse_node_identity\{(?P<labels>.+)\}\s+(?P<value>[0-9.eE+-]+)$'
@@ -222,9 +227,32 @@ def observer_health():
     return state
 
 
+def campaign_health():
+    try:
+        with open(CAMPAIGN_STATE_PATH, encoding="utf-8") as handle:
+            state = json.load(handle)
+    except FileNotFoundError:
+        return {
+            "schema": "power-house-reliability-campaign-v1",
+            "status": "not_started",
+            "phase": "awaiting",
+            "fresh": False,
+        }
+    if state.get("schema") != "power-house-reliability-campaign-v1":
+        raise RuntimeError("reliability campaign schema mismatch")
+    updated = datetime.fromisoformat(state["updated_at"].replace("Z", "+00:00"))
+    age = (datetime.now(timezone.utc) - updated).total_seconds()
+    state["fresh"] = 0 <= age <= CAMPAIGN_MAX_AGE_SECONDS
+    if state.get("status") == "running" and not state["fresh"]:
+        state["status"] = "stalled"
+        state["phase"] = "telemetry_gap"
+    return state
+
+
 def snapshot():
     registry = registry_health()
     observer = observer_health()
+    campaign = campaign_health()
     validators = int(registry.get("validators_healthy", 0))
     validators_total = int(registry.get("validators_total", 0))
     systems = sum(
@@ -288,6 +316,7 @@ def snapshot():
         "peer_connections": validator_links,
         "public_peer_connections": observer_connections,
         "release": RELEASE,
+        "reliability_campaign": campaign,
         "rpc": {
             "endpoint": RPC_URL,
             "name": "LAX MFENX RPC",
