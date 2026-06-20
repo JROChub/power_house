@@ -1,0 +1,165 @@
+:root {
+  color-scheme: dark;
+  --ink: #050807;
+  --panel: rgba(7, 13, 12, 0.9);
+  --line: rgba(215, 233, 228, 0.18);
+  --text: #edf6f2;
+  --muted: #8fa39c;
+  --live: #b9ff3d;
+  --teal: #45ddd2;
+  --warn: #ffc14d;
+  --down: #ff7167;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--ink);
+  color: var(--text);
+}
+
+.earth-field {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: #050807 url("assets/earth-night.jpg") center 34% / cover no-repeat;
+  opacity: 0.24;
+}
+
+.earth-field::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: rgba(1, 5, 4, 0.7);
+}
+
+header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 12px clamp(18px, 4vw, 64px);
+  background: rgba(3, 7, 6, 0.92);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
+.brand img { width: 38px; height: 38px; object-fit: contain; }
+.brand span, .campaign-clock { display: grid; gap: 3px; }
+.brand b { font-size: 18px; }
+.brand small, .campaign-clock span { color: var(--muted); font-size: 10px; }
+.campaign-clock { text-align: right; }
+.campaign-clock b { color: var(--teal); }
+
+main {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 54px 0 28px;
+}
+
+.campaign-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.55fr);
+  gap: 52px;
+  align-items: end;
+  min-height: 210px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow, .section-head span, .progress-band span, .telemetry span, .evidence-band span {
+  color: var(--teal);
+  font-size: 10px;
+}
+
+h1 {
+  max-width: 850px;
+  margin: 14px 0 22px;
+  font: 700 52px/0.98 Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+.campaign-state { display: flex; align-items: center; gap: 12px; }
+.campaign-state i { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 14px rgba(255, 193, 77, 0.8); }
+.campaign-state b { color: var(--warn); font-size: 13px; }
+.campaign-state span { color: var(--muted); font-size: 10px; }
+
+.hero-time { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.hero-time div { min-height: 82px; display: grid; align-content: center; gap: 8px; padding: 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
+.hero-time div:last-child { grid-column: 1 / -1; }
+.hero-time dt { color: var(--muted); font-size: 9px; }
+.hero-time dd { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+
+.progress-band { padding: 28px 0; }
+.progress-band > div:first-child { display: flex; justify-content: space-between; }
+.progress-band b { color: var(--live); font-size: 12px; }
+.progress-track { height: 4px; margin-top: 13px; overflow: hidden; background: rgba(255,255,255,.1); }
+.progress-track i { display: block; width: 0; height: 100%; background: var(--live); box-shadow: 0 0 14px rgba(185,255,61,.65); transition: width .7s ease; }
+.progress-scale { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 8px; }
+
+.telemetry { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.telemetry article { min-height: 132px; display: grid; align-content: center; gap: 8px; padding: 20px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
+.telemetry b { font-size: 22px; overflow-wrap: anywhere; }
+.telemetry small { color: var(--muted); font-size: 9px; line-height: 1.5; }
+
+.drill-ledger { margin-top: 38px; border-top: 1px solid var(--line); }
+.section-head { display: flex; justify-content: space-between; align-items: end; padding: 22px 0; }
+.section-head h2 { margin: 6px 0 0; font: 700 24px/1 Arial, sans-serif; letter-spacing: 0; }
+.section-head > div:last-child { display: grid; gap: 6px; text-align: right; }
+.section-head b { color: var(--teal); }
+.drill-ledger ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.drill-ledger li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 15px; align-items: center; min-height: 72px; padding: 14px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--panel); }
+.drill-ledger li i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); }
+.drill-ledger li span { display: grid; gap: 5px; }
+.drill-ledger li b { font-size: 12px; }
+.drill-ledger li small { color: var(--muted); font-size: 9px; }
+.drill-ledger li strong { color: var(--muted); font-size: 10px; }
+.drill-ledger li.passed i { border-color: var(--live); background: var(--live); }
+.drill-ledger li.passed strong { color: var(--live); }
+.drill-ledger li.running i { border-color: var(--warn); background: var(--warn); animation: blink 1s infinite; }
+.drill-ledger li.failed i, .drill-ledger li.blocked i { border-color: var(--down); background: var(--down); }
+.drill-ledger li.failed strong, .drill-ledger li.blocked strong { color: var(--down); }
+
+@keyframes blink { 50% { opacity: .25; } }
+
+.evidence-band { display: grid; grid-template-columns: 1fr 1fr auto; gap: 24px; align-items: end; margin-top: 38px; padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.evidence-band div { min-width: 0; display: grid; gap: 8px; }
+.evidence-band code { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.evidence-band time { color: var(--teal); font-size: 9px; }
+
+footer { display: flex; flex-wrap: wrap; gap: 24px; padding: 24px 0; }
+footer a { color: var(--muted); font-size: 10px; text-decoration: none; }
+footer a:hover { color: var(--teal); }
+
+body[data-state="running"] .campaign-state i { background: var(--live); box-shadow: 0 0 14px rgba(185,255,61,.8); }
+body[data-state="running"] .campaign-state b,
+body[data-state="passed"] .campaign-state b { color: var(--live); }
+body[data-state="failed"] .campaign-state b,
+body[data-state="stalled"] .campaign-state b { color: var(--down); }
+
+@media (max-width: 780px) {
+  header { min-height: 64px; }
+  .brand small { display: none; }
+  main { width: calc(100% - 24px); padding-top: 30px; }
+  .campaign-hero { grid-template-columns: 1fr; gap: 28px; }
+  h1 { font-size: 38px; }
+  .telemetry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .telemetry article { min-height: 120px; padding: 15px; }
+  .telemetry b { font-size: 17px; }
+  .evidence-band { grid-template-columns: 1fr; }
+  .drill-ledger li { grid-template-columns: 12px minmax(0, 1fr); }
+  .drill-ledger li strong { grid-column: 2; }
+}
+
+@media (max-width: 920px) and (max-height: 520px) and (orientation: landscape) {
+  main { padding-top: 20px; }
+  .campaign-hero { grid-template-columns: 1fr 320px; min-height: 140px; gap: 24px; padding-bottom: 20px; }
+  h1 { margin: 8px 0 12px; font-size: 31px; }
+  .hero-time div { min-height: 60px; }
+  .progress-band { padding: 18px 0; }
+  .telemetry { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

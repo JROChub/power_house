@@ -79,6 +79,29 @@ def observer_state(generated_at: str) -> dict:
     }
 
 
+def campaign_state(updated_at: str) -> dict:
+    return {
+        "schema": "power-house-reliability-campaign-v1",
+        "campaign_id": "rel_20260620T000000Z",
+        "status": "running",
+        "phase": "soak",
+        "updated_at": updated_at,
+        "duration_seconds": 259200,
+        "elapsed_seconds": 3600,
+        "remaining_seconds": 255600,
+        "progress_percent": 1.3889,
+        "sample_count": 60,
+        "successful_samples": 60,
+        "failed_samples": 0,
+        "max_consecutive_failures": 0,
+        "uptime_percent": 100.0,
+        "rpc": {"requests": 210, "errors": 0, "p95_ms": 45.2},
+        "network": {"validators_healthy": 3, "validators_total": 3},
+        "drills": {"scheduled": 4, "completed": 0, "failed": 0, "items": []},
+        "evidence": {"events": 61, "head_sha256": "a" * 64},
+    }
+
+
 def main() -> None:
     prometheus = (ROOT / "infra" / "monitoring" / "prometheus.yml").read_text()
     assert "/etc/prometheus/file_sd/powerhouse-validators.json" in prometheus
@@ -89,6 +112,8 @@ def main() -> None:
     assert "powerhouse-validator-registry.timer" in deployment
     assert "powerhouse-observer-registry.timer" in deployment
     assert "powerhouse-observer-intake" in deployment
+    assert "RELIABILITY_CAMPAIGN_STATE" in deployment
+    assert "/var/lib/powerhouse/reliability" in deployment
     assert "OBSERVER_REGISTRY_URL" in deployment
     assert "validator-registry.json" in deployment
     assert "install -d -m 0755 /usr/local/lib/powerhouse" in deployment
@@ -125,8 +150,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="powerhouse-status-registry-") as temp:
         state_path = Path(temp) / "state.json"
         observer_path = Path(temp) / "observer-state.json"
+        campaign_path = Path(temp) / "campaign-status.json"
         module.REGISTRY_STATE_PATH = str(state_path)
         module.OBSERVER_STATE_PATH = str(observer_path)
+        module.CAMPAIGN_STATE_PATH = str(campaign_path)
         module.query = lambda expression: (
             1.0 if "probe_success" in expression and "avg_over_time" not in expression else 0.999
         )
@@ -159,6 +186,13 @@ def main() -> None:
             "identity_verified": 4,
             "verified": True,
         }
+        assert snapshot["reliability_campaign"]["status"] == "not_started"
+
+        campaign_path.write_text(json.dumps(campaign_state(now.isoformat())))
+        snapshot = module.snapshot()
+        assert snapshot["reliability_campaign"]["status"] == "running"
+        assert snapshot["reliability_campaign"]["fresh"] is True
+        assert snapshot["reliability_campaign"]["sample_count"] == 60
 
         observer_path.write_text(json.dumps(observer_state(now.isoformat())))
         snapshot = module.snapshot()
@@ -184,6 +218,8 @@ def main() -> None:
         snapshot = module.snapshot()
         assert snapshot["status"] == "outage"
         assert snapshot["validator_registry"]["fresh"] is False
+        campaign_path.write_text(json.dumps(campaign_state(stale.isoformat())))
+        assert module.campaign_health()["status"] == "stalled"
 
         try:
             module.public_addresses_for_host("127.0.0.1")

@@ -1,6 +1,6 @@
 [package]
 name = "power_house"
-version = "0.3.10"
+version = "0.3.11"
 edition = "2021"
 authors = ["MFENX LLC"]
 description = "Deterministic verification and provenance system for portable computational identities using .pha artifacts and Rootprint graphs."
@@ -47,6 +47,7 @@ include = [
   "scripts/deploy_rpc_cluster.sh",
   "scripts/digitalocean_rpc_preflight.sh",
   "scripts/generate_rpc_cluster.py",
+  "scripts/install_reliability_campaign.sh",
   "scripts/provision_digitalocean_rpc.sh",
   "scripts/rpc_load_test.py",
   "scripts/soundness_budget.py",
@@ -56,6 +57,7 @@ include = [
   "scripts/test_observatory_contract.py",
   "scripts/test_observer_registry.py",
   "scripts/test_rpc_check.py",
+  "scripts/test_reliability_campaign.py",
   "scripts/test_status_registry.py",
   "scripts/test_observer_intake.py",
   "scripts/test_validator_registry.py",

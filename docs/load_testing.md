@@ -1,6 +1,6 @@
 # MFENX Network Load Testing
 
-Release scope: Power House v0.3.10.
+Release scope: Power House v0.3.11.
 
 Run read-only public RPC tests before transaction tests. Never direct an
 unbounded load generator at production.

@@ -1,6 +1,6 @@
 # Power House Documentation
 
-This index is the authoritative map for Power House v0.3.10 documentation.
+This index is the authoritative map for Power House v0.3.11 documentation.
 
 ## Start Here
 
@@ -37,6 +37,7 @@ This index is the authoritative map for Power House v0.3.10 documentation.
 - [Node Operator Guide](node_operator.md)
 - [Incident Response](incident_response.md)
 - [Load Testing](load_testing.md)
+- [72-Hour Reliability Campaign](reliability_campaign.md)
 - [Testnet to Mainnet](testnet_mainnet.md)
 - [Orbital Observatory](orbital_observatory.md)
 
