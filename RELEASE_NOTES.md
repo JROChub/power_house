@@ -1,5 +1,18 @@
 # Release Notes
 
+## v0.3.12 - 2026-06-19
+
+### Campaign Acceptance Hardening
+- Made controlled drills wait for complete cross-region telemetry convergence
+  after the affected service becomes active, with every intermediate recovery
+  probe retained in the hash-chained evidence journal.
+- Added explicit final gates requiring zero failed samples, zero RPC errors,
+  campaign-wide RPC p95 latency at or below 1,000 milliseconds, and successful
+  completion of every scheduled or manual drill.
+- Added live acceptance-gate telemetry to the dedicated campaign page without
+  adding campaign UI to the main observatory.
+- Added delayed-convergence and independent final-gate regression tests.
+
 ## v0.3.11 - 2026-06-19
 
 ### 72-Hour Reliability Campaign

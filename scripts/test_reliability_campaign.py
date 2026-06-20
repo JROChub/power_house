@@ -43,8 +43,9 @@ def config_value(base: Path) -> dict:
         "burst_interval_seconds": 10,
         "burst_requests": 3,
         "recovery_timeout_seconds": 15,
+        "max_rpc_p95_ms": 1000,
         "expected_chain_id": 177155,
-        "expected_release": "0.3.11",
+        "expected_release": "0.3.12",
         "rpc_url": "https://rpc.example",
         "status_url": "https://rpc.example/network-status.json",
         "intake_url": "https://rpc.example/observer-intake-healthz",
@@ -62,7 +63,7 @@ def config_value(base: Path) -> dict:
 def fake_node(name: str) -> dict:
     return {
         "name": name,
-        "version": "0.3.11",
+        "version": "0.3.12",
         "binary_sha256": "1" * 64,
         "validator_registry_sha256": "2" * 64,
         "state_sha256": "3" * 64,
@@ -85,13 +86,13 @@ def install_fakes(campaign) -> None:
             result = {
                 "eth_chainId": hex(177155),
                 "eth_blockNumber": hex(42),
-                "web3_clientVersion": "power-house/0.3.11/finalized-native-rpc",
+                "web3_clientVersion": "power-house/0.3.12/finalized-native-rpc",
             }[method]
             return {"jsonrpc": "2.0", "id": 1, "result": result}, 12.5
         if url.endswith("network-status.json"):
             return {
                 "status": "operational",
-                "release": "0.3.11",
+                "release": "0.3.12",
                 "validators_healthy": 3,
                 "validators_total": 3,
                 "validator_registry": {"verified": True},
@@ -138,6 +139,7 @@ def main() -> None:
         assert status["uptime_percent"] == 100.0
         assert status["network"]["validators_healthy"] == 3
         assert status["evidence"]["events"] == 1
+        assert status["acceptance"]["max_rpc_p95_ms"] == 1000
 
         campaign._drill_action = lambda kind: {
             "passed": True,
@@ -146,10 +148,29 @@ def main() -> None:
             "errors": 0,
             "service_active": True,
         }
-        drill = campaign.perform_drill(campaign.state["drills"][0])
+        collect_sample = campaign.collect_sample
+        healthy_sample = collect_sample()
+        converging_sample = json.loads(json.dumps(healthy_sample))
+        converging_sample["ok"] = False
+        converging_sample["errors"] = ["validator telemetry still converging"]
+        recovery_samples = iter([healthy_sample, converging_sample, healthy_sample])
+        campaign.collect_sample = lambda: next(recovery_samples)
+        original_sleep = module.time.sleep
+        module.time.sleep = lambda _seconds: None
+        try:
+            drill = campaign.perform_drill(campaign.state["drills"][0])
+        finally:
+            module.time.sleep = original_sleep
         assert drill["status"] == "passed"
-        assert drill["recovery_seconds"] == 5.25
+        assert drill["recovery_seconds"] >= 0
+        events = [json.loads(line) for line in campaign.events_path.read_text().splitlines()]
+        assert any(event["kind"] == "drill_recovery_probe" for event in events)
+        completed = next(event for event in reversed(events) if event["kind"] == "drill_completed")
+        assert completed["data"]["result"]["service_recovery_seconds"] == 5.25
+        assert completed["data"]["result"]["recovery_probes"] == 1
         verify_event_chain(module, campaign.events_path)
+
+        campaign.collect_sample = collect_sample
 
         mismatch = fake_node("validator-3")
         mismatch["validator_registry_sha256"] = "9" * 64
@@ -176,6 +197,7 @@ def main() -> None:
         assert json.loads(campaign.events_path.read_text().splitlines()[-2])["kind"] == "telemetry_gap"
 
         campaign.finalize()
+        assert campaign.state["status"] == "failed"
         assert campaign.report_path.exists()
         assert campaign.manifest_path.exists()
         assert campaign.state["final_report_sha256"]
@@ -188,7 +210,7 @@ def main() -> None:
         assert "restarted during drill" in resumed.state["drills"][0]["detail"]
 
         changed = config_value(base)
-        changed["expected_release"] = "0.3.12"
+        changed["expected_release"] = "0.3.13"
         changed_path = base / "changed.json"
         changed_path.write_text(json.dumps(changed))
         try:
@@ -209,12 +231,41 @@ def main() -> None:
         else:
             raise AssertionError("unsafe SSH target was accepted")
 
+        threshold = config_value(base / "threshold")
+        threshold["max_rpc_p95_ms"] = 10
+        threshold_path = base / "threshold.json"
+        threshold_path.write_text(json.dumps(threshold))
+        try:
+            module.Config.load(threshold_path)
+        except ValueError as error:
+            assert "p95 threshold" in str(error)
+        else:
+            raise AssertionError("unsafe RPC latency threshold was accepted")
+
+        for name, rpc_errors, latency, expected in (
+            ("passing", 0, 100.0, "passed"),
+            ("rpc-errors", 1, 100.0, "failed"),
+            ("rpc-latency", 0, 1001.0, "failed"),
+        ):
+            gate_value = config_value(base / name)
+            gate_path = base / f"{name}.json"
+            gate_path.write_text(json.dumps(gate_value))
+            gated = module.Campaign(module.Config.load(gate_path))
+            install_fakes(gated)
+            gated.apply_sample(gated.collect_sample())
+            gated.state["drills"][0]["status"] = "passed"
+            gated.state["rpc_errors"] = rpc_errors
+            gated.state["rpc_latencies_ms"] = [latency]
+            gated.finalize()
+            assert gated.state["status"] == expected
+
     html = (ROOT / "publicpower" / "campaign.html").read_text()
     javascript = (ROOT / "publicpower" / "campaign.js").read_text()
     main_html = (ROOT / "publicpower" / "index.html").read_text()
     main_js = (ROOT / "publicpower" / "app.js").read_text()
     assert 'id="campaign-state"' in html
     assert 'id="drill-list"' in html
+    assert 'id="acceptance-state"' in html
     assert "reliability_campaign" in javascript
     assert "reliability_campaign" not in main_js
     assert "campaign.html" not in main_html

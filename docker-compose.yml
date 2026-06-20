@@ -1,6 +1,6 @@
 services:
   node:
-    image: ghcr.io/jrochub/power_house:0.3.11
+    image: ghcr.io/jrochub/power_house:0.3.12
     build: .
     command:
       [
