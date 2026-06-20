@@ -1,6 +1,6 @@
 # Power House + slbit Observatory
 
-Status: active integration guide for Power House v0.3.11 and slbit v0.1.0.
+Status: active integration guide for Power House v0.3.12 and slbit v0.1.0.
 
 Power House and `slbit` are independent technologies:
 

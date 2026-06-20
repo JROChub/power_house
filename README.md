@@ -14,7 +14,7 @@ fingerprints that bind proof data, provenance metadata, and verification state.
 Rootprint provides a directed acyclic graph (DAG) for identity lineage,
 branching, merging, replay, navigation, and equivalence verification.
 
-Current release: **v0.3.11**
+Current release: **v0.3.12**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).

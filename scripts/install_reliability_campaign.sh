@@ -110,6 +110,7 @@ config = {
     "burst_interval_seconds": 3600,
     "burst_requests": 30,
     "recovery_timeout_seconds": 90,
+    "max_rpc_p95_ms": 1000,
     "expected_chain_id": 177155,
     "expected_release": release,
     "rpc_url": "https://rpc.mfenx.com",

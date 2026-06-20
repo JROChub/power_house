@@ -1,6 +1,6 @@
 # 72-Hour Reliability Campaign
 
-Release scope: Power House v0.3.11.
+Release scope: Power House v0.3.12.
 
 The production reliability campaign is controlled from an external machine,
 not from the validator cluster. It measures the public edge and all three
@@ -23,6 +23,11 @@ Live state is rendered at [mfenx.com/campaign.html](https://mfenx.com/campaign.h
   limited to the non-consensus observer registry replica.
 - RPC traffic is bounded to three calls per sample and 30 read-only requests
   per hourly burst.
+- A passing report requires zero RPC errors and campaign-wide RPC p95 latency
+  no greater than 1,000 milliseconds.
+- A drill is not complete when its service merely returns to `active`; the
+  controller waits for a healthy cross-region sample and journals every
+  intermediate recovery probe.
 
 ## Measurements
 
@@ -39,6 +44,9 @@ The controller samples once per minute:
 The public campaign state includes elapsed and remaining time, progress,
 successful and failed samples, uptime, RPC p50/p95/p99, drill outcomes,
 evidence event count, evidence head hash, and final report hash.
+The dedicated page also renders the current pass criteria and whether the
+running evidence remains on track. Campaign UI is not added to the primary
+observatory.
 
 ## Failure Schedule
 

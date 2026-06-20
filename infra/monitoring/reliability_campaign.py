@@ -139,6 +139,7 @@ class Config:
     burst_interval_seconds: int
     burst_requests: int
     recovery_timeout_seconds: int
+    max_rpc_p95_ms: float
     expected_chain_id: int
     expected_release: str
     rpc_url: str
@@ -163,6 +164,7 @@ class Config:
             burst_interval_seconds=int(value.get("burst_interval_seconds", 3600)),
             burst_requests=int(value.get("burst_requests", 30)),
             recovery_timeout_seconds=int(value.get("recovery_timeout_seconds", 90)),
+            max_rpc_p95_ms=float(value.get("max_rpc_p95_ms", 1000)),
             expected_chain_id=int(value.get("expected_chain_id", 177155)),
             expected_release=str(value["expected_release"]),
             rpc_url=str(value["rpc_url"]),
@@ -193,6 +195,8 @@ class Config:
             raise ValueError("burst request count is outside the safe range")
         if not 15 <= self.recovery_timeout_seconds <= 300:
             raise ValueError("recovery timeout is outside the safe range")
+        if not 50 <= self.max_rpc_p95_ms <= 10_000:
+            raise ValueError("RPC p95 threshold is outside the safe range")
         if not re.fullmatch(r"\d+\.\d+\.\d+", self.expected_release):
             raise ValueError("expected release is invalid")
         if not all(url.startswith("https://") for url in (self.rpc_url, self.status_url, self.intake_url)):
@@ -214,6 +218,7 @@ class Config:
             "sample_interval_seconds": self.sample_interval_seconds,
             "burst_interval_seconds": self.burst_interval_seconds,
             "burst_requests": self.burst_requests,
+            "max_rpc_p95_ms": self.max_rpc_p95_ms,
             "expected_chain_id": self.expected_chain_id,
             "expected_release": self.expected_release,
             "nodes": [node.__dict__ for node in self.nodes],
@@ -610,6 +615,12 @@ class Campaign:
                 "p95_ms": percentile(latencies, 0.95),
                 "p99_ms": percentile(latencies, 0.99),
             },
+            "acceptance": {
+                "required_uptime_percent": 100.0,
+                "max_rpc_p95_ms": self.config.max_rpc_p95_ms,
+                "required_rpc_errors": 0,
+                "required_drill_failures": 0,
+            },
             "network": last_sample.get("network", {}),
             "drills": {
                 "scheduled": len(drills),
@@ -825,8 +836,20 @@ class Campaign:
             self.state["phase"] = "soak"
             self.save()
             return drill
+        recovery_started = time.monotonic()
         result = self._drill_action(drill["kind"])
-        recovery = self.collect_sample()
+        convergence_deadline = time.monotonic() + self.config.recovery_timeout_seconds
+        recovery_probes = 0
+        while True:
+            recovery = self.collect_sample()
+            if recovery["ok"] or time.monotonic() >= convergence_deadline:
+                break
+            recovery_probes += 1
+            self.record_event("drill_recovery_probe", recovery)
+            time.sleep(3)
+        result["service_recovery_seconds"] = result.get("recovery_seconds")
+        result["recovery_seconds"] = round(time.monotonic() - recovery_started, 3)
+        result["recovery_probes"] = recovery_probes
         self.apply_sample(recovery, "drill_recovery")
         passed = result.get("passed") is True and recovery["ok"]
         drill["status"] = "passed" if passed else "failed"
@@ -861,7 +884,14 @@ class Campaign:
         scheduled_incomplete = any(
             drill["status"] not in {"passed"} for drill in self.state["drills"]
         )
-        passed = self.state["failed_samples"] == 0 and not scheduled_incomplete
+        campaign_p95 = percentile(self.state.get("rpc_latencies_ms", []), 0.95)
+        passed = (
+            self.state["failed_samples"] == 0
+            and self.state["rpc_errors"] == 0
+            and campaign_p95 is not None
+            and campaign_p95 <= self.config.max_rpc_p95_ms
+            and not scheduled_incomplete
+        )
         self.state["status"] = "passed" if passed else "failed"
         self.state["phase"] = "complete"
         self.record_event(
@@ -870,6 +900,9 @@ class Campaign:
                 "status": self.state["status"],
                 "samples": self.state["sample_count"],
                 "failed_samples": self.state["failed_samples"],
+                "rpc_errors": self.state["rpc_errors"],
+                "rpc_p95_ms": campaign_p95,
+                "max_rpc_p95_ms": self.config.max_rpc_p95_ms,
                 "drills": self.state["drills"],
             },
         )
