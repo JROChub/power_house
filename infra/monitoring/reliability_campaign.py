@@ -262,6 +262,8 @@ class Campaign:
                     interrupted = True
             if interrupted:
                 state["phase"] = "soak"
+            state.setdefault("started_event_recorded", int(state.get("evidence_sequence", 0)) > 0)
+            state.setdefault("failure_log", [])
             return state
         started = time.time()
         campaign_id = datetime.fromtimestamp(started, timezone.utc).strftime("rel_%Y%m%dT%H%M%SZ")
@@ -304,6 +306,8 @@ class Campaign:
             "last_burst_unix": 0,
             "last_publish_error": None,
             "final_report_sha256": None,
+            "started_event_recorded": False,
+            "failure_log": [],
         }
         atomic_json(self.state_path, state)
         return state
@@ -537,6 +541,22 @@ class Campaign:
         self.state["evidence_head"] = event_hash
         return event_hash
 
+    def record_failure(self, kind: str, data: dict) -> None:
+        failures = self.state.setdefault("failure_log", [])
+        entry = {
+            "recorded_at": now_iso(),
+            "kind": kind,
+            "errors": list(data.get("errors", []))[:8],
+            "network": data.get("network", {}),
+            "latency_ms": data.get("latency_ms", {}),
+        }
+        if "gap_seconds" in data:
+            entry["gap_seconds"] = data["gap_seconds"]
+        if "missed_samples" in data:
+            entry["missed_samples"] = data["missed_samples"]
+        failures.append(entry)
+        del failures[:-25]
+
     def apply_sample(self, sample: dict, kind: str = "sample") -> None:
         sample_time = time.time()
         previous_time = self.state.get("last_sample_unix")
@@ -555,6 +575,10 @@ class Campaign:
                     "telemetry_gap",
                     {"gap_seconds": round(gap, 3), "missed_samples": missed},
                 )
+                self.record_failure(
+                    "telemetry_gap",
+                    {"gap_seconds": round(gap, 3), "missed_samples": missed, "errors": []},
+                )
         self.state["sample_count"] += 1
         self.state["last_sample"] = sample
         self.state["last_sample_unix"] = sample_time
@@ -568,6 +592,7 @@ class Campaign:
                 self.state["max_consecutive_failures"],
                 self.state["consecutive_failures"],
             )
+            self.record_failure(kind, sample)
         if self.state.get("baseline") is None and sample["ok"]:
             self.state["baseline"] = {
                 "recorded_at": sample["recorded_at"],
@@ -627,6 +652,10 @@ class Campaign:
                 "completed": completed,
                 "failed": failed,
                 "items": drills,
+            },
+            "failures": {
+                "total": int(self.state["failed_samples"]),
+                "recent": self.state.get("failure_log", [])[-10:],
             },
             "evidence": {
                 "events": int(self.state["evidence_sequence"]),
@@ -929,8 +958,10 @@ class Campaign:
             if self.state["status"] in {"passed", "failed"}:
                 self.save()
                 return 0
-            self.record_event("campaign_started", {"config": self.config.fingerprint()})
-            self.save()
+            if not self.state.get("started_event_recorded"):
+                self.record_event("campaign_started", {"config": self.config.fingerprint()})
+                self.state["started_event_recorded"] = True
+                self.save()
             if time.time() >= self.state["ends_unix"]:
                 sample = self.collect_sample()
                 self.apply_sample(sample, "final_sample")
