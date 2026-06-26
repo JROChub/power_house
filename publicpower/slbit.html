@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#010405">
+  <meta name="description" content="SLBIT v2 Luminous Proof Explorer for locally verifying semantic packets, transcript digests, anchors, summaries, and proof meaning.">
+  <meta property="og:title" content="SLBIT v2 Luminous Proof Explorer">
+  <meta property="og:description" content="The proof says it verified. SLBIT shows what it meant.">
+  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
+  <title>MFENX | SLBIT v2 Luminous Proof Explorer</title>
+  <link rel="icon" href="assets/powerhouse-logo.png">
+  <link rel="preload" href="assets/proof-lattice.webp" as="image">
+  <link rel="stylesheet" href="slbit.css">
+</head>
+<body>
+  <div class="field" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="assets/powerhouse-logo.png" alt="">
+      <span><b>MFENX</b><small>SLBIT v2 / LUMINOUS VERIFICATION UX</small></span>
+    </a>
+    <nav aria-label="Navigation">
+      <a href="/">OBSERVATORY</a>
+      <a href="status.html">STATUS</a>
+      <a href="campaign.html">72H SOAK</a>
+      <a href="https://docs.rs/slbit">DOCS.RS</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="title">
+      <div class="hero-copy">
+        <span>SLBIT/VIZ-PACKET/V2</span>
+        <h1 id="title">LUMINOUS PROOF EXPLORER</h1>
+        <p>The proof says it verified. SLBIT shows what it meant.</p>
+      </div>
+      <div class="hero-state" aria-label="Verification state">
+        <div><span>CRATE</span><b>slbit 0.2.0</b></div>
+        <div><span>CORE</span><b>ZERO DEPENDENCIES</b></div>
+        <div><span>TRUST</span><b>NON-CORE SEMANTIC LAYER</b></div>
+      </div>
+    </section>
+
+    <section class="command-band" aria-label="Explorer controls">
+      <button id="sample-drone" type="button">DRONE PERCEPTION</button>
+      <button id="sample-agent" type="button">AGENT TRACE</button>
+      <button id="sample-zkml" type="button">ZKML CLASSIFICATION</button>
+      <button id="sample-finance" type="button">FINANCIAL AUDIT</button>
+      <label class="upload">
+        <input id="packet-file" type="file" accept=".json,application/json">
+        LOAD PACKET JSON
+      </label>
+      <button id="export-markdown" type="button">EXPORT MARKDOWN</button>
+      <button id="copy-llm" type="button">COPY LLM CONTEXT</button>
+    </section>
+
+    <section class="explorer-grid">
+      <section class="verification-panel" aria-label="Packet verification">
+        <div class="panel-head">
+          <span>LOCAL VERIFIER</span>
+          <b id="verify-state">BUILDING SAMPLE</b>
+        </div>
+        <dl class="digest-list">
+          <div><dt>PACKET ID</dt><dd id="packet-id">--</dd></div>
+          <div><dt>PACKET DIGEST</dt><dd id="packet-digest">--</dd></div>
+          <div><dt>TRANSCRIPT</dt><dd id="transcript-digest">--</dd></div>
+          <div><dt>SEMANTIC GRAPH</dt><dd id="graph-digest">--</dd></div>
+        </dl>
+        <div class="gate-stack" id="gate-stack"></div>
+      </section>
+
+      <section class="graph-panel" aria-label="Semantic graph">
+        <div class="panel-head">
+          <span>SEMANTIC DAG</span>
+          <b id="graph-count">0 NODES / 0 EDGES</b>
+        </div>
+        <svg id="semantic-graph" viewBox="0 0 820 460" role="img" aria-label="SLBIT semantic graph"></svg>
+      </section>
+
+      <section class="inspector-panel" aria-label="Packet inspector">
+        <div class="inspector-head">
+          <span id="claim-kind">CLAIM</span>
+          <b id="claim-title">--</b>
+          <small id="claim-subtitle">--</small>
+        </div>
+        <div class="summary-tabs" id="summary-tabs" role="tablist" aria-label="Summary audiences"></div>
+        <article id="summary-text" class="summary-text"></article>
+        <div class="anchor-list" id="anchor-list"></div>
+      </section>
+
+      <section class="timeline-panel" aria-label="Transcript timeline">
+        <div class="panel-head">
+          <span>TRANSCRIPT PLAYBACK</span>
+          <b id="round-count">0 ROUNDS</b>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </section>
+
+      <section class="json-panel" aria-label="Packet JSON preview">
+        <div class="panel-head">
+          <span>CANONICAL PACKET JSON</span>
+          <b id="json-size">0 B</b>
+        </div>
+        <pre id="json-preview"></pre>
+      </section>
+    </section>
+  </main>
+
+  <div id="drop-zone" class="drop-zone" aria-hidden="true">
+    <b>DROP SLBIT PACKET</b>
+    <span>LOCAL VERIFICATION ONLY / NO NETWORK UPLOAD</span>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="slbit.js" defer></script>
+</body>
+</html>
