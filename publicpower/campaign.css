@@ -115,18 +115,22 @@ h1 {
 .telemetry b { font-size: 22px; overflow-wrap: anywhere; }
 .telemetry small { color: var(--muted); font-size: 9px; line-height: 1.5; }
 
-.drill-ledger { margin-top: 38px; border-top: 1px solid var(--line); }
+.failure-ledger, .drill-ledger { margin-top: 38px; border-top: 1px solid var(--line); }
 .section-head { display: flex; justify-content: space-between; align-items: end; padding: 22px 0; }
 .section-head h2 { margin: 6px 0 0; font: 700 24px/1 Arial, sans-serif; letter-spacing: 0; }
 .section-head > div:last-child { display: grid; gap: 6px; text-align: right; }
 .section-head b { color: var(--teal); }
-.drill-ledger ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-.drill-ledger li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 15px; align-items: center; min-height: 72px; padding: 14px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--panel); }
-.drill-ledger li i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); }
-.drill-ledger li span { display: grid; gap: 5px; }
-.drill-ledger li b { font-size: 12px; }
-.drill-ledger li small { color: var(--muted); font-size: 9px; }
-.drill-ledger li strong { color: var(--muted); font-size: 10px; }
+.failure-ledger ol, .drill-ledger ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.failure-ledger li, .drill-ledger li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 15px; align-items: center; min-height: 72px; padding: 14px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--panel); }
+.failure-ledger li i, .drill-ledger li i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); }
+.failure-ledger li span, .drill-ledger li span { display: grid; gap: 5px; min-width: 0; }
+.failure-ledger li b, .drill-ledger li b { font-size: 12px; }
+.failure-ledger li small, .drill-ledger li small { color: var(--muted); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.failure-ledger li strong, .drill-ledger li strong { color: var(--muted); font-size: 10px; text-align: right; }
+.failure-ledger li.clear i { border-color: var(--live); background: var(--live); }
+.failure-ledger li.clear strong { color: var(--live); }
+.failure-ledger li.failed i, .failure-ledger li.gap i { border-color: var(--down); background: var(--down); }
+.failure-ledger li.failed strong, .failure-ledger li.gap strong { color: var(--down); }
 .drill-ledger li.passed i { border-color: var(--live); background: var(--live); }
 .drill-ledger li.passed strong { color: var(--live); }
 .drill-ledger li.running i { border-color: var(--warn); background: var(--warn); animation: blink 1s infinite; }
@@ -162,8 +166,8 @@ body[data-state="stalled"] .campaign-state b { color: var(--down); }
   .telemetry article { min-height: 120px; padding: 15px; }
   .telemetry b { font-size: 17px; }
   .evidence-band { grid-template-columns: 1fr; }
-  .drill-ledger li { grid-template-columns: 12px minmax(0, 1fr); }
-  .drill-ledger li strong { grid-column: 2; }
+  .failure-ledger li, .drill-ledger li { grid-template-columns: 12px minmax(0, 1fr); }
+  .failure-ledger li strong, .drill-ledger li strong { grid-column: 2; text-align: left; }
 }
 
 @media (max-width: 920px) and (max-height: 520px) and (orientation: landscape) {

@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 %h/.local/lib/powerhouse/reliability_campaign.py run --config %h/.config/powerhouse/reliability-campaign.json
+ExecStart=/usr/bin/systemd-inhibit --what=sleep:shutdown:idle --mode=block --why=Power-House-reliability-campaign /usr/bin/python3 %h/.local/lib/powerhouse/reliability_campaign.py run --config %h/.config/powerhouse/reliability-campaign.json
 Restart=on-failure
 RestartSec=15
 NoNewPrivileges=true

@@ -180,6 +180,13 @@ def main() -> None:
         rejected = campaign.collect_sample()
         assert rejected["ok"] is False
         assert "validator validator_registry_sha256 values differ" in rejected["errors"]
+        campaign.apply_sample(rejected)
+        status = campaign.public_status()
+        assert status["failures"]["total"] >= 1
+        assert any(
+            "validator validator_registry_sha256 values differ" in " ".join(item["errors"])
+            for item in status["failures"]["recent"]
+        )
 
         campaign.audit_node = lambda node: {
             **fake_node(node.name),
@@ -195,6 +202,10 @@ def main() -> None:
         campaign.apply_sample(campaign.collect_sample())
         assert campaign.state["failed_samples"] > before_failed
         assert json.loads(campaign.events_path.read_text().splitlines()[-2])["kind"] == "telemetry_gap"
+        assert any(
+            item["kind"] == "telemetry_gap"
+            for item in campaign.public_status()["failures"]["recent"]
+        )
 
         campaign.finalize()
         assert campaign.state["status"] == "failed"
@@ -265,11 +276,14 @@ def main() -> None:
     main_js = (ROOT / "publicpower" / "app.js").read_text()
     assert 'id="campaign-state"' in html
     assert 'id="drill-list"' in html
+    assert 'id="failure-list"' in html
     assert 'id="acceptance-state"' in html
     assert "reliability_campaign" in javascript
+    assert "renderFailures" in javascript
     assert "reliability_campaign" not in main_js
     assert "campaign.html" not in main_html
     unit = (ROOT / "infra" / "systemd" / "powerhouse-reliability-campaign.service").read_text()
+    assert "systemd-inhibit" in unit
     assert "ProtectSystem=strict" in unit
     assert "ProtectHome=read-only" in unit
     assert "ReadWritePaths=%h/.local/state/powerhouse/reliability" in unit
