@@ -24,6 +24,8 @@ const fields = Object.fromEntries(
     "evidence-events",
     "evidence-head",
     "report-hash",
+    "failure-summary",
+    "failure-list",
     "drill-summary",
     "drill-list",
     "updated-at",
@@ -85,6 +87,41 @@ function renderDrills(drills = {}) {
   );
 }
 
+function compactReason(failure) {
+  const errors = Array.isArray(failure.errors) ? failure.errors : [];
+  if (failure.kind === "telemetry_gap") {
+    return `CONTROLLER GAP ${Number(failure.gap_seconds || 0).toFixed(3)}S / ${Number(failure.missed_samples) || 0} MISSED`;
+  }
+  if (!errors.length) return "NO ERROR DETAIL PUBLISHED";
+  return errors.join(" / ").replace(/\s+/g, " ").slice(0, 220);
+}
+
+function renderFailures(failures = {}) {
+  const items = Array.isArray(failures.recent) ? failures.recent.slice().reverse() : [];
+  fields["failure-summary"].textContent = `${Number(failures.total) || 0} TOTAL`;
+  if (!items.length) {
+    fields["failure-list"].innerHTML = '<li class="clear"><i></i><span><b>NO FAILED SAMPLES RECORDED</b><small>THE CURRENT CAMPAIGN IS CLEAN</small></span><strong>CLEAR</strong></li>';
+    return;
+  }
+  fields["failure-list"].replaceChildren(
+    ...items.map((failure) => {
+      const item = document.createElement("li");
+      item.className = failure.kind === "telemetry_gap" ? "gap" : "failed";
+      const marker = document.createElement("i");
+      const copy = document.createElement("span");
+      const title = document.createElement("b");
+      const detail = document.createElement("small");
+      const state = document.createElement("strong");
+      title.textContent = timestamp(failure.recorded_at);
+      detail.textContent = compactReason(failure);
+      state.textContent = String(failure.kind || "failure").replaceAll("_", " ").toUpperCase();
+      copy.append(title, detail);
+      item.append(marker, copy, state);
+      return item;
+    }),
+  );
+}
+
 function render(data) {
   const campaign = data.reliability_campaign || {};
   const state = campaign.status || "not_started";
@@ -134,6 +171,7 @@ function render(data) {
   fields["evidence-head"].textContent = evidence.head_sha256 || "AWAITING FIRST EVENT";
   fields["report-hash"].textContent = evidence.final_report_sha256 || "PENDING CAMPAIGN COMPLETION";
   fields["updated-at"].textContent = timestamp(campaign.updated_at || data.generated_at);
+  renderFailures(campaign.failures);
   renderDrills(campaign.drills);
 }
 
