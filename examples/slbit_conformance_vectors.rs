@@ -143,7 +143,7 @@ fn main() {
 
     let manifest = json!({
         "schema": "power-house-slbit-conformance-v1",
-        "slbit_version": "0.1.0",
+        "slbit_version": "3.0.0",
         "rootprint_state_fingerprint": sidecar.rootprint_state_fingerprint,
         "semantic_packets_affect_core_identity": false,
         "files": {

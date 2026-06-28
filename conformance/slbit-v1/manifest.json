@@ -6,5 +6,5 @@
   "rootprint_state_fingerprint": "sha256:a3390eead1a21bbdd06259cd48c1ab09d7fce3595095115c06cfa51f1f91bccb",
   "schema": "power-house-slbit-conformance-v1",
   "semantic_packets_affect_core_identity": false,
-  "slbit_version": "0.1.0"
+  "slbit_version": "3.0.0"
 }

@@ -1,5 +1,38 @@
 # Release Notes
 
+## v0.3.13 - 2026-06-27
+
+### Verifiable Memory Foundation
+- Added Memory Capsule v1 (`.phm`) as a portable proof-memory container for
+  `.pha` core artifacts, Rootprint lineage, replay expectations, optional
+  Observatory sidecars, opaque semantic packet bindings, witness receipts,
+  challenge vectors, and reproduction receipts.
+- Added strict capsule parsing with duplicate-key rejection, floating-point
+  rejection, canonical JSON digesting, and domain-separated capsule/core/
+  semantic-packet transport digests.
+- Added structured rejection traces that preserve the exact failure layer and
+  whether core verification had already passed.
+
+### JULIAN Memory CLI
+- Added `julian memory create`, `verify`, `replay`, `challenge`, `inspect`,
+  `explain-boundary`, and `export`.
+- Added challenge execution on mutated copies only, with expected layer/code
+  matching for capsule, core, Rootprint, replay, sidecar, and semantic binding
+  mutations.
+- Kept memory verification offline by default and independent from the network
+  feature.
+
+### Truth Boundary And Conformance
+- Added Memory Capsule, memory CLI, memory conformance, truth-boundary, and
+  soundness/scope documentation.
+- Added Rust and CLI integration tests proving valid capsule verification,
+  replay, challenge behavior, strict parser rejection, and semantic mutation
+  rejection without changing core validity.
+- Updated development-only `slbit` usage for the 3.0 Meaning Observatory path while preserving Power House
+  runtime independence from `slbit`.
+- Upgraded the network stack to `libp2p` 0.56.0, removing the yanked `core2`
+  transitive dependency from the release lockfile.
+
 ## v0.3.12 - 2026-06-19
 
 ### Campaign Acceptance Hardening

@@ -8,13 +8,15 @@
 Power House is a deterministic verification and provenance system for portable
 computational identities.
 
-`.pha` artifacts provide self-verifying identity containers with deterministic
-fingerprints that bind proof data, provenance metadata, and verification state.
+Power House 0.3.13 introduces Memory Capsules: self-verifying proof-memory
+objects that bind `.pha` artifacts, Rootprint lineage, replay state, optional
+witness receipts, challenge vectors, and non-core semantic packets into one
+offline-verifiable bundle.
 
-Rootprint provides a directed acyclic graph (DAG) for identity lineage,
-branching, merging, replay, navigation, and equivalence verification.
+`slbit` is the independent semantic layer: it shows what verified proof memory
+means without changing core proof identity.
 
-Current release: **v0.3.12**
+Current release: **v0.3.13**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -75,6 +77,19 @@ julian identity verify main.identity.json proof.rootprint.json
 julian identity replay main.identity.json proof.rootprint.json
 ```
 
+Create a portable proof-memory capsule:
+
+```bash
+julian memory create \
+  --pha main.pha \
+  --rootprint proof.rootprint.json \
+  --sidecar proof.observatory.json \
+  --output earth-001.phm
+julian memory verify earth-001.phm
+julian memory replay earth-001.phm
+julian memory challenge earth-001.phm --all
+```
+
 ## Human-Observable Proofs
 
 [`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency
@@ -120,6 +135,7 @@ not allocate the expanded Boolean hypercube.
 | --- | --- |
 | `.pha` v1 | Portable proof, public inputs, provenance, and core fingerprint |
 | Rootprint v1 | Deterministic proof-history graph with forks and merges |
+| `.phm` Memory Capsule v1 | Portable proof memory with core, lineage, replay, semantic bindings, witnesses, and challenges |
 | Observatory sidecar v1 | Non-core binding from replay state and branch IDs to semantic packets |
 | `PHSPv1` | Seeded sparse polynomial certificate |
 | `PHSMv1` | Canonical external sparse polynomial |
@@ -137,6 +153,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 cargo test --all-targets --locked
 cargo test --all-targets --features net --locked
+cargo test --test memory_capsule --test memory_cli --locked
 
 cargo run --example pha_conformance_vectors
 cargo run --example slbit_conformance_vectors
@@ -166,6 +183,10 @@ The complete procedure and expected rejection behavior are documented in the
   deterministic proof-history branching and verification.
 - [`ObservatorySidecar`](https://docs.rs/power_house/latest/power_house/observatory/struct.ObservatorySidecar.html):
   non-core semantic packet binding to verified Rootprint replay state.
+- [`MemoryCapsule`](https://docs.rs/power_house/latest/power_house/memory/struct.MemoryCapsule.html):
+  portable proof memory with replay and challenge verification.
+- [`MemoryCapsuleBuilder`](https://docs.rs/power_house/latest/power_house/memory/struct.MemoryCapsuleBuilder.html):
+  safe construction interface for `.phm` bundles.
 - [`prove_with_rootprint!`](https://docs.rs/power_house/latest/power_house/macro.prove_with_rootprint.html):
   recommended provenance-aware construction interface.
 - [`GeneralSumProof`](https://docs.rs/power_house/latest/power_house/sumcheck/struct.GeneralSumProof.html):

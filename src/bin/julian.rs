@@ -25,8 +25,9 @@ use power_house::net::{
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
-    read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote, EntryAnchor,
-    Field, GeneralSumProof, LedgerAnchor, ObservatorySidecar, ProofStats,
+    read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote,
+    ChallengeSuite, EntryAnchor, Field, GeneralSumProof, LedgerAnchor, MemoryCapsule,
+    MemoryCapsuleBuilder, MemoryError, MemoryVerificationPolicy, ObservatorySidecar, ProofStats,
 };
 #[cfg(feature = "net")]
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
@@ -69,6 +70,11 @@ fn fatal(message: &str) -> ! {
     std::process::exit(1);
 }
 
+fn fatal_code(code: i32, message: &str) -> ! {
+    eprintln!("{message}");
+    std::process::exit(code);
+}
+
 fn print_cli_help() {
     println!("Power-House JULIAN {}", env!("CARGO_PKG_VERSION"));
     println!("Usage: julian <command> [options]");
@@ -76,6 +82,7 @@ fn print_cli_help() {
     println!("Core commands:");
     println!("  identity         Create, branch, merge, replay, and verify identities");
     println!("  rootprint        Navigate, fork, merge, and verify Power House provenance");
+    println!("  memory           Create, verify, replay, challenge, and export proof memory");
     println!("  node             Replay logs, derive anchors, and verify Merkle proofs");
     println!("  scale_sumcheck   Benchmark streaming sum-check verification");
     println!();
@@ -163,6 +170,22 @@ fn print_observatory_help() {
     println!();
     println!("Rootprint core verification completes before the optional sidecar is checked.");
     println!("Semantic packets never alter Power House proof identity or validity.");
+}
+
+fn print_memory_help() {
+    println!(
+        "Usage: julian memory <create|verify|replay|challenge|inspect|explain-boundary|export> ..."
+    );
+    println!("  create --pha <main.pha> --rootprint <proof.rootprint.json> \\");
+    println!("         [--sidecar <proof.observatory.json>] [--output <capsule.phm>]");
+    println!("  verify <capsule.phm> [--policy strict|inspect] [--report <report.json>]");
+    println!("  replay <capsule.phm> [--report <replay.json>]");
+    println!("  challenge <capsule.phm> --all [--report <challenge.json>]");
+    println!("  inspect <capsule.phm> [--summary]");
+    println!("  explain-boundary <capsule.phm>");
+    println!("  export <capsule.phm> --format directory --output <dir>");
+    println!();
+    println!("Memory verification runs offline and verifies core truth before semantic bindings.");
 }
 
 #[cfg(feature = "net")]
@@ -390,6 +413,13 @@ fn main() {
                 print_rootprint_help();
             }
         }
+        Some("memory") => {
+            if let Some(sub) = args.next() {
+                handle_memory(&sub, args.collect());
+            } else {
+                print_memory_help();
+            }
+        }
         Some("identity") => {
             if let Some(sub) = args.next() {
                 handle_identity(&sub, args.collect());
@@ -521,6 +551,20 @@ fn handle_observatory(sub: &str, tail: Vec<String>) {
     }
 }
 
+fn handle_memory(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_memory_help(),
+        "create" => cmd_memory_create(tail),
+        "verify" => cmd_memory_verify(tail),
+        "replay" => cmd_memory_replay(tail),
+        "challenge" => cmd_memory_challenge(tail),
+        "inspect" => cmd_memory_inspect(tail),
+        "explain-boundary" => cmd_memory_explain_boundary(tail),
+        "export" => cmd_memory_export(tail),
+        _ => fatal(&format!("unknown memory subcommand: {sub}")),
+    }
+}
+
 fn read_pha(path: &Path) -> PhaArtifact {
     let contents = fs::read_to_string(path)
         .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
@@ -556,6 +600,15 @@ fn read_observatory_sidecar(path: &Path) -> ObservatorySidecar {
     serde_json::from_str(&contents).unwrap_or_else(|err| {
         fatal(&format!(
             "invalid Observatory sidecar JSON in {}: {err}",
+            path.display()
+        ))
+    })
+}
+
+fn read_memory_capsule(path: &Path, policy: &MemoryVerificationPolicy) -> MemoryCapsule {
+    MemoryCapsule::from_path(path, policy).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid Memory Capsule in {}: {err}",
             path.display()
         ))
     })
@@ -781,6 +834,346 @@ fn cmd_observatory_verify(args: Vec<String>) {
         sidecar.nodes.len(),
         sidecar.rootprint_state_fingerprint
     );
+}
+
+fn cmd_memory_create(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let mut pha_path = None;
+    let mut rootprint_path = None;
+    let mut sidecar_path = None;
+    let mut output = None;
+    let mut capsule_id = "memory".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--pha" => pha_path = Some(PathBuf::from(take_option(&mut iter, "--pha"))),
+            "--rootprint" => {
+                rootprint_path = Some(PathBuf::from(take_option(&mut iter, "--rootprint")))
+            }
+            "--sidecar" => sidecar_path = Some(PathBuf::from(take_option(&mut iter, "--sidecar"))),
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            "--capsule-id" => capsule_id = take_option(&mut iter, "--capsule-id"),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let pha = read_pha(&pha_path.unwrap_or_else(|| fatal("--pha is required")));
+    let rootprint =
+        read_rootprint(&rootprint_path.unwrap_or_else(|| fatal("--rootprint is required")));
+    let output = output.unwrap_or_else(|| PathBuf::from("capsule.phm"));
+    let mut builder = MemoryCapsuleBuilder::new(capsule_id)
+        .producer("mfenx", env!("CARGO_PKG_VERSION"))
+        .with_pha(pha)
+        .with_rootprint(rootprint.clone())
+        .with_replay_required()
+        .with_challenge_suite(ChallengeSuite::standard());
+    if let Some(path) = sidecar_path {
+        let sidecar = read_observatory_sidecar(&path);
+        sidecar
+            .verify(&rootprint)
+            .unwrap_or_else(|err| fatal(&format!("sidecar verification failed: {err}")));
+        for (branch_id, packet) in &sidecar.nodes {
+            let packet_schema = packet
+                .get("schema")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("opaque/semantic-packet");
+            let packet_id = packet
+                .get("packet_id")
+                .or_else(|| packet.get("claim_id"))
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or(branch_id);
+            builder = builder
+                .with_semantic_packet(
+                    packet_schema,
+                    packet_id,
+                    branch_id,
+                    &sidecar.rootprint_state_fingerprint,
+                    "claim_view",
+                    packet.clone(),
+                )
+                .unwrap_or_else(|err| fatal(&format!("semantic packet binding failed: {err}")));
+        }
+        builder = builder.with_sidecar(sidecar);
+    }
+    let capsule = builder
+        .build()
+        .unwrap_or_else(|err| fatal(&format!("memory capsule creation failed: {err}")));
+    capsule
+        .write_canonical(&output)
+        .unwrap_or_else(|err| fatal(&format!("failed to write capsule: {err}")));
+    println!("memory_capsule: {}", output.display());
+    println!(
+        "capsule_digest: {}",
+        capsule.header.capsule_digest.as_deref().unwrap_or("<none>")
+    );
+    println!("truth_boundary: semantic packets are non-core and cannot alter proof identity");
+}
+
+fn cmd_memory_verify(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut report_output = None;
+    let mut policy = MemoryVerificationPolicy::strict();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--policy" => {
+                policy = match take_option(&mut iter, "--policy").as_str() {
+                    "strict" => MemoryVerificationPolicy::strict(),
+                    "inspect" => MemoryVerificationPolicy::inspect(),
+                    other => fatal(&format!("unknown memory policy: {other}")),
+                }
+            }
+            "--report" => report_output = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 1 {
+        fatal("memory verify requires <capsule.phm>");
+    }
+    let capsule = read_memory_capsule(Path::new(&positionals[0]), &policy);
+    match capsule.verify(policy) {
+        Ok(report) => {
+            if let Some(path) = report_output {
+                write_json(&path, &report);
+            }
+            println!("POWER HOUSE MEMORY VERIFY");
+            println!();
+            println!("capsule: {}", positionals[0]);
+            println!("capsule_digest: {}", report.capsule_digest);
+            println!("schema: {}", capsule.header.schema);
+            println!();
+            println!("CORE        {}", status_word(report.core_valid));
+            println!("ROOTPRINT   {}", status_word(report.rootprint_valid));
+            println!("REPLAY      {}", status_word(report.replay_valid));
+            println!("SIDECAR     {}", optional_status_word(report.sidecar_valid));
+            println!(
+                "SEMANTIC    {}",
+                optional_status_word(report.semantic_valid)
+            );
+            let valid_witnesses = report
+                .witness_validity
+                .iter()
+                .filter(|item| item.valid)
+                .count();
+            println!(
+                "WITNESSES   {} VALID / {} INVALID",
+                valid_witnesses,
+                report
+                    .witness_validity
+                    .len()
+                    .saturating_sub(valid_witnesses)
+            );
+            println!();
+            println!("truth boundary:");
+            println!("  core proof identity is independent from semantic rendering");
+        }
+        Err(MemoryError::Rejected(trace)) => {
+            if let Some(path) = report_output {
+                write_json(&path, &trace);
+            }
+            println!("POWER HOUSE MEMORY VERIFY");
+            println!();
+            println!(
+                "CORE        {}",
+                status_word(trace.core_valid_before_failure)
+            );
+            println!(
+                "ROOTPRINT   {}",
+                status_word(trace.rootprint_valid_before_failure)
+            );
+            println!("{}        INVALID", trace.layer.to_uppercase());
+            println!();
+            println!("rejection:");
+            println!("  layer: {}", trace.layer);
+            println!("  code: {}", trace.code);
+            println!("  reason: {}", trace.message);
+            if let Some(path) = trace.json_pointer {
+                println!("  path: {path}");
+            }
+            println!(
+                "  semantic_can_affect_core: {}",
+                trace.semantic_can_affect_core
+            );
+            fatal_code(1, "memory capsule rejected");
+        }
+        Err(err) => fatal(&format!("memory verification failed: {err}")),
+    }
+}
+
+fn cmd_memory_replay(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut report_output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--report" => report_output = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 1 {
+        fatal("memory replay requires <capsule.phm>");
+    }
+    let policy = MemoryVerificationPolicy::strict();
+    let capsule = read_memory_capsule(Path::new(&positionals[0]), &policy);
+    let report = capsule
+        .replay()
+        .unwrap_or_else(|err| fatal(&format!("memory replay failed: {err}")));
+    if let Some(path) = report_output {
+        write_json(&path, &report);
+    }
+    println!("replay_fingerprint: {}", report.replay_fingerprint);
+    println!("branches: {}", report.branch_count);
+    println!("replay: {}", status_word(report.replay_valid));
+}
+
+fn cmd_memory_challenge(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut report_output = None;
+    let mut run_all = false;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--all" => run_all = true,
+            "--report" => report_output = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 1 || !run_all {
+        fatal("memory challenge requires <capsule.phm> --all");
+    }
+    let policy = MemoryVerificationPolicy::strict();
+    let capsule = read_memory_capsule(Path::new(&positionals[0]), &policy);
+    let report = capsule
+        .challenge_all(policy)
+        .unwrap_or_else(|err| fatal(&format!("memory challenge failed: {err}")));
+    if let Some(path) = report_output {
+        write_json(&path, &report);
+    }
+    println!(
+        "CHALLENGE   {}/{} EXPECTED REJECTIONS",
+        report.expected_rejections, report.total
+    );
+    if report.mismatches > 0 {
+        fatal_code(9, "memory challenge mismatch");
+    }
+}
+
+fn cmd_memory_inspect(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let path = args
+        .iter()
+        .find(|arg| !arg.starts_with("--"))
+        .unwrap_or_else(|| fatal("memory inspect requires <capsule.phm>"));
+    let policy = MemoryVerificationPolicy::inspect();
+    let capsule = read_memory_capsule(Path::new(path), &policy);
+    println!("capsule_id: {}", capsule.header.capsule_id);
+    println!("schema: {}", capsule.header.schema);
+    println!(
+        "capsule_digest: {}",
+        capsule
+            .header
+            .capsule_digest
+            .as_deref()
+            .unwrap_or("<missing>")
+    );
+    println!("branches: {}", capsule.lineage.rootprint.branches.len());
+    println!(
+        "semantic_packets: {}",
+        capsule
+            .semantics
+            .as_ref()
+            .map(|layer| layer.packets.len())
+            .unwrap_or(0)
+    );
+}
+
+fn cmd_memory_explain_boundary(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    println!("Power House verifies core artifacts, Rootprint lineage, and replay state.");
+    println!("Observatory sidecars bind semantic packets to verified Rootprint replay.");
+    println!("slbit packets explain meaning but do not become proof identity.");
+    println!("Witnesses observe capsule digests; they do not make false claims true.");
+    println!("Challenge vectors mutate copies and show where falsehood is rejected.");
+}
+
+fn cmd_memory_export(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_memory_help();
+        return;
+    }
+    let mut positionals = Vec::new();
+    let mut format = None;
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--format" => format = Some(take_option(&mut iter, "--format")),
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if !value.starts_with("--") => positionals.push(value.to_string()),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    if positionals.len() != 1 {
+        fatal("memory export requires <capsule.phm>");
+    }
+    if format.as_deref() != Some("directory") {
+        fatal("memory export currently supports --format directory");
+    }
+    let output = output.unwrap_or_else(|| fatal("--output is required"));
+    let policy = MemoryVerificationPolicy::inspect();
+    let capsule = read_memory_capsule(Path::new(&positionals[0]), &policy);
+    fs::create_dir_all(&output)
+        .unwrap_or_else(|err| fatal(&format!("failed to create {}: {err}", output.display())));
+    write_json(&output.join("capsule.json"), &capsule);
+    write_json(&output.join("core.pha"), &capsule.core.pha);
+    write_json(&output.join("rootprint.json"), &capsule.lineage.rootprint);
+    if let Some(sidecar) = capsule
+        .semantics
+        .as_ref()
+        .and_then(|semantics| semantics.sidecar.as_ref())
+    {
+        write_json(&output.join("observatory-sidecar.json"), sidecar);
+    }
+    println!("memory_export: {}", output.display());
+}
+
+fn status_word(valid: bool) -> &'static str {
+    if valid {
+        "VALID"
+    } else {
+        "INVALID"
+    }
+}
+
+fn optional_status_word(valid: Option<bool>) -> &'static str {
+    match valid {
+        Some(true) => "VALID",
+        Some(false) => "INVALID",
+        None => "NOT PRESENT",
+    }
 }
 
 fn cmd_identity_create(args: Vec<String>) {

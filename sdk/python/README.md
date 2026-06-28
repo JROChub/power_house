@@ -1,6 +1,6 @@
 # Power House Python SDK
 
-Version: 0.3.12
+Version: 0.3.13
 
 The default `power_house` namespace implements immutable identity operations,
 `.pha` v1, and Rootprint v1 without requiring network access or interpreting
@@ -33,6 +33,19 @@ EPA transport helpers are deliberately separated:
 
 ```python
 from power_house.external import attach_external_proof, verify_external_attachments
+```
+
+Memory Capsules can be loaded and checked offline. The Python SDK verifies
+capsule/core digests, `.pha`, Rootprint replay, and semantic packet transport
+bindings; unsupported proof profiles are reported instead of silently accepted
+as fully proven:
+
+```python
+from power_house import load_memory_capsule, verify_memory_capsule
+
+capsule = load_memory_capsule("earth-001.phm")
+report = verify_memory_capsule(capsule, policy="strict")
+print(report.core_valid, report.replay_valid)
 ```
 
 Run the shared conformance suite from the repository root:
