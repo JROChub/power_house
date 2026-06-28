@@ -278,10 +278,12 @@ def main() -> None:
     assert 'id="drill-list"' in html
     assert 'id="failure-list"' in html
     assert 'id="acceptance-state"' in html
+    assert 'id="campaign-note-title"' in html
     assert "reliability_campaign" in javascript
     assert "renderFailures" in javascript
+    assert "NETWORK ON TRACK / EVIDENCE CONTINUITY CAUTION" in javascript
     assert "reliability_campaign" not in main_js
-    assert "campaign.html" not in main_html
+    assert "campaign.html" in main_html
     unit = (ROOT / "infra" / "systemd" / "powerhouse-reliability-campaign.service").read_text()
     assert "systemd-inhibit" in unit
     assert "ProtectSystem=strict" in unit

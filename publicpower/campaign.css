@@ -109,6 +109,45 @@ h1 {
 .acceptance-gates[data-gate="passed"] .acceptance-lead b { color: var(--live); }
 .acceptance-gates[data-gate="off-track"] .acceptance-lead b,
 .acceptance-gates[data-gate="failed"] .acceptance-lead b { color: var(--down); }
+.acceptance-gates[data-evidence="caution"] { box-shadow: inset 0 -1px 0 rgba(255, 193, 77, 0.36); }
+
+.campaign-note {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 16px 18px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-left: 3px solid rgba(69, 221, 210, 0.72);
+  background: rgba(4, 10, 8, 0.72);
+}
+
+.campaign-note span {
+  color: var(--teal);
+  font-size: 10px;
+}
+
+.campaign-note b {
+  color: var(--text);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.campaign-note p {
+  max-width: 860px;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.campaign-note[data-tone="caution"] {
+  border-left-color: var(--warn);
+  background: linear-gradient(90deg, rgba(255, 193, 77, 0.11), rgba(4, 10, 8, 0.72) 48%);
+}
+
+.campaign-note[data-tone="caution"] b {
+  color: var(--warn);
+}
 
 .telemetry { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .telemetry article { min-height: 132px; display: grid; align-content: center; gap: 8px; padding: 20px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -129,8 +168,10 @@ h1 {
 .failure-ledger li strong, .drill-ledger li strong { color: var(--muted); font-size: 10px; text-align: right; }
 .failure-ledger li.clear i { border-color: var(--live); background: var(--live); }
 .failure-ledger li.clear strong { color: var(--live); }
-.failure-ledger li.failed i, .failure-ledger li.gap i { border-color: var(--down); background: var(--down); }
-.failure-ledger li.failed strong, .failure-ledger li.gap strong { color: var(--down); }
+.failure-ledger li.failed i { border-color: var(--down); background: var(--down); }
+.failure-ledger li.failed strong { color: var(--down); }
+.failure-ledger li.gap i { border-color: var(--warn); background: var(--warn); }
+.failure-ledger li.gap strong { color: var(--warn); }
 .drill-ledger li.passed i { border-color: var(--live); background: var(--live); }
 .drill-ledger li.passed strong { color: var(--live); }
 .drill-ledger li.running i { border-color: var(--warn); background: var(--warn); animation: blink 1s infinite; }
