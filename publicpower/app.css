@@ -2631,6 +2631,47 @@ body[data-network="outage"] .network-ribbon-state i {
   color: #9eaca7;
 }
 
+.release-links {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.release-links a {
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  color: #9eaca7;
+  text-decoration: none;
+  border: 1px solid rgba(214, 232, 225, 0.1);
+  background: linear-gradient(135deg, rgba(69, 221, 210, 0.08), rgba(2, 8, 9, 0.72));
+  box-shadow: inset 2px 0 0 rgba(69, 221, 210, 0.22);
+}
+
+.release-links a:hover {
+  color: var(--paper);
+  border-color: rgba(69, 221, 210, 0.34);
+  background: linear-gradient(135deg, rgba(185, 255, 61, 0.1), rgba(2, 8, 9, 0.8));
+}
+
+.release-links span,
+.release-links b {
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.release-links span {
+  color: var(--cyan);
+}
+
+.release-links b {
+  color: #cbd8d3;
+}
+
 .center-stage {
   inset: var(--top) 0 var(--dock);
 }
@@ -3122,7 +3163,8 @@ body[data-network="outage"] .network-ribbon-state i {
     display: none;
   }
 
-  .rail-status {
+  .rail-status,
+  .release-links {
     display: none;
   }
 }
@@ -3424,6 +3466,7 @@ body[data-network="outage"] .network-ribbon-state i {
   .rail-heading,
   .install-command,
   .rail-status,
+  .release-links,
   .proof-event,
   #sound-toggle,
   #motion-toggle {
