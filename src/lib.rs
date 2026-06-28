@@ -7,6 +7,9 @@
 //!
 //! - [`identity`] provides immutable computational identities over `.pha` and
 //!   Rootprint.
+//! - [`memory`] packages core artifacts, Rootprint lineage, replay state,
+//!   semantic bindings, witnesses, and challenge vectors into portable
+//!   proof-memory capsules.
 //! - [`observatory`] binds optional human-readable visualization sidecars to
 //!   verified Rootprint replay state.
 //! - [`provenance`] defines Power House Archive (`.pha`) and Rootprint v1.
@@ -83,7 +86,10 @@
 //!
 //! # Feature flags
 //!
-//! - `default`: proof, provenance, transcript, and sparse-certificate APIs.
+//! - `default`: proof, provenance, transcript, sparse-certificate, and memory
+//!   APIs.
+//! - `memory`: portable proof-memory capsules without network access.
+//! - `memory-net`: memory workflows that may compose with network features.
 //! - `net`: networking, migration commands, data availability, governance,
 //!   staking, and native JSON-RPC.
 //!
@@ -102,6 +108,7 @@ pub mod identity;
 mod io;
 pub mod julian;
 mod log_parser;
+pub mod memory;
 mod merkle;
 mod multilinear;
 pub mod observatory;
@@ -135,6 +142,11 @@ pub use julian::{
     ProofKind, ProofLedger, Statement, JULIAN_GENESIS_STATEMENT,
 };
 pub use log_parser::{parse_log_file, read_fold_digest_hint, LogRecordMetadata, ParsedLogFile};
+pub use memory::{
+    ChallengeSuite, ChallengeVector, MemoryCapsule, MemoryCapsuleBuilder, MemoryCapsuleReport,
+    MemoryChallengeReport, MemoryError, MemoryReplayReport, MemoryVerificationPolicy,
+    MemoryVerificationReport, RejectionTrace, WitnessReceipt,
+};
 pub use merkle::{
     build_proof as build_merkle_proof, merkle_root, verify_proof as verify_merkle_proof,
     MerkleProof, MerkleProofNode,

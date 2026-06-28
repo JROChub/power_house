@@ -2,7 +2,7 @@
 
 ## Status
 
-Normative for Power House v0.3.12.
+Normative for Power House v0.3.13.
 
 This document defines the portable Power House Archive v1 JSON format. The
 schema identifier is:

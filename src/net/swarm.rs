@@ -2433,7 +2433,7 @@ async fn publish_anchor_payload(
         Ok(_) => {
             NO_GOSSIP_PEERS_LOGGED.store(false, Ordering::Relaxed);
         }
-        Err(PublishError::InsufficientPeers) => {
+        Err(PublishError::NoPeersSubscribedToTopic) => {
             if !NO_GOSSIP_PEERS_LOGGED.swap(true, Ordering::Relaxed) {
                 println!("QSYS|mod=ANCHOR|evt=STANDBY|reason=awaiting_peers");
             }
@@ -2541,7 +2541,7 @@ async fn broadcast_anchor_vote(
         .publish(TOPIC_VOTES.clone(), message)
     {
         Ok(_) => Ok(()),
-        Err(PublishError::InsufficientPeers) => Ok(()),
+        Err(PublishError::NoPeersSubscribedToTopic) => Ok(()),
         Err(PublishError::Duplicate) => Ok(()),
         Err(err) => {
             metrics.inc_gossipsub_rejects();
@@ -2975,7 +2975,9 @@ async fn publish_native_message(
                 .gossipsub
                 .publish(TOPIC_NATIVE_CHAIN.clone(), bytes)
             {
-                Ok(_) | Err(PublishError::InsufficientPeers) | Err(PublishError::Duplicate) => {}
+                Ok(_)
+                | Err(PublishError::NoPeersSubscribedToTopic)
+                | Err(PublishError::Duplicate) => {}
                 Err(err) => return Err(NetworkError::Libp2p(err.to_string())),
             }
         }
@@ -3009,7 +3011,7 @@ fn bridge_anchor_message(
             .publish(topic.clone(), message.to_vec())
         {
             Ok(_) => {}
-            Err(PublishError::InsufficientPeers) => {}
+            Err(PublishError::NoPeersSubscribedToTopic) => {}
             Err(PublishError::Duplicate) => {}
             Err(err) => {
                 metrics.inc_gossipsub_rejects();

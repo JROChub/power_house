@@ -40,7 +40,7 @@ const samples = {
   drone: {
     claim: ["drone-camera-frame-7842", 4096],
     seed: "drone-seed-7842",
-    producer: ["mfenx-slbit-demo", "2.0.0", "browser"],
+    producer: ["mfenx-slbit-demo", "3.0.0", "browser"],
     visualization: { color: [0, 200, 255], icon: "camera", layer_name: "perception-conv3" },
     rounds: [
       [0, "sensor-frame", "sensor-processing", "Raw camera frame converted into normalized features"],

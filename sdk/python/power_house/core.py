@@ -3,21 +3,60 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import dataclass
 import hashlib
 import json
 import unicodedata
-from typing import Any, Dict, Iterable, List, Tuple
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 PHA_SCHEMA_V1 = "power-house/pha/v1"
 ROOTPRINT_SCHEMA_V1 = "power-house/rootprint/v1"
+MEMORY_CAPSULE_SCHEMA_V1 = "power-house/memory-capsule/v1"
 
 _PHX_DOMAIN = b"power-house:pha:v1:phx-fingerprint\x00"
 _BRANCH_DOMAIN = b"power-house:rootprint:v1:branch-id\x00"
 _REPLAY_DOMAIN = b"power-house:rootprint:v1:replay-state\x00"
+_MEMORY_CAPSULE_DOMAIN = b"PHM-CAPSULE-v1\x00"
+_MEMORY_CORE_DOMAIN = b"PHM-CORE-v1\x00"
+_SEMANTIC_PACKET_DOMAIN = b"PHM-SEMANTIC-PACKET-v1\x00"
 
 
 class PowerHouseError(ValueError):
     """Raised when a Power House artifact or Rootprint graph is invalid."""
+
+
+@dataclass(frozen=True)
+class MemoryVerificationReport:
+    """Python verification report for Memory Capsule transport integrity."""
+
+    capsule_digest: str
+    core_valid: bool
+    rootprint_valid: bool
+    replay_valid: bool
+    sidecar_valid: Optional[bool]
+    semantic_valid: Optional[bool]
+    unsupported_profiles: Tuple[str, ...] = ()
+
+
+def _strict_object(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    found = set()
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in found:
+            raise PowerHouseError(f"duplicate JSON key: {key}")
+        found.add(key)
+        result[key] = value
+    return result
+
+
+def _loads_strict_json(text: str) -> Any:
+    try:
+        value = json.loads(text, object_pairs_hook=_strict_object)
+    except json.JSONDecodeError as error:
+        raise PowerHouseError(f"invalid JSON: {error}") from error
+    _validate_json_numbers(value)
+    return value
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -53,6 +92,16 @@ def _validate_json_numbers(value: Any) -> None:
 def _sha256(domain: bytes, value: Any) -> str:
     digest = hashlib.sha256(domain + _canonical_json(value)).hexdigest()
     return f"sha256:{digest}"
+
+
+def _validate_sha256(value: Any) -> None:
+    if (
+        not isinstance(value, str)
+        or not value.startswith("sha256:")
+        or len(value) != 71
+        or any(character not in "0123456789abcdef" for character in value[7:])
+    ):
+        raise PowerHouseError(f"invalid SHA-256 digest: {value}")
 
 
 def _core_projection(artifact: Dict[str, Any]) -> Dict[str, Any]:
@@ -504,3 +553,124 @@ def _bind_identity(
         "pha": copy.deepcopy(branch["artifact"]),
         "rootprint_id": rootprint_id,
     }
+
+
+def load_memory_capsule(path: str | Path) -> Dict[str, Any]:
+    """Load a Memory Capsule with duplicate-key and float rejection."""
+    return _loads_strict_json(Path(path).read_text(encoding="utf-8"))
+
+
+def calculate_memory_capsule_digest(capsule: Dict[str, Any]) -> str:
+    """Calculate the PHM capsule digest with the stored digest excluded."""
+    projection = copy.deepcopy(capsule)
+    projection.setdefault("header", {})["capsule_digest"] = None
+    return _sha256(_MEMORY_CAPSULE_DOMAIN, projection)
+
+
+def calculate_memory_core_digest(core: Dict[str, Any]) -> str:
+    """Calculate the PHM core layer digest."""
+    projection = {
+        "core_verification_policy": core["core_verification_policy"],
+        "pha": core["pha"],
+        "proofs": core["proofs"],
+    }
+    return _sha256(_MEMORY_CORE_DOMAIN, projection)
+
+
+def semantic_packet_digest(packet: Dict[str, Any]) -> str:
+    """Calculate the PHM transport digest for an opaque semantic packet."""
+    projection = copy.deepcopy(packet)
+    if isinstance(projection, dict):
+        if "packet_digest" in projection:
+            projection["packet_digest"] = ""
+        digests = projection.get("digests")
+        if isinstance(digests, dict):
+            if "packet" in digests:
+                digests["packet"] = ""
+            if "packet_digest" in digests:
+                digests["packet_digest"] = ""
+    return _sha256(_SEMANTIC_PACKET_DOMAIN, projection)
+
+
+def verify_memory_capsule(
+    capsule: Dict[str, Any], policy: str = "strict"
+) -> MemoryVerificationReport:
+    """Verify a Memory Capsule's offline transport and replay bindings.
+
+    Python verifies deterministic capsule/core digests, PHA identity,
+    Rootprint structure, replay fingerprint, and semantic packet bindings.
+    It reports unsupported proof descriptors instead of pretending to verify
+    proof systems outside the Python SDK.
+    """
+    if policy not in {"strict", "inspect"}:
+        raise PowerHouseError(f"unsupported memory policy: {policy}")
+    if capsule.get("header", {}).get("schema") != MEMORY_CAPSULE_SCHEMA_V1:
+        raise PowerHouseError(
+            f"unsupported Memory Capsule schema: {capsule.get('header', {}).get('schema')}"
+        )
+    if policy == "strict" and capsule.get("header", {}).get("critical_extensions"):
+        raise PowerHouseError("unknown critical extension")
+
+    capsule_digest = calculate_memory_capsule_digest(capsule)
+    stored_capsule_digest = capsule.get("header", {}).get("capsule_digest")
+    if stored_capsule_digest is not None:
+        _validate_sha256(stored_capsule_digest)
+        if stored_capsule_digest != capsule_digest:
+            raise PowerHouseError("capsule digest mismatch")
+
+    core = capsule.get("core")
+    if not isinstance(core, dict):
+        raise PowerHouseError("Memory Capsule core layer is missing")
+    verify_artifact(core["pha"])
+    expected_core_digest = calculate_memory_core_digest(core)
+    _validate_sha256(core.get("core_digest"))
+    if core["core_digest"] != expected_core_digest:
+        raise PowerHouseError("core digest mismatch")
+    unsupported_profiles = tuple(
+        proof.get("verification_profile", "unknown")
+        for proof in core.get("proofs", [])
+        if proof.get("verification_profile") not in {"rootprint-replay", "sdk-transport"}
+    )
+
+    rootprint = capsule.get("lineage", {}).get("rootprint")
+    verify_rootprint(rootprint)
+    replay_state = replay_rootprint(rootprint)
+    expected = capsule.get("replay", {}).get("replay", {}).get("expected", {})
+    replay_fingerprint = expected.get("replay_fingerprint")
+    _validate_sha256(replay_fingerprint)
+    replay_valid = replay_state["state_fingerprint"] == replay_fingerprint
+    if policy == "strict" and not replay_valid:
+        raise PowerHouseError("replay fingerprint mismatch")
+
+    sidecar_valid: Optional[bool] = None
+    semantic_valid: Optional[bool] = None
+    semantics = capsule.get("semantics")
+    if semantics is not None:
+        sidecar_valid = semantics.get("sidecar") is not None
+        if policy == "strict" and not sidecar_valid:
+            raise PowerHouseError("semantic layer present without required sidecar")
+        semantic_policy = semantics.get("semantic_policy", {})
+        if semantic_policy.get("semantic_changes_affect_core") is not False:
+            raise PowerHouseError("semantic policy attempted to affect core identity")
+        for index, packet in enumerate(semantics.get("packets", [])):
+            if packet.get("bound_branch_id") not in rootprint["branches"]:
+                raise PowerHouseError(f"semantic packet {index} is bound to an unknown branch")
+            if packet.get("bound_replay_fingerprint") != replay_state["state_fingerprint"]:
+                raise PowerHouseError(f"semantic packet {index} replay binding mismatch")
+            _validate_sha256(packet.get("packet_digest"))
+            packet_value = packet.get("packet")
+            if packet_value is not None:
+                expected_packet_digest = semantic_packet_digest(packet_value)
+                if packet["packet_digest"] != expected_packet_digest:
+                    raise PowerHouseError(f"semantic packet {index} digest mismatch")
+        semantic_valid = True
+
+    return MemoryVerificationReport(
+        capsule_digest=capsule_digest,
+        core_valid=True,
+        rootprint_valid=True,
+        replay_valid=replay_valid,
+        sidecar_valid=sidecar_valid,
+        semantic_valid=semantic_valid,
+        unsupported_profiles=unsupported_profiles,
+    )

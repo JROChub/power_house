@@ -1,10 +1,15 @@
 import copy
 import json
 import pathlib
+import tempfile
 import unittest
 
 from power_house import (
+    MEMORY_CAPSULE_SCHEMA_V1,
     PowerHouseError,
+    ROOTPRINT_SCHEMA_V1,
+    calculate_memory_capsule_digest,
+    calculate_memory_core_digest,
     calculate_phx_fingerprint,
     create_artifact,
     create_identity,
@@ -17,10 +22,13 @@ from power_house import (
     merge_identity,
     merge_rootprints,
     new_rootprint,
+    load_memory_capsule,
     replay_identity,
     replay_rootprint,
+    semantic_packet_digest,
     verify_artifact,
     verify_identity,
+    verify_memory_capsule,
     verify_rootprint,
 )
 from power_house.external import attach_external_proof, verify_external_attachments
@@ -29,6 +37,129 @@ from power_house.external import attach_external_proof, verify_external_attachme
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 VECTORS = ROOT / "conformance" / "pha-v1"
 IDENTITY_VECTORS = ROOT / "conformance" / "identity-v1"
+
+
+def memory_capsule_fixture(include_semantics=False):
+    artifact = create_artifact(
+        {"source": "python-memory"},
+        "power-house/python-memory/v1",
+        {"claim": 13},
+        {"accepted": True},
+    )
+    graph = new_rootprint("main", artifact)
+    replay = replay_rootprint(graph)
+    core = {
+        "pha": artifact,
+        "proofs": [
+            {
+                "kind": "rootprint",
+                "schema": ROOTPRINT_SCHEMA_V1,
+                "digest": replay["state_fingerprint"],
+                "bytes_ref": None,
+                "public_statement": "python memory fixture",
+                "verification_profile": "rootprint-replay",
+            }
+        ],
+        "core_digest": "",
+        "core_verification_policy": {
+            "require_rootprint": True,
+            "require_replay": True,
+            "allow_external_attachments": True,
+            "fail_on_unknown_critical": True,
+        },
+    }
+    core["core_digest"] = calculate_memory_core_digest(core)
+    capsule = {
+        "header": {
+            "schema": MEMORY_CAPSULE_SCHEMA_V1,
+            "capsule_id": "phm_python_memory",
+            "capsule_digest": None,
+            "created_at_unix_ms": 0,
+            "producer": {
+                "name": "python-sdk",
+                "tool": "power_house",
+                "power_house_version": "0.3.13",
+                "slbit_version": None,
+                "rustc": None,
+                "platform": "python",
+            },
+            "critical_extensions": [],
+            "noncritical_extensions": [],
+        },
+        "core": core,
+        "lineage": {
+            "rootprint": graph,
+            "branches": [
+                {
+                    "branch_id": graph["root_branch"],
+                    "label": "main",
+                    "parent_ids": [],
+                    "artifact_digest": artifact["phx_fingerprint"],
+                    "state_fingerprint": replay["state_fingerprint"],
+                    "operation": "create",
+                }
+            ],
+            "equivalence": [],
+        },
+        "replay": {
+            "replay": {
+                "engine": "power_house",
+                "version": "0.3.13",
+                "commands": ["python verify_memory_capsule"],
+                "expected": {
+                    "core_valid": True,
+                    "rootprint_valid": True,
+                    "replay_fingerprint": replay["state_fingerprint"],
+                    "sidecar_valid": None,
+                },
+                "resource_bounds": {
+                    "max_memory_mb": 512,
+                    "max_disk_mb": 1024,
+                    "max_wall_seconds_reference": 600,
+                },
+                "network_required": False,
+            }
+        },
+        "witnesses": [],
+        "receipts": [],
+    }
+    if include_semantics:
+        packet = {
+            "schema": "slbit/viz-packet/v3",
+            "packet_id": "slp_python_memory",
+            "packet_digest": "",
+            "claim": {
+                "label": "python-memory",
+                "bound_core": {
+                    "capsule_id": capsule["header"]["capsule_id"],
+                    "branch_id": graph["root_branch"],
+                    "replay_fingerprint": replay["state_fingerprint"],
+                },
+            },
+        }
+        packet["packet_digest"] = semantic_packet_digest(packet)
+        capsule["semantics"] = {
+            "sidecar_schema": "power-house/observatory-sidecar/v2",
+            "packets": [
+                {
+                    "packet_schema": "slbit/viz-packet/v3",
+                    "packet_id": packet["packet_id"],
+                    "packet_digest": packet["packet_digest"],
+                    "bound_branch_id": graph["root_branch"],
+                    "bound_replay_fingerprint": replay["state_fingerprint"],
+                    "role": "claim_view",
+                    "packet": packet,
+                }
+            ],
+            "semantic_policy": {
+                "semantic_changes_affect_core": False,
+                "llm_text_is_non_authoritative": True,
+                "require_packet_digest": True,
+                "require_branch_binding": True,
+            },
+        }
+    capsule["header"]["capsule_digest"] = calculate_memory_capsule_digest(capsule)
+    return capsule
 
 
 class PowerHouseSdkTests(unittest.TestCase):
@@ -202,6 +333,37 @@ class PowerHouseSdkTests(unittest.TestCase):
         self.assertEqual(
             replay_identity(generated_identity, generated_graph), expected
         )
+
+    def test_memory_capsule_verification_and_loading(self):
+        capsule = memory_capsule_fixture()
+        report = verify_memory_capsule(capsule)
+        self.assertTrue(report.core_valid)
+        self.assertTrue(report.rootprint_valid)
+        self.assertTrue(report.replay_valid)
+        self.assertEqual(report.unsupported_profiles, ())
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = pathlib.Path(temp) / "capsule.phm"
+            path.write_text(json.dumps(capsule, separators=(",", ":"), sort_keys=True))
+            self.assertEqual(load_memory_capsule(path), capsule)
+            path.write_text('{"a":1,"a":2}')
+            with self.assertRaises(PowerHouseError):
+                load_memory_capsule(path)
+
+    def test_memory_semantic_mutation_is_non_core(self):
+        capsule = memory_capsule_fixture(include_semantics=True)
+        report = verify_memory_capsule(capsule, policy="inspect")
+        self.assertTrue(report.core_valid)
+        self.assertTrue(report.semantic_valid)
+        self.assertFalse(report.sidecar_valid)
+
+        original_core_digest = capsule["core"]["core_digest"]
+        mutated = copy.deepcopy(capsule)
+        mutated["semantics"]["packets"][0]["packet"]["claim"]["label"] = "tampered"
+        mutated["header"]["capsule_digest"] = calculate_memory_capsule_digest(mutated)
+        with self.assertRaises(PowerHouseError):
+            verify_memory_capsule(mutated, policy="inspect")
+        self.assertEqual(mutated["core"]["core_digest"], original_core_digest)
 
 
 if __name__ == "__main__":
