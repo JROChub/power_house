@@ -78,6 +78,30 @@ const modes = {
     unit: "BRANCHES",
     action: verifyRootprintRelease,
   },
+  sfcs: {
+    exponent: 6,
+    domainLabel: "SFCS",
+    domainCaption: "FRACTAL SUBSTRATE",
+    dossierDomain: "6-NODE DRAFT GRAPH",
+    domain: "FRACTAL DIGEST BOUND",
+    verifierPath: "SFCS DIGEST + PHA BRIDGE",
+    allocation: "ROOTPRINT v1 SAFE",
+    dossierArtifact: "BROWSER SFCS GRAPH",
+    kicker: "SOVEREIGN FRACTAL COMPUTATION",
+    description:
+      "Commit a computational fractal into a normal .pha artifact, then derive the Rootprint bridge without changing legacy identity rules.",
+    title: "Run the SFCS browser bridge",
+    detail:
+      "The browser verifies graph shape, structure discovery, fractal digest, .pha projection, and root branch identity.",
+    button: "VERIFY SFCS",
+    status: "SFCS DRAFT VERIFIER READY",
+    downloadHref: "https://github.com/JROChub/power_house/blob/main/docs/sfcs.md",
+    color: 0x7df4ff,
+    unit: "NODES",
+    ready: "6 NODES READY",
+    tooltip: "FRACTAL / PHA BRIDGE",
+    action: runSfcsFractal,
+  },
   constant: {
     exponent: 70,
     domain: "1.18 SEXTILLION POINTS",
@@ -182,6 +206,55 @@ const knownArtifacts = {
     hash: "82045e6eb851991e08d9c4cd782abff3bb06cb8ec5f149e7c2d4287113e6a54a",
     label: "PHCPv1",
   },
+};
+
+const sfcsSampleGraph = {
+  schema: "power-house/sfcs-fractal/v1-draft",
+  nodes: {
+    bias: {
+      id: "bias",
+      op: "const",
+      inputs: [],
+      params: { value: 17 },
+      label: "Public bias",
+    },
+    decision: {
+      id: "decision",
+      op: "branch",
+      inputs: ["gate", "score", "bias"],
+      params: {},
+      label: "Deterministic branch",
+    },
+    gate: {
+      id: "gate",
+      op: "const",
+      inputs: [],
+      params: { value: 1 },
+      label: "Public condition",
+    },
+    score: {
+      id: "score",
+      op: "mul",
+      inputs: ["sensor", "threshold"],
+      params: {},
+      label: "Structured product",
+    },
+    sensor: {
+      id: "sensor",
+      op: "input",
+      inputs: [],
+      params: {},
+      label: "Public input",
+    },
+    threshold: {
+      id: "threshold",
+      op: "const",
+      inputs: [],
+      params: { value: 7 },
+      label: "Public threshold",
+    },
+  },
+  outputs: ["decision"],
 };
 
 const cities = [
@@ -1238,9 +1311,12 @@ async function createEarth() {
 }
 
 function createOrbitTrack(name, index) {
-  const radius = [1.72, 1.88, 2.04, 2.2, 2.36][index];
-  const tiltX = [0.4, 1.04, -0.68, 0.78, -1.02][index];
-  const tiltZ = [0.16, -0.3, 0.52, -0.62, 0.34][index];
+  const orbitRadii = [1.68, 1.82, 1.96, 2.1, 2.24, 2.38];
+  const orbitTiltX = [0.4, -0.92, 1.04, -0.68, 0.78, -1.02];
+  const orbitTiltZ = [0.16, 0.44, -0.3, 0.52, -0.62, 0.34];
+  const radius = orbitRadii[index % orbitRadii.length];
+  const tiltX = orbitTiltX[index % orbitTiltX.length];
+  const tiltZ = orbitTiltZ[index % orbitTiltZ.length];
   const points = [];
   for (let point = 0; point <= 256; point += 1) {
     const angle = (point / 256) * Math.PI * 2;
@@ -1444,7 +1520,8 @@ function showGlobeTooltip(event, object) {
     )} / ${city.code}</span>`;
   } else {
     const mode = modes[data.mode];
-    el.globeTooltip.innerHTML = `<b>${data.mode.toUpperCase()}</b><span>2^${mode.exponent.toLocaleString()} DOMAIN</span>`;
+    const tooltip = mode.tooltip ?? `2^${mode.exponent.toLocaleString()} DOMAIN`;
+    el.globeTooltip.innerHTML = `<b>${data.mode.toUpperCase()}</b><span>${tooltip}</span>`;
   }
   el.globeTooltip.style.left = `${Math.min(event.clientX + 14, window.innerWidth - 190)}px`;
   el.globeTooltip.style.top = `${Math.min(event.clientY + 14, window.innerHeight - 72)}px`;
@@ -1756,7 +1833,7 @@ function selectMode(name, withTone = true) {
   el.shareButton.disabled = true;
   el.statusSeal.classList.remove("verified");
   el.eventPhase.textContent = "FIELD ARMED";
-  el.eventValue.textContent = `${mode.exponent.toLocaleString()} ROUNDS READY`;
+  el.eventValue.textContent = mode.ready ?? `${mode.exponent.toLocaleString()} ROUNDS READY`;
   document.body.classList.remove("proof-running", "proof-verified");
   setProgress(0);
   updateOrbitSelection();
@@ -1818,6 +1895,109 @@ async function domainSeparatedHash(domain, value) {
   combined.set(domainBytes);
   combined.set(valueBytes, domainBytes.length);
   return `sha256:${await sha256Hex(combined)}`;
+}
+
+function assertSfcsId(value, field = "SFCS identifier") {
+  if (typeof value !== "string" || !/^[A-Za-z0-9_.:-]{1,96}$/.test(value)) {
+    throw new Error(`${field} is invalid`);
+  }
+}
+
+function verifySfcsNodeShape(node) {
+  const count = node.inputs.length;
+  if (node.op === "input" && count !== 0) throw new Error("SFCS input node has inputs");
+  if (node.op === "const") {
+    if (count !== 0 || !Number.isSafeInteger(node.params?.value)) {
+      throw new Error("SFCS const node is malformed");
+    }
+  }
+  if ((node.op === "add" || node.op === "mul") && count < 2) {
+    throw new Error(`SFCS ${node.op} node requires at least two inputs`);
+  }
+  if (node.op === "branch" && count !== 3) {
+    throw new Error("SFCS branch node requires condition, true, and false inputs");
+  }
+  if (
+    ["dense_step", "memory_read", "memory_write", "fast_path_claim"].includes(node.op) &&
+    count === 0
+  ) {
+    throw new Error(`SFCS ${node.op} node requires an input`);
+  }
+}
+
+function sfcsTopologicalOrder(graph) {
+  const temporary = new Set();
+  const permanent = new Set();
+  const order = [];
+  const visit = (nodeId) => {
+    if (permanent.has(nodeId)) return;
+    if (temporary.has(nodeId)) throw new Error(`SFCS cycle detected at ${nodeId}`);
+    const node = graph.nodes[nodeId];
+    if (!node) throw new Error(`SFCS missing node ${nodeId}`);
+    temporary.add(nodeId);
+    node.inputs.forEach(visit);
+    temporary.delete(nodeId);
+    permanent.add(nodeId);
+    order.push(nodeId);
+  };
+  Object.keys(graph.nodes)
+    .sort()
+    .forEach(visit);
+  return order;
+}
+
+async function verifySfcsGraph(graph) {
+  if (graph?.schema !== "power-house/sfcs-fractal/v1-draft") {
+    throw new Error("Unsupported SFCS schema");
+  }
+  if (!graph.nodes || Array.isArray(graph.nodes) || typeof graph.nodes !== "object") {
+    throw new Error("SFCS nodes are malformed");
+  }
+  if (!Array.isArray(graph.outputs) || graph.outputs.length === 0) {
+    throw new Error("SFCS outputs are malformed");
+  }
+  const outputs = new Set();
+  for (const output of graph.outputs) {
+    assertSfcsId(output, "SFCS output");
+    if (outputs.has(output)) throw new Error("SFCS output is repeated");
+    outputs.add(output);
+    if (!graph.nodes[output]) throw new Error("SFCS output references a missing node");
+  }
+  for (const [key, node] of Object.entries(graph.nodes)) {
+    if (key !== node.id) throw new Error("SFCS node key mismatch");
+    assertSfcsId(node.id);
+    if (!Array.isArray(node.inputs) || !node.params || typeof node.params !== "object") {
+      throw new Error("SFCS node body is malformed");
+    }
+    const seenInputs = new Set();
+    for (const input of node.inputs) {
+      assertSfcsId(input, "SFCS input edge");
+      if (seenInputs.has(input)) throw new Error("SFCS input edge is repeated");
+      seenInputs.add(input);
+      if (!graph.nodes[input]) throw new Error("SFCS input references a missing node");
+    }
+    Object.values(node.params).forEach((value) => {
+      if (!Number.isSafeInteger(value)) throw new Error("SFCS params must be safe integers");
+    });
+    verifySfcsNodeShape(node);
+  }
+  const order = sfcsTopologicalOrder(graph);
+  const fastOps = new Set(["input", "const", "add", "mul", "fast_path_claim"]);
+  const fastPathNodes = Object.values(graph.nodes)
+    .filter((node) => fastOps.has(node.op))
+    .map((node) => node.id)
+    .sort();
+  const denseNodes = Object.values(graph.nodes)
+    .filter((node) => !fastOps.has(node.op))
+    .map((node) => node.id)
+    .sort();
+  const graphDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:fractal", graph);
+  const workloadDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:fast-path-workload", {
+    graph_digest: graphDigest,
+    node_ids: fastPathNodes,
+    strategy: "structured-arithmetic-draft",
+  });
+  return { graphDigest, workloadDigest, order, fastPathNodes, denseNodes };
 }
 
 async function verifyPhaArtifact(artifact) {
@@ -2276,6 +2456,76 @@ function completeRun(digest, claim = "VERIFIED") {
   tone(760, 0.12);
 }
 
+async function runSfcsFractal() {
+  beginRun();
+  try {
+    el.verificationStatus.textContent = "VERIFYING SFCS GRAPH SHAPE";
+    setProgress(8);
+    const report = await verifySfcsGraph(sfcsSampleGraph);
+    el.roundValue.textContent = `${report.order.length} / ${report.order.length}`;
+    el.claimValue.textContent = `${report.fastPathNodes.length} FAST / ${report.denseNodes.length} DENSE`;
+    setProgress(36);
+
+    const provenance = {
+      fractal_digest: report.graphDigest,
+      label: "browser-sfcs-bridge",
+      producer: "mfenx_browser_observatory",
+      schema: sfcsSampleGraph.schema,
+    };
+    const publicInputs = {
+      dense_nodes: report.denseNodes.length,
+      fast_path_nodes: report.fastPathNodes.length,
+      node_count: Object.keys(sfcsSampleGraph.nodes).length,
+      outputs: sfcsSampleGraph.outputs,
+    };
+    const phaCore = {
+      embedded_proof: {
+        proof: sfcsSampleGraph,
+        protocol: "power-house/sfcs/v1-draft",
+        public_inputs: publicInputs,
+      },
+      provenance,
+      schema: "power-house/pha/v1",
+    };
+    el.verificationStatus.textContent = "DERIVING .PHA CORE FINGERPRINT";
+    const phx = await domainSeparatedHash("power-house:pha:v1:phx-fingerprint", phaCore);
+    setProgress(62);
+
+    const branchId = await domainSeparatedHash("power-house:rootprint:v1:branch-id", {
+      artifact_phx_fingerprint: phx,
+      label: "sfcs-browser-bridge",
+      parents: [],
+    });
+    const replayFingerprint = await domainSeparatedHash("power-house:rootprint:v1:replay-state", {
+      branches: [
+        {
+          artifact_phx_fingerprint: phx,
+          id: branchId,
+          label: "sfcs-browser-bridge",
+          parents: [],
+          sequence: 0,
+        },
+      ],
+      root_branch: branchId,
+      tips: [branchId],
+    });
+    setProgress(88);
+    const finalDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:browser-bridge", {
+      branch_id: branchId,
+      fast_path_workload_digest: report.workloadDigest,
+      graph_digest: report.graphDigest,
+      phx_fingerprint: phx,
+      replay_fingerprint: replayFingerprint,
+    });
+    completeRun(finalDigest.slice(7), "SFCS BRIDGE OK");
+    el.verificationTitle.textContent = "SFCS fractal committed without changing Rootprint v1";
+    el.verificationDetail.textContent =
+      "This browser path checks the draft graph, fast-path discovery, .pha projection, branch ID, and replay fingerprint boundary.";
+  } catch (error) {
+    failRun(error.message);
+  }
+}
+
 function failRun(message) {
   state.running = false;
   document.body.classList.remove("proof-running", "proof-verified");
@@ -2659,6 +2909,23 @@ function cancelAutoProof() {
   autoProofTimer = 0;
 }
 
+function consumeBootstrapInput() {
+  const bootstrap = window.__mfenxBootstrap;
+  if (!bootstrap || typeof bootstrap !== "object") {
+    return { interacted: false, pendingMode: null, pendingVerify: false };
+  }
+
+  const input = {
+    interacted: bootstrap.interacted === true,
+    pendingMode: typeof bootstrap.pendingMode === "string" ? bootstrap.pendingMode : null,
+    pendingVerify: bootstrap.pendingVerify === true,
+  };
+
+  bootstrap.pendingMode = null;
+  bootstrap.pendingVerify = false;
+  return input;
+}
+
 function tone(frequency, duration) {
   if (!state.sound) return;
   try {
@@ -2936,6 +3203,11 @@ function init() {
   buildCityList();
   bindInterface();
   applyUrlState();
+  const bootstrapInput = consumeBootstrapInput();
+  if (bootstrapInput.interacted) state.userInteracted = true;
+  if (bootstrapInput.pendingMode && modes[bootstrapInput.pendingMode]) {
+    state.mode = bootstrapInput.pendingMode;
+  }
   selectMode(state.mode, false);
   selectCity(state.activeCity, false);
   focusSelectedCity();
@@ -2946,6 +3218,11 @@ function init() {
   window.setInterval(updateAstronomy, 1000);
   window.setInterval(refreshNetworkStatus, 15_000);
   initScene();
+  if (bootstrapInput.pendingVerify) {
+    window.requestAnimationFrame(() => {
+      if (!state.running) modes[state.mode].action();
+    });
+  }
 }
 
 window.addEventListener("beforeunload", () => {

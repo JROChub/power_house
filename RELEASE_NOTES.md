@@ -1,5 +1,31 @@
 # Release Notes
 
+## v0.3.14 - 2026-06-30
+
+### SFCS Draft Gate
+- Added the opt-in `sfcs` feature with draft computational-fractal graph
+  primitives, deterministic graph digestion, deterministic structure discovery,
+  an arithmetic subset evaluator, and a `SovereignFastPath` interface.
+- Added explicit SFCS `.pha` embedding verification so a core-valid `.pha` can
+  still be rejected if its fractal digest, public counters, or payload binding
+  are inconsistent.
+- Kept SFCS outside the default feature set and preserved Rootprint v1 branch
+  identity, `.pha` fingerprint rules, Memory Capsule verification order, and
+  slbit separation.
+
+### Observatory Upgrade
+- Added an SFCS browser verification path to `mfenx.com` that checks graph
+  shape, structure discovery, fractal digest, `.pha` projection, branch ID, and
+  replay fingerprint boundary locally.
+- Expanded the public Observatory to six verification paths and added an SFCS
+  truth-boundary readout without changing network or core proof behavior.
+
+### Conformance
+- Added adversarial SFCS tests for duplicate keys, float rejection, duplicate
+  graph edges, duplicate outputs, cycle rejection, stale digest metadata, public
+  counter mismatch, deterministic round trips, and `.pha`/Rootprint/Memory
+  Capsule isolation.
+
 ## v0.3.13 - 2026-06-27
 
 ### Verifiable Memory Foundation

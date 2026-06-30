@@ -1,6 +1,6 @@
 # Provenance Security Model
 
-Status: active security statement for Power House v0.3.13.
+Status: active security statement for Power House v0.3.14.
 
 This document defines the integrity boundary for Power House Archive (`.pha`)
 v1, Rootprint v1, and optional external proof attachments.

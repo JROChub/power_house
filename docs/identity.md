@@ -1,6 +1,6 @@
 # Identity Layer
 
-Status: normative for Power House v0.3.13.
+Status: normative for Power House v0.3.14.
 
 The identity layer is an immutable abstraction over existing `.pha` and
 Rootprint primitives. It does not replace Rootprint and does not require the
