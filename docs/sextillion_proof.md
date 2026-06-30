@@ -1,6 +1,6 @@
 # Sextillion-Scale Verification Certificate
 
-Status: active proof profile for Power House v0.3.17.
+Status: active proof profile for Power House v0.3.18.
 
 Power-House can verify a sum-check claim over a domain larger than one
 sextillion points without enumerating the domain.

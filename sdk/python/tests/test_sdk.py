@@ -78,7 +78,7 @@ def memory_capsule_fixture(include_semantics=False):
             "producer": {
                 "name": "python-sdk",
                 "tool": "power_house",
-                "power_house_version": "0.3.17",
+                "power_house_version": "0.3.18",
                 "slbit_version": None,
                 "rustc": None,
                 "platform": "python",
@@ -104,7 +104,7 @@ def memory_capsule_fixture(include_semantics=False):
         "replay": {
             "replay": {
                 "engine": "power_house",
-                "version": "0.3.17",
+                "version": "0.3.18",
                 "commands": ["python verify_memory_capsule"],
                 "expected": {
                     "core_valid": True,

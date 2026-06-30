@@ -33,6 +33,8 @@ const SHA256_PREFIX: &str = "sha256:";
 pub enum SfcsOp {
     /// Public input value supplied to evaluation.
     Input,
+    /// Deterministic identity edge used by direct source lowering.
+    Alias,
     /// Integer constant stored in `params["value"]`.
     Const,
     /// Integer addition over ordered inputs.
@@ -121,6 +123,7 @@ impl SfcsNode {
         matches!(
             self.op,
             SfcsOp::Input
+                | SfcsOp::Alias
                 | SfcsOp::Const
                 | SfcsOp::Add
                 | SfcsOp::Sub
@@ -150,6 +153,7 @@ impl SfcsGraph {
     /// Supported lines:
     ///
     /// - `input <id>`
+    /// - `alias <id> <input>`
     /// - `const <id> <integer>`
     /// - `add <id> <input> <input> [input...]`
     /// - `sub <id> <left> <right>`
@@ -183,6 +187,14 @@ impl SfcsGraph {
                 "input" => {
                     require_program_arity(line_number, keyword, rest, 1)?;
                     graph.insert_node(SfcsNode::new(rest[0], SfcsOp::Input, Vec::new()))?;
+                }
+                "alias" => {
+                    require_program_arity(line_number, keyword, rest, 2)?;
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        SfcsOp::Alias,
+                        vec![rest[1].to_string()],
+                    ))?;
                 }
                 "const" => {
                     require_program_arity(line_number, keyword, rest, 2)?;
@@ -313,6 +325,65 @@ impl SfcsGraph {
         graph.outputs = outputs;
         graph.verify()?;
         Ok(graph)
+    }
+
+    /// Parses a deterministic expression source directly into an SFCS graph.
+    ///
+    /// This is the higher-level native SFCS frontend. It does not lower source
+    /// into a circuit language. Each assignment becomes a committed fractal
+    /// node, and nested expressions become deterministic intermediate nodes.
+    ///
+    /// Supported statements:
+    ///
+    /// - `input <id>`
+    /// - `let <id> = <expr>`
+    /// - `output <id> [id...]`
+    /// - `output <expr> as <id>`
+    ///
+    /// Supported expressions:
+    ///
+    /// - integer constants
+    /// - identifiers
+    /// - `+`, `-`, `*`
+    /// - `==`, `&&`, `||`, `!`
+    /// - parentheses
+    /// - `if <expr> then <expr> else <expr>`
+    pub fn from_source(source: &str) -> Result<Self, SfcsError> {
+        let mut builder = SfcsSourceBuilder::new();
+        for (line_index, raw_line) in source.lines().enumerate() {
+            let line_number = line_index + 1;
+            let line = raw_line.split('#').next().unwrap_or("").trim();
+            if line.is_empty() {
+                continue;
+            }
+            if let Some(rest) = line.strip_prefix("input ") {
+                let parts = rest.split_whitespace().collect::<Vec<_>>();
+                require_program_arity(line_number, "input", &parts, 1)?;
+                builder.insert_input(parts[0], line_number)?;
+                continue;
+            }
+            if let Some(rest) = line.strip_prefix("let ") {
+                let (id, expression) = rest.split_once('=').ok_or_else(|| {
+                    SfcsError::InvalidProgram(format!("line {line_number}: let requires '='"))
+                })?;
+                let id = id.trim();
+                if id.split_whitespace().count() != 1 {
+                    return Err(SfcsError::InvalidProgram(format!(
+                        "line {line_number}: let target must be one identifier"
+                    )));
+                }
+                builder.insert_let(id, expression.trim(), line_number)?;
+                continue;
+            }
+            if let Some(rest) = line.strip_prefix("output ") {
+                builder.insert_output(rest.trim(), line_number)?;
+                continue;
+            }
+            return Err(SfcsError::InvalidProgram(format!(
+                "line {line_number}: unknown SFCS source statement"
+            )));
+        }
+        builder.finish()
     }
 
     /// Strictly parses a graph from JSON bytes.
@@ -598,6 +669,7 @@ impl SfcsGraph {
                 SfcsOp::Input => *inputs
                     .get(&node.id)
                     .ok_or_else(|| SfcsError::MissingInput(node.id.clone()))?,
+                SfcsOp::Alias => values[&node.inputs[0]],
                 SfcsOp::Const => *node.params.get("value").ok_or_else(|| {
                     SfcsError::InvalidGraph(format!("const {} missing value", node.id))
                 })?,
@@ -1419,6 +1491,611 @@ impl From<serde_json::Error> for SfcsError {
     }
 }
 
+struct SfcsSourceBuilder {
+    graph: SfcsGraph,
+    bindings: BTreeMap<String, String>,
+    outputs: Vec<String>,
+    temp_counter: u64,
+}
+
+impl SfcsSourceBuilder {
+    fn new() -> Self {
+        Self {
+            graph: SfcsGraph::new(Vec::new()),
+            bindings: BTreeMap::new(),
+            outputs: Vec::new(),
+            temp_counter: 0,
+        }
+    }
+
+    fn insert_input(&mut self, id: &str, line_number: usize) -> Result<(), SfcsError> {
+        self.reserve_binding(id, line_number)?;
+        self.graph
+            .insert_node(SfcsNode::new(id, SfcsOp::Input, Vec::new()))?;
+        self.bindings.insert(id.to_string(), id.to_string());
+        Ok(())
+    }
+
+    fn insert_let(
+        &mut self,
+        id: &str,
+        expression: &str,
+        line_number: usize,
+    ) -> Result<(), SfcsError> {
+        self.reserve_binding(id, line_number)?;
+        let expression = SfcsExprParser::parse(expression, line_number)?;
+        let node_id = self.lower_expr(&expression, Some(id.to_string()), line_number)?;
+        self.bindings.insert(id.to_string(), node_id);
+        Ok(())
+    }
+
+    fn insert_output(&mut self, body: &str, line_number: usize) -> Result<(), SfcsError> {
+        if body.is_empty() {
+            return Err(SfcsError::InvalidProgram(format!(
+                "line {line_number}: output requires at least one value"
+            )));
+        }
+        if let Some((expression, id)) = split_output_as(body) {
+            let id = id.trim();
+            self.reserve_binding(id, line_number)?;
+            let expression = SfcsExprParser::parse(expression.trim(), line_number)?;
+            let node_id = self.lower_expr(&expression, Some(id.to_string()), line_number)?;
+            self.bindings.insert(id.to_string(), node_id.clone());
+            self.outputs.push(node_id);
+            return Ok(());
+        }
+        for value in body.split_whitespace() {
+            let node_id = self.resolve(value, line_number)?;
+            self.outputs.push(node_id);
+        }
+        Ok(())
+    }
+
+    fn finish(mut self) -> Result<SfcsGraph, SfcsError> {
+        if self.outputs.is_empty() {
+            return Err(SfcsError::InvalidProgram(
+                "source did not declare outputs".to_string(),
+            ));
+        }
+        self.graph.outputs = self.outputs;
+        self.graph.verify()?;
+        Ok(self.graph)
+    }
+
+    fn reserve_binding(&self, id: &str, line_number: usize) -> Result<(), SfcsError> {
+        validate_id(id)?;
+        if self.bindings.contains_key(id) || self.graph.nodes.contains_key(id) {
+            return Err(SfcsError::InvalidProgram(format!(
+                "line {line_number}: source identifier {id} is already defined"
+            )));
+        }
+        Ok(())
+    }
+
+    fn resolve(&self, id: &str, line_number: usize) -> Result<String, SfcsError> {
+        validate_id(id)?;
+        self.bindings.get(id).cloned().ok_or_else(|| {
+            SfcsError::InvalidProgram(format!(
+                "line {line_number}: source references unknown identifier {id}"
+            ))
+        })
+    }
+
+    fn next_temp(&mut self) -> String {
+        loop {
+            let id = format!("__sfcs_tmp_{:06}", self.temp_counter);
+            self.temp_counter += 1;
+            if !self.graph.nodes.contains_key(&id) && !self.bindings.contains_key(&id) {
+                return id;
+            }
+        }
+    }
+
+    fn lower_expr(
+        &mut self,
+        expression: &SfcsExpr,
+        preferred_id: Option<String>,
+        line_number: usize,
+    ) -> Result<String, SfcsError> {
+        match expression {
+            SfcsExpr::Ident(id) => {
+                let resolved = self.resolve(id, line_number)?;
+                if let Some(id) = preferred_id {
+                    self.insert_generated_node(
+                        SfcsNode::new(&id, SfcsOp::Alias, vec![resolved]),
+                        "alias",
+                    )?;
+                    Ok(id)
+                } else {
+                    Ok(resolved)
+                }
+            }
+            SfcsExpr::Number(value) => {
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                self.insert_generated_node(SfcsNode::constant(&id, *value), "const")?;
+                Ok(id)
+            }
+            SfcsExpr::UnaryNot(inner) => {
+                let input = self.lower_expr(inner, None, line_number)?;
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                self.insert_generated_node(SfcsNode::new(&id, SfcsOp::Not, vec![input]), "not")?;
+                Ok(id)
+            }
+            SfcsExpr::Binary { op, left, right } => {
+                let left = self.lower_expr(left, None, line_number)?;
+                let right = self.lower_expr(right, None, line_number)?;
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                let inputs = self.distinct_inputs(vec![left, right], line_number)?;
+                self.insert_generated_node(SfcsNode::new(&id, op.to_sfcs_op(), inputs), op.name())?;
+                Ok(id)
+            }
+            SfcsExpr::If {
+                condition,
+                then_expr,
+                else_expr,
+            } => {
+                let condition = self.lower_expr(condition, None, line_number)?;
+                let then_id = self.lower_expr(then_expr, None, line_number)?;
+                let else_id = self.lower_expr(else_expr, None, line_number)?;
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                let inputs =
+                    self.distinct_inputs(vec![condition, then_id, else_id], line_number)?;
+                self.insert_generated_node(
+                    SfcsNode::new(&id, SfcsOp::Branch, inputs),
+                    "if_then_else",
+                )?;
+                Ok(id)
+            }
+        }
+    }
+
+    fn insert_generated_node(
+        &mut self,
+        mut node: SfcsNode,
+        source_op: &str,
+    ) -> Result<(), SfcsError> {
+        node.metadata
+            .insert("source".to_string(), "sfcs-expression".to_string());
+        node.metadata
+            .insert("source_op".to_string(), source_op.to_string());
+        self.graph.insert_node(node)
+    }
+
+    fn distinct_inputs(
+        &mut self,
+        inputs: Vec<String>,
+        line_number: usize,
+    ) -> Result<Vec<String>, SfcsError> {
+        let mut seen = BTreeSet::new();
+        let mut distinct = Vec::new();
+        for input in inputs {
+            if seen.insert(input.clone()) {
+                distinct.push(input);
+                continue;
+            }
+            let alias_id = self.next_temp();
+            self.insert_generated_node(
+                SfcsNode::new(&alias_id, SfcsOp::Alias, vec![input]),
+                "alias",
+            )
+            .map_err(|error| {
+                SfcsError::InvalidProgram(format!(
+                    "line {line_number}: could not create deterministic alias: {error}"
+                ))
+            })?;
+            distinct.push(alias_id);
+        }
+        Ok(distinct)
+    }
+}
+
+fn split_output_as(body: &str) -> Option<(&str, &str)> {
+    let (expression, id) = body.rsplit_once(" as ")?;
+    if expression.trim().is_empty() || id.trim().is_empty() || id.split_whitespace().count() != 1 {
+        return None;
+    }
+    Some((expression, id))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum SfcsExpr {
+    Ident(String),
+    Number(i64),
+    UnaryNot(Box<SfcsExpr>),
+    Binary {
+        op: SfcsExprBinaryOp,
+        left: Box<SfcsExpr>,
+        right: Box<SfcsExpr>,
+    },
+    If {
+        condition: Box<SfcsExpr>,
+        then_expr: Box<SfcsExpr>,
+        else_expr: Box<SfcsExpr>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SfcsExprBinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Eq,
+    And,
+    Or,
+}
+
+impl SfcsExprBinaryOp {
+    fn to_sfcs_op(self) -> SfcsOp {
+        match self {
+            Self::Add => SfcsOp::Add,
+            Self::Sub => SfcsOp::Sub,
+            Self::Mul => SfcsOp::Mul,
+            Self::Eq => SfcsOp::Eq,
+            Self::And => SfcsOp::And,
+            Self::Or => SfcsOp::Or,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Add => "add",
+            Self::Sub => "sub",
+            Self::Mul => "mul",
+            Self::Eq => "eq",
+            Self::And => "and",
+            Self::Or => "or",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum SfcsExprToken {
+    Ident(String),
+    Number(i64),
+    Plus,
+    Minus,
+    Star,
+    EqEq,
+    AndAnd,
+    OrOr,
+    Bang,
+    LParen,
+    RParen,
+    If,
+    Then,
+    Else,
+    End,
+}
+
+struct SfcsExprParser {
+    tokens: Vec<SfcsExprToken>,
+    index: usize,
+    line_number: usize,
+}
+
+impl SfcsExprParser {
+    fn parse(source: &str, line_number: usize) -> Result<SfcsExpr, SfcsError> {
+        let mut parser = Self {
+            tokens: tokenize_expr(source, line_number)?,
+            index: 0,
+            line_number,
+        };
+        let expression = parser.parse_expression()?;
+        parser.expect_end()?;
+        Ok(expression)
+    }
+
+    fn parse_expression(&mut self) -> Result<SfcsExpr, SfcsError> {
+        self.parse_if()
+    }
+
+    fn parse_if(&mut self) -> Result<SfcsExpr, SfcsError> {
+        if self.consume_if() {
+            let condition = self.parse_expression()?;
+            self.expect_then()?;
+            let then_expr = self.parse_expression()?;
+            self.expect_else()?;
+            let else_expr = self.parse_expression()?;
+            return Ok(SfcsExpr::If {
+                condition: Box::new(condition),
+                then_expr: Box::new(then_expr),
+                else_expr: Box::new(else_expr),
+            });
+        }
+        self.parse_or()
+    }
+
+    fn parse_or(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_and()?;
+        while self.consume_or_or() {
+            let right = self.parse_and()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::Or,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_and(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_eq()?;
+        while self.consume_and_and() {
+            let right = self.parse_eq()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::And,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_eq(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_add_sub()?;
+        while self.consume_eq_eq() {
+            let right = self.parse_add_sub()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::Eq,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_add_sub(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_mul()?;
+        loop {
+            if self.consume_plus() {
+                let right = self.parse_mul()?;
+                expression = SfcsExpr::Binary {
+                    op: SfcsExprBinaryOp::Add,
+                    left: Box::new(expression),
+                    right: Box::new(right),
+                };
+            } else if self.consume_minus() {
+                let right = self.parse_mul()?;
+                expression = SfcsExpr::Binary {
+                    op: SfcsExprBinaryOp::Sub,
+                    left: Box::new(expression),
+                    right: Box::new(right),
+                };
+            } else {
+                return Ok(expression);
+            }
+        }
+    }
+
+    fn parse_mul(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_unary()?;
+        while self.consume_star() {
+            let right = self.parse_unary()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::Mul,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_unary(&mut self) -> Result<SfcsExpr, SfcsError> {
+        if self.consume_bang() {
+            return Ok(SfcsExpr::UnaryNot(Box::new(self.parse_unary()?)));
+        }
+        self.parse_primary()
+    }
+
+    fn parse_primary(&mut self) -> Result<SfcsExpr, SfcsError> {
+        match self.next().clone() {
+            SfcsExprToken::Ident(id) => Ok(SfcsExpr::Ident(id)),
+            SfcsExprToken::Number(value) => Ok(SfcsExpr::Number(value)),
+            SfcsExprToken::LParen => {
+                let expression = self.parse_expression()?;
+                self.expect_rparen()?;
+                Ok(expression)
+            }
+            token => Err(self.error(format!("expected expression, found {token:?}"))),
+        }
+    }
+
+    fn next(&mut self) -> &SfcsExprToken {
+        let token = &self.tokens[self.index];
+        self.index += 1;
+        token
+    }
+
+    fn peek(&self) -> &SfcsExprToken {
+        &self.tokens[self.index]
+    }
+
+    fn consume_if(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::If))
+    }
+
+    fn consume_then(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Then))
+    }
+
+    fn consume_else(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Else))
+    }
+
+    fn consume_or_or(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::OrOr))
+    }
+
+    fn consume_and_and(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::AndAnd))
+    }
+
+    fn consume_eq_eq(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::EqEq))
+    }
+
+    fn consume_plus(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Plus))
+    }
+
+    fn consume_minus(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Minus))
+    }
+
+    fn consume_star(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Star))
+    }
+
+    fn consume_bang(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Bang))
+    }
+
+    fn consume<F>(&mut self, predicate: F) -> bool
+    where
+        F: FnOnce(&SfcsExprToken) -> bool,
+    {
+        if predicate(self.peek()) {
+            self.index += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn expect_then(&mut self) -> Result<(), SfcsError> {
+        if self.consume_then() {
+            Ok(())
+        } else {
+            Err(self.error("expected then".to_string()))
+        }
+    }
+
+    fn expect_else(&mut self) -> Result<(), SfcsError> {
+        if self.consume_else() {
+            Ok(())
+        } else {
+            Err(self.error("expected else".to_string()))
+        }
+    }
+
+    fn expect_rparen(&mut self) -> Result<(), SfcsError> {
+        if self.consume(|token| matches!(token, SfcsExprToken::RParen)) {
+            Ok(())
+        } else {
+            Err(self.error("expected ')'".to_string()))
+        }
+    }
+
+    fn expect_end(&mut self) -> Result<(), SfcsError> {
+        if matches!(self.peek(), SfcsExprToken::End) {
+            Ok(())
+        } else {
+            Err(self.error(format!("unexpected token {:?}", self.peek())))
+        }
+    }
+
+    fn error(&self, message: String) -> SfcsError {
+        SfcsError::InvalidProgram(format!(
+            "line {}: invalid source expression: {message}",
+            self.line_number
+        ))
+    }
+}
+
+fn tokenize_expr(source: &str, line_number: usize) -> Result<Vec<SfcsExprToken>, SfcsError> {
+    let bytes = source.as_bytes();
+    let mut index = 0;
+    let mut tokens = Vec::new();
+    while index < bytes.len() {
+        let byte = bytes[index];
+        if byte.is_ascii_whitespace() {
+            index += 1;
+            continue;
+        }
+        match byte {
+            b'+' => {
+                tokens.push(SfcsExprToken::Plus);
+                index += 1;
+            }
+            b'-' => {
+                tokens.push(SfcsExprToken::Minus);
+                index += 1;
+            }
+            b'*' => {
+                tokens.push(SfcsExprToken::Star);
+                index += 1;
+            }
+            b'!' => {
+                tokens.push(SfcsExprToken::Bang);
+                index += 1;
+            }
+            b'(' => {
+                tokens.push(SfcsExprToken::LParen);
+                index += 1;
+            }
+            b')' => {
+                tokens.push(SfcsExprToken::RParen);
+                index += 1;
+            }
+            b'=' if bytes.get(index + 1) == Some(&b'=') => {
+                tokens.push(SfcsExprToken::EqEq);
+                index += 2;
+            }
+            b'&' if bytes.get(index + 1) == Some(&b'&') => {
+                tokens.push(SfcsExprToken::AndAnd);
+                index += 2;
+            }
+            b'|' if bytes.get(index + 1) == Some(&b'|') => {
+                tokens.push(SfcsExprToken::OrOr);
+                index += 2;
+            }
+            b'0'..=b'9' => {
+                let start = index;
+                while bytes.get(index).is_some_and(u8::is_ascii_digit) {
+                    index += 1;
+                }
+                let value = source[start..index].parse::<i64>().map_err(|error| {
+                    SfcsError::InvalidProgram(format!(
+                        "line {line_number}: invalid integer literal: {error}"
+                    ))
+                })?;
+                tokens.push(SfcsExprToken::Number(value));
+            }
+            _ if byte.is_ascii_alphabetic() || byte == b'_' => {
+                let start = index;
+                while bytes.get(index).is_some_and(|value| {
+                    value.is_ascii_alphanumeric() || matches!(*value, b'_' | b'.' | b':')
+                }) {
+                    index += 1;
+                }
+                let id = &source[start..index];
+                match id {
+                    "if" => tokens.push(SfcsExprToken::If),
+                    "then" => tokens.push(SfcsExprToken::Then),
+                    "else" => tokens.push(SfcsExprToken::Else),
+                    _ => {
+                        validate_id(id)?;
+                        tokens.push(SfcsExprToken::Ident(id.to_string()));
+                    }
+                }
+            }
+            _ => {
+                return Err(SfcsError::InvalidProgram(format!(
+                    "line {line_number}: unsupported expression character {:?}",
+                    byte as char
+                )));
+            }
+        }
+    }
+    if tokens.is_empty() {
+        return Err(SfcsError::InvalidProgram(format!(
+            "line {line_number}: empty expression"
+        )));
+    }
+    tokens.push(SfcsExprToken::End);
+    Ok(tokens)
+}
+
 fn visit_node(
     node_id: &str,
     graph: &SfcsGraph,
@@ -1448,6 +2125,7 @@ fn visit_node(
 fn validate_node_shape(node: &SfcsNode) -> Result<(), SfcsError> {
     match node.op {
         SfcsOp::Input => require_inputs(node, 0),
+        SfcsOp::Alias => require_inputs(node, 1),
         SfcsOp::Const => {
             require_inputs(node, 0)?;
             if !node.params.contains_key("value") {

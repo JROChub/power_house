@@ -8,7 +8,7 @@
 Power House is a deterministic verification and provenance system for portable
 computational identities.
 
-Power House 0.3.17 expands the opt-in Sovereign Fractal Computation Substrate
+Power House 0.3.18 expands the opt-in Sovereign Fractal Computation Substrate
 (SFCS): source text maps directly into deterministic computational-fractal
 graphs, executable arithmetic traces replay into digest-bound `.pha` artifacts,
 and synthesis plans record connected sub-fractal regions that route to the
@@ -29,7 +29,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.17**
+Current release: **v0.3.18**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -221,7 +221,8 @@ The complete procedure and expected rejection behavior are documented in the
 - [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
 - [`SfcsGraph`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsGraph.html):
-  opt-in computational-fractal draft graph behind the `sfcs` feature.
+  opt-in computational-fractal draft graph behind the `sfcs` feature, including
+  `SfcsGraph::from_source(...)` for native expression-to-fractal lowering.
 - [`SfcsExecutionTrace`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsExecutionTrace.html):
   deterministic executable trace for the SFCS arithmetic subset.
 - [`SfcsSynthesisPlan`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsSynthesisPlan.html):
