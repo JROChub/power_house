@@ -160,8 +160,9 @@ pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs")]
 pub use sfcs::{
-    SfcsDiscoveryReport, SfcsEmbeddingReport, SfcsError, SfcsFastPathCertificate,
-    SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp, SovereignFastPath,
+    SfcsDiscoveryReport, SfcsEmbeddingReport, SfcsError, SfcsExecutionEmbeddingReport,
+    SfcsExecutionTrace, SfcsFastPathCertificate, SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp,
+    SfcsRewriteKind, SfcsRewriteOperation, SfcsSynthesisPlan, SfcsTraceStep, SovereignFastPath,
 };
 pub use sparse_sumcheck::{
     CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,
@@ -180,4 +181,16 @@ pub fn verify_sfcs_pha_embedding(
     artifact: &provenance::pha::PhaArtifact,
 ) -> Result<SfcsEmbeddingReport, SfcsError> {
     sfcs::verify_pha_embedding(artifact)
+}
+
+/// Verify that a `.pha` artifact contains a deterministic SFCS execution trace.
+///
+/// This checks graph parsing, replayed execution, synthesis-plan replay,
+/// output binding, and the SFCS embedding invariant while leaving Rootprint v1
+/// and `.pha` core fingerprint rules unchanged.
+#[cfg(feature = "sfcs")]
+pub fn verify_sfcs_execution_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsExecutionEmbeddingReport, SfcsError> {
+    sfcs::verify_execution_embedding(artifact)
 }

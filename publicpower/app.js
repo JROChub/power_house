@@ -89,10 +89,10 @@ const modes = {
     dossierArtifact: "BROWSER SFCS GRAPH",
     kicker: "SOVEREIGN FRACTAL COMPUTATION",
     description:
-      "Commit a computational fractal into a normal .pha artifact, then derive the Rootprint bridge without changing legacy identity rules.",
-    title: "Run the SFCS browser bridge",
+      "Parse and replay a computational fractal, bind its execution trace and synthesis plan into .pha, then derive the Rootprint bridge.",
+    title: "Run the SFCS execution bridge",
     detail:
-      "The browser verifies graph shape, structure discovery, fractal digest, .pha projection, and root branch identity.",
+      "The browser verifies graph shape, execution trace, synthesis plan, .pha projection, and root branch identity.",
     button: "VERIFY SFCS",
     status: "SFCS DRAFT VERIFIER READY",
     downloadHref: "https://github.com/JROChub/power_house/blob/main/docs/sfcs.md",
@@ -2000,6 +2000,138 @@ async function verifySfcsGraph(graph) {
   return { graphDigest, workloadDigest, order, fastPathNodes, denseNodes };
 }
 
+async function sfcsExecutionTrace(graph, inputs, report) {
+  const values = {};
+  const steps = [];
+  for (const nodeId of report.order) {
+    const node = graph.nodes[nodeId];
+    const inputValues = {};
+    for (const input of node.inputs) inputValues[input] = values[input];
+    let outputValue;
+    if (node.op === "input") {
+      if (!Number.isSafeInteger(inputs[node.id])) throw new Error(`SFCS missing input ${node.id}`);
+      outputValue = inputs[node.id];
+    } else if (node.op === "const") {
+      outputValue = node.params.value;
+    } else if (node.op === "add") {
+      outputValue = node.inputs.reduce((total, input) => total + values[input], 0);
+    } else if (node.op === "mul") {
+      outputValue = node.inputs.reduce((total, input) => total * values[input], 1);
+    } else if (node.op === "branch") {
+      outputValue = values[node.inputs[0]] !== 0 ? values[node.inputs[1]] : values[node.inputs[2]];
+    } else {
+      throw new Error(`SFCS node ${node.id} is not executable in browser trace`);
+    }
+    const step = {
+      fast_path_eligible: report.fastPathNodes.includes(node.id),
+      input_nodes: node.inputs,
+      input_values: inputValues,
+      node_id: node.id,
+      op: node.op,
+      output_value: outputValue,
+      step_digest: "",
+      step_index: steps.length,
+    };
+    step.step_digest = await domainSeparatedHash("power-house:sfcs:v1-draft:trace-step", {
+      fast_path_eligible: step.fast_path_eligible,
+      input_nodes: step.input_nodes,
+      input_values: step.input_values,
+      node_id: step.node_id,
+      op: step.op,
+      output_value: step.output_value,
+      step_index: step.step_index,
+    });
+    values[node.id] = outputValue;
+    steps.push(step);
+  }
+  const outputs = Object.fromEntries(graph.outputs.map((output) => [output, values[output]]));
+  const inputDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:trace-inputs", inputs);
+  const outputDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:trace-outputs", outputs);
+  const trace = {
+    graph_digest: report.graphDigest,
+    input_digest: inputDigest,
+    output_digest: outputDigest,
+    outputs,
+    steps,
+    trace_digest: "",
+  };
+  trace.trace_digest = await domainSeparatedHash("power-house:sfcs:v1-draft:execution-trace", {
+    graph_digest: trace.graph_digest,
+    input_digest: trace.input_digest,
+    output_digest: trace.output_digest,
+    outputs: trace.outputs,
+    steps: trace.steps,
+  });
+  return trace;
+}
+
+async function sfcsSynthesisPlan(graph, report) {
+  const operations = [];
+  let pendingFast = [];
+  const flushFast = async () => {
+    if (!pendingFast.length) return;
+    operations.push(await sfcsRewriteOperation(operations.length, "fast_path_extract", pendingFast, report.graphDigest));
+    pendingFast = [];
+  };
+  for (const nodeId of report.order) {
+    if (report.fastPathNodes.includes(nodeId)) {
+      pendingFast.push(nodeId);
+    } else {
+      await flushFast();
+      operations.push(await sfcsRewriteOperation(operations.length, "dense_boundary", [nodeId], report.graphDigest));
+    }
+  }
+  await flushFast();
+  const operationDigests = operations.map((operation) => operation.operation_digest);
+  const plan = {
+    dense_nodes: report.denseNodes,
+    embedding_invariant_digest: "",
+    fast_path_workload_digest: report.workloadDigest,
+    graph_digest: report.graphDigest,
+    operation_digests: operationDigests,
+    operations,
+    synthesis_digest: "",
+  };
+  plan.synthesis_digest = await domainSeparatedHash("power-house:sfcs:v1-draft:synthesis-plan", {
+    dense_nodes: plan.dense_nodes,
+    fast_path_workload_digest: plan.fast_path_workload_digest,
+    graph_digest: plan.graph_digest,
+    operation_digests: plan.operation_digests,
+    operations: plan.operations,
+  });
+  plan.embedding_invariant_digest = await domainSeparatedHash("power-house:sfcs:v1-draft:embedding-invariant", {
+    graph_digest: plan.graph_digest,
+    synthesis_digest: plan.synthesis_digest,
+  });
+  return plan;
+}
+
+async function sfcsRewriteOperation(index, kind, nodeIds, graphDigest) {
+  const workloadDigest = kind === "fast_path_extract"
+    ? await domainSeparatedHash("power-house:sfcs:v1-draft:fast-path-workload", {
+      graph_digest: graphDigest,
+      node_ids: [...nodeIds].sort(),
+      strategy: "structured-arithmetic-draft",
+    })
+    : null;
+  const operation = {
+    graph_digest: graphDigest,
+    index,
+    kind,
+    node_ids: nodeIds,
+    operation_digest: "",
+    ...(workloadDigest ? { workload_digest: workloadDigest } : {}),
+  };
+  operation.operation_digest = await domainSeparatedHash("power-house:sfcs:v1-draft:synthesis-operation", {
+    graph_digest: operation.graph_digest,
+    index: operation.index,
+    kind: operation.kind,
+    node_ids: operation.node_ids,
+    workload_digest: workloadDigest,
+  });
+  return operation;
+}
+
 async function verifyPhaArtifact(artifact) {
   if (artifact?.schema !== "power-house/pha/v1") {
     throw new Error("Unsupported PHA schema");
@@ -2464,24 +2596,47 @@ async function runSfcsFractal() {
     const report = await verifySfcsGraph(sfcsSampleGraph);
     el.roundValue.textContent = `${report.order.length} / ${report.order.length}`;
     el.claimValue.textContent = `${report.fastPathNodes.length} FAST / ${report.denseNodes.length} DENSE`;
-    setProgress(36);
+    setProgress(30);
+
+    el.verificationStatus.textContent = "REPLAYING SFCS EXECUTION TRACE";
+    const executionInputs = { sensor: 11 };
+    const trace = await sfcsExecutionTrace(sfcsSampleGraph, executionInputs, report);
+    if (trace.outputs.decision !== 77) throw new Error("SFCS execution output mismatch");
+    setProgress(46);
+
+    el.verificationStatus.textContent = "BUILDING SFCS SYNTHESIS PLAN";
+    const synthesis = await sfcsSynthesisPlan(sfcsSampleGraph, report);
+    if (!synthesis.operations.some((operation) => operation.kind === "fast_path_extract")) {
+      throw new Error("SFCS fast-path extraction was not recorded");
+    }
+    setProgress(58);
 
     const provenance = {
+      embedding_invariant_digest: synthesis.embedding_invariant_digest,
       fractal_digest: report.graphDigest,
       label: "browser-sfcs-bridge",
       producer: "mfenx_browser_observatory",
       schema: sfcsSampleGraph.schema,
+      synthesis_digest: synthesis.synthesis_digest,
+      trace_digest: trace.trace_digest,
     };
     const publicInputs = {
       dense_nodes: report.denseNodes.length,
-      fast_path_nodes: report.fastPathNodes.length,
+      fast_path_workload_digest: report.workloadDigest,
+      inputs: executionInputs,
       node_count: Object.keys(sfcsSampleGraph.nodes).length,
-      outputs: sfcsSampleGraph.outputs,
+      outputs: trace.outputs,
+      synthesis_operations: synthesis.operations.length,
+      trace_steps: trace.steps.length,
     };
     const phaCore = {
       embedded_proof: {
-        proof: sfcsSampleGraph,
-        protocol: "power-house/sfcs/v1-draft",
+        proof: {
+          graph: sfcsSampleGraph,
+          synthesis,
+          trace,
+        },
+        protocol: "power-house/sfcs-execution/v1-draft",
         public_inputs: publicInputs,
       },
       provenance,
@@ -2516,11 +2671,13 @@ async function runSfcsFractal() {
       graph_digest: report.graphDigest,
       phx_fingerprint: phx,
       replay_fingerprint: replayFingerprint,
+      synthesis_digest: synthesis.synthesis_digest,
+      trace_digest: trace.trace_digest,
     });
-    completeRun(finalDigest.slice(7), "SFCS BRIDGE OK");
-    el.verificationTitle.textContent = "SFCS fractal committed without changing Rootprint v1";
+    completeRun(finalDigest.slice(7), "SFCS EXECUTION OK");
+    el.verificationTitle.textContent = "SFCS program, trace, and synthesis committed";
     el.verificationDetail.textContent =
-      "This browser path checks the draft graph, fast-path discovery, .pha projection, branch ID, and replay fingerprint boundary.";
+      "This browser path checks the draft graph, execution trace, synthesis plan, .pha identity, branch ID, and replay fingerprint boundary.";
   } catch (error) {
     failRun(error.message);
   }

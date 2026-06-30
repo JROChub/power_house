@@ -1,5 +1,22 @@
 # Release Notes
 
+## v0.3.16 - 2026-06-30
+
+### Executable SFCS Draft
+- Added direct SFCS source parsing through `SfcsGraph::from_program(...)` so
+  source text maps into computational-fractal nodes without a circuit compiler
+  stage.
+- Added deterministic execution traces for the arithmetic subset, including
+  input digests, output digests, per-step digests, and full trace digests.
+- Added deterministic synthesis plans that record fast-path extraction regions,
+  dense/general boundaries, operation digests, and an embedding invariant
+  digest.
+- Added `SfcsGraph::to_execution_pha_artifact(...)` plus
+  `verify_sfcs_execution_embedding(...)` to replay graph, trace, synthesis
+  plan, public outputs, and provenance digests from ordinary `.pha` core data.
+- Expanded SFCS adversarial tests to cover parser failures, trace mutation,
+  synthesis determinism, execution artifact replay, and output tampering.
+
 ## v0.3.15 - 2026-06-30
 
 ### Docs.rs API Link Fix
