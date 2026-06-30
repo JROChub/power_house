@@ -1,6 +1,6 @@
 # Verification Guide
 
-This guide reproduces the Power House v0.3.18 provenance and proof workflows.
+This guide reproduces the Power House v0.3.19 provenance and proof workflows.
 
 ## Requirements
 

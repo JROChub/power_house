@@ -1,6 +1,6 @@
 # Public Observer Registry
 
-Release scope: Power House v0.3.18.
+Release scope: Power House v0.3.19.
 
 The public observer registry is the permissionless monitoring layer for nodes
 that verify or relay public network data without joining validator quorum. It

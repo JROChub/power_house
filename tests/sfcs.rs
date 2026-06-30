@@ -276,6 +276,78 @@ fn source_frontend_rejects_ambiguous_or_corrupt_source() {
 }
 
 #[test]
+fn source_frontend_executes_dense_integer_and_memory_ops() {
+    let graph = SfcsGraph::from_source(
+        r#"
+        input addr
+        input value
+        let masked = (value & 15) | 2
+        let shifted = masked << 1
+        let divided = shifted / 2
+        let rem = shifted % 4
+        let ok = divided >= rem
+        let written = store(addr, divided)
+        let loaded = load(addr)
+        let out = if ok then loaded ^ rem else value
+        output out
+        "#,
+    )
+    .unwrap();
+
+    let inputs = BTreeMap::from([("addr".to_string(), 7), ("value".to_string(), 29)]);
+    let first = graph.execution_trace(&inputs).unwrap();
+    let second = graph.execution_trace(&inputs).unwrap();
+    assert_eq!(first, second);
+    assert_eq!(first.outputs["out"], 13);
+    assert!(first
+        .steps
+        .iter()
+        .any(|step| step.op == SfcsOp::MemoryWrite));
+    assert!(first.steps.iter().any(|step| step.op == SfcsOp::MemoryRead));
+    assert!(first
+        .steps
+        .iter()
+        .all(|step| step.memory_before_digest.starts_with("sha256:")
+            && step.memory_after_digest.starts_with("sha256:")));
+    let memory_mutation = first
+        .steps
+        .iter()
+        .find(|step| step.op == SfcsOp::MemoryWrite)
+        .unwrap();
+    assert_ne!(
+        memory_mutation.memory_before_digest,
+        memory_mutation.memory_after_digest
+    );
+
+    let artifact = graph
+        .to_execution_pha_artifact("dense-memory", &inputs)
+        .unwrap();
+    let report = verify_sfcs_execution_embedding(&artifact).unwrap();
+    assert_eq!(report.output_digest, first.output_digest);
+    assert!(report.dense_nodes > 0);
+
+    let synthesis = graph.synthesis_plan().unwrap();
+    assert!(synthesis.dense_nodes.iter().any(|node| node == "written"));
+    assert!(synthesis.dense_nodes.iter().any(|node| node == "loaded"));
+    assert!(synthesis.dense_nodes.iter().any(|node| node == "out"));
+}
+
+#[test]
+fn source_frontend_rejects_invalid_dense_execution() {
+    let divide_by_zero = SfcsGraph::from_source("input a\nlet out = a / 0\noutput out").unwrap();
+    assert!(matches!(
+        divide_by_zero.evaluate(&BTreeMap::from([("a".to_string(), 9)])),
+        Err(SfcsError::Execution(_))
+    ));
+
+    let bad_shift = SfcsGraph::from_source("input a\nlet out = a << 64\noutput out").unwrap();
+    assert!(matches!(
+        bad_shift.evaluate(&BTreeMap::from([("a".to_string(), 9)])),
+        Err(SfcsError::Execution(_))
+    ));
+}
+
+#[test]
 fn execution_trace_is_deterministic_and_input_sensitive() {
     let graph = arithmetic_graph();
     let inputs = BTreeMap::from([("a".to_string(), 5), ("b".to_string(), 6)]);

@@ -29,6 +29,12 @@ use power_house::{
     ChallengeSuite, EntryAnchor, Field, GeneralSumProof, LedgerAnchor, MemoryCapsule,
     MemoryCapsuleBuilder, MemoryError, MemoryVerificationPolicy, ObservatorySidecar, ProofStats,
 };
+#[cfg(feature = "sfcs")]
+use power_house::{
+    verify_sfcs_execution_embedding, verify_sfcs_pha_embedding, SfcsError, SfcsGraph,
+};
+#[cfg(feature = "sfcs")]
+use std::collections::BTreeMap;
 #[cfg(feature = "net")]
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
 #[cfg(feature = "net")]
@@ -83,6 +89,8 @@ fn print_cli_help() {
     println!("  identity         Create, branch, merge, replay, and verify identities");
     println!("  rootprint        Navigate, fork, merge, and verify Power House provenance");
     println!("  memory           Create, verify, replay, challenge, and export proof memory");
+    #[cfg(feature = "sfcs")]
+    println!("  sfcs             Parse, execute, and verify SFCS computational fractals");
     println!("  node             Replay logs, derive anchors, and verify Merkle proofs");
     println!("  scale_sumcheck   Benchmark streaming sum-check verification");
     println!();
@@ -186,6 +194,19 @@ fn print_memory_help() {
     println!("  export <capsule.phm> --format directory --output <dir>");
     println!();
     println!("Memory verification runs offline and verifies core truth before semantic bindings.");
+}
+
+#[cfg(feature = "sfcs")]
+fn print_sfcs_help() {
+    println!("Usage: julian sfcs <source|eval|inspect|verify-pha> ...");
+    println!("  source <source.sfcs> --output <graph.json>");
+    println!("  eval <source.sfcs> --input <name=value> [--input <name=value>] \\");
+    println!("       [--report <report.json>] [--graph-output <graph.json>] \\");
+    println!("       [--artifact-output <exec.pha>] [--label <name>]");
+    println!("  inspect <graph.json>");
+    println!("  verify-pha <artifact.pha>");
+    println!();
+    println!("SFCS commands are offline and do not alter Rootprint or .pha identity rules.");
 }
 
 #[cfg(feature = "net")]
@@ -420,6 +441,14 @@ fn main() {
                 print_memory_help();
             }
         }
+        #[cfg(feature = "sfcs")]
+        Some("sfcs") => {
+            if let Some(sub) = args.next() {
+                handle_sfcs(&sub, args.collect());
+            } else {
+                print_sfcs_help();
+            }
+        }
         Some("identity") => {
             if let Some(sub) = args.next() {
                 handle_identity(&sub, args.collect());
@@ -565,6 +594,18 @@ fn handle_memory(sub: &str, tail: Vec<String>) {
     }
 }
 
+#[cfg(feature = "sfcs")]
+fn handle_sfcs(sub: &str, tail: Vec<String>) {
+    match sub {
+        "-h" | "--help" => print_sfcs_help(),
+        "source" => cmd_sfcs_source(tail),
+        "eval" => cmd_sfcs_eval(tail),
+        "inspect" => cmd_sfcs_inspect(tail),
+        "verify-pha" => cmd_sfcs_verify_pha(tail),
+        _ => fatal(&format!("unknown sfcs subcommand: {sub}")),
+    }
+}
+
 fn read_pha(path: &Path) -> PhaArtifact {
     let contents = fs::read_to_string(path)
         .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
@@ -621,6 +662,26 @@ fn read_json_value(path: &Path) -> serde_json::Value {
         .unwrap_or_else(|err| fatal(&format!("invalid JSON in {}: {err}", path.display())))
 }
 
+#[cfg(feature = "sfcs")]
+fn read_sfcs_graph(path: &Path) -> SfcsGraph {
+    let contents = fs::read(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    SfcsGraph::from_slice(&contents)
+        .unwrap_or_else(|err| fatal(&format!("invalid SFCS graph in {}: {err}", path.display())))
+}
+
+#[cfg(feature = "sfcs")]
+fn read_sfcs_source(path: &Path) -> SfcsGraph {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    SfcsGraph::from_source(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "failed to parse SFCS source {}: {err}",
+            path.display()
+        ))
+    })
+}
+
 fn write_json<T: serde::Serialize>(path: &Path, value: &T) {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).unwrap_or_else(|err| {
@@ -640,6 +701,222 @@ fn write_json<T: serde::Serialize>(path: &Path, value: &T) {
 fn take_option(iter: &mut impl Iterator<Item = String>, name: &str) -> String {
     iter.next()
         .unwrap_or_else(|| fatal(&format!("{name} expects a value")))
+}
+
+#[cfg(feature = "sfcs")]
+fn parse_sfcs_input(value: &str) -> (String, i64) {
+    let Some((name, raw_value)) = value.split_once('=') else {
+        fatal("--input expects name=value");
+    };
+    if name.is_empty() {
+        fatal("--input name cannot be empty");
+    }
+    let parsed = raw_value
+        .parse::<i64>()
+        .unwrap_or_else(|err| fatal(&format!("invalid SFCS input value {raw_value}: {err}")));
+    (name.to_string(), parsed)
+}
+
+#[cfg(feature = "sfcs")]
+fn sfcs_exit_for_error(error: &SfcsError) -> i32 {
+    match error {
+        SfcsError::Canonical(_) | SfcsError::InvalidProgram(_) => 2,
+        SfcsError::UnsupportedSchema(_) => 3,
+        SfcsError::InvalidEmbedding(_)
+        | SfcsError::InvalidDigest(_)
+        | SfcsError::InvalidGraph(_)
+        | SfcsError::CycleDetected(_)
+        | SfcsError::UnknownNode(_)
+        | SfcsError::MissingInput(_)
+        | SfcsError::UnsupportedEvaluation(_)
+        | SfcsError::Execution(_)
+        | SfcsError::DuplicateNode(_)
+        | SfcsError::InvalidId(_) => 1,
+        SfcsError::Json(_) | SfcsError::Pha(_) => 5,
+    }
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_source(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut output = None;
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--output" => output = Some(PathBuf::from(take_option(&mut iter, "--output"))),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path = source_path.unwrap_or_else(|| fatal("sfcs source requires <source.sfcs>"));
+    let output = output.unwrap_or_else(|| fatal("--output is required"));
+    let graph = read_sfcs_source(&source_path);
+    let digest = graph
+        .fractal_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS graph digest failed: {err}")));
+    write_json(&output, &graph);
+    println!("SFCS SOURCE");
+    println!("graph_digest: {digest}");
+    println!("nodes: {}", graph.nodes.len());
+    println!("outputs: {}", graph.outputs.len());
+    println!("graph: {}", output.display());
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_eval(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut inputs = BTreeMap::<String, i64>::new();
+    let mut report_path = None;
+    let mut graph_output = None;
+    let mut artifact_output = None;
+    let mut label = "sfcs-execution".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--input" => {
+                let (name, value) = parse_sfcs_input(&take_option(&mut iter, "--input"));
+                if inputs.insert(name.clone(), value).is_some() {
+                    fatal(&format!("duplicate SFCS input: {name}"));
+                }
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--graph-output" => {
+                graph_output = Some(PathBuf::from(take_option(&mut iter, "--graph-output")))
+            }
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path = source_path.unwrap_or_else(|| fatal("sfcs eval requires <source.sfcs>"));
+    let graph = read_sfcs_source(&source_path);
+    if let Some(path) = graph_output {
+        write_json(&path, &graph);
+    }
+    let trace = graph.execution_trace(&inputs).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_exit_for_error(&err),
+            &format!("SFCS execution failed: {err}"),
+        )
+    });
+    let synthesis = graph.synthesis_plan().unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_exit_for_error(&err),
+            &format!("SFCS synthesis failed: {err}"),
+        )
+    });
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-cli-report/v1",
+        "source": source_path,
+        "graph_digest": trace.graph_digest,
+        "trace_digest": trace.trace_digest,
+        "synthesis_digest": synthesis.synthesis_digest,
+        "embedding_invariant_digest": synthesis.embedding_invariant_digest,
+        "input_digest": trace.input_digest,
+        "output_digest": trace.output_digest,
+        "outputs": trace.outputs,
+        "trace_steps": trace.steps.len(),
+        "fast_path_regions": synthesis.fast_path_regions,
+        "dense_regions": synthesis.dense_regions,
+        "dense_nodes": synthesis.dense_nodes,
+        "fast_path_workload_digest": synthesis.fast_path_workload_digest,
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = graph
+            .to_execution_pha_artifact(&label, &inputs)
+            .unwrap_or_else(|err| fatal(&format!("SFCS .pha embedding failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    println!("SFCS EVAL");
+    println!(
+        "graph_digest: {}",
+        report["graph_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "trace_digest: {}",
+        report["trace_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "synthesis_digest: {}",
+        report["synthesis_digest"].as_str().unwrap_or("")
+    );
+    for (name, value) in report["outputs"].as_object().into_iter().flatten() {
+        println!("output {name}={value}");
+    }
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_inspect(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs inspect requires <graph.json>");
+    }
+    let graph = read_sfcs_graph(Path::new(&args[0]));
+    let digest = graph
+        .fractal_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS graph digest failed: {err}")));
+    let discovery = graph
+        .discover_structure()
+        .unwrap_or_else(|err| fatal(&format!("SFCS discovery failed: {err}")));
+    println!("SFCS INSPECT");
+    println!("graph_digest: {digest}");
+    println!("nodes: {}", discovery.node_count);
+    println!("fast_path_nodes: {}", discovery.fast_path_nodes.len());
+    println!("dense_nodes: {}", discovery.dense_nodes.len());
+    println!("fast_path_regions: {}", discovery.fast_path_regions);
+    println!("dense_regions: {}", discovery.dense_regions);
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_verify_pha(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-pha requires <artifact.pha>");
+    }
+    let artifact = read_pha(Path::new(&args[0]));
+    match verify_sfcs_execution_embedding(&artifact) {
+        Ok(report) => {
+            println!("SFCS EXECUTION PHA VALID");
+            println!("graph_digest: {}", report.graph_digest);
+            println!("trace_digest: {}", report.trace_digest);
+            println!("synthesis_digest: {}", report.synthesis_digest);
+            println!("output_digest: {}", report.output_digest);
+        }
+        Err(execution_error) => match verify_sfcs_pha_embedding(&artifact) {
+            Ok(report) => {
+                println!("SFCS GRAPH PHA VALID");
+                println!("graph_digest: {}", report.graph_digest);
+                println!("fast_path_nodes: {}", report.fast_path_nodes);
+                println!("dense_nodes: {}", report.dense_nodes);
+            }
+            Err(graph_error) => fatal_code(
+                sfcs_exit_for_error(&graph_error),
+                &format!(
+                    "SFCS .pha verification failed: execution={execution_error}; graph={graph_error}"
+                ),
+            ),
+        },
+    }
 }
 
 fn cmd_rootprint_init(args: Vec<String>) {

@@ -19,6 +19,7 @@ const FRACTAL_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:fractal\0";
 const FAST_PATH_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:fast-path-workload\0";
 const TRACE_INPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-inputs\0";
 const TRACE_OUTPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-outputs\0";
+const TRACE_MEMORY_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-memory\0";
 const TRACE_STEP_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-step\0";
 const TRACE_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:execution-trace\0";
 const STRUCTURE_REGION_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:structure-region\0";
@@ -43,21 +44,43 @@ pub enum SfcsOp {
     Sub,
     /// Integer multiplication over ordered inputs.
     Mul,
+    /// Integer division over two ordered inputs. Division by zero rejects execution.
+    Div,
+    /// Integer remainder over two ordered inputs. Division by zero rejects execution.
+    Mod,
     /// Deterministic equality predicate. Returns 1 for equality and 0 otherwise.
     Eq,
+    /// Deterministic less-than predicate. Returns 1 when left < right.
+    Lt,
+    /// Deterministic less-than-or-equal predicate. Returns 1 when left <= right.
+    Le,
+    /// Deterministic greater-than predicate. Returns 1 when left > right.
+    Gt,
+    /// Deterministic greater-than-or-equal predicate. Returns 1 when left >= right.
+    Ge,
     /// Deterministic nonzero conjunction. Returns 1 when both inputs are nonzero.
     And,
     /// Deterministic nonzero disjunction. Returns 1 when either input is nonzero.
     Or,
     /// Deterministic nonzero negation. Returns 1 when the input is zero.
     Not,
+    /// Deterministic bitwise conjunction over two ordered inputs.
+    BitAnd,
+    /// Deterministic bitwise disjunction over two ordered inputs.
+    BitOr,
+    /// Deterministic bitwise exclusive-or over two ordered inputs.
+    BitXor,
+    /// Deterministic wrapping left shift. Negative or oversized shifts reject execution.
+    Shl,
+    /// Deterministic wrapping right shift. Negative or oversized shifts reject execution.
+    Shr,
     /// Deterministic branch: input 0 is the condition, input 1 true, input 2 false.
     Branch,
     /// Dense opaque step that is not eligible for the Sovereign fast path.
     DenseStep,
-    /// Explicit memory read placeholder. Not executable in the draft evaluator.
+    /// Deterministic memory read. Input 0 is the address; input 1 optionally orders memory state.
     MemoryRead,
-    /// Explicit memory write placeholder. Not executable in the draft evaluator.
+    /// Deterministic memory write. Inputs 0 and 1 are address and value; input 2 optionally orders memory state.
     MemoryWrite,
     /// Node already rewritten to an external fast-path workload certificate.
     FastPathClaim,
@@ -158,9 +181,20 @@ impl SfcsGraph {
     /// - `add <id> <input> <input> [input...]`
     /// - `sub <id> <left> <right>`
     /// - `mul <id> <input> <input> [input...]`
+    /// - `div <id> <left> <right>`
+    /// - `mod <id> <left> <right>`
     /// - `eq <id> <left> <right>`
+    /// - `lt <id> <left> <right>`
+    /// - `le <id> <left> <right>`
+    /// - `gt <id> <left> <right>`
+    /// - `ge <id> <left> <right>`
     /// - `and <id> <left> <right>`
     /// - `or <id> <left> <right>`
+    /// - `bit_and <id> <left> <right>`
+    /// - `bit_or <id> <left> <right>`
+    /// - `bit_xor <id> <left> <right>`
+    /// - `shl <id> <left> <right>`
+    /// - `shr <id> <left> <right>`
     /// - `not <id> <input>`
     /// - `branch <id> <condition> <true> <false>`
     /// - `dense <id> <input> [input...]`
@@ -222,13 +256,25 @@ impl SfcsGraph {
                         rest[1..].iter().map(|value| (*value).to_string()).collect(),
                     ))?;
                 }
-                "sub" | "eq" | "and" | "or" => {
+                "sub" | "div" | "mod" | "eq" | "lt" | "le" | "gt" | "ge" | "and" | "or"
+                | "bit_and" | "bit_or" | "bit_xor" | "shl" | "shr" => {
                     require_program_arity(line_number, keyword, rest, 3)?;
                     let op = match *keyword {
                         "sub" => SfcsOp::Sub,
+                        "div" => SfcsOp::Div,
+                        "mod" => SfcsOp::Mod,
                         "eq" => SfcsOp::Eq,
+                        "lt" => SfcsOp::Lt,
+                        "le" => SfcsOp::Le,
+                        "gt" => SfcsOp::Gt,
+                        "ge" => SfcsOp::Ge,
                         "and" => SfcsOp::And,
                         "or" => SfcsOp::Or,
+                        "bit_and" => SfcsOp::BitAnd,
+                        "bit_or" => SfcsOp::BitOr,
+                        "bit_xor" => SfcsOp::BitXor,
+                        "shl" => SfcsOp::Shl,
+                        "shr" => SfcsOp::Shr,
                         _ => unreachable!(),
                     };
                     graph.insert_node(SfcsNode::new(
@@ -345,8 +391,12 @@ impl SfcsGraph {
     /// - integer constants
     /// - identifiers
     /// - `+`, `-`, `*`
+    /// - `/`, `%`
+    /// - `<`, `<=`, `>`, `>=`
     /// - `==`, `&&`, `||`, `!`
+    /// - `&`, `|`, `^`, `<<`, `>>`
     /// - parentheses
+    /// - `load(<address>)`, `store(<address>, <value>)`
     /// - `if <expr> then <expr> else <expr>`
     pub fn from_source(source: &str) -> Result<Self, SfcsError> {
         let mut builder = SfcsSourceBuilder::new();
@@ -633,10 +683,10 @@ impl SfcsGraph {
         Ok(regions)
     }
 
-    /// Evaluates the executable arithmetic subset deterministically.
+    /// Evaluates the executable source-to-fractal subset deterministically.
     ///
-    /// Memory and dense opaque operations are deliberately rejected in this
-    /// draft evaluator rather than silently accepted.
+    /// Explicit opaque dense steps are rejected rather than silently accepted
+    /// until a proof profile defines their semantics.
     pub fn evaluate(
         &self,
         inputs: &BTreeMap<String, i64>,
@@ -644,7 +694,7 @@ impl SfcsGraph {
         Ok(self.execution_trace(inputs)?.outputs)
     }
 
-    /// Executes the arithmetic subset and returns a deterministic trace.
+    /// Executes the source-to-fractal subset and returns a deterministic trace.
     ///
     /// The trace is a first-class digestible object. It records the node order,
     /// operation, inputs, outputs, and per-step digests so replay can distinguish
@@ -656,6 +706,7 @@ impl SfcsGraph {
         self.verify()?;
         let graph_digest = self.fractal_digest()?;
         let input_digest = digest_json(TRACE_INPUT_DOMAIN, inputs)?;
+        let mut memory = BTreeMap::<i64, i64>::new();
         let mut values = BTreeMap::new();
         let mut steps = Vec::new();
         for node_id in self.topological_order()? {
@@ -665,6 +716,7 @@ impl SfcsGraph {
                 .iter()
                 .map(|input| (input.clone(), values[input]))
                 .collect::<BTreeMap<_, _>>();
+            let memory_before_digest = digest_json(TRACE_MEMORY_DOMAIN, &memory)?;
             let value = match node.op {
                 SfcsOp::Input => *inputs
                     .get(&node.id)
@@ -680,7 +732,31 @@ impl SfcsGraph {
                 SfcsOp::Mul => node.inputs.iter().try_fold(1_i64, |acc, input| {
                     Ok::<i64, SfcsError>(acc.wrapping_mul(values[input]))
                 })?,
+                SfcsOp::Div => {
+                    let divisor = values[&node.inputs[1]];
+                    if divisor == 0 {
+                        return Err(SfcsError::Execution(format!(
+                            "node {} attempted division by zero",
+                            node.id
+                        )));
+                    }
+                    values[&node.inputs[0]].wrapping_div(divisor)
+                }
+                SfcsOp::Mod => {
+                    let divisor = values[&node.inputs[1]];
+                    if divisor == 0 {
+                        return Err(SfcsError::Execution(format!(
+                            "node {} attempted remainder by zero",
+                            node.id
+                        )));
+                    }
+                    values[&node.inputs[0]].wrapping_rem(divisor)
+                }
                 SfcsOp::Eq => i64::from(values[&node.inputs[0]] == values[&node.inputs[1]]),
+                SfcsOp::Lt => i64::from(values[&node.inputs[0]] < values[&node.inputs[1]]),
+                SfcsOp::Le => i64::from(values[&node.inputs[0]] <= values[&node.inputs[1]]),
+                SfcsOp::Gt => i64::from(values[&node.inputs[0]] > values[&node.inputs[1]]),
+                SfcsOp::Ge => i64::from(values[&node.inputs[0]] >= values[&node.inputs[1]]),
                 SfcsOp::And => {
                     i64::from(values[&node.inputs[0]] != 0 && values[&node.inputs[1]] != 0)
                 }
@@ -688,6 +764,17 @@ impl SfcsGraph {
                     i64::from(values[&node.inputs[0]] != 0 || values[&node.inputs[1]] != 0)
                 }
                 SfcsOp::Not => i64::from(values[&node.inputs[0]] == 0),
+                SfcsOp::BitAnd => values[&node.inputs[0]] & values[&node.inputs[1]],
+                SfcsOp::BitOr => values[&node.inputs[0]] | values[&node.inputs[1]],
+                SfcsOp::BitXor => values[&node.inputs[0]] ^ values[&node.inputs[1]],
+                SfcsOp::Shl => {
+                    let shift = checked_shift_amount(values[&node.inputs[1]], &node.id)?;
+                    values[&node.inputs[0]].wrapping_shl(shift)
+                }
+                SfcsOp::Shr => {
+                    let shift = checked_shift_amount(values[&node.inputs[1]], &node.id)?;
+                    values[&node.inputs[0]].wrapping_shr(shift)
+                }
                 SfcsOp::Branch => {
                     let condition = values[&node.inputs[0]];
                     if condition != 0 {
@@ -696,13 +783,21 @@ impl SfcsGraph {
                         values[&node.inputs[2]]
                     }
                 }
-                SfcsOp::FastPathClaim
-                | SfcsOp::DenseStep
-                | SfcsOp::MemoryRead
-                | SfcsOp::MemoryWrite => {
+                SfcsOp::MemoryRead => {
+                    let address = values[&node.inputs[0]];
+                    *memory.get(&address).unwrap_or(&0)
+                }
+                SfcsOp::MemoryWrite => {
+                    let address = values[&node.inputs[0]];
+                    let stored = values[&node.inputs[1]];
+                    memory.insert(address, stored);
+                    stored
+                }
+                SfcsOp::FastPathClaim | SfcsOp::DenseStep => {
                     return Err(SfcsError::UnsupportedEvaluation(node.id.clone()));
                 }
             };
+            let memory_after_digest = digest_json(TRACE_MEMORY_DOMAIN, &memory)?;
             let mut step = SfcsTraceStep {
                 step_index: steps.len() as u64,
                 node_id: node.id.clone(),
@@ -711,6 +806,8 @@ impl SfcsGraph {
                 input_values,
                 output_value: value,
                 fast_path_eligible: node.is_fast_path_eligible(),
+                memory_before_digest,
+                memory_after_digest,
                 step_digest: String::new(),
             };
             step.step_digest = digest_json(TRACE_STEP_DOMAIN, &step.preimage())?;
@@ -1170,7 +1267,7 @@ impl SfcsStructureRegion {
     }
 }
 
-/// Deterministic execution trace for the arithmetic SFCS subset.
+/// Deterministic execution trace for the source-to-fractal SFCS subset.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsExecutionTrace {
     /// Digest of the source graph.
@@ -1216,6 +1313,10 @@ pub struct SfcsTraceStep {
     pub output_value: i64,
     /// Whether this node is eligible for the Sovereign fast path.
     pub fast_path_eligible: bool,
+    /// Digest of deterministic memory state before this step.
+    pub memory_before_digest: String,
+    /// Digest of deterministic memory state after this step.
+    pub memory_after_digest: String,
     /// Domain-separated digest of this step.
     pub step_digest: String,
 }
@@ -1230,6 +1331,8 @@ impl SfcsTraceStep {
             "input_values": self.input_values,
             "output_value": self.output_value,
             "fast_path_eligible": self.fast_path_eligible,
+            "memory_before_digest": self.memory_before_digest,
+            "memory_after_digest": self.memory_after_digest,
         })
     }
 }
@@ -1437,6 +1540,8 @@ pub enum SfcsError {
     MissingInput(String),
     /// Node cannot be evaluated by the draft arithmetic evaluator.
     UnsupportedEvaluation(String),
+    /// Deterministic execution failed.
+    Execution(String),
     /// Digest is malformed.
     InvalidDigest(String),
     /// JSON serialization failed.
@@ -1468,6 +1573,7 @@ impl fmt::Display for SfcsError {
                     "SFCS node {id} is not executable by the draft evaluator"
                 )
             }
+            Self::Execution(message) => write!(formatter, "SFCS execution error: {message}"),
             Self::InvalidDigest(value) => write!(formatter, "invalid digest: {value}"),
             Self::Json(error) => write!(formatter, "SFCS JSON error: {error}"),
             Self::Pha(error) => write!(formatter, "SFCS PHA error: {error}"),
@@ -1496,6 +1602,7 @@ struct SfcsSourceBuilder {
     bindings: BTreeMap<String, String>,
     outputs: Vec<String>,
     temp_counter: u64,
+    memory_head: Option<String>,
 }
 
 impl SfcsSourceBuilder {
@@ -1505,6 +1612,7 @@ impl SfcsSourceBuilder {
             bindings: BTreeMap::new(),
             outputs: Vec::new(),
             temp_counter: 0,
+            memory_head: None,
         }
     }
 
@@ -1621,6 +1729,41 @@ impl SfcsSourceBuilder {
                 self.insert_generated_node(SfcsNode::new(&id, SfcsOp::Not, vec![input]), "not")?;
                 Ok(id)
             }
+            SfcsExpr::Load(address) => {
+                let address = self.lower_expr(address, None, line_number)?;
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                let mut inputs = vec![address];
+                if let Some(memory_head) = self.memory_head.clone() {
+                    inputs.push(memory_head);
+                }
+                self.insert_generated_node(SfcsNode::new(&id, SfcsOp::MemoryRead, inputs), "load")?;
+                self.memory_head = Some(id.clone());
+                Ok(id)
+            }
+            SfcsExpr::Store { address, value } => {
+                let address = self.lower_expr(address, None, line_number)?;
+                let value = self.lower_expr(value, None, line_number)?;
+                let id = preferred_id.unwrap_or_else(|| self.next_temp());
+                let mut inputs = self.distinct_inputs(vec![address, value], line_number)?;
+                if let Some(memory_head) = self.memory_head.clone() {
+                    if inputs.iter().any(|input| input == &memory_head) {
+                        let alias_id = self.next_temp();
+                        self.insert_generated_node(
+                            SfcsNode::new(&alias_id, SfcsOp::Alias, vec![memory_head]),
+                            "alias",
+                        )?;
+                        inputs.push(alias_id);
+                    } else {
+                        inputs.push(memory_head);
+                    }
+                }
+                self.insert_generated_node(
+                    SfcsNode::new(&id, SfcsOp::MemoryWrite, inputs),
+                    "store",
+                )?;
+                self.memory_head = Some(id.clone());
+                Ok(id)
+            }
             SfcsExpr::Binary { op, left, right } => {
                 let left = self.lower_expr(left, None, line_number)?;
                 let right = self.lower_expr(right, None, line_number)?;
@@ -1702,6 +1845,11 @@ enum SfcsExpr {
     Ident(String),
     Number(i64),
     UnaryNot(Box<SfcsExpr>),
+    Load(Box<SfcsExpr>),
+    Store {
+        address: Box<SfcsExpr>,
+        value: Box<SfcsExpr>,
+    },
     Binary {
         op: SfcsExprBinaryOp,
         left: Box<SfcsExpr>,
@@ -1719,9 +1867,20 @@ enum SfcsExprBinaryOp {
     Add,
     Sub,
     Mul,
+    Div,
+    Mod,
     Eq,
+    Lt,
+    Le,
+    Gt,
+    Ge,
     And,
     Or,
+    BitAnd,
+    BitOr,
+    BitXor,
+    Shl,
+    Shr,
 }
 
 impl SfcsExprBinaryOp {
@@ -1730,9 +1889,20 @@ impl SfcsExprBinaryOp {
             Self::Add => SfcsOp::Add,
             Self::Sub => SfcsOp::Sub,
             Self::Mul => SfcsOp::Mul,
+            Self::Div => SfcsOp::Div,
+            Self::Mod => SfcsOp::Mod,
             Self::Eq => SfcsOp::Eq,
+            Self::Lt => SfcsOp::Lt,
+            Self::Le => SfcsOp::Le,
+            Self::Gt => SfcsOp::Gt,
+            Self::Ge => SfcsOp::Ge,
             Self::And => SfcsOp::And,
             Self::Or => SfcsOp::Or,
+            Self::BitAnd => SfcsOp::BitAnd,
+            Self::BitOr => SfcsOp::BitOr,
+            Self::BitXor => SfcsOp::BitXor,
+            Self::Shl => SfcsOp::Shl,
+            Self::Shr => SfcsOp::Shr,
         }
     }
 
@@ -1741,9 +1911,20 @@ impl SfcsExprBinaryOp {
             Self::Add => "add",
             Self::Sub => "sub",
             Self::Mul => "mul",
+            Self::Div => "div",
+            Self::Mod => "mod",
             Self::Eq => "eq",
+            Self::Lt => "lt",
+            Self::Le => "le",
+            Self::Gt => "gt",
+            Self::Ge => "ge",
             Self::And => "and",
             Self::Or => "or",
+            Self::BitAnd => "bit_and",
+            Self::BitOr => "bit_or",
+            Self::BitXor => "bit_xor",
+            Self::Shl => "shl",
+            Self::Shr => "shr",
         }
     }
 }
@@ -1755,15 +1936,29 @@ enum SfcsExprToken {
     Plus,
     Minus,
     Star,
+    Slash,
+    Percent,
     EqEq,
+    Lt,
+    Le,
+    Gt,
+    Ge,
     AndAnd,
     OrOr,
+    Amp,
+    Pipe,
+    Caret,
+    ShiftLeft,
+    ShiftRight,
     Bang,
+    Comma,
     LParen,
     RParen,
     If,
     Then,
     Else,
+    Load,
+    Store,
     End,
 }
 
@@ -1819,9 +2014,9 @@ impl SfcsExprParser {
     }
 
     fn parse_and(&mut self) -> Result<SfcsExpr, SfcsError> {
-        let mut expression = self.parse_eq()?;
+        let mut expression = self.parse_bit_or()?;
         while self.consume_and_and() {
-            let right = self.parse_eq()?;
+            let right = self.parse_bit_or()?;
             expression = SfcsExpr::Binary {
                 op: SfcsExprBinaryOp::And,
                 left: Box::new(expression),
@@ -1831,10 +2026,49 @@ impl SfcsExprParser {
         Ok(expression)
     }
 
+    fn parse_bit_or(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_bit_xor()?;
+        while self.consume_pipe() {
+            let right = self.parse_bit_xor()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::BitOr,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_bit_xor(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_bit_and()?;
+        while self.consume_caret() {
+            let right = self.parse_bit_and()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::BitXor,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
+    fn parse_bit_and(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_eq()?;
+        while self.consume_amp() {
+            let right = self.parse_eq()?;
+            expression = SfcsExpr::Binary {
+                op: SfcsExprBinaryOp::BitAnd,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+        Ok(expression)
+    }
+
     fn parse_eq(&mut self) -> Result<SfcsExpr, SfcsError> {
-        let mut expression = self.parse_add_sub()?;
+        let mut expression = self.parse_cmp()?;
         while self.consume_eq_eq() {
-            let right = self.parse_add_sub()?;
+            let right = self.parse_cmp()?;
             expression = SfcsExpr::Binary {
                 op: SfcsExprBinaryOp::Eq,
                 left: Box::new(expression),
@@ -1844,18 +2078,60 @@ impl SfcsExprParser {
         Ok(expression)
     }
 
+    fn parse_cmp(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_shift()?;
+        loop {
+            let op = if self.consume_le() {
+                SfcsExprBinaryOp::Le
+            } else if self.consume_lt() {
+                SfcsExprBinaryOp::Lt
+            } else if self.consume_ge() {
+                SfcsExprBinaryOp::Ge
+            } else if self.consume_gt() {
+                SfcsExprBinaryOp::Gt
+            } else {
+                return Ok(expression);
+            };
+            let right = self.parse_shift()?;
+            expression = SfcsExpr::Binary {
+                op,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+    }
+
+    fn parse_shift(&mut self) -> Result<SfcsExpr, SfcsError> {
+        let mut expression = self.parse_add_sub()?;
+        loop {
+            let op = if self.consume_shift_left() {
+                SfcsExprBinaryOp::Shl
+            } else if self.consume_shift_right() {
+                SfcsExprBinaryOp::Shr
+            } else {
+                return Ok(expression);
+            };
+            let right = self.parse_add_sub()?;
+            expression = SfcsExpr::Binary {
+                op,
+                left: Box::new(expression),
+                right: Box::new(right),
+            };
+        }
+    }
+
     fn parse_add_sub(&mut self) -> Result<SfcsExpr, SfcsError> {
-        let mut expression = self.parse_mul()?;
+        let mut expression = self.parse_mul_div_mod()?;
         loop {
             if self.consume_plus() {
-                let right = self.parse_mul()?;
+                let right = self.parse_mul_div_mod()?;
                 expression = SfcsExpr::Binary {
                     op: SfcsExprBinaryOp::Add,
                     left: Box::new(expression),
                     right: Box::new(right),
                 };
             } else if self.consume_minus() {
-                let right = self.parse_mul()?;
+                let right = self.parse_mul_div_mod()?;
                 expression = SfcsExpr::Binary {
                     op: SfcsExprBinaryOp::Sub,
                     left: Box::new(expression),
@@ -1867,17 +2143,25 @@ impl SfcsExprParser {
         }
     }
 
-    fn parse_mul(&mut self) -> Result<SfcsExpr, SfcsError> {
+    fn parse_mul_div_mod(&mut self) -> Result<SfcsExpr, SfcsError> {
         let mut expression = self.parse_unary()?;
-        while self.consume_star() {
+        loop {
+            let op = if self.consume_star() {
+                SfcsExprBinaryOp::Mul
+            } else if self.consume_slash() {
+                SfcsExprBinaryOp::Div
+            } else if self.consume_percent() {
+                SfcsExprBinaryOp::Mod
+            } else {
+                return Ok(expression);
+            };
             let right = self.parse_unary()?;
             expression = SfcsExpr::Binary {
-                op: SfcsExprBinaryOp::Mul,
+                op,
                 left: Box::new(expression),
                 right: Box::new(right),
             };
         }
-        Ok(expression)
     }
 
     fn parse_unary(&mut self) -> Result<SfcsExpr, SfcsError> {
@@ -1891,6 +2175,23 @@ impl SfcsExprParser {
         match self.next().clone() {
             SfcsExprToken::Ident(id) => Ok(SfcsExpr::Ident(id)),
             SfcsExprToken::Number(value) => Ok(SfcsExpr::Number(value)),
+            SfcsExprToken::Load => {
+                self.expect_lparen()?;
+                let address = self.parse_expression()?;
+                self.expect_rparen()?;
+                Ok(SfcsExpr::Load(Box::new(address)))
+            }
+            SfcsExprToken::Store => {
+                self.expect_lparen()?;
+                let address = self.parse_expression()?;
+                self.expect_comma()?;
+                let value = self.parse_expression()?;
+                self.expect_rparen()?;
+                Ok(SfcsExpr::Store {
+                    address: Box::new(address),
+                    value: Box::new(value),
+                })
+            }
             SfcsExprToken::LParen => {
                 let expression = self.parse_expression()?;
                 self.expect_rparen()?;
@@ -1934,6 +2235,30 @@ impl SfcsExprParser {
         self.consume(|token| matches!(token, SfcsExprToken::EqEq))
     }
 
+    fn consume_le(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Le))
+    }
+
+    fn consume_lt(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Lt))
+    }
+
+    fn consume_ge(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Ge))
+    }
+
+    fn consume_gt(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Gt))
+    }
+
+    fn consume_shift_left(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::ShiftLeft))
+    }
+
+    fn consume_shift_right(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::ShiftRight))
+    }
+
     fn consume_plus(&mut self) -> bool {
         self.consume(|token| matches!(token, SfcsExprToken::Plus))
     }
@@ -1944,6 +2269,26 @@ impl SfcsExprParser {
 
     fn consume_star(&mut self) -> bool {
         self.consume(|token| matches!(token, SfcsExprToken::Star))
+    }
+
+    fn consume_slash(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Slash))
+    }
+
+    fn consume_percent(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Percent))
+    }
+
+    fn consume_amp(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Amp))
+    }
+
+    fn consume_pipe(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Pipe))
+    }
+
+    fn consume_caret(&mut self) -> bool {
+        self.consume(|token| matches!(token, SfcsExprToken::Caret))
     }
 
     fn consume_bang(&mut self) -> bool {
@@ -1978,11 +2323,27 @@ impl SfcsExprParser {
         }
     }
 
+    fn expect_lparen(&mut self) -> Result<(), SfcsError> {
+        if self.consume(|token| matches!(token, SfcsExprToken::LParen)) {
+            Ok(())
+        } else {
+            Err(self.error("expected '('".to_string()))
+        }
+    }
+
     fn expect_rparen(&mut self) -> Result<(), SfcsError> {
         if self.consume(|token| matches!(token, SfcsExprToken::RParen)) {
             Ok(())
         } else {
             Err(self.error("expected ')'".to_string()))
+        }
+    }
+
+    fn expect_comma(&mut self) -> Result<(), SfcsError> {
+        if self.consume(|token| matches!(token, SfcsExprToken::Comma)) {
+            Ok(())
+        } else {
+            Err(self.error("expected ','".to_string()))
         }
     }
 
@@ -2025,8 +2386,20 @@ fn tokenize_expr(source: &str, line_number: usize) -> Result<Vec<SfcsExprToken>,
                 tokens.push(SfcsExprToken::Star);
                 index += 1;
             }
+            b'/' => {
+                tokens.push(SfcsExprToken::Slash);
+                index += 1;
+            }
+            b'%' => {
+                tokens.push(SfcsExprToken::Percent);
+                index += 1;
+            }
             b'!' => {
                 tokens.push(SfcsExprToken::Bang);
+                index += 1;
+            }
+            b',' => {
+                tokens.push(SfcsExprToken::Comma);
                 index += 1;
             }
             b'(' => {
@@ -2045,9 +2418,45 @@ fn tokenize_expr(source: &str, line_number: usize) -> Result<Vec<SfcsExprToken>,
                 tokens.push(SfcsExprToken::AndAnd);
                 index += 2;
             }
+            b'&' => {
+                tokens.push(SfcsExprToken::Amp);
+                index += 1;
+            }
             b'|' if bytes.get(index + 1) == Some(&b'|') => {
                 tokens.push(SfcsExprToken::OrOr);
                 index += 2;
+            }
+            b'|' => {
+                tokens.push(SfcsExprToken::Pipe);
+                index += 1;
+            }
+            b'^' => {
+                tokens.push(SfcsExprToken::Caret);
+                index += 1;
+            }
+            b'<' if bytes.get(index + 1) == Some(&b'<') => {
+                tokens.push(SfcsExprToken::ShiftLeft);
+                index += 2;
+            }
+            b'<' if bytes.get(index + 1) == Some(&b'=') => {
+                tokens.push(SfcsExprToken::Le);
+                index += 2;
+            }
+            b'<' => {
+                tokens.push(SfcsExprToken::Lt);
+                index += 1;
+            }
+            b'>' if bytes.get(index + 1) == Some(&b'>') => {
+                tokens.push(SfcsExprToken::ShiftRight);
+                index += 2;
+            }
+            b'>' if bytes.get(index + 1) == Some(&b'=') => {
+                tokens.push(SfcsExprToken::Ge);
+                index += 2;
+            }
+            b'>' => {
+                tokens.push(SfcsExprToken::Gt);
+                index += 1;
             }
             b'0'..=b'9' => {
                 let start = index;
@@ -2073,6 +2482,8 @@ fn tokenize_expr(source: &str, line_number: usize) -> Result<Vec<SfcsExprToken>,
                     "if" => tokens.push(SfcsExprToken::If),
                     "then" => tokens.push(SfcsExprToken::Then),
                     "else" => tokens.push(SfcsExprToken::Else),
+                    "load" => tokens.push(SfcsExprToken::Load),
+                    "store" => tokens.push(SfcsExprToken::Store),
                     _ => {
                         validate_id(id)?;
                         tokens.push(SfcsExprToken::Ident(id.to_string()));
@@ -2145,7 +2556,21 @@ fn validate_node_shape(node: &SfcsNode) -> Result<(), SfcsError> {
             }
             Ok(())
         }
-        SfcsOp::Sub | SfcsOp::Eq | SfcsOp::And | SfcsOp::Or => require_inputs(node, 2),
+        SfcsOp::Sub
+        | SfcsOp::Div
+        | SfcsOp::Mod
+        | SfcsOp::Eq
+        | SfcsOp::Lt
+        | SfcsOp::Le
+        | SfcsOp::Gt
+        | SfcsOp::Ge
+        | SfcsOp::And
+        | SfcsOp::Or
+        | SfcsOp::BitAnd
+        | SfcsOp::BitOr
+        | SfcsOp::BitXor
+        | SfcsOp::Shl
+        | SfcsOp::Shr => require_inputs(node, 2),
         SfcsOp::Not => require_inputs(node, 1),
         SfcsOp::Branch => require_inputs(node, 3),
         SfcsOp::DenseStep | SfcsOp::FastPathClaim => {
@@ -2157,10 +2582,19 @@ fn validate_node_shape(node: &SfcsNode) -> Result<(), SfcsError> {
             }
             Ok(())
         }
-        SfcsOp::MemoryRead | SfcsOp::MemoryWrite => {
-            if node.inputs.is_empty() {
+        SfcsOp::MemoryRead => {
+            if !(1..=2).contains(&node.inputs.len()) {
                 return Err(SfcsError::InvalidGraph(format!(
-                    "memory node {} requires at least one input",
+                    "memory read {} requires address and optional memory dependency",
+                    node.id
+                )));
+            }
+            Ok(())
+        }
+        SfcsOp::MemoryWrite => {
+            if !(2..=3).contains(&node.inputs.len()) {
+                return Err(SfcsError::InvalidGraph(format!(
+                    "memory write {} requires address, value, and optional memory dependency",
                     node.id
                 )));
             }
@@ -2220,6 +2654,15 @@ fn validate_metadata_value(key: &str, value: &str) -> Result<(), SfcsError> {
         )));
     }
     Ok(())
+}
+
+fn checked_shift_amount(value: i64, node_id: &str) -> Result<u32, SfcsError> {
+    if !(0..=63).contains(&value) {
+        return Err(SfcsError::Execution(format!(
+            "node {node_id} used invalid shift amount {value}"
+        )));
+    }
+    Ok(value as u32)
 }
 
 fn validate_sha256(value: &str) -> Result<(), SfcsError> {
