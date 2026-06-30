@@ -1,9 +1,9 @@
 # Sovereign Fractal Computation Substrate
 
-Status: experimental design gate for Power House v0.3.14.
+Status: experimental design gate for Power House v0.3.15.
 
 SFCS is a proposed opt-in computational-fractal layer. It must not change
-Power House v0.3.14 core guarantees unless a future schema is separately
+Power House v0.3.15 core guarantees unless a future schema is separately
 specified, implemented, tested, and released.
 
 ## Compatibility Decision

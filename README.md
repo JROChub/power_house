@@ -8,7 +8,7 @@
 Power House is a deterministic verification and provenance system for portable
 computational identities.
 
-Power House 0.3.14 adds the opt-in Sovereign Fractal Computation Substrate
+Power House 0.3.15 adds the opt-in Sovereign Fractal Computation Substrate
 (SFCS) draft gate: deterministic computational-fractal payloads that commit
 through ordinary `.pha` artifacts and Rootprint v1 without changing existing
 core identity rules.
@@ -21,7 +21,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.14**
+Current release: **v0.3.15**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
