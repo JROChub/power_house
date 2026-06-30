@@ -198,9 +198,13 @@ def main() -> None:
 
         campaign.state["last_sample_unix"] -= 20
         before_failed = campaign.state["failed_samples"]
+        before_samples = campaign.state["sample_count"]
+        expected_missed = 20 // config.sample_interval_seconds - 1
         campaign.audit_node = lambda node: fake_node(node.name)
         campaign.apply_sample(campaign.collect_sample())
-        assert campaign.state["failed_samples"] > before_failed
+        assert campaign.state["failed_samples"] == before_failed
+        assert campaign.state["sample_count"] == before_samples + 1
+        assert campaign.state["missed_controller_samples"] == expected_missed
         assert json.loads(campaign.events_path.read_text().splitlines()[-2])["kind"] == "telemetry_gap"
         assert any(
             item["kind"] == "telemetry_gap"
@@ -219,6 +223,55 @@ def main() -> None:
         resumed = module.Campaign(config)
         assert resumed.state["drills"][0]["status"] == "failed"
         assert "restarted during drill" in resumed.state["drills"][0]["detail"]
+
+        gap_only_value = config_value(base / "gap-only")
+        gap_only_path = base / "gap-only.json"
+        gap_only_path.write_text(json.dumps(gap_only_value))
+        gap_only = module.Campaign(module.Config.load(gap_only_path))
+        install_fakes(gap_only)
+        gap_only.apply_sample(gap_only.collect_sample())
+        gap_only.state["last_sample_unix"] -= 20
+        gap_only.apply_sample(gap_only.collect_sample())
+        gap_only.state["drills"][0]["status"] = "passed"
+        status = gap_only.public_status()
+        assert status["sample_count"] == 2
+        assert status["successful_samples"] == 2
+        assert status["failed_samples"] == 0
+        assert status["uptime_percent"] == 100.0
+        assert status["controller_telemetry_gaps"]["missed_samples"] == expected_missed
+        assert status["failures"]["controller_gap_total"] == expected_missed
+        gap_only.finalize()
+        assert gap_only.state["status"] == "passed"
+
+        legacy_value = config_value(base / "legacy-gap")
+        legacy_path = base / "legacy-gap.json"
+        legacy_path.write_text(json.dumps(legacy_value))
+        legacy = module.Campaign(module.Config.load(legacy_path))
+        install_fakes(legacy)
+        legacy.apply_sample(legacy.collect_sample())
+        legacy.state["sample_count"] += 1
+        legacy.state["failed_samples"] += 1
+        legacy.state["controller_gap_count"] = 1
+        legacy.state["missed_controller_samples"] = 1
+        legacy.state["max_controller_gap_seconds"] = 121.6
+        legacy.state["controller_gaps_counted_as_failed_samples"] = 1
+        legacy.state["drills"][0]["status"] = "passed"
+        legacy.state["phase"] = "complete"
+        legacy.state["status"] = "failed"
+        legacy.state["rpc_latencies_ms"] = [100.0]
+        legacy.record_failure(
+            "telemetry_gap",
+            {"gap_seconds": 121.6, "missed_samples": 1, "errors": []},
+        )
+        result = legacy.reclassify_controller_gap_outcome()
+        assert result["status"] == "passed"
+        assert result["network_failed_samples"] == 0
+        assert legacy.state["status"] == "passed"
+        status = legacy.public_status()
+        assert status["sample_count"] == 1
+        assert status["failed_samples"] == 0
+        assert status["uptime_percent"] == 100.0
+        assert status["evidence"]["final_report_sha256"]
 
         changed = config_value(base)
         changed["expected_release"] = "0.3.14"

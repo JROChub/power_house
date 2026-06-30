@@ -42,8 +42,9 @@ The controller samples once per minute:
 - external observer health and connection count.
 
 The public campaign state includes elapsed and remaining time, progress,
-successful and failed samples, uptime, RPC p50/p95/p99, drill outcomes,
-evidence event count, evidence head hash, and final report hash.
+successful and failed network samples, controller telemetry gaps, uptime, RPC
+p50/p95/p99, drill outcomes, evidence event count, evidence head hash, and
+final report hash.
 The dedicated page also renders the current pass criteria and whether the
 running evidence remains on track. Campaign UI is not added to the primary
 observatory.
@@ -74,9 +75,11 @@ Local campaign evidence is stored outside the repository under:
 ```
 
 Each JSONL event binds the previous event hash. At completion, the controller
-writes a final report and SHA-256 manifest. Any telemetry gap, blocked drill,
-failed sample, RPC error, hash divergence, or incomplete drill prevents a
-passing campaign result.
+writes a final report and SHA-256 manifest. RPC errors, hash divergence,
+network failed samples, blocked drills, or incomplete drills prevent a passing
+campaign result. Controller telemetry gaps are retained in the evidence journal
+and reported as evidence-continuity cautions, but they do not count as network
+failed samples unless the collected network sample itself failed.
 
 ## Operations
 
@@ -86,8 +89,14 @@ journalctl --user -u powerhouse-reliability-campaign -f
 
 python3 ~/.local/lib/powerhouse/reliability_campaign.py status \
   --config ~/.config/powerhouse/reliability-campaign.json
+
+python3 ~/.local/lib/powerhouse/reliability_campaign.py reclassify-controller-gaps \
+  --config ~/.config/powerhouse/reliability-campaign.json
 ```
 
 The controller resumes the same campaign after process restart only when the
 configuration fingerprint is unchanged. A second controller cannot acquire the
 campaign lock.
+The reclassification command is guarded: it only changes a completed failed
+campaign to passed when all network acceptance gates pass and the only failure
+source was legacy controller telemetry gaps.
