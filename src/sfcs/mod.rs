@@ -17,6 +17,13 @@ pub const SFCS_SCHEMA_V1_DRAFT: &str = "power-house/sfcs-fractal/v1-draft";
 
 const FRACTAL_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:fractal\0";
 const FAST_PATH_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:fast-path-workload\0";
+const TRACE_INPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-inputs\0";
+const TRACE_OUTPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-outputs\0";
+const TRACE_STEP_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-step\0";
+const TRACE_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:execution-trace\0";
+const SYNTHESIS_OPERATION_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:synthesis-operation\0";
+const SYNTHESIS_PLAN_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:synthesis-plan\0";
+const EMBEDDING_INVARIANT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:embedding-invariant\0";
 const SHA256_PREFIX: &str = "sha256:";
 
 /// A deterministic computational operation carried by an SFCS node.
@@ -108,6 +115,119 @@ pub struct SfcsGraph {
 }
 
 impl SfcsGraph {
+    /// Parses a small deterministic SFCS program directly into a fractal graph.
+    ///
+    /// This is intentionally not a circuit compiler. Each source line maps to
+    /// one first-class fractal node or output declaration.
+    ///
+    /// Supported lines:
+    ///
+    /// - `input <id>`
+    /// - `const <id> <integer>`
+    /// - `add <id> <input> <input> [input...]`
+    /// - `mul <id> <input> <input> [input...]`
+    /// - `branch <id> <condition> <true> <false>`
+    /// - `dense <id> <input> [input...]`
+    /// - `memory_read <id> <input> [input...]`
+    /// - `memory_write <id> <input> [input...]`
+    /// - `output <id> [id...]`
+    pub fn from_program(source: &str) -> Result<Self, SfcsError> {
+        let mut graph = Self::new(Vec::new());
+        let mut outputs = Vec::new();
+
+        for (line_index, raw_line) in source.lines().enumerate() {
+            let line_number = line_index + 1;
+            let line = raw_line.split('#').next().unwrap_or("").trim();
+            if line.is_empty() {
+                continue;
+            }
+            let parts = line.split_whitespace().collect::<Vec<_>>();
+            let Some((keyword, rest)) = parts.split_first() else {
+                continue;
+            };
+            match *keyword {
+                "input" => {
+                    require_program_arity(line_number, keyword, rest, 1)?;
+                    graph.insert_node(SfcsNode::new(rest[0], SfcsOp::Input, Vec::new()))?;
+                }
+                "const" => {
+                    require_program_arity(line_number, keyword, rest, 2)?;
+                    let value = rest[1].parse::<i64>().map_err(|error| {
+                        SfcsError::InvalidProgram(format!(
+                            "line {line_number}: invalid const value: {error}"
+                        ))
+                    })?;
+                    graph.insert_node(SfcsNode::constant(rest[0], value))?;
+                }
+                "add" | "mul" => {
+                    if rest.len() < 3 {
+                        return Err(SfcsError::InvalidProgram(format!(
+                            "line {line_number}: {keyword} requires id and at least two inputs"
+                        )));
+                    }
+                    let op = if *keyword == "add" {
+                        SfcsOp::Add
+                    } else {
+                        SfcsOp::Mul
+                    };
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        op,
+                        rest[1..].iter().map(|value| (*value).to_string()).collect(),
+                    ))?;
+                }
+                "branch" => {
+                    require_program_arity(line_number, keyword, rest, 4)?;
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        SfcsOp::Branch,
+                        rest[1..].iter().map(|value| (*value).to_string()).collect(),
+                    ))?;
+                }
+                "dense" | "memory_read" | "memory_write" => {
+                    if rest.len() < 2 {
+                        return Err(SfcsError::InvalidProgram(format!(
+                            "line {line_number}: {keyword} requires id and at least one input"
+                        )));
+                    }
+                    let op = match *keyword {
+                        "dense" => SfcsOp::DenseStep,
+                        "memory_read" => SfcsOp::MemoryRead,
+                        "memory_write" => SfcsOp::MemoryWrite,
+                        _ => unreachable!(),
+                    };
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        op,
+                        rest[1..].iter().map(|value| (*value).to_string()).collect(),
+                    ))?;
+                }
+                "output" => {
+                    if rest.is_empty() {
+                        return Err(SfcsError::InvalidProgram(format!(
+                            "line {line_number}: output requires at least one node id"
+                        )));
+                    }
+                    outputs.extend(rest.iter().map(|value| (*value).to_string()));
+                }
+                _ => {
+                    return Err(SfcsError::InvalidProgram(format!(
+                        "line {line_number}: unknown SFCS program directive {keyword}"
+                    )));
+                }
+            }
+        }
+
+        if outputs.is_empty() {
+            return Err(SfcsError::InvalidProgram(
+                "program did not declare outputs".to_string(),
+            ));
+        }
+        graph.outputs = outputs;
+        graph.verify()?;
+        Ok(graph)
+    }
+
     /// Strictly parses a graph from JSON bytes.
     ///
     /// This parser rejects duplicate object keys before serde decoding so
@@ -233,10 +353,30 @@ impl SfcsGraph {
         &self,
         inputs: &BTreeMap<String, i64>,
     ) -> Result<BTreeMap<String, i64>, SfcsError> {
+        Ok(self.execution_trace(inputs)?.outputs)
+    }
+
+    /// Executes the arithmetic subset and returns a deterministic trace.
+    ///
+    /// The trace is a first-class digestible object. It records the node order,
+    /// operation, inputs, outputs, and per-step digests so replay can distinguish
+    /// graph truth from later display or semantic layers.
+    pub fn execution_trace(
+        &self,
+        inputs: &BTreeMap<String, i64>,
+    ) -> Result<SfcsExecutionTrace, SfcsError> {
         self.verify()?;
+        let graph_digest = self.fractal_digest()?;
+        let input_digest = digest_json(TRACE_INPUT_DOMAIN, inputs)?;
         let mut values = BTreeMap::new();
+        let mut steps = Vec::new();
         for node_id in self.topological_order()? {
             let node = &self.nodes[&node_id];
+            let input_values = node
+                .inputs
+                .iter()
+                .map(|input| (input.clone(), values[input]))
+                .collect::<BTreeMap<_, _>>();
             let value = match node.op {
                 SfcsOp::Input => *inputs
                     .get(&node.id)
@@ -265,12 +405,101 @@ impl SfcsGraph {
                     return Err(SfcsError::UnsupportedEvaluation(node.id.clone()));
                 }
             };
+            let mut step = SfcsTraceStep {
+                step_index: steps.len() as u64,
+                node_id: node.id.clone(),
+                op: node.op.clone(),
+                input_nodes: node.inputs.clone(),
+                input_values,
+                output_value: value,
+                fast_path_eligible: node.is_fast_path_eligible(),
+                step_digest: String::new(),
+            };
+            step.step_digest = digest_json(TRACE_STEP_DOMAIN, &step.preimage())?;
             values.insert(node.id.clone(), value);
+            steps.push(step);
         }
-        self.outputs
+        let outputs = self
+            .outputs
             .iter()
             .map(|id| Ok((id.clone(), values[id])))
-            .collect()
+            .collect::<Result<BTreeMap<_, _>, SfcsError>>()?;
+        let output_digest = digest_json(TRACE_OUTPUT_DOMAIN, &outputs)?;
+        let mut trace = SfcsExecutionTrace {
+            graph_digest,
+            input_digest,
+            output_digest,
+            trace_digest: String::new(),
+            steps,
+            outputs,
+        };
+        trace.trace_digest = digest_json(TRACE_DOMAIN, &trace.preimage())?;
+        Ok(trace)
+    }
+
+    /// Creates a deterministic synthesis plan for fast-path extraction.
+    ///
+    /// The plan records where structured sub-fractals can be routed to the
+    /// Sovereign fast path and where dense/general boundaries remain. It does
+    /// not mutate Rootprint v1 or `.pha` core rules.
+    pub fn synthesis_plan(&self) -> Result<SfcsSynthesisPlan, SfcsError> {
+        let discovery = self.discover_structure()?;
+        let graph_digest = discovery.graph_digest.clone();
+        let mut operations = Vec::new();
+        let mut pending_fast = Vec::new();
+        for node_id in self.topological_order()? {
+            let node = &self.nodes[&node_id];
+            if node.is_fast_path_eligible() {
+                pending_fast.push(node_id);
+            } else {
+                if !pending_fast.is_empty() {
+                    operations.push(SfcsRewriteOperation::new(
+                        operations.len() as u64,
+                        SfcsRewriteKind::FastPathExtract,
+                        std::mem::take(&mut pending_fast),
+                        graph_digest.clone(),
+                    )?);
+                }
+                operations.push(SfcsRewriteOperation::new(
+                    operations.len() as u64,
+                    SfcsRewriteKind::DenseBoundary,
+                    vec![node_id],
+                    graph_digest.clone(),
+                )?);
+            }
+        }
+        if !pending_fast.is_empty() {
+            operations.push(SfcsRewriteOperation::new(
+                operations.len() as u64,
+                SfcsRewriteKind::FastPathExtract,
+                pending_fast,
+                graph_digest.clone(),
+            )?);
+        }
+        let operation_digests = operations
+            .iter()
+            .map(|operation| operation.operation_digest.clone())
+            .collect::<Vec<_>>();
+        let fast_path_workload_digest = discovery.fast_path_workload_digest.clone();
+        let dense_nodes = discovery.dense_nodes.clone();
+        let mut plan = SfcsSynthesisPlan {
+            graph_digest: graph_digest.clone(),
+            synthesis_digest: String::new(),
+            embedding_invariant_digest: String::new(),
+            operations,
+            operation_digests,
+            fast_path_workload_digest,
+            dense_nodes,
+        };
+        plan.synthesis_digest = digest_json(SYNTHESIS_PLAN_DOMAIN, &plan.preimage())?;
+        plan.embedding_invariant_digest = digest_json(
+            EMBEDDING_INVARIANT_DOMAIN,
+            &serde_json::json!({
+                "graph_digest": graph_digest,
+                "synthesis_digest": plan.synthesis_digest,
+            }),
+        )?;
+        Ok(plan)
     }
 
     /// Commits the SFCS graph as ordinary `.pha` core data.
@@ -294,6 +523,47 @@ impl SfcsGraph {
                 "dense_nodes": report.dense_nodes.len(),
             }),
             serde_json::to_value(self)?,
+        )
+        .map_err(SfcsError::Pha)
+    }
+
+    /// Commits graph, synthesis plan, and execution trace as `.pha` core data.
+    ///
+    /// This is the draft "program + trace + synthesis" artifact. It remains
+    /// ordinary Power House core data and can be anchored by Rootprint without
+    /// adding new Rootprint rules.
+    pub fn to_execution_pha_artifact(
+        &self,
+        label: impl Into<String>,
+        inputs: &BTreeMap<String, i64>,
+    ) -> Result<PhaArtifact, SfcsError> {
+        let trace = self.execution_trace(inputs)?;
+        let synthesis = self.synthesis_plan()?;
+        PhaArtifact::new(
+            serde_json::json!({
+                "producer": "power_house_sfcs",
+                "label": label.into(),
+                "fractal_digest": trace.graph_digest,
+                "trace_digest": trace.trace_digest,
+                "synthesis_digest": synthesis.synthesis_digest,
+                "embedding_invariant_digest": synthesis.embedding_invariant_digest,
+                "schema": self.schema,
+            }),
+            "power-house/sfcs-execution/v1-draft",
+            serde_json::json!({
+                "inputs": inputs,
+                "outputs": trace.outputs,
+                "node_count": self.nodes.len(),
+                "trace_steps": trace.steps.len(),
+                "synthesis_operations": synthesis.operations.len(),
+                "dense_nodes": synthesis.dense_nodes.len(),
+                "fast_path_workload_digest": synthesis.fast_path_workload_digest,
+            }),
+            serde_json::json!({
+                "graph": self,
+                "trace": trace,
+                "synthesis": synthesis,
+            }),
         )
         .map_err(SfcsError::Pha)
     }
@@ -363,6 +633,79 @@ pub fn verify_pha_embedding(artifact: &PhaArtifact) -> Result<SfcsEmbeddingRepor
     })
 }
 
+/// Verifies a `.pha` artifact that carries an SFCS execution trace and synthesis plan.
+pub fn verify_execution_embedding(
+    artifact: &PhaArtifact,
+) -> Result<SfcsExecutionEmbeddingReport, SfcsError> {
+    artifact.verify().map_err(SfcsError::Pha)?;
+    if artifact.embedded_proof.protocol != "power-house/sfcs-execution/v1-draft" {
+        return Err(SfcsError::InvalidEmbedding(
+            "embedded proof protocol is not SFCS execution".to_string(),
+        ));
+    }
+    let proof: SfcsExecutionProof = serde_json::from_value(artifact.embedded_proof.proof.clone())?;
+    proof.graph.verify()?;
+    let inputs = artifact
+        .embedded_proof
+        .public_inputs
+        .get("inputs")
+        .ok_or_else(|| SfcsError::InvalidEmbedding("missing execution inputs".to_string()))?;
+    let inputs = serde_json::from_value::<BTreeMap<String, i64>>(inputs.clone())?;
+    let expected_trace = proof.graph.execution_trace(&inputs)?;
+    let expected_synthesis = proof.graph.synthesis_plan()?;
+    if proof.trace != expected_trace {
+        return Err(SfcsError::InvalidEmbedding(
+            "execution trace does not replay from graph and inputs".to_string(),
+        ));
+    }
+    if proof.synthesis != expected_synthesis {
+        return Err(SfcsError::InvalidEmbedding(
+            "synthesis plan does not replay from graph".to_string(),
+        ));
+    }
+    let provenance = &artifact.provenance;
+    for (field, expected) in [
+        ("fractal_digest", &expected_trace.graph_digest),
+        ("trace_digest", &expected_trace.trace_digest),
+        ("synthesis_digest", &expected_synthesis.synthesis_digest),
+        (
+            "embedding_invariant_digest",
+            &expected_synthesis.embedding_invariant_digest,
+        ),
+    ] {
+        let found = provenance
+            .get(field)
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| SfcsError::InvalidEmbedding(format!("missing provenance {field}")))?;
+        if found != expected {
+            return Err(SfcsError::InvalidEmbedding(format!(
+                "provenance {field} does not match replay"
+            )));
+        }
+    }
+    let public_inputs = &artifact.embedded_proof.public_inputs;
+    let expected_outputs = public_inputs
+        .get("outputs")
+        .ok_or_else(|| SfcsError::InvalidEmbedding("missing public outputs".to_string()))?;
+    if expected_outputs != &serde_json::to_value(&expected_trace.outputs)? {
+        return Err(SfcsError::InvalidEmbedding(
+            "public outputs do not match trace".to_string(),
+        ));
+    }
+    Ok(SfcsExecutionEmbeddingReport {
+        graph_digest: expected_trace.graph_digest,
+        artifact_phx_fingerprint: artifact.phx_fingerprint.clone(),
+        trace_digest: expected_trace.trace_digest,
+        synthesis_digest: expected_synthesis.synthesis_digest,
+        embedding_invariant_digest: expected_synthesis.embedding_invariant_digest,
+        output_digest: expected_trace.output_digest,
+        node_count: proof.graph.nodes.len(),
+        trace_steps: expected_trace.steps.len(),
+        synthesis_operations: expected_synthesis.operations.len(),
+        dense_nodes: expected_synthesis.dense_nodes.len(),
+    })
+}
+
 /// Verified SFCS `.pha` embedding summary.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsEmbeddingReport {
@@ -380,6 +723,38 @@ pub struct SfcsEmbeddingReport {
     pub fast_path_workload_digest: String,
 }
 
+/// Verified SFCS execution `.pha` embedding summary.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsExecutionEmbeddingReport {
+    /// Digest of the embedded SFCS graph.
+    pub graph_digest: String,
+    /// Core `.pha` fingerprint that commits to graph, trace, and synthesis plan.
+    pub artifact_phx_fingerprint: String,
+    /// Digest of the replayed execution trace.
+    pub trace_digest: String,
+    /// Digest of the deterministic synthesis plan.
+    pub synthesis_digest: String,
+    /// Digest binding graph identity to synthesis identity.
+    pub embedding_invariant_digest: String,
+    /// Digest of public outputs.
+    pub output_digest: String,
+    /// Total graph nodes.
+    pub node_count: usize,
+    /// Total trace steps.
+    pub trace_steps: usize,
+    /// Total synthesis operations.
+    pub synthesis_operations: usize,
+    /// Dense/general node count.
+    pub dense_nodes: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct SfcsExecutionProof {
+    graph: SfcsGraph,
+    trace: SfcsExecutionTrace,
+    synthesis: SfcsSynthesisPlan,
+}
+
 /// Deterministic structure-discovery report.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsDiscoveryReport {
@@ -393,6 +768,177 @@ pub struct SfcsDiscoveryReport {
     pub dense_nodes: Vec<String>,
     /// Digest of the extracted fast-path workload descriptor.
     pub fast_path_workload_digest: String,
+}
+
+/// Deterministic execution trace for the arithmetic SFCS subset.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsExecutionTrace {
+    /// Digest of the source graph.
+    pub graph_digest: String,
+    /// Digest of the public execution inputs.
+    pub input_digest: String,
+    /// Digest of the public execution outputs.
+    pub output_digest: String,
+    /// Digest of the full trace preimage.
+    pub trace_digest: String,
+    /// Deterministic node execution steps.
+    pub steps: Vec<SfcsTraceStep>,
+    /// Public output values.
+    pub outputs: BTreeMap<String, i64>,
+}
+
+impl SfcsExecutionTrace {
+    fn preimage(&self) -> serde_json::Value {
+        serde_json::json!({
+            "graph_digest": self.graph_digest,
+            "input_digest": self.input_digest,
+            "output_digest": self.output_digest,
+            "steps": self.steps,
+            "outputs": self.outputs,
+        })
+    }
+}
+
+/// One deterministic execution trace step.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsTraceStep {
+    /// Zero-based execution index.
+    pub step_index: u64,
+    /// Executed node ID.
+    pub node_id: String,
+    /// Executed operation.
+    pub op: SfcsOp,
+    /// Ordered input node IDs.
+    pub input_nodes: Vec<String>,
+    /// Input values observed at this step.
+    pub input_values: BTreeMap<String, i64>,
+    /// Output value produced by this step.
+    pub output_value: i64,
+    /// Whether this node is eligible for the Sovereign fast path.
+    pub fast_path_eligible: bool,
+    /// Domain-separated digest of this step.
+    pub step_digest: String,
+}
+
+impl SfcsTraceStep {
+    fn preimage(&self) -> serde_json::Value {
+        serde_json::json!({
+            "step_index": self.step_index,
+            "node_id": self.node_id,
+            "op": self.op,
+            "input_nodes": self.input_nodes,
+            "input_values": self.input_values,
+            "output_value": self.output_value,
+            "fast_path_eligible": self.fast_path_eligible,
+        })
+    }
+}
+
+/// Deterministic synthesis plan that records fast-path and dense boundaries.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsSynthesisPlan {
+    /// Digest of the source graph.
+    pub graph_digest: String,
+    /// Digest of this synthesis plan.
+    pub synthesis_digest: String,
+    /// Digest binding graph and synthesis identities.
+    pub embedding_invariant_digest: String,
+    /// Ordered rewrite/extraction operations.
+    pub operations: Vec<SfcsRewriteOperation>,
+    /// Ordered operation digests.
+    pub operation_digests: Vec<String>,
+    /// Digest of the complete fast-path workload descriptor.
+    pub fast_path_workload_digest: String,
+    /// Dense/general nodes left outside the fast path.
+    pub dense_nodes: Vec<String>,
+}
+
+impl SfcsSynthesisPlan {
+    fn preimage(&self) -> serde_json::Value {
+        serde_json::json!({
+            "graph_digest": self.graph_digest,
+            "operations": self.operations,
+            "operation_digests": self.operation_digests,
+            "fast_path_workload_digest": self.fast_path_workload_digest,
+            "dense_nodes": self.dense_nodes,
+        })
+    }
+}
+
+/// Kind of deterministic SFCS synthesis operation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SfcsRewriteKind {
+    /// Extract a contiguous structured sub-fractal for the Sovereign fast path.
+    FastPathExtract,
+    /// Record a dense/general computation boundary.
+    DenseBoundary,
+}
+
+/// One deterministic synthesis operation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsRewriteOperation {
+    /// Zero-based operation index.
+    pub index: u64,
+    /// Operation kind.
+    pub kind: SfcsRewriteKind,
+    /// Nodes covered by the operation in deterministic order.
+    pub node_ids: Vec<String>,
+    /// Source graph digest before the operation.
+    pub graph_digest: String,
+    /// Optional workload digest for fast-path extraction.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workload_digest: Option<String>,
+    /// Domain-separated digest of the operation.
+    pub operation_digest: String,
+}
+
+impl SfcsRewriteOperation {
+    fn new(
+        index: u64,
+        kind: SfcsRewriteKind,
+        node_ids: Vec<String>,
+        graph_digest: String,
+    ) -> Result<Self, SfcsError> {
+        validate_sha256(&graph_digest)?;
+        if node_ids.is_empty() {
+            return Err(SfcsError::InvalidGraph(
+                "synthesis operation cannot be empty".to_string(),
+            ));
+        }
+        for node_id in &node_ids {
+            validate_id(node_id)?;
+        }
+        let workload_digest = if kind == SfcsRewriteKind::FastPathExtract {
+            Some(
+                SfcsFastPathWorkload::new(graph_digest.clone(), node_ids.clone())?
+                    .workload_digest()?,
+            )
+        } else {
+            None
+        };
+        let mut operation = Self {
+            index,
+            kind,
+            node_ids,
+            graph_digest,
+            workload_digest,
+            operation_digest: String::new(),
+        };
+        operation.operation_digest =
+            digest_json(SYNTHESIS_OPERATION_DOMAIN, &operation.preimage())?;
+        Ok(operation)
+    }
+
+    fn preimage(&self) -> serde_json::Value {
+        serde_json::json!({
+            "index": self.index,
+            "kind": self.kind,
+            "node_ids": self.node_ids,
+            "graph_digest": self.graph_digest,
+            "workload_digest": self.workload_digest,
+        })
+    }
 }
 
 /// Descriptor for the privileged structured proving path.
@@ -464,6 +1010,8 @@ pub enum SfcsError {
     UnknownNode(String),
     /// Graph shape is invalid.
     InvalidGraph(String),
+    /// Textual SFCS program is invalid.
+    InvalidProgram(String),
     /// A graph cycle was found.
     CycleDetected(String),
     /// Canonical JSON validation failed.
@@ -492,6 +1040,7 @@ impl fmt::Display for SfcsError {
             Self::DuplicateNode(id) => write!(formatter, "duplicate SFCS node: {id}"),
             Self::UnknownNode(id) => write!(formatter, "unknown SFCS node: {id}"),
             Self::InvalidGraph(message) => write!(formatter, "invalid SFCS graph: {message}"),
+            Self::InvalidProgram(message) => write!(formatter, "invalid SFCS program: {message}"),
             Self::CycleDetected(id) => write!(formatter, "SFCS graph contains a cycle at {id}"),
             Self::Canonical(message) => write!(formatter, "SFCS canonical JSON error: {message}"),
             Self::InvalidEmbedding(message) => {
@@ -604,6 +1153,21 @@ fn require_inputs(node: &SfcsNode, count: usize) -> Result<(), SfcsError> {
         Err(SfcsError::InvalidGraph(format!(
             "node {} requires exactly {count} inputs",
             node.id
+        )))
+    }
+}
+
+fn require_program_arity(
+    line_number: usize,
+    keyword: &str,
+    values: &[&str],
+    count: usize,
+) -> Result<(), SfcsError> {
+    if values.len() == count {
+        Ok(())
+    } else {
+        Err(SfcsError::InvalidProgram(format!(
+            "line {line_number}: {keyword} requires {count} argument(s)"
         )))
     }
 }

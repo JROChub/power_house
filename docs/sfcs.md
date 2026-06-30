@@ -1,9 +1,9 @@
 # Sovereign Fractal Computation Substrate
 
-Status: experimental design gate for Power House v0.3.15.
+Status: experimental design gate for Power House v0.3.16.
 
 SFCS is a proposed opt-in computational-fractal layer. It must not change
-Power House v0.3.15 core guarantees unless a future schema is separately
+Power House v0.3.16 core guarantees unless a future schema is separately
 specified, implemented, tested, and released.
 
 ## Compatibility Decision
@@ -42,18 +42,22 @@ Rootprint v2 or dedicated SFCS capsule schema.
 
 ## Current Repository Surface
 
-The first implementation step is intentionally small and safe:
+The v0.3.16 implementation is still intentionally isolated, but it now covers
+the first executable SFCS workflow:
 
 - feature flag: `sfcs`
 - module: `src/sfcs/mod.rs`
 - schema: `power-house/sfcs-fractal/v1-draft`
-- bridge: `SfcsGraph::to_pha_artifact(...)`
+- graph bridge: `SfcsGraph::to_pha_artifact(...)`
+- execution bridge: `SfcsGraph::to_execution_pha_artifact(...)`
+- execution protocol: `power-house/sfcs-execution/v1-draft`
 
 The feature is not in the default feature set. Enabling it adds draft types for
 computational fractal nodes, deterministic graph digestion, basic structure
-discovery, strict duplicate-key JSON parsing, a simple arithmetic evaluator,
-a fast-path workload descriptor, and `.pha` embedding verification. It does
-not change existing public behavior.
+discovery, strict duplicate-key JSON parsing, direct textual SFCS program
+parsing, arithmetic execution traces, synthesis plans, a fast-path workload
+descriptor, and `.pha` embedding verification. It does not change existing
+public behavior.
 
 ## Corrected Architecture
 
@@ -63,9 +67,10 @@ Program or producer
         v
 SFCS graph (draft computational fractal)
         |
-        | deterministic digest
+        | deterministic digest + optional execution trace + synthesis plan
         v
 .pha core payload with protocol power-house/sfcs/v1-draft
+or power-house/sfcs-execution/v1-draft
         |
         v
 Rootprint v1 branch
@@ -80,6 +85,27 @@ slbit semantic packet binding
 Rootprint can carry SFCS computation by carrying the `.pha` artifact. It does
 not become an executable VM by mutation of the v1 schema.
 
+## Direct SFCS Program Parsing
+
+`SfcsGraph::from_program(...)` parses a small deterministic source form
+directly into fractal nodes. This is not a traditional circuit compiler: each
+source line becomes one first-class node or output declaration.
+
+Supported lines:
+
+```text
+input a
+input b
+const c 7
+add sum a b
+mul z sum c
+output z
+```
+
+The parsed graph is verified using the same structural checks as JSON-loaded
+graphs: valid IDs, no duplicate nodes, no duplicate inputs, known references,
+declared outputs, and acyclic topology.
+
 ## Structure Discovery Rules
 
 The draft discovery engine classifies:
@@ -91,6 +117,38 @@ Future versions may discover larger algebraic regions, but every rewrite must
 be recorded as deterministic data and must produce the same output from the
 same input across operating systems, architectures, compiler versions, and
 network conditions.
+
+## Execution Trace
+
+`SfcsGraph::execution_trace(...)` executes the draft arithmetic subset and
+emits a digest-bound trace:
+
+- graph digest;
+- input digest;
+- output digest;
+- per-step node digests;
+- final trace digest;
+- public outputs.
+
+The draft evaluator supports `input`, `const`, `add`, `mul`, and `branch`.
+Dense and memory placeholders are rejected by the evaluator until a future
+profile defines their proof semantics.
+
+## Synthesis Plan
+
+`SfcsGraph::synthesis_plan(...)` deterministically records where the graph can
+be routed to the Sovereign fast path and where dense/general boundaries remain.
+Each operation has its own operation digest. The plan also emits an embedding
+invariant digest that binds the graph digest to the synthesis digest.
+
+This is the first repository step toward the intended SFCS model:
+
+```text
+program -> fractal graph -> execution trace -> synthesis plan -> .pha identity
+```
+
+No hidden rewrite or optimization is accepted. Rewrites must become explicit,
+digest-bound data.
 
 ## SFCS `.pha` Embedding Verification
 
@@ -108,11 +166,16 @@ This matters because a `.pha` can be core-valid while still carrying stale or
 inconsistent SFCS metadata. SFCS-specific validation is explicit and separate,
 matching the existing Power House boundary pattern.
 
+`SfcsGraph::to_execution_pha_artifact(...)` commits graph, execution trace, and
+synthesis plan into a normal `.pha` artifact. `verify_sfcs_execution_embedding`
+then replays the graph from public inputs, regenerates the synthesis plan,
+checks public outputs, and verifies provenance digests.
+
 ## What Is Not Implemented Yet
 
 The draft module does not claim:
 
-- complete arbitrary program execution;
+- complete arbitrary program execution beyond the arithmetic subset;
 - zkVM replacement;
 - cryptographic proof generation for dense control flow;
 - semantic equivalence between optimized and unoptimized programs;
