@@ -3474,9 +3474,9 @@ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "slbit"
-version = "3.0.0"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecab7fe8b2fc91f0fce265845697d5cd9cc42e0e607373c60d3cd8bf6e0cc174"
+checksum = "7cf291337097b90218c5f261dad707b4e1bb3d5938cde1d5951c78972fe69dca"
 
 [[package]]
 name = "smallvec"

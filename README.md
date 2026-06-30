@@ -103,7 +103,8 @@ julian memory challenge earth-001.phm --all
 
 [`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency
 crate for luminous claims, semantic transcripts, and visualization packets.
-Power House remains the verification and provenance authority; `slbit` adds
+Power House remains the verification and provenance authority; `slbit` 3.1 adds
+the Meaning Observatory inspection layer, deterministic ask reports, and
 human-readable meaning beside it.
 
 ```bash

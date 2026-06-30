@@ -58,6 +58,8 @@ a {
   content: "";
   background:
     linear-gradient(90deg, rgba(1, 4, 5, 0.96), rgba(1, 4, 5, 0.5) 45%, rgba(1, 4, 5, 0.92)),
+    linear-gradient(135deg, transparent 0 40%, rgba(62, 228, 213, 0.13) 40.2% 40.4%, transparent 40.6% 100%),
+    linear-gradient(35deg, transparent 0 58%, rgba(186, 255, 53, 0.1) 58.2% 58.45%, transparent 58.7% 100%),
     repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0 1px, transparent 1px 46px),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.024) 0 1px, transparent 1px 46px);
 }
@@ -267,6 +269,139 @@ h1 {
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+.meaning-console {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(300px, 0.85fr) minmax(420px, 1.35fr);
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.boundary-card,
+.authority-strip,
+.ask-grid {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(4, 13, 14, 0.94), rgba(2, 6, 7, 0.86));
+  backdrop-filter: blur(16px);
+}
+
+.boundary-card {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  min-height: 212px;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.boundary-card::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    repeating-linear-gradient(90deg, rgba(62, 228, 213, 0.08) 0 1px, transparent 1px 18px),
+    linear-gradient(180deg, transparent, rgba(186, 255, 53, 0.08));
+  opacity: 0.46;
+  pointer-events: none;
+}
+
+.boundary-card > * {
+  position: relative;
+}
+
+.boundary-card span,
+.ask-card span,
+.authority-card span {
+  color: var(--cyan);
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+}
+
+.boundary-card h2 {
+  margin: 0;
+  color: var(--acid);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.boundary-card p {
+  max-width: 520px;
+  margin: 0;
+  color: #d7e3de;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.authority-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.authority-card {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  min-height: 106px;
+  padding: 15px;
+  border-right: 1px solid rgba(214, 235, 227, 0.1);
+  border-bottom: 1px solid rgba(214, 235, 227, 0.1);
+}
+
+.authority-card:nth-child(2n) {
+  border-right: 0;
+}
+
+.authority-card b {
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.authority-card small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.ask-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ask-card {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 106px;
+  padding: 15px;
+  border-right: 1px solid rgba(214, 235, 227, 0.1);
+  border-bottom: 1px solid rgba(214, 235, 227, 0.1);
+}
+
+.ask-card:nth-child(2n) {
+  border-right: 0;
+}
+
+.ask-card b {
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  line-height: 1.18;
+}
+
+.ask-card p {
+  margin: 0;
+  color: #c8d6d0;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .explorer-grid {
@@ -605,6 +740,7 @@ body.dragging .drop-zone {
 
 @media (max-width: 1120px) {
   .hero,
+  .meaning-console,
   .explorer-grid {
     grid-template-columns: 1fr;
   }
@@ -616,6 +752,11 @@ body.dragging .drop-zone {
 
   .hero-state {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .authority-strip,
+  .ask-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -642,6 +783,21 @@ body.dragging .drop-zone {
 
   .hero-state {
     grid-template-columns: 1fr;
+  }
+
+  .boundary-card {
+    min-height: 172px;
+  }
+
+  .authority-strip,
+  .ask-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .authority-card,
+  .ask-card {
+    min-height: 0;
+    border-right: 0;
   }
 
   .command-band {
@@ -693,6 +849,25 @@ body.dragging .drop-zone {
 
   .hero-state div {
     min-height: 64px;
+  }
+
+  .meaning-console {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ask-grid {
+    grid-column: span 2;
+  }
+
+  .authority-strip,
+  .ask-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .boundary-card,
+  .authority-card,
+  .ask-card {
+    min-height: 92px;
   }
 
   .explorer-grid {

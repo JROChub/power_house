@@ -150,4 +150,4 @@ rayon = "1"
 
 [dev-dependencies]
 proptest = "1"
-slbit = "3.0.0"
+slbit = "3.1.0"
