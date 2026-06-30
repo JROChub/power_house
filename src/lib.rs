@@ -15,6 +15,8 @@
 //! - [`provenance`] defines Power House Archive (`.pha`) and Rootprint v1.
 //! - [`sumcheck`] implements dense, streaming, constant, and seeded-affine
 //!   sum-check workflows.
+//! - [`sfcs`] defines opt-in draft computational-fractal primitives when the
+//!   `sfcs` feature is enabled.
 //! - [`sparse_sumcheck`] implements stable seeded and commitment-bound sparse
 //!   certificate formats.
 //! - [`julian`] records proof transcripts, anchors them, and reconciles quorum
@@ -115,6 +117,8 @@ pub mod observatory;
 mod prng;
 pub mod provenance;
 pub mod rollup;
+#[cfg(feature = "sfcs")]
+pub mod sfcs;
 pub mod sparse_sumcheck;
 mod streaming;
 pub mod sumcheck;
@@ -154,6 +158,12 @@ pub use merkle::{
 pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
+#[cfg(feature = "sfcs")]
+pub use sfcs::{
+    verify_pha_embedding as verify_sfcs_pha_embedding, SfcsDiscoveryReport, SfcsEmbeddingReport,
+    SfcsError, SfcsFastPathCertificate, SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp,
+    SovereignFastPath,
+};
 pub use sparse_sumcheck::{
     CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,
     SparseMonomial, SparseProofError, SparseVerificationReport,

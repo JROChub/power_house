@@ -8,15 +8,20 @@
 Power House is a deterministic verification and provenance system for portable
 computational identities.
 
-Power House 0.3.13 introduces Memory Capsules: self-verifying proof-memory
-objects that bind `.pha` artifacts, Rootprint lineage, replay state, optional
-witness receipts, challenge vectors, and non-core semantic packets into one
+Power House 0.3.14 adds the opt-in Sovereign Fractal Computation Substrate
+(SFCS) draft gate: deterministic computational-fractal payloads that commit
+through ordinary `.pha` artifacts and Rootprint v1 without changing existing
+core identity rules.
+
+The release also retains Memory Capsules: self-verifying proof-memory objects
+that bind `.pha` artifacts, Rootprint lineage, replay state, optional witness
+receipts, challenge vectors, and non-core semantic packets into one
 offline-verifiable bundle.
 
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.13**
+Current release: **v0.3.14**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -29,6 +34,8 @@ The primary workflow is **Power House Identity + Rootprint**:
   deterministic `phx_fingerprint`.
 - **Rootprint** provides verifiable navigation, forks, merges, and equivalence
   over `.pha` core identities.
+- **SFCS draft primitives** are opt-in through `--features sfcs` and commit
+  computational fractals into `.pha` without mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -124,6 +131,7 @@ vectors.
 | Seeded sparse certificate | `2^1,000,000` Boolean points | `O(n + I log n)` deterministic replay | `cargo run --release --example sparse_record` |
 | Committed sparse workload | External `PHSMv1` + `PHCPv1` files | Commitment-bound deterministic replay | `cargo run --release --example committed_workload` |
 | Portable provenance | `.pha` core + Rootprint DAG | Fingerprint and graph replay | `cargo run --example rootprint_workflow` |
+| SFCS draft bridge | Computational fractal committed through `.pha` | Graph digest, `.pha` embedding, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs` |
 
 Here `n` is the number of variables and `I` is the number of nonzero variable
 incidences. The proof modes operate on compact algebraic descriptions and do
@@ -137,6 +145,7 @@ not allocate the expanded Boolean hypercube.
 | Rootprint v1 | Deterministic proof-history graph with forks and merges |
 | `.phm` Memory Capsule v1 | Portable proof memory with core, lineage, replay, semantic bindings, witnesses, and challenges |
 | Observatory sidecar v1 | Non-core binding from replay state and branch IDs to semantic packets |
+| `power-house/sfcs-fractal/v1-draft` | Opt-in computational-fractal draft payload committed through `.pha` |
 | `PHSPv1` | Seeded sparse polynomial certificate |
 | `PHSMv1` | Canonical external sparse polynomial |
 | `PHCPv1` | Certificate bound to a `PHSMv1` commitment |
@@ -152,6 +161,7 @@ cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 cargo test --all-targets --locked
+cargo test --features sfcs --test sfcs --locked
 cargo test --all-targets --features net --locked
 cargo test --test memory_capsule --test memory_cli --locked
 
@@ -199,6 +209,10 @@ The complete procedure and expected rejection behavior are documented in the
   external workload binding.
 - [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
+- [`SfcsGraph`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsGraph.html):
+  opt-in computational-fractal draft graph behind the `sfcs` feature.
+- [`verify_sfcs_pha_embedding`](https://docs.rs/power_house/latest/power_house/fn.verify_sfcs_pha_embedding.html):
+  explicit SFCS `.pha` embedding verifier.
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 
@@ -269,6 +283,7 @@ Start with the [Documentation Index](docs/README.md).
 
 - [Identity Layer](docs/identity.md)
 - [Power House + slbit Observatory](docs/slbit.md)
+- [SFCS Draft](docs/sfcs.md)
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
 - [Provenance Security Model](docs/provenance_security.md)
