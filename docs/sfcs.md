@@ -1,9 +1,9 @@
 # Sovereign Fractal Computation Substrate
 
-Status: experimental design gate for Power House v0.3.16.
+Status: experimental design gate for Power House v0.3.17.
 
 SFCS is a proposed opt-in computational-fractal layer. It must not change
-Power House v0.3.16 core guarantees unless a future schema is separately
+Power House v0.3.17 core guarantees unless a future schema is separately
 specified, implemented, tested, and released.
 
 ## Compatibility Decision
@@ -42,7 +42,7 @@ Rootprint v2 or dedicated SFCS capsule schema.
 
 ## Current Repository Surface
 
-The v0.3.16 implementation is still intentionally isolated, but it now covers
+The v0.3.17 implementation is still intentionally isolated, but it now covers
 the first executable SFCS workflow:
 
 - feature flag: `sfcs`
@@ -58,6 +58,11 @@ discovery, strict duplicate-key JSON parsing, direct textual SFCS program
 parsing, arithmetic execution traces, synthesis plans, a fast-path workload
 descriptor, and `.pha` embedding verification. It does not change existing
 public behavior.
+
+v0.3.17 strengthens this draft with committed source metadata, additional
+control-oriented source operations, deterministic connected structure regions,
+region digests, and synthesis operations bound back to the exact region that
+created them.
 
 ## Corrected Architecture
 
@@ -98,20 +103,44 @@ input a
 input b
 const c 7
 add sum a b
+sub delta sum c
+eq same sum c
+not changed same
+branch selected changed delta sum
 mul z sum c
+label z Final structured output
+meta z source direct-fractal
 output z
 ```
 
 The parsed graph is verified using the same structural checks as JSON-loaded
 graphs: valid IDs, no duplicate nodes, no duplicate inputs, known references,
-declared outputs, and acyclic topology.
+declared outputs, acyclic topology, committed metadata limits, and no control
+characters in labels or metadata.
 
 ## Structure Discovery Rules
 
 The draft discovery engine classifies:
 
-- fast-path eligible: `input`, `const`, `add`, `mul`, `fast_path_claim`;
-- dense/general: `branch`, `dense_step`, `memory_read`, `memory_write`.
+- fast-path eligible: `input`, `const`, `add`, `sub`, `mul`,
+  `fast_path_claim`;
+- dense/general: `eq`, `and`, `or`, `not`, `branch`, `dense_step`,
+  `memory_read`, `memory_write`.
+
+It then groups same-kind connected nodes into deterministic structure regions.
+Each region records:
+
+- stable region ID;
+- region kind;
+- topologically ordered nodes;
+- entry nodes with dependencies outside the region;
+- output nodes consumed outside the region or exported by the graph;
+- source graph digest;
+- domain-separated region digest.
+
+Region ordering follows dependency completion, not the earliest independent
+node in a region. This prevents a downstream fast-path region from being
+recorded before the dense/control boundary it depends on.
 
 Future versions may discover larger algebraic regions, but every rewrite must
 be recorded as deterministic data and must produce the same output from the
@@ -130,16 +159,17 @@ emits a digest-bound trace:
 - final trace digest;
 - public outputs.
 
-The draft evaluator supports `input`, `const`, `add`, `mul`, and `branch`.
-Dense and memory placeholders are rejected by the evaluator until a future
-profile defines their proof semantics.
+The draft evaluator supports `input`, `const`, `add`, `sub`, `mul`, `eq`,
+`and`, `or`, `not`, and `branch`. Dense and memory placeholders are rejected by
+the evaluator until a future profile defines their proof semantics.
 
 ## Synthesis Plan
 
 `SfcsGraph::synthesis_plan(...)` deterministically records where the graph can
 be routed to the Sovereign fast path and where dense/general boundaries remain.
-Each operation has its own operation digest. The plan also emits an embedding
-invariant digest that binds the graph digest to the synthesis digest.
+Each operation has its own operation digest and is bound to the exact structure
+region digest that produced it. The plan also emits an embedding invariant
+digest that binds the graph digest to the synthesis digest.
 
 This is the first repository step toward the intended SFCS model:
 
@@ -169,7 +199,8 @@ matching the existing Power House boundary pattern.
 `SfcsGraph::to_execution_pha_artifact(...)` commits graph, execution trace, and
 synthesis plan into a normal `.pha` artifact. `verify_sfcs_execution_embedding`
 then replays the graph from public inputs, regenerates the synthesis plan,
-checks public outputs, and verifies provenance digests.
+checks public outputs, verifies public region counters, and verifies provenance
+digests.
 
 ## What Is Not Implemented Yet
 

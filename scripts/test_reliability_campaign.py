@@ -45,7 +45,7 @@ def config_value(base: Path) -> dict:
         "recovery_timeout_seconds": 15,
         "max_rpc_p95_ms": 1000,
         "expected_chain_id": 177155,
-        "expected_release": "0.3.16",
+        "expected_release": "0.3.17",
         "rpc_url": "https://rpc.example",
         "status_url": "https://rpc.example/network-status.json",
         "intake_url": "https://rpc.example/observer-intake-healthz",
@@ -63,7 +63,7 @@ def config_value(base: Path) -> dict:
 def fake_node(name: str) -> dict:
     return {
         "name": name,
-        "version": "0.3.16",
+        "version": "0.3.17",
         "binary_sha256": "1" * 64,
         "validator_registry_sha256": "2" * 64,
         "state_sha256": "3" * 64,
@@ -86,13 +86,13 @@ def install_fakes(campaign) -> None:
             result = {
                 "eth_chainId": hex(177155),
                 "eth_blockNumber": hex(42),
-                "web3_clientVersion": "power-house/0.3.16/finalized-native-rpc",
+                "web3_clientVersion": "power-house/0.3.17/finalized-native-rpc",
             }[method]
             return {"jsonrpc": "2.0", "id": 1, "result": result}, 12.5
         if url.endswith("network-status.json"):
             return {
                 "status": "operational",
-                "release": "0.3.16",
+                "release": "0.3.17",
                 "validators_healthy": 3,
                 "validators_total": 3,
                 "validator_registry": {"verified": True},
@@ -274,7 +274,7 @@ def main() -> None:
         assert status["evidence"]["final_report_sha256"]
 
         changed = config_value(base)
-        changed["expected_release"] = "0.3.17"
+        changed["expected_release"] = "0.3.18"
         changed_path = base / "changed.json"
         changed_path.write_text(json.dumps(changed))
         try:

@@ -21,6 +21,7 @@ const TRACE_INPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-inputs\0";
 const TRACE_OUTPUT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-outputs\0";
 const TRACE_STEP_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:trace-step\0";
 const TRACE_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:execution-trace\0";
+const STRUCTURE_REGION_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:structure-region\0";
 const SYNTHESIS_OPERATION_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:synthesis-operation\0";
 const SYNTHESIS_PLAN_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:synthesis-plan\0";
 const EMBEDDING_INVARIANT_DOMAIN: &[u8] = b"power-house:sfcs:v1-draft:embedding-invariant\0";
@@ -36,8 +37,18 @@ pub enum SfcsOp {
     Const,
     /// Integer addition over ordered inputs.
     Add,
+    /// Integer subtraction over two ordered inputs.
+    Sub,
     /// Integer multiplication over ordered inputs.
     Mul,
+    /// Deterministic equality predicate. Returns 1 for equality and 0 otherwise.
+    Eq,
+    /// Deterministic nonzero conjunction. Returns 1 when both inputs are nonzero.
+    And,
+    /// Deterministic nonzero disjunction. Returns 1 when either input is nonzero.
+    Or,
+    /// Deterministic nonzero negation. Returns 1 when the input is zero.
+    Not,
     /// Deterministic branch: input 0 is the condition, input 1 true, input 2 false.
     Branch,
     /// Dense opaque step that is not eligible for the Sovereign fast path.
@@ -64,6 +75,9 @@ pub struct SfcsNode {
     /// Optional human label. Labels are metadata and are committed by the draft digest.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
+    /// Deterministic source or structure metadata committed by the draft digest.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, String>,
 }
 
 impl SfcsNode {
@@ -75,6 +89,7 @@ impl SfcsNode {
             inputs,
             params: BTreeMap::new(),
             label: None,
+            metadata: BTreeMap::new(),
         }
     }
 
@@ -86,6 +101,7 @@ impl SfcsNode {
             inputs: Vec::new(),
             params: BTreeMap::from([("value".to_string(), value)]),
             label: None,
+            metadata: BTreeMap::new(),
         }
     }
 
@@ -95,10 +111,21 @@ impl SfcsNode {
         self
     }
 
+    /// Adds deterministic source or structural metadata.
+    pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.metadata.insert(key.into(), value.into());
+        self
+    }
+
     fn is_fast_path_eligible(&self) -> bool {
         matches!(
             self.op,
-            SfcsOp::Input | SfcsOp::Const | SfcsOp::Add | SfcsOp::Mul | SfcsOp::FastPathClaim
+            SfcsOp::Input
+                | SfcsOp::Const
+                | SfcsOp::Add
+                | SfcsOp::Sub
+                | SfcsOp::Mul
+                | SfcsOp::FastPathClaim
         )
     }
 }
@@ -125,11 +152,18 @@ impl SfcsGraph {
     /// - `input <id>`
     /// - `const <id> <integer>`
     /// - `add <id> <input> <input> [input...]`
+    /// - `sub <id> <left> <right>`
     /// - `mul <id> <input> <input> [input...]`
+    /// - `eq <id> <left> <right>`
+    /// - `and <id> <left> <right>`
+    /// - `or <id> <left> <right>`
+    /// - `not <id> <input>`
     /// - `branch <id> <condition> <true> <false>`
     /// - `dense <id> <input> [input...]`
     /// - `memory_read <id> <input> [input...]`
     /// - `memory_write <id> <input> [input...]`
+    /// - `label <id> <text...>`
+    /// - `meta <id> <key> <value...>`
     /// - `output <id> [id...]`
     pub fn from_program(source: &str) -> Result<Self, SfcsError> {
         let mut graph = Self::new(Vec::new());
@@ -176,6 +210,29 @@ impl SfcsGraph {
                         rest[1..].iter().map(|value| (*value).to_string()).collect(),
                     ))?;
                 }
+                "sub" | "eq" | "and" | "or" => {
+                    require_program_arity(line_number, keyword, rest, 3)?;
+                    let op = match *keyword {
+                        "sub" => SfcsOp::Sub,
+                        "eq" => SfcsOp::Eq,
+                        "and" => SfcsOp::And,
+                        "or" => SfcsOp::Or,
+                        _ => unreachable!(),
+                    };
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        op,
+                        rest[1..].iter().map(|value| (*value).to_string()).collect(),
+                    ))?;
+                }
+                "not" => {
+                    require_program_arity(line_number, keyword, rest, 2)?;
+                    graph.insert_node(SfcsNode::new(
+                        rest[0],
+                        SfcsOp::Not,
+                        vec![rest[1].to_string()],
+                    ))?;
+                }
                 "branch" => {
                     require_program_arity(line_number, keyword, rest, 4)?;
                     graph.insert_node(SfcsNode::new(
@@ -201,6 +258,36 @@ impl SfcsGraph {
                         op,
                         rest[1..].iter().map(|value| (*value).to_string()).collect(),
                     ))?;
+                }
+                "label" => {
+                    if rest.len() < 2 {
+                        return Err(SfcsError::InvalidProgram(format!(
+                            "line {line_number}: label requires id and text"
+                        )));
+                    }
+                    let node = graph.nodes.get_mut(rest[0]).ok_or_else(|| {
+                        SfcsError::InvalidProgram(format!(
+                            "line {line_number}: label references unknown node {}",
+                            rest[0]
+                        ))
+                    })?;
+                    node.label = Some(rest[1..].join(" "));
+                }
+                "meta" => {
+                    if rest.len() < 3 {
+                        return Err(SfcsError::InvalidProgram(format!(
+                            "line {line_number}: meta requires id, key, and value"
+                        )));
+                    }
+                    validate_id(rest[1])?;
+                    let node = graph.nodes.get_mut(rest[0]).ok_or_else(|| {
+                        SfcsError::InvalidProgram(format!(
+                            "line {line_number}: meta references unknown node {}",
+                            rest[0]
+                        ))
+                    })?;
+                    node.metadata
+                        .insert(rest[1].to_string(), rest[2..].join(" "));
                 }
                 "output" => {
                     if rest.is_empty() {
@@ -305,6 +392,13 @@ impl SfcsGraph {
                 }
             }
             validate_node_shape(node)?;
+            if let Some(label) = &node.label {
+                validate_metadata_value("label", label)?;
+            }
+            for (key, value) in &node.metadata {
+                validate_id(key)?;
+                validate_metadata_value(key, value)?;
+            }
         }
         self.topological_order()?;
         Ok(())
@@ -336,13 +430,136 @@ impl SfcsGraph {
         }
         let graph_digest = self.fractal_digest()?;
         let workload = SfcsFastPathWorkload::new(graph_digest.clone(), fast_path_nodes.clone())?;
+        let regions = self.structure_regions(&graph_digest)?;
+        let fast_path_regions = regions
+            .iter()
+            .filter(|region| region.kind == SfcsRegionKind::FastPath)
+            .count();
+        let dense_regions = regions.len().saturating_sub(fast_path_regions);
         Ok(SfcsDiscoveryReport {
             graph_digest,
             node_count: self.nodes.len(),
             fast_path_nodes,
             dense_nodes,
+            regions,
+            fast_path_regions,
+            dense_regions,
             fast_path_workload_digest: workload.workload_digest()?,
         })
+    }
+
+    /// Returns deterministic connected structure regions inside the fractal.
+    pub fn structure_regions(
+        &self,
+        graph_digest: &str,
+    ) -> Result<Vec<SfcsStructureRegion>, SfcsError> {
+        self.verify()?;
+        validate_sha256(graph_digest)?;
+        let order = self.topological_order()?;
+        let order_index = order
+            .iter()
+            .enumerate()
+            .map(|(index, node_id)| (node_id.clone(), index))
+            .collect::<BTreeMap<_, _>>();
+        let mut consumers = BTreeMap::<String, Vec<String>>::new();
+        for node in self.nodes.values() {
+            for input in &node.inputs {
+                consumers
+                    .entry(input.clone())
+                    .or_default()
+                    .push(node.id.clone());
+            }
+        }
+        for values in consumers.values_mut() {
+            values.sort_by_key(|node_id| order_index[node_id]);
+        }
+
+        let mut assigned = BTreeSet::new();
+        let mut raw_regions = Vec::<(usize, SfcsRegionKind, Vec<String>)>::new();
+        for node_id in &order {
+            if assigned.contains(node_id) {
+                continue;
+            }
+            let kind = if self.nodes[node_id].is_fast_path_eligible() {
+                SfcsRegionKind::FastPath
+            } else {
+                SfcsRegionKind::DenseBoundary
+            };
+            let mut stack = vec![node_id.clone()];
+            let mut region_nodes = BTreeSet::new();
+            while let Some(current) = stack.pop() {
+                if !assigned.insert(current.clone()) {
+                    continue;
+                }
+                region_nodes.insert(current.clone());
+                let current_node = &self.nodes[&current];
+                for neighbor in current_node
+                    .inputs
+                    .iter()
+                    .chain(consumers.get(&current).into_iter().flatten())
+                {
+                    if assigned.contains(neighbor) {
+                        continue;
+                    }
+                    let neighbor_kind = if self.nodes[neighbor].is_fast_path_eligible() {
+                        SfcsRegionKind::FastPath
+                    } else {
+                        SfcsRegionKind::DenseBoundary
+                    };
+                    if neighbor_kind == kind {
+                        stack.push(neighbor.clone());
+                    }
+                }
+            }
+            let mut node_ids = region_nodes.into_iter().collect::<Vec<_>>();
+            node_ids.sort_by_key(|node_id| order_index[node_id]);
+            let completion = node_ids
+                .iter()
+                .map(|node_id| order_index[node_id])
+                .max()
+                .unwrap_or(0);
+            raw_regions.push((completion, kind, node_ids));
+        }
+        raw_regions.sort_by_key(|(start, kind, node_ids)| (*start, kind.clone(), node_ids.clone()));
+
+        let mut regions = Vec::new();
+        for (index, (_, kind, node_ids)) in raw_regions.into_iter().enumerate() {
+            let node_set = node_ids.iter().cloned().collect::<BTreeSet<_>>();
+            let mut entry_nodes = BTreeSet::new();
+            let mut output_nodes = BTreeSet::new();
+            for node_id in &node_ids {
+                let node = &self.nodes[node_id];
+                if node.inputs.iter().any(|input| !node_set.contains(input)) {
+                    entry_nodes.insert(node_id.clone());
+                }
+                let leaves_region = consumers
+                    .get(node_id)
+                    .into_iter()
+                    .flatten()
+                    .any(|consumer| !node_set.contains(consumer));
+                if leaves_region || self.outputs.contains(node_id) {
+                    output_nodes.insert(node_id.clone());
+                }
+            }
+            let mut region = SfcsStructureRegion {
+                region_id: format!(
+                    "region_{index:04}_{}",
+                    match kind {
+                        SfcsRegionKind::FastPath => "fast_path",
+                        SfcsRegionKind::DenseBoundary => "dense_boundary",
+                    }
+                ),
+                kind,
+                node_ids,
+                entry_nodes: entry_nodes.into_iter().collect(),
+                output_nodes: output_nodes.into_iter().collect(),
+                graph_digest: graph_digest.to_string(),
+                region_digest: String::new(),
+            };
+            region.region_digest = digest_json(STRUCTURE_REGION_DOMAIN, &region.preimage())?;
+            regions.push(region);
+        }
+        Ok(regions)
     }
 
     /// Evaluates the executable arithmetic subset deterministically.
@@ -387,9 +604,18 @@ impl SfcsGraph {
                 SfcsOp::Add => node.inputs.iter().try_fold(0_i64, |acc, input| {
                     Ok::<i64, SfcsError>(acc.wrapping_add(values[input]))
                 })?,
+                SfcsOp::Sub => values[&node.inputs[0]].wrapping_sub(values[&node.inputs[1]]),
                 SfcsOp::Mul => node.inputs.iter().try_fold(1_i64, |acc, input| {
                     Ok::<i64, SfcsError>(acc.wrapping_mul(values[input]))
                 })?,
+                SfcsOp::Eq => i64::from(values[&node.inputs[0]] == values[&node.inputs[1]]),
+                SfcsOp::And => {
+                    i64::from(values[&node.inputs[0]] != 0 && values[&node.inputs[1]] != 0)
+                }
+                SfcsOp::Or => {
+                    i64::from(values[&node.inputs[0]] != 0 || values[&node.inputs[1]] != 0)
+                }
+                SfcsOp::Not => i64::from(values[&node.inputs[0]] == 0),
                 SfcsOp::Branch => {
                     let condition = values[&node.inputs[0]];
                     if condition != 0 {
@@ -446,34 +672,17 @@ impl SfcsGraph {
         let discovery = self.discover_structure()?;
         let graph_digest = discovery.graph_digest.clone();
         let mut operations = Vec::new();
-        let mut pending_fast = Vec::new();
-        for node_id in self.topological_order()? {
-            let node = &self.nodes[&node_id];
-            if node.is_fast_path_eligible() {
-                pending_fast.push(node_id);
-            } else {
-                if !pending_fast.is_empty() {
-                    operations.push(SfcsRewriteOperation::new(
-                        operations.len() as u64,
-                        SfcsRewriteKind::FastPathExtract,
-                        std::mem::take(&mut pending_fast),
-                        graph_digest.clone(),
-                    )?);
-                }
-                operations.push(SfcsRewriteOperation::new(
-                    operations.len() as u64,
-                    SfcsRewriteKind::DenseBoundary,
-                    vec![node_id],
-                    graph_digest.clone(),
-                )?);
-            }
-        }
-        if !pending_fast.is_empty() {
+        for region in &discovery.regions {
+            let kind = match region.kind {
+                SfcsRegionKind::FastPath => SfcsRewriteKind::FastPathExtract,
+                SfcsRegionKind::DenseBoundary => SfcsRewriteKind::DenseBoundary,
+            };
             operations.push(SfcsRewriteOperation::new(
                 operations.len() as u64,
-                SfcsRewriteKind::FastPathExtract,
-                pending_fast,
+                kind,
+                region.node_ids.clone(),
                 graph_digest.clone(),
+                region.region_digest.clone(),
             )?);
         }
         let operation_digests = operations
@@ -488,8 +697,11 @@ impl SfcsGraph {
             embedding_invariant_digest: String::new(),
             operations,
             operation_digests,
+            regions: discovery.regions.clone(),
             fast_path_workload_digest,
             dense_nodes,
+            fast_path_regions: discovery.fast_path_regions,
+            dense_regions: discovery.dense_regions,
         };
         plan.synthesis_digest = digest_json(SYNTHESIS_PLAN_DOMAIN, &plan.preimage())?;
         plan.embedding_invariant_digest = digest_json(
@@ -521,6 +733,9 @@ impl SfcsGraph {
                 "node_count": report.node_count,
                 "fast_path_nodes": report.fast_path_nodes.len(),
                 "dense_nodes": report.dense_nodes.len(),
+                "structure_regions": report.regions.len(),
+                "fast_path_regions": report.fast_path_regions,
+                "dense_regions": report.dense_regions,
             }),
             serde_json::to_value(self)?,
         )
@@ -557,6 +772,9 @@ impl SfcsGraph {
                 "trace_steps": trace.steps.len(),
                 "synthesis_operations": synthesis.operations.len(),
                 "dense_nodes": synthesis.dense_nodes.len(),
+                "structure_regions": synthesis.regions.len(),
+                "fast_path_regions": synthesis.fast_path_regions,
+                "dense_regions": synthesis.dense_regions,
                 "fast_path_workload_digest": synthesis.fast_path_workload_digest,
             }),
             serde_json::json!({
@@ -615,9 +833,28 @@ pub fn verify_pha_embedding(artifact: &PhaArtifact) -> Result<SfcsEmbeddingRepor
         .get("dense_nodes")
         .and_then(serde_json::Value::as_u64)
         .ok_or_else(|| SfcsError::InvalidEmbedding("missing public dense_nodes".to_string()))?;
+    let expected_regions = public_inputs
+        .get("structure_regions")
+        .and_then(serde_json::Value::as_u64)
+        .ok_or_else(|| {
+            SfcsError::InvalidEmbedding("missing public structure_regions".to_string())
+        })?;
+    let expected_fast_regions = public_inputs
+        .get("fast_path_regions")
+        .and_then(serde_json::Value::as_u64)
+        .ok_or_else(|| {
+            SfcsError::InvalidEmbedding("missing public fast_path_regions".to_string())
+        })?;
+    let expected_dense_regions = public_inputs
+        .get("dense_regions")
+        .and_then(serde_json::Value::as_u64)
+        .ok_or_else(|| SfcsError::InvalidEmbedding("missing public dense_regions".to_string()))?;
     if expected_node_count != discovery.node_count as u64
         || expected_fast != discovery.fast_path_nodes.len() as u64
         || expected_dense != discovery.dense_nodes.len() as u64
+        || expected_regions != discovery.regions.len() as u64
+        || expected_fast_regions != discovery.fast_path_regions as u64
+        || expected_dense_regions != discovery.dense_regions as u64
     {
         return Err(SfcsError::InvalidEmbedding(
             "public SFCS counters do not match graph discovery".to_string(),
@@ -629,6 +866,9 @@ pub fn verify_pha_embedding(artifact: &PhaArtifact) -> Result<SfcsEmbeddingRepor
         node_count: discovery.node_count,
         fast_path_nodes: discovery.fast_path_nodes.len(),
         dense_nodes: discovery.dense_nodes.len(),
+        structure_regions: discovery.regions.len(),
+        fast_path_regions: discovery.fast_path_regions,
+        dense_regions: discovery.dense_regions,
         fast_path_workload_digest: discovery.fast_path_workload_digest,
     })
 }
@@ -692,6 +932,31 @@ pub fn verify_execution_embedding(
             "public outputs do not match trace".to_string(),
         ));
     }
+    for (field, expected) in [
+        ("node_count", proof.graph.nodes.len() as u64),
+        ("trace_steps", expected_trace.steps.len() as u64),
+        (
+            "synthesis_operations",
+            expected_synthesis.operations.len() as u64,
+        ),
+        ("dense_nodes", expected_synthesis.dense_nodes.len() as u64),
+        ("structure_regions", expected_synthesis.regions.len() as u64),
+        (
+            "fast_path_regions",
+            expected_synthesis.fast_path_regions as u64,
+        ),
+        ("dense_regions", expected_synthesis.dense_regions as u64),
+    ] {
+        let found = public_inputs
+            .get(field)
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| SfcsError::InvalidEmbedding(format!("missing public {field}")))?;
+        if found != expected {
+            return Err(SfcsError::InvalidEmbedding(format!(
+                "public {field} does not match replay"
+            )));
+        }
+    }
     Ok(SfcsExecutionEmbeddingReport {
         graph_digest: expected_trace.graph_digest,
         artifact_phx_fingerprint: artifact.phx_fingerprint.clone(),
@@ -703,6 +968,9 @@ pub fn verify_execution_embedding(
         trace_steps: expected_trace.steps.len(),
         synthesis_operations: expected_synthesis.operations.len(),
         dense_nodes: expected_synthesis.dense_nodes.len(),
+        structure_regions: expected_synthesis.regions.len(),
+        fast_path_regions: expected_synthesis.fast_path_regions,
+        dense_regions: expected_synthesis.dense_regions,
     })
 }
 
@@ -719,6 +987,12 @@ pub struct SfcsEmbeddingReport {
     pub fast_path_nodes: usize,
     /// Dense/general node count.
     pub dense_nodes: usize,
+    /// Total deterministic structure regions.
+    pub structure_regions: usize,
+    /// Fast-path structure region count.
+    pub fast_path_regions: usize,
+    /// Dense/general structure region count.
+    pub dense_regions: usize,
     /// Digest of the extracted fast-path workload descriptor.
     pub fast_path_workload_digest: String,
 }
@@ -746,6 +1020,12 @@ pub struct SfcsExecutionEmbeddingReport {
     pub synthesis_operations: usize,
     /// Dense/general node count.
     pub dense_nodes: usize,
+    /// Total deterministic structure regions.
+    pub structure_regions: usize,
+    /// Fast-path structure region count.
+    pub fast_path_regions: usize,
+    /// Dense/general structure region count.
+    pub dense_regions: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -766,8 +1046,56 @@ pub struct SfcsDiscoveryReport {
     pub fast_path_nodes: Vec<String>,
     /// Nodes requiring dense/general handling.
     pub dense_nodes: Vec<String>,
+    /// Deterministically discovered connected structure regions.
+    pub regions: Vec<SfcsStructureRegion>,
+    /// Count of fast-path regions.
+    pub fast_path_regions: usize,
+    /// Count of dense/general regions.
+    pub dense_regions: usize,
     /// Digest of the extracted fast-path workload descriptor.
     pub fast_path_workload_digest: String,
+}
+
+/// Kind of deterministic SFCS structure region.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SfcsRegionKind {
+    /// Connected structured arithmetic region eligible for the Sovereign fast path.
+    FastPath,
+    /// Connected dense/control/memory boundary that remains outside the fast path.
+    DenseBoundary,
+}
+
+/// Connected sub-fractal discovered during deterministic structure analysis.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsStructureRegion {
+    /// Stable region identifier assigned by deterministic topological order.
+    pub region_id: String,
+    /// Region kind.
+    pub kind: SfcsRegionKind,
+    /// Nodes contained in the region in topological order.
+    pub node_ids: Vec<String>,
+    /// Region nodes with at least one dependency outside the region.
+    pub entry_nodes: Vec<String>,
+    /// Region nodes consumed outside the region or exported as graph outputs.
+    pub output_nodes: Vec<String>,
+    /// Source graph digest before extraction.
+    pub graph_digest: String,
+    /// Domain-separated digest of the region preimage.
+    pub region_digest: String,
+}
+
+impl SfcsStructureRegion {
+    fn preimage(&self) -> serde_json::Value {
+        serde_json::json!({
+            "region_id": self.region_id,
+            "kind": self.kind,
+            "node_ids": self.node_ids,
+            "entry_nodes": self.entry_nodes,
+            "output_nodes": self.output_nodes,
+            "graph_digest": self.graph_digest,
+        })
+    }
 }
 
 /// Deterministic execution trace for the arithmetic SFCS subset.
@@ -847,10 +1175,16 @@ pub struct SfcsSynthesisPlan {
     pub operations: Vec<SfcsRewriteOperation>,
     /// Ordered operation digests.
     pub operation_digests: Vec<String>,
+    /// Structure regions used to create the synthesis operations.
+    pub regions: Vec<SfcsStructureRegion>,
     /// Digest of the complete fast-path workload descriptor.
     pub fast_path_workload_digest: String,
     /// Dense/general nodes left outside the fast path.
     pub dense_nodes: Vec<String>,
+    /// Number of fast-path regions.
+    pub fast_path_regions: usize,
+    /// Number of dense/general regions.
+    pub dense_regions: usize,
 }
 
 impl SfcsSynthesisPlan {
@@ -859,8 +1193,11 @@ impl SfcsSynthesisPlan {
             "graph_digest": self.graph_digest,
             "operations": self.operations,
             "operation_digests": self.operation_digests,
+            "regions": self.regions,
             "fast_path_workload_digest": self.fast_path_workload_digest,
             "dense_nodes": self.dense_nodes,
+            "fast_path_regions": self.fast_path_regions,
+            "dense_regions": self.dense_regions,
         })
     }
 }
@@ -889,6 +1226,8 @@ pub struct SfcsRewriteOperation {
     /// Optional workload digest for fast-path extraction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub workload_digest: Option<String>,
+    /// Digest of the structure region that produced this operation.
+    pub region_digest: String,
     /// Domain-separated digest of the operation.
     pub operation_digest: String,
 }
@@ -899,8 +1238,10 @@ impl SfcsRewriteOperation {
         kind: SfcsRewriteKind,
         node_ids: Vec<String>,
         graph_digest: String,
+        region_digest: String,
     ) -> Result<Self, SfcsError> {
         validate_sha256(&graph_digest)?;
+        validate_sha256(&region_digest)?;
         if node_ids.is_empty() {
             return Err(SfcsError::InvalidGraph(
                 "synthesis operation cannot be empty".to_string(),
@@ -923,6 +1264,7 @@ impl SfcsRewriteOperation {
             node_ids,
             graph_digest,
             workload_digest,
+            region_digest,
             operation_digest: String::new(),
         };
         operation.operation_digest =
@@ -937,6 +1279,7 @@ impl SfcsRewriteOperation {
             "node_ids": self.node_ids,
             "graph_digest": self.graph_digest,
             "workload_digest": self.workload_digest,
+            "region_digest": self.region_digest,
         })
     }
 }
@@ -1124,6 +1467,8 @@ fn validate_node_shape(node: &SfcsNode) -> Result<(), SfcsError> {
             }
             Ok(())
         }
+        SfcsOp::Sub | SfcsOp::Eq | SfcsOp::And | SfcsOp::Or => require_inputs(node, 2),
+        SfcsOp::Not => require_inputs(node, 1),
         SfcsOp::Branch => require_inputs(node, 3),
         SfcsOp::DenseStep | SfcsOp::FastPathClaim => {
             if node.inputs.is_empty() {
@@ -1181,6 +1526,20 @@ fn validate_id(value: &str) -> Result<(), SfcsError> {
         .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b':'))
     {
         return Err(SfcsError::InvalidId(value.to_string()));
+    }
+    Ok(())
+}
+
+fn validate_metadata_value(key: &str, value: &str) -> Result<(), SfcsError> {
+    if value.len() > 512 {
+        return Err(SfcsError::InvalidGraph(format!(
+            "metadata value for {key} exceeds 512 bytes"
+        )));
+    }
+    if value.chars().any(char::is_control) {
+        return Err(SfcsError::InvalidGraph(format!(
+            "metadata value for {key} contains a control character"
+        )));
     }
     Ok(())
 }

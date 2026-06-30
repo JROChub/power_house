@@ -1,5 +1,23 @@
 # Release Notes
 
+## v0.3.17 - 2026-06-30
+
+### SFCS Connected Region Discovery
+- Added committed SFCS node metadata and direct source directives for labels
+  and deterministic metadata without changing `.pha`, Rootprint, Memory
+  Capsule, or slbit rules.
+- Added direct source parsing and deterministic execution for `sub`, `eq`,
+  `and`, `or`, and `not`, expanding the executable fractal representation for
+  control-oriented source logic.
+- Added deterministic connected structure regions with stable region IDs,
+  entry nodes, output nodes, and domain-separated region digests.
+- Bound synthesis operations to the exact structure-region digest that produced
+  them so fast-path extraction and dense boundaries are replayable sub-fractal
+  data rather than flat node counters.
+- Extended SFCS `.pha` execution verification to reject stale public region
+  counters while preserving existing core fingerprint and Rootprint v1
+  compatibility.
+
 ## v0.3.16 - 2026-06-30
 
 ### Executable SFCS Draft

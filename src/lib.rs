@@ -162,7 +162,8 @@ pub use prng::SimplePrng;
 pub use sfcs::{
     SfcsDiscoveryReport, SfcsEmbeddingReport, SfcsError, SfcsExecutionEmbeddingReport,
     SfcsExecutionTrace, SfcsFastPathCertificate, SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp,
-    SfcsRewriteKind, SfcsRewriteOperation, SfcsSynthesisPlan, SfcsTraceStep, SovereignFastPath,
+    SfcsRegionKind, SfcsRewriteKind, SfcsRewriteOperation, SfcsStructureRegion, SfcsSynthesisPlan,
+    SfcsTraceStep, SovereignFastPath,
 };
 pub use sparse_sumcheck::{
     CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,
