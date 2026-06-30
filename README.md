@@ -8,48 +8,59 @@
 Power House is a deterministic verification and provenance system for portable
 computational identities.
 
-Power House includes the opt-in Sovereign Fractal Computation Substrate (SFCS):
-source text maps directly into deterministic computational-fractal graphs,
-executable dense integer and memory traces replay into digest-bound `.pha`
-artifacts, and synthesis plans record connected sub-fractal regions that route
-to the Sovereign fast path. Rootprint v1 and existing `.pha` identity rules
-remain unchanged.
-
-The SFCS objective is to make direct source-to-fractal execution the native
-Power House path so traditional circuit compilers and zkVM workflows become
-unnecessary and unwise as the default for the workloads Power House targets.
-The current release is a guarded milestone toward that objective, not final
-SFCS compliance.
-
-The release also retains Memory Capsules: self-verifying proof-memory objects
-that bind `.pha` artifacts, Rootprint lineage, replay state, optional witness
-receipts, challenge vectors, and non-core semantic packets into one
-offline-verifiable bundle.
-
-`slbit` is the independent semantic layer: it shows what verified proof memory
-means without changing core proof identity.
-
 Current release: **v0.3.19**
 
-Production reliability evidence is published on the dedicated
-[72-hour campaign page](https://mfenx.com/campaign.html).
+## v0.3.19: Source-To-Fractal Execution
 
-The primary workflow is **Power House Identity + Rootprint**:
+Power House v0.3.19 ships the opt-in Sovereign Fractal Computation Substrate
+(SFCS) path for direct source-to-fractal execution:
 
-- **Identity** provides immutable create, fork, merge, verify, replay, and
-  equivalence operations over `.pha` and Rootprint.
+- source text maps directly into deterministic computational-fractal graphs;
+- dense integer operations, comparisons, bitwise operations, shifts, branching,
+  and ordered memory `load(...)` / `store(...)` operations execute locally;
+- every execution emits digest-bound graph, input, output, per-step, and memory
+  trace state;
+- synthesis plans record connected sub-fractal regions, Sovereign fast-path
+  candidates, dense boundaries, operation digests, and embedding invariants;
+- `.pha` execution artifacts carry the graph, trace, public outputs, synthesis
+  plan, and provenance digests without changing Rootprint v1 identity rules;
+- the `julian sfcs` CLI parses, evaluates, inspects, and verifies the same
+  source-to-fractal artifacts offline.
+
+The architectural goal is now public and direct: for the workload class Power
+House targets, computation should be expressed as Power House source, committed
+as deterministic fractal structure, replayed through `.pha` identity, and routed
+through the Sovereign fast path. Traditional zkVM and circuit-compiler flows are
+not the default integration path for Power House computation.
+
+Rootprint v1 and existing `.pha` fingerprint rules remain stable. SFCS is
+carried as committed `.pha` payload and verified by explicit SFCS embedding
+checks.
+
+## Core Workflow
+
+The primary workflow is **Power House Identity + Rootprint + optional SFCS**:
+
 - **Power House Archive (`.pha`)** binds proof data and provenance to a
   deterministic `phx_fingerprint`.
-- **Rootprint** provides verifiable navigation, forks, merges, and equivalence
-  over `.pha` core identities.
-- **SFCS draft primitives** are opt-in through `--features sfcs` and provide
-  direct fractal parsing, dense integer and memory execution traces, synthesis
-  plans, an offline `julian sfcs` CLI, and `.pha` execution embedding
-  verification without mutating Rootprint v1.
+- **Rootprint v1** provides verifiable navigation, forks, merges, replay, and
+  equivalence over `.pha` core identities.
+- **Identity** provides immutable create, fork, merge, verify, replay, and
+  equivalence operations over `.pha` and Rootprint.
+- **SFCS** provides source-to-fractal parsing, deterministic execution traces,
+  synthesis planning, offline CLI verification, and `.pha` execution embedding.
+- **Memory Capsule (`.phm`)** binds `.pha` artifacts, Rootprint lineage, replay
+  state, optional witness receipts, challenge vectors, and semantic packets into
+  one offline-verifiable proof-memory bundle.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
   verified Rootprint replay state without changing proof identity.
+- **slbit** is the independent semantic layer: it explains what verified proof
+  memory means without changing core proof identity.
+
+Production reliability evidence is published on the dedicated
+[72-hour campaign page](https://mfenx.com/campaign.html).
 
 ## Quick Start
 
@@ -107,12 +118,53 @@ julian memory replay earth-001.phm
 julian memory challenge earth-001.phm --all
 ```
 
+## SFCS Quick Start
+
+Build the CLI with SFCS enabled:
+
+```bash
+cargo build --features sfcs --bin julian
+```
+
+Create a source file:
+
+```text
+input addr
+input value
+let masked = value ^ 255
+let stored = store(addr, masked)
+let loaded = load(addr)
+let doubled = loaded * 2
+let out = if doubled > value then doubled else value
+output out
+```
+
+Parse, execute, and verify the artifact:
+
+```bash
+julian sfcs source dense.sfcs --output dense.graph.json
+julian sfcs eval dense.sfcs \
+  --input addr=7 \
+  --input value=29 \
+  --report dense.report.json \
+  --artifact-output dense.execution.pha \
+  --label dense-memory
+julian sfcs inspect dense.graph.json
+julian sfcs verify-pha dense.execution.pha
+```
+
+The same flow is available from Rust through `SfcsGraph::from_source(...)`,
+`SfcsGraph::execution_trace(...)`, `SfcsGraph::synthesis_plan(...)`,
+`SfcsGraph::to_execution_pha_artifact(...)`, and
+`verify_sfcs_execution_embedding(...)` when the crate is built with
+`--features sfcs`.
+
 ## Human-Observable Proofs
 
-[`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency
-crate for luminous claims, semantic transcripts, and visualization packets.
-Power House remains the verification and provenance authority; `slbit` 3.1 adds
-the Meaning Observatory inspection layer, deterministic ask reports, and
+[`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency crate
+for luminous claims, semantic transcripts, and visualization packets. Power
+House remains the verification and provenance authority; `slbit` adds the
+Meaning Observatory inspection layer, deterministic ask reports, and
 human-readable meaning beside it.
 
 ```bash
@@ -142,11 +194,11 @@ vectors.
 | Seeded sparse certificate | `2^1,000,000` Boolean points | `O(n + I log n)` deterministic replay | `cargo run --release --example sparse_record` |
 | Committed sparse workload | External `PHSMv1` + `PHCPv1` files | Commitment-bound deterministic replay | `cargo run --release --example committed_workload` |
 | Portable provenance | `.pha` core + Rootprint DAG | Fingerprint and graph replay | `cargo run --example rootprint_workflow` |
-| SFCS executable draft | Computational fractal source, trace, and synthesis plan committed through `.pha` | Graph digest, execution trace replay, synthesis-plan replay, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs --test sfcs_cli` |
+| SFCS source-to-fractal execution | Native source, computational fractal graph, execution trace, synthesis plan, and `.pha` embedding | Graph digest, execution trace replay, memory digest replay, synthesis-plan replay, public-output checks, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs --test sfcs_cli` |
 
 Here `n` is the number of variables and `I` is the number of nonzero variable
-incidences. The proof modes operate on compact algebraic descriptions and do
-not allocate the expanded Boolean hypercube.
+incidences. The proof modes operate on compact algebraic descriptions and do not
+allocate the expanded Boolean hypercube.
 
 ## Core Formats
 
@@ -156,8 +208,8 @@ not allocate the expanded Boolean hypercube.
 | Rootprint v1 | Deterministic proof-history graph with forks and merges |
 | `.phm` Memory Capsule v1 | Portable proof memory with core, lineage, replay, semantic bindings, witnesses, and challenges |
 | Observatory sidecar v1 | Non-core binding from replay state and branch IDs to semantic packets |
-| `power-house/sfcs-fractal/v1-draft` | Opt-in computational-fractal draft graph |
-| `power-house/sfcs-execution/v1-draft` | Opt-in graph + trace + synthesis plan committed through `.pha` |
+| `power-house/sfcs-fractal/v1-draft` | Opt-in computational-fractal graph schema |
+| `power-house/sfcs-execution/v1-draft` | Graph + trace + synthesis plan committed through `.pha` |
 | `PHSPv1` | Seeded sparse polynomial certificate |
 | `PHSMv1` | Canonical external sparse polynomial |
 | `PHCPv1` | Certificate bound to a `PHSMv1` commitment |
@@ -174,6 +226,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 cargo test --all-targets --locked
 cargo test --features sfcs --test sfcs --locked
+cargo test --features sfcs --test sfcs_cli --locked
 cargo test --all-targets --features net --locked
 cargo test --test memory_capsule --test memory_cli --locked
 
@@ -222,7 +275,7 @@ The complete procedure and expected rejection behavior are documented in the
 - [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
 - [`SfcsGraph`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsGraph.html):
-  opt-in computational-fractal draft graph behind the `sfcs` feature, including
+  opt-in computational-fractal graph behind the `sfcs` feature, including
   `SfcsGraph::from_source(...)` for native expression-to-fractal lowering.
 - [`SfcsExecutionTrace`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsExecutionTrace.html):
   deterministic executable trace for the SFCS source-to-fractal subset.
@@ -274,11 +327,11 @@ and a quorum-finalized native JSON-RPC lane.
 | ChainList endpoint | `https://rpc.mfenx.com` |
 | Status | `https://mfenx.com/status.html` |
 
-The production edge uses health-aware global routing across validators in
-New York, San Francisco, and Amsterdam. Public traffic is rate-limited at
-Nginx and removed from a backend automatically when `/healthz` fails. Signed
-validator registrations bind each admitted public key to its derived peer ID
-and live identity metrics; validator totals are not inferred from peer links.
+The production edge uses health-aware global routing across validators in New
+York, San Francisco, and Amsterdam. Public traffic is rate-limited at Nginx and
+removed from a backend automatically when `/healthz` fails. Signed validator
+registrations bind each admitted public key to its derived peer ID and live
+identity metrics; validator totals are not inferred from peer links.
 
 ```bash
 julian net start \
@@ -302,7 +355,7 @@ Start with the [Documentation Index](docs/README.md).
 
 - [Identity Layer](docs/identity.md)
 - [Power House + slbit Observatory](docs/slbit.md)
-- [SFCS Draft](docs/sfcs.md)
+- [SFCS v0.3.19 Source-to-Fractal Execution](docs/sfcs.md)
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
 - [Provenance Security Model](docs/provenance_security.md)
