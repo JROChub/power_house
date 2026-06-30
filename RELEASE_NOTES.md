@@ -1,5 +1,12 @@
 # Release Notes
 
+## v0.3.15 - 2026-06-30
+
+### Docs.rs API Link Fix
+- Promoted `verify_sfcs_pha_embedding` from a root re-export alias to a real
+  documented root function so docs.rs and README API links resolve directly.
+- Kept the underlying SFCS `.pha` embedding verifier unchanged.
+
 ## v0.3.14 - 2026-06-30
 
 ### SFCS Draft Gate

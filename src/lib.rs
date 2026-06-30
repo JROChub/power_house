@@ -160,9 +160,8 @@ pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs")]
 pub use sfcs::{
-    verify_pha_embedding as verify_sfcs_pha_embedding, SfcsDiscoveryReport, SfcsEmbeddingReport,
-    SfcsError, SfcsFastPathCertificate, SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp,
-    SovereignFastPath,
+    SfcsDiscoveryReport, SfcsEmbeddingReport, SfcsError, SfcsFastPathCertificate,
+    SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp, SovereignFastPath,
 };
 pub use sparse_sumcheck::{
     CommittedSparsePolynomial, CommittedSparseProof, SeededSparseProof, SeededSparseSpec,
@@ -171,3 +170,14 @@ pub use sparse_sumcheck::{
 pub use streaming::StreamingPolynomial;
 pub use sumcheck::{ChainedSumProof, GeneralSumClaim, GeneralSumProof, ProofStats, SumClaim};
 pub use transcript::Transcript;
+
+/// Verify that a `.pha` artifact contains a deterministic SFCS graph embedding.
+///
+/// This is the root-level API for callers that want the SFCS draft bridge while
+/// keeping the `.pha` core fingerprint and Rootprint rules unchanged.
+#[cfg(feature = "sfcs")]
+pub fn verify_sfcs_pha_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsEmbeddingReport, SfcsError> {
+    sfcs::verify_pha_embedding(artifact)
+}
