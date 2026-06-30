@@ -220,6 +220,14 @@ def main() -> None:
         assert snapshot["validator_registry"]["fresh"] is False
         campaign_path.write_text(json.dumps(campaign_state(stale.isoformat())))
         assert module.campaign_health()["status"] == "stalled"
+        complete = campaign_state(stale.isoformat())
+        complete["status"] = "passed"
+        complete["phase"] = "complete"
+        complete["evidence"]["final_report_sha256"] = "b" * 64
+        campaign_path.write_text(json.dumps(complete))
+        completed_campaign = module.campaign_health()
+        assert completed_campaign["status"] == "passed"
+        assert completed_campaign["fresh"] is True
 
         try:
             module.public_addresses_for_host("127.0.0.1")

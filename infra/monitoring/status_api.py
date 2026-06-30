@@ -242,7 +242,12 @@ def campaign_health():
         raise RuntimeError("reliability campaign schema mismatch")
     updated = datetime.fromisoformat(state["updated_at"].replace("Z", "+00:00"))
     age = (datetime.now(timezone.utc) - updated).total_seconds()
-    state["fresh"] = 0 <= age <= CAMPAIGN_MAX_AGE_SECONDS
+    complete = (
+        state.get("status") in {"passed", "failed"}
+        and state.get("phase") == "complete"
+        and bool(state.get("evidence", {}).get("final_report_sha256"))
+    )
+    state["fresh"] = complete or 0 <= age <= CAMPAIGN_MAX_AGE_SECONDS
     if state.get("status") == "running" and not state["fresh"]:
         state["status"] = "stalled"
         state["phase"] = "telemetry_gap"
