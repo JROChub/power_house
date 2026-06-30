@@ -274,7 +274,7 @@ def main() -> None:
         assert status["evidence"]["final_report_sha256"]
 
         changed = config_value(base)
-        changed["expected_release"] = "0.3.19"
+        changed["expected_release"] = "0.3.20"
         changed_path = base / "changed.json"
         changed_path.write_text(json.dumps(changed))
         try:
