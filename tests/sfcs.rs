@@ -3,7 +3,7 @@
 use power_house::{
     provenance::Rootprint, verify_sfcs_execution_embedding, verify_sfcs_pha_embedding,
     MemoryCapsuleBuilder, MemoryVerificationPolicy, SfcsError, SfcsGraph, SfcsNode, SfcsOp,
-    SfcsRewriteKind,
+    SfcsRegionKind, SfcsRewriteKind,
 };
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
@@ -134,6 +134,63 @@ fn textual_program_maps_directly_to_fractal_graph() {
 }
 
 #[test]
+fn textual_program_supports_control_ops_and_committed_metadata() {
+    let parsed = SfcsGraph::from_program(
+        r#"
+        input a
+        input b
+        sub delta a b
+        eq same a b
+        not changed same
+        branch out changed delta a
+        label delta Difference node
+        meta delta source user-supplied-logic
+        output out
+        "#,
+    )
+    .unwrap();
+
+    let delta = &parsed.nodes["delta"];
+    assert_eq!(delta.label.as_deref(), Some("Difference node"));
+    assert_eq!(delta.metadata["source"], "user-supplied-logic");
+    assert_eq!(
+        parsed
+            .evaluate(&BTreeMap::from([
+                ("a".to_string(), 9),
+                ("b".to_string(), 4),
+            ]))
+            .unwrap()["out"],
+        5
+    );
+    assert_eq!(
+        parsed
+            .evaluate(&BTreeMap::from([
+                ("a".to_string(), 4),
+                ("b".to_string(), 4),
+            ]))
+            .unwrap()["out"],
+        4
+    );
+
+    let mut mutated = parsed.clone();
+    mutated
+        .nodes
+        .get_mut("delta")
+        .unwrap()
+        .metadata
+        .insert("source".to_string(), "tampered-source".to_string());
+    assert_ne!(
+        parsed.fractal_digest().unwrap(),
+        mutated.fractal_digest().unwrap()
+    );
+
+    assert!(matches!(
+        SfcsGraph::from_program("input a\nlabel a bad\u{0007}\noutput a"),
+        Err(SfcsError::InvalidGraph(_))
+    ));
+}
+
+#[test]
 fn execution_trace_is_deterministic_and_input_sensitive() {
     let graph = arithmetic_graph();
     let inputs = BTreeMap::from([("a".to_string(), 5), ("b".to_string(), 6)]);
@@ -182,6 +239,47 @@ fn synthesis_plan_records_fast_path_and_dense_boundaries() {
 }
 
 #[test]
+fn structure_regions_are_connected_replayable_subfractals() {
+    let graph = SfcsGraph::from_program(
+        r#"
+        input a
+        input b
+        const c 3
+        add sum a b
+        dense opaque sum
+        mul z opaque c
+        output z
+        "#,
+    )
+    .unwrap();
+
+    let discovery = graph.discover_structure().unwrap();
+    assert_eq!(discovery.fast_path_regions, 2);
+    assert_eq!(discovery.dense_regions, 1);
+    assert_eq!(discovery.regions.len(), 3);
+    assert!(discovery
+        .regions
+        .iter()
+        .all(|region| region.region_digest.starts_with("sha256:")));
+    assert_eq!(discovery.regions[0].kind, SfcsRegionKind::FastPath);
+    assert_eq!(discovery.regions[0].node_ids, vec!["a", "b", "sum"]);
+    assert_eq!(discovery.regions[1].kind, SfcsRegionKind::DenseBoundary);
+    assert_eq!(discovery.regions[1].node_ids, vec!["opaque"]);
+    assert_eq!(discovery.regions[2].kind, SfcsRegionKind::FastPath);
+    assert_eq!(discovery.regions[2].node_ids, vec!["c", "z"]);
+    assert_eq!(discovery.regions[2].entry_nodes, vec!["z"]);
+    assert_eq!(discovery.regions[2].output_nodes, vec!["z"]);
+
+    let plan = graph.synthesis_plan().unwrap();
+    assert_eq!(plan.operations.len(), 3);
+    assert_eq!(plan.fast_path_regions, 2);
+    assert_eq!(plan.dense_regions, 1);
+    for (operation, region) in plan.operations.iter().zip(plan.regions.iter()) {
+        assert_eq!(operation.region_digest, region.region_digest);
+    }
+}
+
+#[test]
 fn execution_pha_embedding_replays_trace_and_synthesis_plan() {
     let graph = arithmetic_graph();
     let inputs = BTreeMap::from([("a".to_string(), 5), ("b".to_string(), 6)]);
@@ -213,6 +311,22 @@ fn execution_pha_embedding_replays_trace_and_synthesis_plan() {
     stale_trace.verify().unwrap();
     assert!(matches!(
         verify_sfcs_execution_embedding(&stale_trace),
+        Err(SfcsError::InvalidEmbedding(_))
+    ));
+}
+
+#[test]
+fn execution_embedding_rejects_stale_region_public_inputs() {
+    let graph = arithmetic_graph();
+    let inputs = BTreeMap::from([("a".to_string(), 5), ("b".to_string(), 6)]);
+    let mut artifact = graph
+        .to_execution_pha_artifact("arithmetic-execution", &inputs)
+        .unwrap();
+    artifact.embedded_proof.public_inputs["structure_regions"] = json!(99);
+    artifact.refresh_phx_fingerprint().unwrap();
+    artifact.verify().unwrap();
+    assert!(matches!(
+        verify_sfcs_execution_embedding(&artifact),
         Err(SfcsError::InvalidEmbedding(_))
     ));
 }
@@ -315,7 +429,7 @@ fn core_valid_embedding_mutations_are_rejected_by_sfcs_verifier() {
 
     let mut stale_counters = artifact;
     let mut public_inputs = stale_counters.embedded_proof.public_inputs.clone();
-    public_inputs["fast_path_nodes"] = json!(4);
+    public_inputs["fast_path_regions"] = json!(4);
     stale_counters.embedded_proof.public_inputs = public_inputs;
     stale_counters.refresh_phx_fingerprint().unwrap();
     stale_counters.verify().unwrap();
