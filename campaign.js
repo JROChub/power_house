@@ -194,13 +194,13 @@ function render(data) {
   const currentUptime = campaign.uptime_percent;
   const currentErrors = Number(rpc.errors) || 0;
   const currentDrillFailures = Number(campaign.drills?.failed) || 0;
+  const hasControllerGapCaution = continuity.onlyControllerGaps && continuity.missedSamples > 0;
   const strictGatesOnTrack = currentUptime != null
     && Number(currentUptime) >= uptimeRequired
     && currentErrors <= requiredErrors
     && (rpc.p95_ms == null || Number(rpc.p95_ms) <= maxLatency)
     && currentDrillFailures <= requiredDrillFailures;
-  const healthyWithContinuityCaution = !strictGatesOnTrack
-    && continuity.onlyControllerGaps
+  const healthyWithContinuityCaution = hasControllerGapCaution
     && networkLooksHealthy(campaign, network, rpc, maxLatency, requiredErrors, requiredDrillFailures);
   const gateState = state === "passed" ? "passed" : state === "failed" ? "failed" : (strictGatesOnTrack || healthyWithContinuityCaution) ? "on-track" : "off-track";
   const acceptanceGate = document.querySelector(".acceptance-gates");
@@ -209,7 +209,9 @@ function render(data) {
   fields["acceptance-state"].textContent = gateState.replaceAll("-", " ").toUpperCase();
   fields["campaign-note"].dataset.tone = healthyWithContinuityCaution ? "caution" : "nominal";
   if (healthyWithContinuityCaution) {
-    fields["campaign-note-title"].textContent = "NETWORK ON TRACK / EVIDENCE CONTINUITY CAUTION";
+    fields["campaign-note-title"].textContent = state === "passed"
+      ? "NETWORK PASSED / EVIDENCE CONTINUITY CAUTION"
+      : "NETWORK ON TRACK / EVIDENCE CONTINUITY CAUTION";
     fields["campaign-note-detail"].textContent = `${countLabel(continuity.missedSamples, "controller sample", "controller samples")} missed during collection. The gap stays in the evidence journal, while RPC errors, validator health, latency, observers, and recovery drills remain within acceptance bounds.`;
   } else {
     fields["campaign-note-title"].textContent = "NETWORK ACCEPTANCE AND EVIDENCE CONTINUITY ARE EVALUATED SEPARATELY";
