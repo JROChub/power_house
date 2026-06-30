@@ -191,6 +191,91 @@ fn textual_program_supports_control_ops_and_committed_metadata() {
 }
 
 #[test]
+fn source_frontend_lowers_expressions_directly_to_fractal_nodes() {
+    let source = r#"
+        input a
+        input b
+        let delta = a-b
+        let same = a == b
+        let doubled = delta * 2
+        let fallback = a + a
+        let out = if !same then doubled else fallback
+        output out
+    "#;
+
+    let first = SfcsGraph::from_source(source).unwrap();
+    let second = SfcsGraph::from_source(source).unwrap();
+    assert_eq!(first, second);
+    assert_eq!(
+        first.fractal_digest().unwrap(),
+        second.fractal_digest().unwrap()
+    );
+    assert!(first.nodes.values().any(|node| node.op == SfcsOp::Alias));
+    assert!(first.nodes.values().all(
+        |node| node.label.is_none() || !node.label.as_deref().unwrap_or_default().contains('<')
+    ));
+
+    let changed = first
+        .evaluate(&BTreeMap::from([
+            ("a".to_string(), 9),
+            ("b".to_string(), 4),
+        ]))
+        .unwrap();
+    assert_eq!(changed["out"], 10);
+
+    let equal = first
+        .evaluate(&BTreeMap::from([
+            ("a".to_string(), 4),
+            ("b".to_string(), 4),
+        ]))
+        .unwrap();
+    assert_eq!(equal["out"], 8);
+
+    let discovery = first.discover_structure().unwrap();
+    assert!(discovery.fast_path_regions >= 1);
+    assert!(discovery.dense_regions >= 1);
+
+    let artifact = first
+        .to_execution_pha_artifact(
+            "source-expression",
+            &BTreeMap::from([("a".to_string(), 9), ("b".to_string(), 4)]),
+        )
+        .unwrap();
+    let report = verify_sfcs_execution_embedding(&artifact).unwrap();
+    assert_eq!(report.node_count, first.nodes.len());
+    assert_eq!(report.trace_steps, first.nodes.len());
+
+    let alias_assignment = SfcsGraph::from_source("input a\nlet x = a\noutput x").unwrap();
+    assert_eq!(alias_assignment.nodes["x"].op, SfcsOp::Alias);
+    assert_eq!(
+        alias_assignment
+            .evaluate(&BTreeMap::from([("a".to_string(), 42)]))
+            .unwrap()["x"],
+        42
+    );
+}
+
+#[test]
+fn source_frontend_rejects_ambiguous_or_corrupt_source() {
+    assert!(matches!(
+        SfcsGraph::from_source("input a\nlet x = a +\noutput x"),
+        Err(SfcsError::InvalidProgram(_))
+    ));
+    assert!(matches!(
+        SfcsGraph::from_source("input a\nlet x = missing + a\noutput x"),
+        Err(SfcsError::InvalidProgram(_))
+    ));
+    assert!(matches!(
+        SfcsGraph::from_source("input a\nlet a = 1\noutput a"),
+        Err(SfcsError::InvalidProgram(_))
+    ));
+    assert!(matches!(
+        SfcsGraph::from_source("input a\noutput a as b as c"),
+        Err(SfcsError::InvalidProgram(_))
+    ));
+}
+
+#[test]
 fn execution_trace_is_deterministic_and_input_sensitive() {
     let graph = arithmetic_graph();
     let inputs = BTreeMap::from([("a".to_string(), 5), ("b".to_string(), 6)]);

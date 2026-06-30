@@ -1,5 +1,21 @@
 # Release Notes
 
+## v0.3.18 - 2026-06-30
+
+### SFCS Native Expression Frontend
+- Added `SfcsGraph::from_source(...)`, a higher-level source-to-fractal
+  frontend that accepts `input`, `let`, and `output` statements and lowers
+  expressions directly into committed SFCS graph nodes.
+- Added deterministic expression support for integer constants, identifiers,
+  `+`, `-`, `*`, `==`, `&&`, `||`, `!`, parentheses, and
+  `if <expr> then <expr> else <expr>`.
+- Added the `alias` SFCS operation so repeated source values such as `a + a`
+  and direct assignments such as `let x = a` become explicit committed graph
+  structure without weakening duplicate-input validation.
+- Added execution-embedding tests proving expression-fronted graphs replay
+  through `.pha`, regenerate synthesis metadata, and reject malformed or
+  unknown source.
+
 ## v0.3.17 - 2026-06-30
 
 ### SFCS Connected Region Discovery

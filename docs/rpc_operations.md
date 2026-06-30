@@ -1,6 +1,6 @@
 # Power-House RPC Operations
 
-Release scope: Power House v0.3.17.
+Release scope: Power House v0.3.18.
 
 Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
 state are finalized by the configured validator quorum. Chain ID `177155` is

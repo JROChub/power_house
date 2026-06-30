@@ -1,7 +1,7 @@
 # Sovereign Fractal Computation Substrate
 
 Status: SFCS implementation contract and experimental release gate for Power
-House v0.3.17.
+House v0.3.18.
 
 SFCS is the path for making the Rootprint-fractal graph the native
 representation, execution environment, and proof substrate for Power House
@@ -10,7 +10,7 @@ House targets, direct source-to-fractal execution, deterministic structure
 discovery, and Sovereign Fast Path routing must make traditional circuit
 compilers and zkVM workflows unnecessary and unwise as the default path.
 
-The v0.3.17 implementation is not the completed end-state. It is a guarded
+The v0.3.18 implementation is not the completed end-state. It is a guarded
 milestone that moves the repository toward that objective while preserving the
 guarantees that cannot be compromised: deterministic replay, `.pha`
 `phx_fingerprint` immutability, Rootprint v1 compatibility, Memory Capsule
@@ -42,7 +42,7 @@ This document therefore separates two statements that must both remain true:
 
 - **Objective:** SFCS is being built so external circuit compilers and zkVM
   workflows become unnecessary and unwise for targeted Power House workloads.
-- **Current release boundary:** v0.3.17 is a tested foundation step, not the
+- **Current release boundary:** v0.3.18 is a tested foundation step, not the
   full dense arbitrary computation end-state.
 
 ## Compatibility Decision
@@ -85,7 +85,7 @@ objects.
 
 ## Current Repository Surface
 
-The v0.3.17 implementation is still intentionally isolated, but it now covers
+The v0.3.18 implementation is still intentionally isolated, but it now covers
 the first executable SFCS workflow:
 
 - feature flag: `sfcs`
@@ -93,6 +93,7 @@ the first executable SFCS workflow:
 - schema: `power-house/sfcs-fractal/v1-draft`
 - graph bridge: `SfcsGraph::to_pha_artifact(...)`
 - execution bridge: `SfcsGraph::to_execution_pha_artifact(...)`
+- native source bridge: `SfcsGraph::from_source(...)`
 - execution protocol: `power-house/sfcs-execution/v1-draft`
 
 The feature is not in the default feature set. Enabling it adds draft types for
@@ -102,10 +103,15 @@ parsing, arithmetic execution traces, synthesis plans, a fast-path workload
 descriptor, and `.pha` embedding verification. It does not change existing
 public behavior.
 
-v0.3.17 strengthens this draft with committed source metadata, additional
+v0.3.18 strengthens this draft with committed source metadata, additional
 control-oriented source operations, deterministic connected structure regions,
-region digests, and synthesis operations bound back to the exact region that
-created them.
+region digests, synthesis operations bound back to the exact region that
+created them, and the higher-level native expression frontend
+`SfcsGraph::from_source(...)`. The frontend accepts `input`, `let`, and
+`output` statements and lowers expressions directly into committed fractal
+nodes. This is the preferred SFCS direction because developers express
+computation as source that becomes the graph itself, not as an external
+circuit artifact.
 
 ## Corrected Architecture
 
@@ -161,11 +167,49 @@ graphs: valid IDs, no duplicate nodes, no duplicate inputs, known references,
 declared outputs, acyclic topology, committed metadata limits, and no control
 characters in labels or metadata.
 
+## Native Expression Source
+
+`SfcsGraph::from_source(...)` is the higher-level source-to-fractal frontend.
+It maps source statements into the graph directly and creates deterministic
+intermediate nodes for nested expressions.
+
+Supported statements:
+
+```text
+input a
+input b
+let delta = a-b
+let same = a == b
+let doubled = delta * 2
+let fallback = a + a
+let out = if !same then doubled else fallback
+output out
+```
+
+Supported expression features:
+
+- integer constants;
+- identifiers;
+- `+`, `-`, and `*`;
+- `==`, `&&`, `||`, and `!`;
+- parentheses;
+- `if <expr> then <expr> else <expr>`;
+- `output <expr> as <id>` for output expressions with a stable node ID.
+
+Repeated source values such as `a + a` are represented by explicit
+deterministic `alias` nodes. The graph therefore remains strict about duplicate
+operation inputs while still supporting normal source expressions.
+
+Expression lowering commits generated nodes, source-operation metadata, and
+the resulting graph digest. Mutating generated nodes, aliases, constants,
+operation kinds, public outputs, traces, or synthesis plans changes the
+replayed embedding and is rejected by SFCS-specific verification.
+
 ## Structure Discovery Rules
 
 The draft discovery engine classifies:
 
-- fast-path eligible: `input`, `const`, `add`, `sub`, `mul`,
+- fast-path eligible: `input`, `alias`, `const`, `add`, `sub`, `mul`,
   `fast_path_claim`;
 - dense/general: `eq`, `and`, `or`, `not`, `branch`, `dense_step`,
   `memory_read`, `memory_write`.
@@ -202,9 +246,9 @@ emits a digest-bound trace:
 - final trace digest;
 - public outputs.
 
-The draft evaluator supports `input`, `const`, `add`, `sub`, `mul`, `eq`,
-`and`, `or`, `not`, and `branch`. Dense and memory placeholders are rejected by
-the evaluator until a future profile defines their proof semantics.
+The draft evaluator supports `input`, `alias`, `const`, `add`, `sub`, `mul`,
+`eq`, `and`, `or`, `not`, and `branch`. Dense and memory placeholders are
+rejected by the evaluator until a future profile defines their proof semantics.
 
 ## Synthesis Plan
 
@@ -247,7 +291,7 @@ digests.
 
 ## Completion Gap
 
-The v0.3.17 module is not final SFCS compliance yet. The remaining gaps are:
+The v0.3.18 module is not final SFCS compliance yet. The remaining gaps are:
 
 - complete arbitrary program execution beyond the arithmetic subset;
 - full replacement of external circuit compiler and zkVM workflows for targeted
