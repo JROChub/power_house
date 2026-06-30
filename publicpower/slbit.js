@@ -32,6 +32,10 @@ const el = Object.fromEntries(
     "packet-file",
     "export-markdown",
     "copy-llm",
+    "boundary-state",
+    "boundary-detail",
+    "authority-strip",
+    "ask-grid",
     "toast",
   ].map((id) => [id, document.getElementById(id)]),
 );
@@ -40,7 +44,7 @@ const samples = {
   drone: {
     claim: ["drone-camera-frame-7842", 4096],
     seed: "drone-seed-7842",
-    producer: ["mfenx-slbit-demo", "3.0.0", "browser"],
+    producer: ["mfenx-slbit-demo", "3.1.0", "browser"],
     visualization: { color: [0, 200, 255], icon: "camera", layer_name: "perception-conv3" },
     rounds: [
       [0, "sensor-frame", "sensor-processing", "Raw camera frame converted into normalized features"],
@@ -100,7 +104,7 @@ const samples = {
   agent: {
     claim: ["agent-session-deploy-review-42", 2048],
     seed: "agent-session-deploy-review-42",
-    producer: ["agent-audit-demo", "2.0.0", null],
+    producer: ["agent-audit-demo", "3.1.0", null],
     visualization: { color: [185, 255, 61], icon: "robot", layer_name: "agent-session" },
     rounds: [
       [0, "issue-brief", "observation", "User requested a production deployment review"],
@@ -145,7 +149,7 @@ const samples = {
   zkml: {
     claim: ["zkml-image-classification-17", 8192],
     seed: "zkml-image-classification-17",
-    producer: ["zkml-demo", "2.0.0", null],
+    producer: ["zkml-demo", "3.1.0", null],
     visualization: { color: [130, 180, 255], icon: "brain", layer_name: "classifier-transformer" },
     rounds: [
       [0, "embedding-digest", "embedding", "Image embedding committed with fixed-point activations"],
@@ -187,7 +191,7 @@ const samples = {
   finance: {
     claim: ["risk-model-audit-2026-06", 1024],
     seed: "risk-model-audit-2026-06",
-    producer: ["risk-audit-demo", "2.0.0", null],
+    producer: ["risk-audit-demo", "3.1.0", null],
     visualization: { color: [255, 193, 77], icon: "database", layer_name: "credit-risk-model" },
     rounds: [
       [0, "dataset-fingerprint", "dataset-binding", "Input portfolio dataset matched approved fingerprint"],
@@ -532,6 +536,160 @@ function renderGates(gates) {
   }));
 }
 
+function gatesPassed(gates) {
+  return gates.every(([, ok]) => ok);
+}
+
+function countBy(items, selector) {
+  const counts = new Map();
+  for (const item of items || []) {
+    const key = selector(item);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return counts;
+}
+
+function shortestDependencyPath(graph = {}) {
+  const nodes = graph.nodes || [];
+  const edges = graph.edges || [];
+  if (nodes.length < 2) return nodes.map((node) => node.id);
+  const incoming = new Set(edges.map((edge) => edge.to));
+  const outgoing = new Set(edges.map((edge) => edge.from));
+  const start = nodes.find((node) => !incoming.has(node.id))?.id || nodes[0].id;
+  const end = [...nodes].reverse().find((node) => !outgoing.has(node.id))?.id || nodes[nodes.length - 1].id;
+  const queue = [[start]];
+  const seen = new Set([start]);
+  while (queue.length) {
+    const path = queue.shift();
+    const last = path[path.length - 1];
+    if (last === end) return path;
+    for (const edge of edges.filter((item) => item.from === last)) {
+      if (seen.has(edge.to)) continue;
+      seen.add(edge.to);
+      queue.push([...path, edge.to]);
+    }
+  }
+  return [start, end].filter(Boolean);
+}
+
+function inspectPacket(packet, gates) {
+  const nodes = packet.semantic_graph?.nodes || [];
+  const edges = packet.semantic_graph?.edges || [];
+  const anchors = packet.anchors || [];
+  const summaries = Object.values(packet.summaries || {});
+  const nodeKinds = countBy(nodes, (node) => node.kind || "unknown");
+  const anchorKinds = countBy(anchors, (anchor) => anchor.anchor_type || "external");
+  const rootprintAnchors = anchors.filter((anchor) => String(anchor.anchor_type).includes("rootprint"));
+  const generatedSummaries = summaries.filter((summary) => summary.generated).length;
+  const signedSummaries = summaries.filter((summary) => summary.signed).length;
+  const path = shortestDependencyPath(packet.semantic_graph || {});
+  return {
+    valid: gatesPassed(gates),
+    schema: packet.schema,
+    packetId: packet.packet_id,
+    rootprintAnchors,
+    nodeKinds,
+    anchorKinds,
+    transcriptRounds: packet.transcript?.length || 0,
+    semanticNodes: nodes.length,
+    semanticEdges: edges.length,
+    anchors: anchors.length,
+    generatedSummaries,
+    signedSummaries,
+    dependencyPath: path,
+    semanticChangesAffectCore: false,
+    digest: packet.digests?.packet || "",
+  };
+}
+
+function authorityCards(report) {
+  const graphKinds = [...report.nodeKinds.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 3)
+    .map(([kind, count]) => `${kind}:${count}`)
+    .join(" / ");
+  const anchorKinds = [...report.anchorKinds.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 2)
+    .map(([kind, count]) => `${kind}:${count}`)
+    .join(" / ");
+  return [
+    ["CORE ANCHORS", String(report.rootprintAnchors.length), anchorKinds || "no external anchors"],
+    ["SEMANTIC NODES", String(report.semanticNodes), graphKinds || "no graph nodes"],
+    ["TRANSCRIPT", String(report.transcriptRounds), `${report.semanticEdges} graph edges`],
+    ["GENERATED TEXT", String(report.generatedSummaries), `${report.signedSummaries} signed summaries`],
+  ];
+}
+
+function askAnswers(packet, report) {
+  const path = report.dependencyPath.length ? report.dependencyPath.join(" -> ") : "no dependency path published";
+  const rootprint = report.rootprintAnchors[0];
+  const rootprintText = rootprint
+    ? `${rootprint.label} / ${rootprint.metadata?.branch_id || rootprint.reference || "branch binding"}`
+    : "No Rootprint anchor is present in this packet.";
+  return [
+    [
+      "WHAT DID IT PROVE?",
+      "SLBIT locally verifies semantic packet integrity, transcript digest consistency, graph identity, and packet identity. External proof validity remains with the bound proof system.",
+    ],
+    [
+      "WHAT IS CORE?",
+      rootprintText,
+    ],
+    [
+      "WHAT IS SEMANTIC?",
+      `${report.semanticNodes} semantic nodes and ${report.transcriptRounds} transcript rounds explain the claim without becoming proof identity.`,
+    ],
+    [
+      "WHAT DEPENDS ON WHAT?",
+      path,
+    ],
+    [
+      "WHAT CAN CHANGE?",
+      "Presentation text, summaries, and graph labels may change only by producing a new packet digest; core proof identity remains unchanged.",
+    ],
+    [
+      "FAILURE BOUNDARY",
+      report.valid
+        ? "All local packet gates passed. A semantic mutation would reject at the semantic packet layer, not silently alter core proof validity."
+        : "At least one local packet gate failed. Treat the semantic packet as rejected until the failed gate is corrected.",
+    ],
+  ];
+}
+
+function renderMeaningConsole(packet, gates) {
+  const report = inspectPacket(packet, gates);
+  setText("boundary-state", report.valid ? "SEMANTIC VALID / CORE UNCHANGED" : "SEMANTIC REJECTED / CORE UNCHANGED");
+  setText(
+    "boundary-detail",
+    `${report.schema} inspected locally. Semantic changes affect this packet digest and sidecar binding, but they do not rewrite proof validity, Rootprint lineage, replay fingerprints, or core identity.`,
+  );
+  el["authority-strip"].replaceChildren(...authorityCards(report).map(([label, value, detail]) => {
+    const card = document.createElement("article");
+    card.className = "authority-card";
+    const span = document.createElement("span");
+    const strong = document.createElement("b");
+    const small = document.createElement("small");
+    span.textContent = label;
+    strong.textContent = value;
+    small.textContent = detail;
+    card.append(span, strong, small);
+    return card;
+  }));
+  el["ask-grid"].replaceChildren(...askAnswers(packet, report).map(([question, answer]) => {
+    const card = document.createElement("article");
+    card.className = "ask-card";
+    const span = document.createElement("span");
+    const strong = document.createElement("b");
+    const paragraph = document.createElement("p");
+    span.textContent = "DETERMINISTIC ASK";
+    strong.textContent = question;
+    paragraph.textContent = answer;
+    card.append(span, strong, paragraph);
+    return card;
+  }));
+}
+
 function renderGraph(packet) {
   const svg = el["semantic-graph"];
   svg.replaceChildren();
@@ -580,10 +738,10 @@ function renderGraph(packet) {
   background.setAttribute("height", "460");
   background.setAttribute("fill", "url(#graph-grid)");
   svg.append(defs, background);
-  for (const edge of edges) {
+  edges.forEach((edge, index) => {
     const from = positions.get(edge.from);
     const to = positions.get(edge.to);
-    if (!from || !to) continue;
+    if (!from || !to) return;
     const startX = from.x + 150;
     const startY = from.y + 26;
     const endX = to.x;
@@ -597,12 +755,12 @@ function renderGraph(packet) {
     pulse.setAttribute("class", "graph-pulse");
     pulse.setAttribute("r", "3.4");
     const motion = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
-    motion.setAttribute("dur", `${4.5 + Math.random() * 1.5}s`);
+    motion.setAttribute("dur", `${4.5 + (index % 4) * 0.4}s`);
     motion.setAttribute("repeatCount", "indefinite");
     motion.setAttribute("path", path.getAttribute("d"));
     pulse.append(motion);
     svg.append(pulse);
-  }
+  });
   for (const node of nodes) {
     const position = positions.get(node.id);
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -727,8 +885,9 @@ function renderJson(packet) {
 
 function toMarkdown(packet) {
   const summary = packet.summaries?.[currentAudience] || Object.values(packet.summaries || {})[0];
+  const report = inspectPacket(packet, [["export", true, ""]]);
   const lines = [
-    "# SLBIT Luminous Packet",
+    "# SLBIT Meaning Observatory Packet",
     "",
     `- Schema: \`${packet.schema}\``,
     `- Packet ID: \`${packet.packet_id}\``,
@@ -736,6 +895,11 @@ function toMarkdown(packet) {
     `- Packet digest: \`${packet.digests.packet}\``,
     `- Transcript digest: \`${packet.digests.transcript}\``,
     `- Semantic graph digest: \`${packet.digests.semantic_graph}\``,
+    `- Semantic changes affect core identity: \`${report.semanticChangesAffectCore}\``,
+    "",
+    "## Truth Boundary",
+    "",
+    "SLBIT verifies semantic packet integrity and explains bound proof state. It does not change proof validity, Rootprint lineage, replay fingerprints, or core identity.",
     "",
     "## Summary",
     "",
@@ -765,6 +929,7 @@ function renderPacket(packet, gates) {
   renderGraph(packet);
   renderInspector(packet);
   renderTimeline(packet);
+  renderMeaningConsole(packet, gates);
   renderJson(packet);
 }
 

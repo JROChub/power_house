@@ -1,6 +1,6 @@
 # Power House + slbit Observatory
 
-Status: active integration guide for Power House v0.3.16 and slbit v3.0.0.
+Status: active integration guide for Power House v0.3.16 and slbit v3.1.0.
 
 Power House and `slbit` are independent technologies:
 
@@ -90,7 +90,9 @@ packet.verify()?;
 
 `slbit` exports payload digests and annotations, not raw round payload bytes.
 Its packet and transcript digests establish deterministic transport integrity;
-they do not establish proof-system soundness.
+they do not establish proof-system soundness. In v3.1, the standalone crate
+also exposes Meaning Observatory inspection APIs such as authority counts,
+dependency chains, shortest explanation paths, and deterministic ask reports.
 
 ## Bind the presentation layer
 
@@ -128,18 +130,35 @@ must verify packet-specific semantics.
 
 ## Browser workflow
 
-The public Observatory downloads and verifies:
+The public Power House Observatory downloads and verifies:
 
 1. `artifacts/rootprint-valid.json`;
 2. `artifacts/luminous-valid.json`;
 3. every `.pha` core fingerprint and Rootprint branch ID;
 4. the canonical Rootprint replay fingerprint;
 5. the Observatory sidecar digest;
-6. every `slbit/viz-packet/v1` transcript and packet digest.
+6. every published semantic-packet digest used by the sidecar.
 
 After verification, each graph node exposes its claim, layer, icon, color, and
 human-readable transcript rounds. Selecting a node changes presentation state
 only.
+
+The dedicated SLBIT page at `https://mfenx.com/slbit.html` is local-first. It
+does not upload packets. The browser verifier currently validates
+`slbit/viz-packet/v2` packet transport integrity and renders the SLBIT 3.1
+Meaning Observatory inspection surface around that packet data:
+
+- truth-boundary state;
+- authority counts;
+- deterministic ask answers;
+- dependency path inspection;
+- transcript playback;
+- semantic graph rendering;
+- Markdown and LLM-context export.
+
+The page deliberately labels external proof validity as external. A rendered
+SLBIT packet can explain a Rootprint-bound proof state, but it cannot change the
+underlying Power House proof identity.
 
 ## Conformance
 
@@ -164,6 +183,8 @@ valid.
 | `power-house/rootprint/v1` | Power House | Verified provenance DAG |
 | `power-house/observatory-sidecar/v1` | Power House | Non-core branch-to-packet binding |
 | `slbit/viz-packet/v1` | slbit | Semantic transcript and visualization data |
+| `slbit/viz-packet/v2` | slbit | Extended semantic packets with anchors, summaries, redactions, and deterministic digests |
+| `slbit/viz-packet/v3` | slbit | Meaning Observatory packets for bound-core inspection, deterministic ask reports, authority labels, and semantic DAG views |
 
-The normative `slbit` packet specification is published in the standalone
-[`slbit` repository](https://github.com/JROChub/slbit/blob/main/docs/packet_spec.md).
+The normative `slbit` packet specifications are published in the standalone
+[`slbit` repository](https://github.com/JROChub/slbit/tree/main/docs).
