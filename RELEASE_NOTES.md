@@ -1,5 +1,31 @@
 # Release Notes
 
+## v0.3.19 - 2026-06-30
+
+### SFCS Dense Memory Execution
+- Expanded the opt-in SFCS source-to-fractal frontend with deterministic
+  division, remainder, comparisons, bitwise integer operations, shifts, and
+  ordered `load(...)` / `store(...)` memory operations.
+- Added per-step deterministic memory digests to `SfcsExecutionTrace`, binding
+  memory state before and after every executed node into the replayable trace.
+- Kept arithmetic fast-path extraction separate from dense/control/memory
+  boundaries so synthesis plans preserve the Sovereign Fast Path without
+  mutating Rootprint v1 or `.pha` fingerprint rules.
+- Added deterministic execution rejection for division by zero, remainder by
+  zero, and invalid shift amounts.
+
+### JULIAN SFCS CLI
+- Added feature-gated `julian sfcs source`, `eval`, `inspect`, and
+  `verify-pha` commands for offline parsing, replay, report generation, `.pha`
+  embedding, and SFCS embedding verification.
+- Added CLI integration coverage proving a dense-memory SFCS source file can
+  be parsed, executed, embedded into `.pha`, and verified from the binary.
+
+### Conformance
+- Extended SFCS tests to cover dense integer operations, ordered memory
+  mutation digests, `.pha` execution embedding replay, synthesis dense-boundary
+  classification, invalid execution rejection, and the new CLI workflow.
+
 ## v0.3.18 - 2026-06-30
 
 ### SFCS Native Expression Frontend
