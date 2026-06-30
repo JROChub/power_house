@@ -3,6 +3,11 @@
 ## v0.3.17 - 2026-06-30
 
 ### SFCS Connected Region Discovery
+- Clarified the SFCS development contract: the end-state objective is direct
+  source-to-fractal execution that makes external circuit compilers and zkVM
+  workflows unnecessary and unwise as the default path for targeted Power
+  House workloads, while v0.3.17 remains a guarded milestone rather than final
+  SFCS compliance.
 - Added committed SFCS node metadata and direct source directives for labels
   and deterministic metadata without changing `.pha`, Rootprint, Memory
   Capsule, or slbit rules.

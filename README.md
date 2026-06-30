@@ -15,6 +15,12 @@ and synthesis plans record connected sub-fractal regions that route to the
 Sovereign fast path. Rootprint v1 and existing `.pha` identity rules remain
 unchanged.
 
+The SFCS objective is to make direct source-to-fractal execution the native
+Power House path so traditional circuit compilers and zkVM workflows become
+unnecessary and unwise as the default for the workloads Power House targets.
+The current release is a guarded milestone toward that objective, not final
+SFCS compliance.
+
 The release also retains Memory Capsules: self-verifying proof-memory objects
 that bind `.pha` artifacts, Rootprint lineage, replay state, optional witness
 receipts, challenge vectors, and non-core semantic packets into one
