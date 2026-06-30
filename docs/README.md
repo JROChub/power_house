@@ -12,7 +12,7 @@ This index is the authoritative map for Power House v0.3.19 documentation.
 | [Memory Capsule v1](memory_capsule.md) | Portable `.phm` proof memory, replay, semantic binding, and challenge vectors |
 | [Truth Boundary](truth_boundary.md) | What is core proof, what is semantic explanation, and what must not be overclaimed |
 | [Power House + slbit Observatory](slbit.md) | Independent semantic packets, non-core sidecar binding, CLI, and browser workflow |
-| [SFCS Draft](sfcs.md) | Experimental computational-fractal design gate and opt-in draft primitives |
+| [SFCS v0.3.19 Source-to-Fractal Execution](sfcs.md) | Shipped opt-in source-to-fractal parsing, dense integer and memory execution, synthesis planning, CLI, and `.pha` embedding verification |
 | [Power House Archive v1](pha_spec.md) | Normative `.pha` core identity and optional EPA format |
 | [Rootprint v1](rootprint.md) | Normative branching, merging, navigation, and graph verification |
 | [Provenance Security Model](provenance_security.md) | Integrity boundary, assumptions, mutation behavior, and EPA isolation |
