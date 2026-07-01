@@ -180,12 +180,14 @@ fn private_vm_proof_verifies_embeds_and_hides_witness_inputs() {
     assert_eq!(proof.statement.memory_consistency_checks, 2);
     assert_eq!(proof.statement.linear_relation_checks, 6);
     assert_eq!(proof.linear_relation_proofs.len(), 6);
-    assert_eq!(proof.statement.zk_range_proofs, 21);
-    assert_eq!(proof.range_proofs.len(), 21);
+    assert_eq!(proof.statement.zk_range_proofs, 23);
+    assert_eq!(proof.range_proofs.len(), 23);
     assert_eq!(proof.statement.zk_memory_consistency_proofs, 1);
     assert_eq!(proof.memory_consistency_proofs.len(), 1);
     assert_eq!(proof.statement.zk_memory_value_proofs, 2);
     assert_eq!(proof.memory_value_proofs.len(), 2);
+    assert_eq!(proof.statement.zk_branch_proofs, 1);
+    assert_eq!(proof.branch_proofs.len(), 1);
     assert_eq!(proof.statement.commitments.len(), 6);
     assert!(proof.proof_digest.starts_with("sha256:"));
     assert!(proof
@@ -294,6 +296,7 @@ fn private_vm_linear_relations_cover_sub_subi_and_scale() {
     assert_eq!(proof.statement.zk_range_proofs, 11);
     assert_eq!(proof.statement.zk_memory_consistency_proofs, 0);
     assert_eq!(proof.statement.zk_memory_value_proofs, 0);
+    assert_eq!(proof.statement.zk_branch_proofs, 0);
     let relations = proof
         .linear_relation_proofs
         .iter()
@@ -338,6 +341,14 @@ fn private_vm_linear_relations_cover_sub_subi_and_scale() {
         .response_blinding = "fr:00".to_string();
     assert!(matches!(
         mutated_memory_value.verify(&memory_program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut mutated_branch =
+        SfcsZkPrivateVmProof::prove(&memory_program, private_vm_witness()).unwrap();
+    mutated_branch.branch_proofs[0].equality.response_blinding = "fr:00".to_string();
+    assert!(matches!(
+        mutated_branch.verify(&memory_program),
         Err(SfcsZkError::InvalidProof(_))
     ));
 }

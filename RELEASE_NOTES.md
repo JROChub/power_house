@@ -40,6 +40,9 @@
 - Added private memory access transition binding: `lw/sw` address calculation
   can now be covered by the linear proof layer, while memory access values are
   equality-bound to the register values that produce stores or consume loads.
+- Added zero-knowledge equality-branch proofs for covered private branch cases:
+  `beq` taken and `bne` not taken now prove hidden branch operands are equal
+  without exposing those operands.
 - Added `julian sfcs rust-private-add`, which runs the constrained source
   through compile -> prove -> `.pha` -> Rootprint -> Observatory sidecar ->
   Memory Capsule and verifies the capsule before reporting success.

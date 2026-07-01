@@ -404,6 +404,7 @@ coverage, and publishes only:
   events;
 - private memory access/register value equality proofs for eligible `lw/sw`
   transitions;
+- zero-knowledge equality-branch proofs for covered `beq`/`bne` cases;
 - a `.pha` artifact that does not embed raw private inputs or raw trace data.
 
 CLI workflow:
