@@ -23,6 +23,11 @@ use power_house::net::{
     ValidatorRegistration, ValidatorRegistry, OBSERVER_REGISTRY_SCHEMA, VALIDATOR_REGISTRY_SCHEMA,
 };
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
+#[cfg(feature = "sfcs-zk")]
+use power_house::{
+    compile_private_add_source, verify_sfcs_zk_private_add_embedding, SfcsCompilerError,
+    SfcsZkError, SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
+};
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
     read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote,
@@ -209,6 +214,23 @@ fn print_sfcs_help() {
     println!("  vm-run <program.json> --inputs <inputs.json> \\");
     println!("       [--report <report.json>] [--artifact-output <vm.pha>] [--label <name>]");
     println!("  verify-vm-pha <artifact.pha>");
+    #[cfg(feature = "sfcs-zk")]
+    {
+        println!("  rust-private-add <source.rs> --lhs-value <u32> --rhs-value <u32> \\");
+        println!("       --lhs-blinding <64-hex> --rhs-blinding <64-hex> \\");
+        println!(
+            "       [--artifact-output <zk.pha>] [--rootprint-output <proof.rootprint.json>] \\"
+        );
+        println!(
+            "       [--sidecar-output <proof.observatory.json>] [--capsule-output <proof.phm>] \\"
+        );
+        println!("       [--report <report.json>] [--label <name>]");
+        println!("  zk-private-add <program.json> --lhs-register <N> --rhs-register <N> \\");
+        println!("       --output-register <N> --lhs-value <u32> --rhs-value <u32> \\");
+        println!("       --lhs-blinding <64-hex> --rhs-blinding <64-hex> \\");
+        println!("       [--report <report.json>] [--artifact-output <zk.pha>] [--label <name>]");
+        println!("  verify-zk-pha <artifact.pha>");
+    }
     println!();
     println!("SFCS commands are offline and do not alter Rootprint or .pha identity rules.");
 }
@@ -608,6 +630,12 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
         "verify-pha" => cmd_sfcs_verify_pha(tail),
         "vm-run" => cmd_sfcs_vm_run(tail),
         "verify-vm-pha" => cmd_sfcs_verify_vm_pha(tail),
+        #[cfg(feature = "sfcs-zk")]
+        "rust-private-add" => cmd_sfcs_rust_private_add(tail),
+        #[cfg(feature = "sfcs-zk")]
+        "zk-private-add" => cmd_sfcs_zk_private_add(tail),
+        #[cfg(feature = "sfcs-zk")]
+        "verify-zk-pha" => cmd_sfcs_verify_zk_pha(tail),
         _ => fatal(&format!("unknown sfcs subcommand: {sub}")),
     }
 }
@@ -785,6 +813,57 @@ fn sfcs_vm_exit_for_error(error: &SfcsVmError) -> i32 {
         | SfcsVmError::Execution(_) => 1,
         SfcsVmError::Json(_) | SfcsVmError::Pha(_) => 5,
     }
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn sfcs_zk_exit_for_error(error: &SfcsZkError) -> i32 {
+    match error {
+        SfcsZkError::InvalidProgram(_) | SfcsZkError::InvalidWitness(_) => 2,
+        SfcsZkError::UnsupportedSchema(_) => 3,
+        SfcsZkError::InvalidProof(_) | SfcsZkError::InvalidEmbedding(_) => 1,
+        SfcsZkError::Vm(_) | SfcsZkError::Sfcs(_) => 1,
+        SfcsZkError::Serialization(_) | SfcsZkError::Json(_) | SfcsZkError::Pha(_) => 5,
+    }
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn sfcs_compiler_exit_for_error(error: &SfcsCompilerError) -> i32 {
+    match error {
+        SfcsCompilerError::InvalidSource(_) => 2,
+        SfcsCompilerError::Vm(_) => 1,
+        SfcsCompilerError::Memory(_) => 5,
+    }
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn parse_register(value: &str, name: &str) -> u8 {
+    let register = value
+        .parse::<u8>()
+        .unwrap_or_else(|err| fatal(&format!("{name} expects a register number: {err}")));
+    if register > 31 {
+        fatal(&format!("{name} must be in 0..=31"));
+    }
+    register
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn parse_u32_arg(value: &str, name: &str) -> u32 {
+    value
+        .parse::<u32>()
+        .unwrap_or_else(|err| fatal(&format!("{name} expects a u32 value: {err}")))
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn parse_seed_hex(value: &str, name: &str) -> [u8; 32] {
+    let bytes = hex::decode(value).unwrap_or_else(|err| fatal(&format!("{name}: bad hex: {err}")));
+    if bytes.len() != 32 {
+        fatal(&format!(
+            "{name} expects exactly 32 bytes / 64 hex characters"
+        ));
+    }
+    let mut seed = [0_u8; 32];
+    seed.copy_from_slice(&bytes);
+    seed
 }
 
 #[cfg(feature = "sfcs")]
@@ -1083,6 +1162,379 @@ fn cmd_sfcs_verify_vm_pha(args: Vec<String>) {
         Err(error) => fatal_code(
             sfcs_vm_exit_for_error(&error),
             &format!("SFCS VM .pha verification failed: {error}"),
+        ),
+    }
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn cmd_sfcs_rust_private_add(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut lhs_value = None;
+    let mut rhs_value = None;
+    let mut lhs_blinding_seed = None;
+    let mut rhs_blinding_seed = None;
+    let mut report_path = None;
+    let mut artifact_output = None;
+    let mut rootprint_output = None;
+    let mut sidecar_output = None;
+    let mut capsule_output = None;
+    let mut label = "sfcs-rust-private-add".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--lhs-value" => {
+                lhs_value = Some(parse_u32_arg(
+                    &take_option(&mut iter, "--lhs-value"),
+                    "--lhs-value",
+                ))
+            }
+            "--rhs-value" => {
+                rhs_value = Some(parse_u32_arg(
+                    &take_option(&mut iter, "--rhs-value"),
+                    "--rhs-value",
+                ))
+            }
+            "--lhs-blinding" => {
+                lhs_blinding_seed = Some(parse_seed_hex(
+                    &take_option(&mut iter, "--lhs-blinding"),
+                    "--lhs-blinding",
+                ))
+            }
+            "--rhs-blinding" => {
+                rhs_blinding_seed = Some(parse_seed_hex(
+                    &take_option(&mut iter, "--rhs-blinding"),
+                    "--rhs-blinding",
+                ))
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            "--sidecar-output" => {
+                sidecar_output = Some(PathBuf::from(take_option(&mut iter, "--sidecar-output")))
+            }
+            "--capsule-output" => {
+                capsule_output = Some(PathBuf::from(take_option(&mut iter, "--capsule-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path =
+        source_path.unwrap_or_else(|| fatal("sfcs rust-private-add requires <source.rs>"));
+    let source = fs::read_to_string(&source_path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", source_path.display())));
+    let compiled = compile_private_add_source(&source).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_compiler_exit_for_error(&err),
+            &format!("SFCS Rust-subset compilation failed: {err}"),
+        )
+    });
+    let proof = SfcsZkPrivateAddProof::prove(
+        &compiled.program,
+        compiled.lhs_register,
+        compiled.rhs_register,
+        compiled.output_register,
+        SfcsZkPrivateAddWitness {
+            lhs_value: lhs_value.unwrap_or_else(|| fatal("--lhs-value is required")),
+            rhs_value: rhs_value.unwrap_or_else(|| fatal("--rhs-value is required")),
+            lhs_blinding_seed: lhs_blinding_seed
+                .unwrap_or_else(|| fatal("--lhs-blinding is required")),
+            rhs_blinding_seed: rhs_blinding_seed
+                .unwrap_or_else(|| fatal("--rhs-blinding is required")),
+        },
+    )
+    .unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_zk_exit_for_error(&err),
+            &format!("SFCS ZK private-add proof failed: {err}"),
+        )
+    });
+    proof.verify(&compiled.program).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_zk_exit_for_error(&err),
+            &format!("SFCS ZK private-add verification failed: {err}"),
+        )
+    });
+    let artifact = proof
+        .to_pha_artifact(&label, &compiled.program)
+        .unwrap_or_else(|err| fatal(&format!("SFCS ZK .pha embedding failed: {err}")));
+    let rootprint = Rootprint::new(&label, artifact.clone())
+        .unwrap_or_else(|err| fatal(&format!("Rootprint creation failed: {err}")));
+    let sidecar_nodes = BTreeMap::from([(rootprint.root_branch.clone(), compiled.semantic_packet)]);
+    let sidecar = ObservatorySidecar::new(&rootprint, sidecar_nodes)
+        .unwrap_or_else(|err| fatal(&format!("Observatory sidecar creation failed: {err}")));
+    sidecar
+        .verify(&rootprint)
+        .unwrap_or_else(|err| fatal(&format!("Observatory sidecar verification failed: {err}")));
+    let packet = sidecar
+        .nodes
+        .get(&rootprint.root_branch)
+        .cloned()
+        .unwrap_or_else(|| fatal("compiler sidecar packet missing root branch"));
+    let packet_schema = packet
+        .get("schema")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("slbit/viz-packet/v3")
+        .to_string();
+    let packet_id = packet
+        .get("packet_id")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("sfcs-rust-private-add")
+        .to_string();
+    let capsule = MemoryCapsuleBuilder::new(&label)
+        .producer("mfenx", env!("CARGO_PKG_VERSION"))
+        .with_pha(artifact.clone())
+        .with_rootprint(rootprint.clone())
+        .with_replay_required()
+        .with_sidecar(sidecar.clone())
+        .with_semantic_packet(
+            packet_schema,
+            packet_id,
+            &rootprint.root_branch,
+            &sidecar.rootprint_state_fingerprint,
+            "claim_view",
+            packet,
+        )
+        .unwrap_or_else(|err| fatal(&format!("semantic packet binding failed: {err}")))
+        .with_challenge_suite(ChallengeSuite::standard())
+        .build()
+        .unwrap_or_else(|err| fatal(&format!("Memory Capsule creation failed: {err}")));
+    let memory_report = capsule
+        .verify(MemoryVerificationPolicy::strict())
+        .unwrap_or_else(|err| fatal(&format!("Memory Capsule verification failed: {err}")));
+
+    if let Some(path) = artifact_output {
+        write_json(&path, &artifact);
+    }
+    if let Some(path) = rootprint_output {
+        write_json(&path, &rootprint);
+    }
+    if let Some(path) = sidecar_output {
+        write_json(&path, &sidecar);
+    }
+    if let Some(path) = capsule_output {
+        capsule
+            .write_canonical(&path)
+            .unwrap_or_else(|err| fatal(&format!("failed to write capsule: {err}")));
+    }
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-rust-private-add-cli-report/v1",
+        "source": source_path.display().to_string(),
+        "compiler_schema": compiled.schema,
+        "source_digest": compiled.source_digest,
+        "program_digest": proof.statement.program_digest,
+        "zk_profile": power_house::SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
+        "proof_digest": proof.proof_digest,
+        "pha_fingerprint": artifact.phx_fingerprint,
+        "rootprint_root": rootprint.root_branch,
+        "rootprint_replay_fingerprint": sidecar.rootprint_state_fingerprint,
+        "sidecar_sha256": sidecar.sidecar_sha256,
+        "capsule_digest": capsule.header.capsule_digest,
+        "memory_core_valid": memory_report.core_valid,
+        "memory_rootprint_valid": memory_report.rootprint_valid,
+        "memory_replay_valid": memory_report.replay_valid,
+        "memory_sidecar_valid": memory_report.sidecar_valid,
+        "memory_semantic_valid": memory_report.semantic_valid,
+        "output_register": proof.statement.output_register,
+        "output_value": proof.statement.output_value,
+        "lhs_commitment": proof.statement.lhs_commitment,
+        "rhs_commitment": proof.statement.rhs_commitment,
+        "truth_boundary": "semantic packet data is non-core and cannot alter .pha or Rootprint proof identity"
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    println!("SFCS RUST PRIVATE ADD");
+    println!(
+        "source_digest: {}",
+        report["source_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "program_digest: {}",
+        report["program_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "proof_digest: {}",
+        report["proof_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "rootprint_replay_fingerprint: {}",
+        report["rootprint_replay_fingerprint"]
+            .as_str()
+            .unwrap_or("")
+    );
+    println!(
+        "capsule_digest: {}",
+        report["capsule_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "output x{}={}",
+        proof.statement.output_register, proof.statement.output_value
+    );
+    println!("truth_boundary: semantic packet data is non-core");
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn cmd_sfcs_zk_private_add(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut program_path = None;
+    let mut lhs_register = None;
+    let mut rhs_register = None;
+    let mut output_register = None;
+    let mut lhs_value = None;
+    let mut rhs_value = None;
+    let mut lhs_blinding_seed = None;
+    let mut rhs_blinding_seed = None;
+    let mut report_path = None;
+    let mut artifact_output = None;
+    let mut label = "sfcs-zk-private-add".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--lhs-register" => {
+                lhs_register = Some(parse_register(
+                    &take_option(&mut iter, "--lhs-register"),
+                    "--lhs-register",
+                ))
+            }
+            "--rhs-register" => {
+                rhs_register = Some(parse_register(
+                    &take_option(&mut iter, "--rhs-register"),
+                    "--rhs-register",
+                ))
+            }
+            "--output-register" => {
+                output_register = Some(parse_register(
+                    &take_option(&mut iter, "--output-register"),
+                    "--output-register",
+                ))
+            }
+            "--lhs-value" => {
+                lhs_value = Some(parse_u32_arg(
+                    &take_option(&mut iter, "--lhs-value"),
+                    "--lhs-value",
+                ))
+            }
+            "--rhs-value" => {
+                rhs_value = Some(parse_u32_arg(
+                    &take_option(&mut iter, "--rhs-value"),
+                    "--rhs-value",
+                ))
+            }
+            "--lhs-blinding" => {
+                lhs_blinding_seed = Some(parse_seed_hex(
+                    &take_option(&mut iter, "--lhs-blinding"),
+                    "--lhs-blinding",
+                ))
+            }
+            "--rhs-blinding" => {
+                rhs_blinding_seed = Some(parse_seed_hex(
+                    &take_option(&mut iter, "--rhs-blinding"),
+                    "--rhs-blinding",
+                ))
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if program_path.is_none() => program_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let program_path =
+        program_path.unwrap_or_else(|| fatal("sfcs zk-private-add requires <program.json>"));
+    let program = read_sfcs_vm_program(&program_path);
+    let proof = SfcsZkPrivateAddProof::prove(
+        &program,
+        lhs_register.unwrap_or_else(|| fatal("--lhs-register is required")),
+        rhs_register.unwrap_or_else(|| fatal("--rhs-register is required")),
+        output_register.unwrap_or_else(|| fatal("--output-register is required")),
+        SfcsZkPrivateAddWitness {
+            lhs_value: lhs_value.unwrap_or_else(|| fatal("--lhs-value is required")),
+            rhs_value: rhs_value.unwrap_or_else(|| fatal("--rhs-value is required")),
+            lhs_blinding_seed: lhs_blinding_seed
+                .unwrap_or_else(|| fatal("--lhs-blinding is required")),
+            rhs_blinding_seed: rhs_blinding_seed
+                .unwrap_or_else(|| fatal("--rhs-blinding is required")),
+        },
+    )
+    .unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_zk_exit_for_error(&err),
+            &format!("SFCS ZK private-add proof failed: {err}"),
+        )
+    });
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-zk-private-add-cli-report/v1",
+        "program": program_path.display().to_string(),
+        "profile": power_house::SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
+        "program_digest": proof.statement.program_digest,
+        "output_register": proof.statement.output_register,
+        "output_value": proof.statement.output_value,
+        "lhs_commitment": proof.statement.lhs_commitment,
+        "rhs_commitment": proof.statement.rhs_commitment,
+        "proof_digest": proof.proof_digest,
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = proof
+            .to_pha_artifact(&label, &program)
+            .unwrap_or_else(|err| fatal(&format!("SFCS ZK .pha embedding failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    println!("SFCS ZK PRIVATE ADD");
+    println!(
+        "program_digest: {}",
+        report["program_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "proof_digest: {}",
+        report["proof_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "output x{}={}",
+        proof.statement.output_register, proof.statement.output_value
+    );
+}
+
+#[cfg(feature = "sfcs-zk")]
+fn cmd_sfcs_verify_zk_pha(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-zk-pha requires <artifact.pha>");
+    }
+    let artifact = read_pha(Path::new(&args[0]));
+    match verify_sfcs_zk_private_add_embedding(&artifact) {
+        Ok(proof) => {
+            println!("SFCS ZK PRIVATE ADD PHA VALID");
+            println!("program_digest: {}", proof.statement.program_digest);
+            println!("proof_digest: {}", proof.proof_digest);
+            println!(
+                "public_output: x{}={}",
+                proof.statement.output_register, proof.statement.output_value
+            );
+        }
+        Err(error) => fatal_code(
+            sfcs_zk_exit_for_error(&error),
+            &format!("SFCS ZK .pha verification failed: {error}"),
         ),
     }
 }

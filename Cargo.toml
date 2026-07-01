@@ -82,6 +82,7 @@ default = ["memory"]
 memory = []
 memory-net = ["net", "memory"]
 sfcs = []
+sfcs-zk = ["sfcs"]
 net = [
   "dep:base64",
   "dep:ed25519-dalek",
@@ -101,6 +102,7 @@ net = [
 [dependencies]
 ark-bn254 = "0.4"
 ark-crypto-primitives = { version = "0.4", features = ["crh", "merkle_tree", "r1cs"] }
+ark-ec = "0.4"
 ark-ed-on-bn254 = { version = "0.4", features = ["r1cs"] }
 ark-ff = "0.4"
 ark-groth16 = "0.4"

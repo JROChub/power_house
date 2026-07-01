@@ -2672,6 +2672,7 @@ version = "0.3.19"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
+ "ark-ec",
  "ark-ed-on-bn254",
  "ark-ff",
  "ark-groth16",

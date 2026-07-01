@@ -98,8 +98,11 @@ covers a reproducible executable SFCS workflow:
 - VM module: `src/sfcs/vm.rs`
 - VM program schema: `power-house/sfcs-vm-program/v1-draft`
 - VM execution protocol: `power-house/sfcs-vm-execution/v1-draft`
+- ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
 - CLI: `julian sfcs source|eval|inspect|verify-pha|vm-run|verify-vm-pha`
-  when built with `--features sfcs`
+  when built with `--features sfcs`;
+  `rust-private-add|zk-private-add|verify-zk-pha` when built with
+  `--features sfcs-zk`
 
 The feature is not in the default feature set. Enabling it adds draft types for
 computational fractal nodes, deterministic graph digestion, strict duplicate-key
@@ -224,6 +227,125 @@ SFCS provides a deterministic RV32I VM execution foundation whose trace,
 state transitions, public outputs, and execution-fractal projection can be
 committed into `.pha` and verified offline without changing Rootprint v1.
 ```
+
+## First ZK Profile
+
+The `sfcs-zk` feature adds the first privacy-preserving proof profile:
+
+```text
+power-house/sfcs-zk-private-add/v1-draft
+```
+
+This profile is intentionally narrow. It verifies a two-instruction RV32I
+program:
+
+```text
+add output_register, lhs_register, rhs_register
+ecall
+```
+
+The prover supplies private `lhs` and `rhs` values plus private commitment
+blindings. The proof publishes:
+
+- the program digest;
+- the output register and public output value;
+- Pedersen commitments to the hidden inputs;
+- a Fiat-Shamir Schnorr proof that the committed inputs sum to the public
+  output;
+- a deterministic proof digest;
+- a `.pha` embedding that can be anchored by Rootprint and Memory Capsules.
+
+The verifier learns the public output and commitments, but the private input
+values and blindings are not embedded into the proof artifact.
+
+The same feature also includes the first constrained source-to-proof pipeline:
+
+```text
+power-house/sfcs-rust-private-add/v1-draft
+```
+
+It accepts one safe Rust subset shape:
+
+```rust
+pub fn add(lhs: u32, rhs: u32) -> u32 {
+    lhs + rhs
+}
+```
+
+The compiler lowers that source directly to the supported RV32I `add; ecall`
+program, emits a deterministic slbit-style semantic packet, proves the private
+inputs against the public output, embeds the proof in `.pha`, creates Rootprint
+lineage, binds the semantic packet through an Observatory sidecar, packages the
+result into a Memory Capsule, and verifies the capsule before reporting
+success.
+
+This is the first end-to-end provenance-first privacy path. It is not the full
+general zkVM compiler. It deliberately supports one audited source shape so the
+complete trust boundary can be tested without weakening Rootprint or `.pha`
+identity.
+
+CLI workflow:
+
+```bash
+julian sfcs zk-private-add private-add.program.json \
+  --lhs-register 10 \
+  --rhs-register 11 \
+  --output-register 3 \
+  --lhs-value 5 \
+  --rhs-value 7 \
+  --lhs-blinding 0707070707070707070707070707070707070707070707070707070707070707 \
+  --rhs-blinding 0909090909090909090909090909090909090909090909090909090909090909 \
+  --artifact-output private-add.pha \
+  --report private-add.report.json
+
+julian sfcs verify-zk-pha private-add.pha
+```
+
+End-to-end source workflow:
+
+```bash
+julian sfcs rust-private-add private_add.rs \
+  --lhs-value 144 \
+  --rhs-value 233 \
+  --lhs-blinding 1111111111111111111111111111111111111111111111111111111111111111 \
+  --rhs-blinding 2222222222222222222222222222222222222222222222222222222222222222 \
+  --artifact-output private-add.pha \
+  --rootprint-output private-add.rootprint.json \
+  --sidecar-output private-add.observatory.json \
+  --capsule-output private-add.phm \
+  --report private-add.report.json
+
+julian sfcs verify-zk-pha private-add.pha
+julian memory verify private-add.phm
+```
+
+Expected source workflow output includes:
+
+```text
+SFCS RUST PRIVATE ADD
+source_digest: sha256:...
+program_digest: sha256:...
+proof_digest: sha256:...
+rootprint_replay_fingerprint: sha256:...
+capsule_digest: sha256:...
+output x3=377
+truth_boundary: semantic packet data is non-core
+```
+
+Expected verifier output includes:
+
+```text
+SFCS ZK PRIVATE ADD PHA VALID
+program_digest: sha256:...
+proof_digest: sha256:...
+public_output: x3=12
+```
+
+This is a real privacy profile, but it is not a full arbitrary VM proof. It is
+accepted as Phase Gate 2 groundwork only for the constrained no-overflow add
+program. Arbitrary private VM execution remains blocked until a proof system
+verifies the full instruction transition semantics, range constraints, memory
+consistency, and public output binding for general traces.
 
 ## Corrected Architecture
 

@@ -158,11 +158,19 @@ pub use merkle::{
 pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
+#[cfg(feature = "sfcs-zk")]
+pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd, SfcsCompilerError};
 #[cfg(feature = "sfcs")]
 pub use sfcs::vm::{
     verify_vm_execution_embedding, SfcsVmError, SfcsVmExecutionEmbeddingReport,
     SfcsVmExecutionTrace, SfcsVmInputs, SfcsVmMemoryAccess, SfcsVmMemoryRange, SfcsVmProgram,
     SfcsVmPublicOutputs, SfcsVmTraceStep,
+};
+#[cfg(feature = "sfcs-zk")]
+pub use sfcs::zk::{
+    encode_rv32_add, verify_private_add_embedding, verify_private_add_program, SfcsZkError,
+    SfcsZkPrivateAddProof, SfcsZkPrivateAddStatement, SfcsZkPrivateAddWitness,
+    SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
 };
 #[cfg(feature = "sfcs")]
 pub use sfcs::{
@@ -212,4 +220,12 @@ pub fn verify_sfcs_vm_execution_embedding(
     artifact: &provenance::pha::PhaArtifact,
 ) -> Result<SfcsVmExecutionEmbeddingReport, SfcsVmError> {
     sfcs::vm::verify_vm_execution_embedding(artifact)
+}
+
+/// Verify that a `.pha` artifact contains the SFCS ZK private-add proof profile.
+#[cfg(feature = "sfcs-zk")]
+pub fn verify_sfcs_zk_private_add_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsZkPrivateAddProof, SfcsZkError> {
+    sfcs::zk::verify_private_add_embedding(artifact)
 }
