@@ -395,6 +395,13 @@ coverage, and publishes only:
   execution-fractal digest, final state digest, final memory digest, and
   private constraint-proof digest;
 - Fiat-Shamir Schnorr opening proofs for those committed digests;
+- verifier-side homomorphic linear transition proofs for eligible private VM
+  relations (`add`, `addi`, `sub`, `subi`, and no-overflow public-scale
+  relations);
+- zero-knowledge 32-bit range proofs for committed private VM values used by
+  those linear transition proofs;
+- zero-knowledge memory equality proofs for eligible private read-after-write
+  events;
 - a `.pha` artifact that does not embed raw private inputs or raw trace data.
 
 CLI workflow:

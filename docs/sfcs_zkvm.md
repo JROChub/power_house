@@ -80,6 +80,16 @@ Implemented groundwork:
   and private constraint-proof digest;
 - Fiat-Shamir Schnorr opening proofs for committed private VM execution
   digests;
+- verifier-side homomorphic private transition proofs for no-overflow/no-
+  underflow linear VM relations (`add`, `addi`, `sub`, `subi`) and public-scale
+  relations such as no-overflow `slli`;
+- zero-knowledge 32-bit range proofs for committed private VM values used by
+  those transition proofs, built from bit commitments, OR proofs that each bit
+  is zero or one, and homomorphic recomposition to the original value
+  commitment;
+- zero-knowledge read-after-write memory consistency proofs for private memory
+  events where a read is backed by a prior hidden write to the same hidden
+  address and width;
 - public output, transition coverage, register range coverage, memory range
   coverage, memory consistency, and branch coverage binding for private VM
   proof statements;
@@ -87,13 +97,17 @@ Implemented groundwork:
 - CLI commands `julian sfcs zk-private-add`, `julian sfcs zk-private-vm`, and
   `julian sfcs verify-zk-pha`;
 - mutation tests for public output, proof body, challenge, overflow, wrong
-  program shape, private VM commitments, private VM public fields, and opening
-  responses.
+  program shape, private VM commitments, private VM public fields, opening
+  responses, linear relation proofs, range proof bit responses, and memory
+  equality proofs.
 
 These profiles are accepted as privacy milestones. The private-VM profile
-hides arbitrary supported VM witnesses and trace data, but the full arbitrary
-VM privacy gate still requires verifier-side proof of the VM transition
-relation itself.
+hides arbitrary supported VM witnesses and trace data and proves a concrete
+linear/range/memory-consistency subset of private VM transition semantics. The
+full arbitrary VM privacy gate still requires verifier-side proof coverage for
+every supported instruction class, especially bitwise operations, comparisons,
+complete memory load/store transition binding, branch behavior, and halting
+semantics.
 
 Required before promotion:
 
@@ -108,7 +122,9 @@ Required before promotion:
 - security review of soundness and zero-knowledge assumptions.
 
 Commitment-only hiding is not enough for the final arbitrary private zkVM
-claim. A release must include a verifier that checks a real proof of execution.
+claim. The current linear/range proof layer is real verifier-side ZK evidence
+for the relations it covers, but the final claim requires complete VM
+transition coverage.
 
 For the complete gate, the proof system must cover more than the current
 private-add and private-VM commitment profiles. It must verify instruction

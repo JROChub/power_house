@@ -52,8 +52,16 @@ fn add(rd: u8, rs1: u8, rs2: u8) -> u32 {
     r_type(0x00, rs2, rs1, 0x0, rd, 0x33)
 }
 
+fn encode_rv32_sub(rd: u8, rs1: u8, rs2: u8) -> u32 {
+    r_type(0x20, rs2, rs1, 0x0, rd, 0x33)
+}
+
 fn addi(rd: u8, rs1: u8, imm: i32) -> u32 {
     i_type(imm, rs1, 0x0, rd, 0x13)
+}
+
+fn encode_rv32_slli(rd: u8, rs1: u8, shift: u8) -> u32 {
+    i_type(shift as i32, rs1, 0x1, rd, 0x13)
 }
 
 fn lw(rd: u8, rs1: u8, imm: i32) -> u32 {
@@ -170,6 +178,12 @@ fn private_vm_proof_verifies_embeds_and_hides_witness_inputs() {
     assert_eq!(proof.statement.transition_checks, 8);
     assert_eq!(proof.statement.register_range_checks, 256);
     assert_eq!(proof.statement.memory_consistency_checks, 2);
+    assert_eq!(proof.statement.linear_relation_checks, 4);
+    assert_eq!(proof.linear_relation_proofs.len(), 4);
+    assert_eq!(proof.statement.zk_range_proofs, 13);
+    assert_eq!(proof.range_proofs.len(), 13);
+    assert_eq!(proof.statement.zk_memory_consistency_proofs, 1);
+    assert_eq!(proof.memory_consistency_proofs.len(), 1);
     assert_eq!(proof.statement.commitments.len(), 6);
     assert!(proof.proof_digest.starts_with("sha256:"));
     assert!(proof
@@ -243,6 +257,74 @@ fn private_vm_embedding_rejects_mutations() {
     stale_response.verify().unwrap();
     assert!(matches!(
         verify_sfcs_zk_private_vm_embedding(&stale_response),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut stale_relation = proof.to_pha_artifact("private-vm", &program).unwrap();
+    stale_relation.embedded_proof.proof["proof"]["linear_relation_proofs"][0]
+        ["response_blinding"] = json!("fr:00");
+    stale_relation.refresh_phx_fingerprint().unwrap();
+    stale_relation.verify().unwrap();
+    assert!(matches!(
+        verify_sfcs_zk_private_vm_embedding(&stale_relation),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+}
+
+#[test]
+fn private_vm_linear_relations_cover_sub_subi_and_scale() {
+    let program = SfcsVmProgram::rv32i(vec![
+        addi(1, 0, 20), // addi
+        addi(2, 0, 7),  // addi
+        encode_rv32_sub(3, 1, 2),
+        addi(4, 3, -5), // subi
+        encode_rv32_slli(5, 4, 2),
+        ecall(),
+    ])
+    .with_max_steps(16);
+    let mut witness = private_vm_witness();
+    witness.inputs.public_registers = vec![5];
+    witness.inputs.public_memory = Vec::new();
+    let proof = SfcsZkPrivateVmProof::prove(&program, witness).unwrap();
+    proof.verify(&program).unwrap();
+    assert_eq!(proof.statement.public_outputs.registers["x5"], 32);
+    assert_eq!(proof.statement.linear_relation_checks, 5);
+    assert_eq!(proof.statement.zk_range_proofs, 11);
+    assert_eq!(proof.statement.zk_memory_consistency_proofs, 0);
+    let relations = proof
+        .linear_relation_proofs
+        .iter()
+        .map(|proof| proof.relation.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(relations, ["addi", "addi", "sub", "subi", "scale"]);
+
+    let mut mutated = proof;
+    mutated.linear_relation_proofs[2].relation_commitment = mutated
+        .linear_relation_proofs
+        .first()
+        .unwrap()
+        .relation_commitment
+        .clone();
+    assert!(matches!(
+        mutated.verify(&program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut mutated_range = SfcsZkPrivateVmProof::prove(&program, private_vm_witness()).unwrap();
+    mutated_range.range_proofs[0].bit_proofs[0].zero_response = "fr:00".to_string();
+    assert!(matches!(
+        mutated_range.verify(&program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let memory_program = private_vm_program();
+    let mut mutated_memory =
+        SfcsZkPrivateVmProof::prove(&memory_program, private_vm_witness()).unwrap();
+    mutated_memory.memory_consistency_proofs[0]
+        .value_equality
+        .response_blinding = "fr:00".to_string();
+    assert!(matches!(
+        mutated_memory.verify(&memory_program),
         Err(SfcsZkError::InvalidProof(_))
     ));
 }

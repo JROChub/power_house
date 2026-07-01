@@ -10,7 +10,7 @@
 use super::{
     constraints::{SfcsVmConstraintError, SfcsVmConstraintProof},
     digest_json,
-    vm::{SfcsVmInputs, SfcsVmProgram, SfcsVmPublicOutputs},
+    vm::{SfcsVmExecutionTrace, SfcsVmInputs, SfcsVmProgram, SfcsVmPublicOutputs},
 };
 use crate::provenance::{PhaArtifact, PhaError};
 use ark_ec::{AffineRepr, CurveGroup, Group};
@@ -113,6 +113,12 @@ pub struct SfcsZkPrivateVmStatement {
     pub memory_consistency_checks: u64,
     /// Number of covered branch checks.
     pub branch_checks: u64,
+    /// Number of ZK-checkable linear transition relations.
+    pub linear_relation_checks: u64,
+    /// Number of zero-knowledge 32-bit range proofs over private VM values.
+    pub zk_range_proofs: u64,
+    /// Number of zero-knowledge private memory consistency proofs.
+    pub zk_memory_consistency_proofs: u64,
     /// Pedersen commitments to private execution digests.
     pub commitments: BTreeMap<String, String>,
 }
@@ -142,6 +148,95 @@ pub struct SfcsZkPrivateVmOpeningProof {
     pub response_blinding: String,
 }
 
+/// Homomorphic proof for one private linear VM transition relation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmLinearRelationProof {
+    /// VM step index.
+    pub step_index: u64,
+    /// Relation kind, e.g. `add` or `addi`.
+    pub relation: String,
+    /// Pedersen commitment to the left operand.
+    pub lhs_commitment: String,
+    /// Optional Pedersen commitment to the right operand.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rhs_commitment: Option<String>,
+    /// Optional public constant used by immediate relations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub public_constant: Option<u32>,
+    /// Pedersen commitment to the output value.
+    pub output_commitment: String,
+    /// Commitment to the zero-valued relation residual.
+    pub relation_commitment: String,
+    /// Schnorr nonce commitment for the relation blinding.
+    pub nonce_commitment: String,
+    /// Response proving the residual commitment opens with zero value.
+    pub response_blinding: String,
+}
+
+/// One zero-knowledge bit proof inside a private VM range proof.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmBitProof {
+    /// Nonce commitment for the branch proving the bit is zero.
+    pub zero_nonce_commitment: String,
+    /// Nonce commitment for the branch proving the bit is one.
+    pub one_nonce_commitment: String,
+    /// Fiat-Shamir challenge share for the zero branch.
+    pub zero_challenge: String,
+    /// Fiat-Shamir challenge share for the one branch.
+    pub one_challenge: String,
+    /// Schnorr response for the zero branch.
+    pub zero_response: String,
+    /// Schnorr response for the one branch.
+    pub one_response: String,
+}
+
+/// Zero-knowledge 32-bit range proof for one private VM value commitment.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmRangeProof {
+    /// Deterministic value label, e.g. `linear:3:add:lhs`.
+    pub label: String,
+    /// Commitment being proven to carry a 32-bit value.
+    pub value_commitment: String,
+    /// Pedersen commitments to each little-endian bit.
+    pub bit_commitments: Vec<String>,
+    /// OR proofs that each bit commitment opens to either zero or one.
+    pub bit_proofs: Vec<SfcsZkPrivateVmBitProof>,
+    /// Homomorphic residual commitment tying the bits back to the value.
+    pub recomposition_commitment: String,
+    /// Nonce commitment for the recomposition residual proof.
+    pub recomposition_nonce_commitment: String,
+    /// Schnorr response for the recomposition residual blinding.
+    pub recomposition_response_blinding: String,
+}
+
+/// Zero-knowledge equality proof between two private VM value commitments.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmEqualityProof {
+    /// Left commitment.
+    pub left_commitment: String,
+    /// Right commitment.
+    pub right_commitment: String,
+    /// Commitment to the zero-valued difference.
+    pub difference_commitment: String,
+    /// Nonce commitment for the difference blinding proof.
+    pub nonce_commitment: String,
+    /// Schnorr response for the difference blinding.
+    pub response_blinding: String,
+}
+
+/// Zero-knowledge read-after-write consistency proof for private VM memory.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmMemoryConsistencyProof {
+    /// Read step index.
+    pub read_step_index: u64,
+    /// Prior write step index supplying the read value.
+    pub write_step_index: u64,
+    /// Hidden address equality proof.
+    pub address_equality: SfcsZkPrivateVmEqualityProof,
+    /// Hidden value equality proof.
+    pub value_equality: SfcsZkPrivateVmEqualityProof,
+}
+
 /// Non-interactive private VM proof.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmProof {
@@ -151,6 +246,15 @@ pub struct SfcsZkPrivateVmProof {
     pub challenge: String,
     /// Opening proofs for every committed private execution digest.
     pub opening_proofs: Vec<SfcsZkPrivateVmOpeningProof>,
+    /// Homomorphic transition relation proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub linear_relation_proofs: Vec<SfcsZkPrivateVmLinearRelationProof>,
+    /// Zero-knowledge u32 range proofs for VM values used by private relations.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub range_proofs: Vec<SfcsZkPrivateVmRangeProof>,
+    /// Zero-knowledge memory read-after-write consistency proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub memory_consistency_proofs: Vec<SfcsZkPrivateVmMemoryConsistencyProof>,
     /// Domain-separated proof digest.
     pub proof_digest: String,
 }
@@ -352,6 +456,18 @@ impl SfcsZkPrivateVmProof {
             );
             openings.insert(label.clone(), (value, blinding));
         }
+        let linear_relation_preimages =
+            private_vm_linear_relation_preimages(&trace, &witness.blinding_seed)?;
+        let memory_consistency_preimages =
+            private_vm_memory_consistency_preimages(&trace, &witness.blinding_seed)?;
+        let range_proof_count = linear_relation_preimages
+            .iter()
+            .map(|relation| relation.range_inputs.len() as u64)
+            .sum::<u64>()
+            + memory_consistency_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>();
         let statement = SfcsZkPrivateVmStatement {
             schema: SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT.to_string(),
             program_digest: trace.program_digest,
@@ -362,6 +478,9 @@ impl SfcsZkPrivateVmProof {
             memory_range_checks: constraints.memory_range_checks,
             memory_consistency_checks: constraints.memory_consistency_checks,
             branch_checks: constraints.branch_checks,
+            linear_relation_checks: linear_relation_preimages.len() as u64,
+            zk_range_proofs: range_proof_count,
+            zk_memory_consistency_proofs: memory_consistency_preimages.len() as u64,
             commitments,
         };
         let nonce_commitments = statement
@@ -379,7 +498,11 @@ impl SfcsZkPrivateVmProof {
                 ))
             })
             .collect::<Result<Vec<_>, SfcsZkError>>()?;
-        let challenge = derive_private_vm_challenge(&statement, &nonce_commitments)?;
+        let challenge = derive_private_vm_challenge(
+            &statement,
+            &nonce_commitments,
+            &linear_relation_preimages,
+        )?;
         let mut opening_proofs = Vec::new();
         for (label, nonce_value, nonce_blinding, nonce_commitment) in nonce_commitments {
             let (value, blinding) = openings.get(&label).ok_or_else(|| {
@@ -392,10 +515,44 @@ impl SfcsZkPrivateVmProof {
                 response_blinding: scalar_to_hex(&(nonce_blinding + challenge * blinding))?,
             });
         }
+        let mut linear_relation_proofs = Vec::new();
+        let mut range_proofs = Vec::new();
+        for relation in linear_relation_preimages {
+            for range_input in &relation.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            linear_relation_proofs.push(SfcsZkPrivateVmLinearRelationProof {
+                step_index: relation.step_index,
+                relation: relation.relation,
+                lhs_commitment: point_to_hex(&relation.lhs_commitment)?,
+                rhs_commitment: relation
+                    .rhs_commitment
+                    .as_ref()
+                    .map(point_to_hex)
+                    .transpose()?,
+                public_constant: relation.public_constant,
+                output_commitment: point_to_hex(&relation.output_commitment)?,
+                relation_commitment: point_to_hex(&relation.relation_commitment)?,
+                nonce_commitment: point_to_hex(&relation.nonce_commitment)?,
+                response_blinding: scalar_to_hex(
+                    &(relation.nonce_blinding + challenge * relation.relation_blinding),
+                )?,
+            });
+        }
+        let mut memory_consistency_proofs = Vec::new();
+        for memory_preimage in memory_consistency_preimages {
+            for range_input in &memory_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            memory_consistency_proofs.push(memory_preimage.proof);
+        }
         let mut proof = Self {
             statement,
             challenge: scalar_to_hex(&challenge)?,
             opening_proofs,
+            linear_relation_proofs,
+            range_proofs,
+            memory_consistency_proofs,
             proof_digest: String::new(),
         };
         proof.proof_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &proof.preimage())?;
@@ -449,6 +606,32 @@ impl SfcsZkPrivateVmProof {
                 "private VM opening proof count does not match commitments".to_string(),
             ));
         }
+        if self.statement.linear_relation_checks != self.linear_relation_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM linear relation count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_range_proofs != self.range_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM range proof count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_memory_consistency_proofs
+            != self.memory_consistency_proofs.len() as u64
+        {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM memory consistency proof count does not match proofs".to_string(),
+            ));
+        }
+        let mut previous_relation_step = None;
+        for proof in &self.linear_relation_proofs {
+            if previous_relation_step.is_some_and(|previous| proof.step_index <= previous) {
+                return Err(SfcsZkError::InvalidProof(
+                    "private VM linear relation proofs are not canonical".to_string(),
+                ));
+            }
+            previous_relation_step = Some(proof.step_index);
+        }
         let nonce_commitments = self
             .opening_proofs
             .iter()
@@ -462,7 +645,11 @@ impl SfcsZkPrivateVmProof {
             })
             .collect::<Result<Vec<_>, SfcsZkError>>()?;
         let challenge = scalar_from_hex(&self.challenge)?;
-        let expected_challenge = derive_private_vm_challenge(&self.statement, &nonce_commitments)?;
+        let expected_challenge = derive_private_vm_challenge_from_proof(
+            &self.statement,
+            &nonce_commitments,
+            &self.linear_relation_proofs,
+        )?;
         if challenge != expected_challenge {
             return Err(SfcsZkError::InvalidProof(
                 "private VM Fiat-Shamir challenge mismatch".to_string(),
@@ -499,6 +686,15 @@ impl SfcsZkPrivateVmProof {
                 )));
             }
         }
+        for proof in &self.linear_relation_proofs {
+            proof.verify(challenge)?;
+        }
+        for proof in &self.range_proofs {
+            proof.verify()?;
+        }
+        for proof in &self.memory_consistency_proofs {
+            proof.verify()?;
+        }
         let expected_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &self.preimage())?;
         if self.proof_digest != expected_digest {
             return Err(SfcsZkError::InvalidProof(
@@ -534,6 +730,9 @@ impl SfcsZkPrivateVmProof {
                 "memory_range_checks": self.statement.memory_range_checks,
                 "memory_consistency_checks": self.statement.memory_consistency_checks,
                 "branch_checks": self.statement.branch_checks,
+                "linear_relation_checks": self.statement.linear_relation_checks,
+                "zk_range_proofs": self.statement.zk_range_proofs,
+                "zk_memory_consistency_proofs": self.statement.zk_memory_consistency_proofs,
                 "commitments": self.statement.commitments,
                 "proof_digest": self.proof_digest,
             }),
@@ -550,7 +749,243 @@ impl SfcsZkPrivateVmProof {
             "statement": self.statement,
             "challenge": self.challenge,
             "opening_proofs": self.opening_proofs,
+            "linear_relation_proofs": self.linear_relation_proofs,
+            "range_proofs": self.range_proofs,
+            "memory_consistency_proofs": self.memory_consistency_proofs,
         })
+    }
+}
+
+impl SfcsZkPrivateVmLinearRelationProof {
+    fn verify(&self, challenge: Fr) -> Result<(), SfcsZkError> {
+        let lhs = point_from_hex(&self.lhs_commitment)?;
+        let output = point_from_hex(&self.output_commitment)?;
+        let relation_commitment = point_from_hex(&self.relation_commitment)?;
+        let expected_relation = match self.relation.as_str() {
+            "add" => {
+                if self.public_constant.is_some() {
+                    return Err(SfcsZkError::InvalidProof(
+                        "add relation must not carry a public constant".to_string(),
+                    ));
+                }
+                let rhs = self
+                    .rhs_commitment
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SfcsZkError::InvalidProof(
+                            "add relation requires rhs commitment".to_string(),
+                        )
+                    })
+                    .and_then(|value| point_from_hex(value))?;
+                output - lhs - rhs
+            }
+            "sub" => {
+                if self.public_constant.is_some() {
+                    return Err(SfcsZkError::InvalidProof(
+                        "sub relation must not carry a public constant".to_string(),
+                    ));
+                }
+                let rhs = self
+                    .rhs_commitment
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SfcsZkError::InvalidProof(
+                            "sub relation requires rhs commitment".to_string(),
+                        )
+                    })
+                    .and_then(|value| point_from_hex(value))?;
+                output - lhs + rhs
+            }
+            "addi" => {
+                if self.rhs_commitment.is_some() {
+                    return Err(SfcsZkError::InvalidProof(
+                        "addi relation must not carry an rhs commitment".to_string(),
+                    ));
+                }
+                let constant = self.public_constant.ok_or_else(|| {
+                    SfcsZkError::InvalidProof("addi relation requires public constant".to_string())
+                })?;
+                output - lhs - value_base().mul_bigint(Fr::from(constant).into_bigint())
+            }
+            "subi" => {
+                if self.rhs_commitment.is_some() {
+                    return Err(SfcsZkError::InvalidProof(
+                        "subi relation must not carry an rhs commitment".to_string(),
+                    ));
+                }
+                let constant = self.public_constant.ok_or_else(|| {
+                    SfcsZkError::InvalidProof("subi relation requires public constant".to_string())
+                })?;
+                output - lhs + value_base().mul_bigint(Fr::from(constant).into_bigint())
+            }
+            "scale" => {
+                if self.rhs_commitment.is_some() {
+                    return Err(SfcsZkError::InvalidProof(
+                        "scale relation must not carry an rhs commitment".to_string(),
+                    ));
+                }
+                let coefficient = self.public_constant.ok_or_else(|| {
+                    SfcsZkError::InvalidProof(
+                        "scale relation requires public coefficient".to_string(),
+                    )
+                })?;
+                output - lhs.mul_bigint(Fr::from(coefficient).into_bigint())
+            }
+            other => {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "unsupported private VM linear relation {other}"
+                )));
+            }
+        };
+        if relation_commitment != expected_relation {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "linear relation commitment mismatch at step {}",
+                self.step_index
+            )));
+        }
+        let nonce_commitment = point_from_hex(&self.nonce_commitment)?;
+        let response = scalar_from_hex(&self.response_blinding)?;
+        let left = blinding_base().mul_bigint(response.into_bigint());
+        let right = nonce_commitment + relation_commitment.mul_bigint(challenge.into_bigint());
+        if left != right {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "linear relation proof failed at step {}",
+                self.step_index
+            )));
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmRangeProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        if self.bit_commitments.len() != 32 || self.bit_proofs.len() != 32 {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range proof {} must contain 32 bit commitments and proofs",
+                self.label
+            )));
+        }
+        let value_commitment = point_from_hex(&self.value_commitment)?;
+        let mut bit_commitments = Vec::with_capacity(32);
+        for value in &self.bit_commitments {
+            bit_commitments.push(point_from_hex(value)?);
+        }
+        for (index, (bit_commitment, proof)) in bit_commitments
+            .iter()
+            .zip(self.bit_proofs.iter())
+            .enumerate()
+        {
+            proof.verify(&self.label, index, bit_commitment)?;
+        }
+
+        let mut expected_recomposition = value_commitment;
+        for (index, bit_commitment) in bit_commitments.iter().enumerate() {
+            let coefficient = Fr::from(1_u64 << index);
+            expected_recomposition -= bit_commitment.mul_bigint(coefficient.into_bigint());
+        }
+        let recomposition_commitment = point_from_hex(&self.recomposition_commitment)?;
+        if recomposition_commitment != expected_recomposition {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range proof {} recomposition commitment mismatch",
+                self.label
+            )));
+        }
+        let nonce_commitment = point_from_hex(&self.recomposition_nonce_commitment)?;
+        let response = scalar_from_hex(&self.recomposition_response_blinding)?;
+        let challenge = derive_range_recomposition_challenge(
+            &self.label,
+            &value_commitment,
+            &bit_commitments,
+            &recomposition_commitment,
+            &nonce_commitment,
+        )?;
+        let left = blinding_base().mul_bigint(response.into_bigint());
+        let right = nonce_commitment + recomposition_commitment.mul_bigint(challenge.into_bigint());
+        if left != right {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range proof {} recomposition proof failed",
+                self.label
+            )));
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmBitProof {
+    fn verify(
+        &self,
+        label: &str,
+        index: usize,
+        bit_commitment: &EdwardsProjective,
+    ) -> Result<(), SfcsZkError> {
+        let zero_nonce = point_from_hex(&self.zero_nonce_commitment)?;
+        let one_nonce = point_from_hex(&self.one_nonce_commitment)?;
+        let zero_challenge = scalar_from_hex(&self.zero_challenge)?;
+        let one_challenge = scalar_from_hex(&self.one_challenge)?;
+        let zero_response = scalar_from_hex(&self.zero_response)?;
+        let one_response = scalar_from_hex(&self.one_response)?;
+        let challenge =
+            derive_range_bit_challenge(label, index, bit_commitment, &zero_nonce, &one_nonce)?;
+        if zero_challenge + one_challenge != challenge {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range bit proof {label}[{index}] challenge split mismatch"
+            )));
+        }
+        let zero_left = blinding_base().mul_bigint(zero_response.into_bigint());
+        let zero_right = zero_nonce + bit_commitment.mul_bigint(zero_challenge.into_bigint());
+        if zero_left != zero_right {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range bit proof {label}[{index}] zero branch failed"
+            )));
+        }
+        let one_relation = *bit_commitment - value_base();
+        let one_left = blinding_base().mul_bigint(one_response.into_bigint());
+        let one_right = one_nonce + one_relation.mul_bigint(one_challenge.into_bigint());
+        if one_left != one_right {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "range bit proof {label}[{index}] one branch failed"
+            )));
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmEqualityProof {
+    fn verify(&self, label: &str) -> Result<(), SfcsZkError> {
+        let left = point_from_hex(&self.left_commitment)?;
+        let right = point_from_hex(&self.right_commitment)?;
+        let difference = point_from_hex(&self.difference_commitment)?;
+        let expected_difference = left - right;
+        if difference != expected_difference {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "equality proof {label} difference commitment mismatch"
+            )));
+        }
+        let nonce = point_from_hex(&self.nonce_commitment)?;
+        let response = scalar_from_hex(&self.response_blinding)?;
+        let challenge = derive_equality_challenge(label, &left, &right, &difference, &nonce)?;
+        let left_side = blinding_base().mul_bigint(response.into_bigint());
+        let right_side = nonce + difference.mul_bigint(challenge.into_bigint());
+        if left_side != right_side {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "equality proof {label} failed"
+            )));
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmMemoryConsistencyProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        if self.write_step_index >= self.read_step_index {
+            return Err(SfcsZkError::InvalidProof(
+                "memory consistency proof must reference a prior write".to_string(),
+            ));
+        }
+        let label = format!("memory:{}:{}", self.write_step_index, self.read_step_index);
+        self.address_equality.verify(&format!("{label}:address"))?;
+        self.value_equality.verify(&format!("{label}:value"))?;
+        Ok(())
     }
 }
 
@@ -564,6 +999,35 @@ struct SfcsZkPrivateAddEmbedding {
 struct SfcsZkPrivateVmEmbedding {
     program: SfcsVmProgram,
     proof: SfcsZkPrivateVmProof,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmLinearRelationPreimage {
+    step_index: u64,
+    relation: String,
+    lhs_commitment: EdwardsProjective,
+    rhs_commitment: Option<EdwardsProjective>,
+    public_constant: Option<u32>,
+    output_commitment: EdwardsProjective,
+    relation_commitment: EdwardsProjective,
+    relation_blinding: Fr,
+    nonce_commitment: EdwardsProjective,
+    nonce_blinding: Fr,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmRangeInput {
+    label: String,
+    value: u32,
+    blinding: Fr,
+    commitment: EdwardsProjective,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmMemoryConsistencyPreimage {
+    proof: SfcsZkPrivateVmMemoryConsistencyProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
 }
 
 /// Verifies a `.pha` artifact carrying the private add proof profile.
@@ -662,6 +1126,9 @@ pub fn verify_private_vm_embedding(
         "memory_range_checks",
         "memory_consistency_checks",
         "branch_checks",
+        "linear_relation_checks",
+        "zk_range_proofs",
+        "zk_memory_consistency_proofs",
         "commitments",
     ] {
         let public = artifact
@@ -685,6 +1152,13 @@ pub fn verify_private_vm_embedding(
                 serde_json::json!(embedding.proof.statement.memory_consistency_checks)
             }
             "branch_checks" => serde_json::json!(embedding.proof.statement.branch_checks),
+            "linear_relation_checks" => {
+                serde_json::json!(embedding.proof.statement.linear_relation_checks)
+            }
+            "zk_range_proofs" => serde_json::json!(embedding.proof.statement.zk_range_proofs),
+            "zk_memory_consistency_proofs" => {
+                serde_json::json!(embedding.proof.statement.zk_memory_consistency_proofs)
+            }
             "commitments" => serde_json::to_value(&embedding.proof.statement.commitments)?,
             _ => unreachable!(),
         };
@@ -774,6 +1248,461 @@ fn private_vm_secret_scalar(label: &str, digest: &str) -> Fr {
     Fr::from_le_bytes_mod_order(&hasher.finalize())
 }
 
+fn private_vm_linear_relation_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmLinearRelationPreimage>, SfcsZkError> {
+    let mut relations = Vec::new();
+    for step in &trace.steps {
+        if step.rd == Some(0) {
+            continue;
+        }
+        match step.mnemonic.as_str() {
+            "add" => {
+                let (Some(lhs), Some(rhs), Some(output)) = (
+                    step.rs1_value_before,
+                    step.rs2_value_before,
+                    step.rd_value_after,
+                ) else {
+                    continue;
+                };
+                if lhs.checked_add(rhs) != Some(output) {
+                    continue;
+                }
+                relations.push(private_vm_binary_linear_relation_preimage(
+                    step.step_index,
+                    "add",
+                    lhs,
+                    rhs,
+                    output,
+                    seed,
+                )?);
+            }
+            "sub" => {
+                let (Some(lhs), Some(rhs), Some(output)) = (
+                    step.rs1_value_before,
+                    step.rs2_value_before,
+                    step.rd_value_after,
+                ) else {
+                    continue;
+                };
+                if lhs.checked_sub(rhs) != Some(output) {
+                    continue;
+                }
+                relations.push(private_vm_binary_linear_relation_preimage(
+                    step.step_index,
+                    "sub",
+                    lhs,
+                    rhs,
+                    output,
+                    seed,
+                )?);
+            }
+            "addi" => {
+                let (Some(lhs), Some(output), Some(immediate)) =
+                    (step.rs1_value_before, step.rd_value_after, step.immediate)
+                else {
+                    continue;
+                };
+                if immediate >= 0 {
+                    let constant = immediate as u32;
+                    if lhs.checked_add(constant) != Some(output) {
+                        continue;
+                    }
+                    relations.push(private_vm_immediate_linear_relation_preimage(
+                        step.step_index,
+                        "addi",
+                        lhs,
+                        constant,
+                        output,
+                        seed,
+                    )?);
+                } else {
+                    let constant = immediate.unsigned_abs();
+                    if lhs.checked_sub(constant) != Some(output) {
+                        continue;
+                    }
+                    relations.push(private_vm_immediate_linear_relation_preimage(
+                        step.step_index,
+                        "subi",
+                        lhs,
+                        constant,
+                        output,
+                        seed,
+                    )?);
+                }
+            }
+            "slli" => {
+                let (Some(lhs), Some(output), Some(immediate)) =
+                    (step.rs1_value_before, step.rd_value_after, step.immediate)
+                else {
+                    continue;
+                };
+                let Ok(shift) = u32::try_from(immediate) else {
+                    continue;
+                };
+                if shift >= 32 {
+                    continue;
+                }
+                let coefficient = 1_u32 << shift;
+                if lhs.checked_mul(coefficient) != Some(output) {
+                    continue;
+                }
+                relations.push(private_vm_immediate_linear_relation_preimage(
+                    step.step_index,
+                    "scale",
+                    lhs,
+                    coefficient,
+                    output,
+                    seed,
+                )?);
+            }
+            _ => {}
+        }
+    }
+    Ok(relations)
+}
+
+fn private_vm_range_proof(
+    input: &SfcsZkPrivateVmRangeInput,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmRangeProof, SfcsZkError> {
+    let mut bit_commitment_points = Vec::with_capacity(32);
+    let mut bit_commitments = Vec::with_capacity(32);
+    let mut bit_blindings = Vec::with_capacity(32);
+    let mut bit_proofs = Vec::with_capacity(32);
+
+    for index in 0..32 {
+        let bit = (input.value >> index) & 1;
+        let bit_label = format!("range:{}:bit:{index}", input.label);
+        let bit_blinding = private_vm_blinding_scalar(&bit_label, seed);
+        let bit_commitment = commit_secret(Fr::from(bit), bit_blinding);
+        let bit_proof =
+            private_vm_bit_proof(&input.label, index, bit, bit_blinding, bit_commitment, seed)?;
+        bit_commitments.push(point_to_hex(&bit_commitment)?);
+        bit_commitment_points.push(bit_commitment);
+        bit_blindings.push(bit_blinding);
+        bit_proofs.push(bit_proof);
+    }
+
+    let mut recomposition_commitment = input.commitment;
+    let mut recomposition_blinding = input.blinding;
+    for (index, (bit_commitment, bit_blinding)) in bit_commitment_points
+        .iter()
+        .zip(bit_blindings.iter())
+        .enumerate()
+    {
+        let coefficient = Fr::from(1_u64 << index);
+        recomposition_commitment -= bit_commitment.mul_bigint(coefficient.into_bigint());
+        recomposition_blinding -= *bit_blinding * coefficient;
+    }
+    let nonce_blinding = private_vm_nonce_scalar(&input.label, "range-recomposition", seed);
+    let nonce_commitment = blinding_base().mul_bigint(nonce_blinding.into_bigint());
+    let challenge = derive_range_recomposition_challenge(
+        &input.label,
+        &input.commitment,
+        &bit_commitment_points,
+        &recomposition_commitment,
+        &nonce_commitment,
+    )?;
+    Ok(SfcsZkPrivateVmRangeProof {
+        label: input.label.clone(),
+        value_commitment: point_to_hex(&input.commitment)?,
+        bit_commitments,
+        bit_proofs,
+        recomposition_commitment: point_to_hex(&recomposition_commitment)?,
+        recomposition_nonce_commitment: point_to_hex(&nonce_commitment)?,
+        recomposition_response_blinding: scalar_to_hex(
+            &(nonce_blinding + challenge * recomposition_blinding),
+        )?,
+    })
+}
+
+fn private_vm_memory_consistency_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmMemoryConsistencyPreimage>, SfcsZkError> {
+    let mut writes = BTreeMap::<(u32, u8), (u64, u32)>::new();
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        let Some(access) = &step.memory_access else {
+            continue;
+        };
+        let key = (access.address, access.width);
+        match access.kind.as_str() {
+            "write" => {
+                writes.insert(key, (step.step_index, access.value));
+            }
+            "read" => {
+                if let Some((write_step_index, write_value)) = writes.get(&key).copied() {
+                    proofs.push(private_vm_memory_consistency_preimage(
+                        write_step_index,
+                        step.step_index,
+                        access.address,
+                        write_value,
+                        access.value,
+                        seed,
+                    )?);
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(proofs)
+}
+
+fn private_vm_memory_consistency_preimage(
+    write_step_index: u64,
+    read_step_index: u64,
+    address: u32,
+    write_value: u32,
+    read_value: u32,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmMemoryConsistencyPreimage, SfcsZkError> {
+    let label = format!("memory:{write_step_index}:{read_step_index}");
+    let write_address = private_vm_range_input(&format!("{label}:write-address"), address, seed);
+    let read_address = private_vm_range_input(&format!("{label}:read-address"), address, seed);
+    let write_value = private_vm_range_input(&format!("{label}:write-value"), write_value, seed);
+    let read_value = private_vm_range_input(&format!("{label}:read-value"), read_value, seed);
+    let address_equality = private_vm_equality_proof(
+        &format!("{label}:address"),
+        &write_address,
+        &read_address,
+        seed,
+    )?;
+    let value_equality =
+        private_vm_equality_proof(&format!("{label}:value"), &write_value, &read_value, seed)?;
+    Ok(SfcsZkPrivateVmMemoryConsistencyPreimage {
+        proof: SfcsZkPrivateVmMemoryConsistencyProof {
+            read_step_index,
+            write_step_index,
+            address_equality,
+            value_equality,
+        },
+        range_inputs: vec![write_address, read_address, write_value, read_value],
+    })
+}
+
+fn private_vm_range_input(label: &str, value: u32, seed: &[u8; 32]) -> SfcsZkPrivateVmRangeInput {
+    let blinding = private_vm_blinding_scalar(label, seed);
+    let commitment = pedersen_commit(value, blinding);
+    SfcsZkPrivateVmRangeInput {
+        label: label.to_string(),
+        value,
+        blinding,
+        commitment,
+    }
+}
+
+fn private_vm_equality_proof(
+    label: &str,
+    left: &SfcsZkPrivateVmRangeInput,
+    right: &SfcsZkPrivateVmRangeInput,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmEqualityProof, SfcsZkError> {
+    let difference_commitment = left.commitment - right.commitment;
+    let difference_blinding = left.blinding - right.blinding;
+    let nonce_blinding = private_vm_nonce_scalar(label, "equality", seed);
+    let nonce_commitment = blinding_base().mul_bigint(nonce_blinding.into_bigint());
+    let challenge = derive_equality_challenge(
+        label,
+        &left.commitment,
+        &right.commitment,
+        &difference_commitment,
+        &nonce_commitment,
+    )?;
+    Ok(SfcsZkPrivateVmEqualityProof {
+        left_commitment: point_to_hex(&left.commitment)?,
+        right_commitment: point_to_hex(&right.commitment)?,
+        difference_commitment: point_to_hex(&difference_commitment)?,
+        nonce_commitment: point_to_hex(&nonce_commitment)?,
+        response_blinding: scalar_to_hex(&(nonce_blinding + challenge * difference_blinding))?,
+    })
+}
+
+fn private_vm_bit_proof(
+    label: &str,
+    index: usize,
+    bit: u32,
+    bit_blinding: Fr,
+    bit_commitment: EdwardsProjective,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmBitProof, SfcsZkError> {
+    let nonce_label = format!("{label}:bit:{index}");
+    let zero_relation = bit_commitment;
+    let one_relation = bit_commitment - value_base();
+    let zero_nonce;
+    let one_nonce;
+    let zero_challenge;
+    let one_challenge;
+    let zero_response;
+    let one_response;
+
+    if bit == 0 {
+        let actual_nonce = private_vm_nonce_scalar(&nonce_label, "zero-actual", seed);
+        zero_nonce = blinding_base().mul_bigint(actual_nonce.into_bigint());
+        one_challenge = private_vm_nonce_scalar(&nonce_label, "one-simulated-challenge", seed);
+        one_response = private_vm_nonce_scalar(&nonce_label, "one-simulated-response", seed);
+        one_nonce = blinding_base().mul_bigint(one_response.into_bigint())
+            - one_relation.mul_bigint(one_challenge.into_bigint());
+        let challenge =
+            derive_range_bit_challenge(label, index, &bit_commitment, &zero_nonce, &one_nonce)?;
+        zero_challenge = challenge - one_challenge;
+        zero_response = actual_nonce + zero_challenge * bit_blinding;
+    } else {
+        let actual_nonce = private_vm_nonce_scalar(&nonce_label, "one-actual", seed);
+        one_nonce = blinding_base().mul_bigint(actual_nonce.into_bigint());
+        zero_challenge = private_vm_nonce_scalar(&nonce_label, "zero-simulated-challenge", seed);
+        zero_response = private_vm_nonce_scalar(&nonce_label, "zero-simulated-response", seed);
+        zero_nonce = blinding_base().mul_bigint(zero_response.into_bigint())
+            - zero_relation.mul_bigint(zero_challenge.into_bigint());
+        let challenge =
+            derive_range_bit_challenge(label, index, &bit_commitment, &zero_nonce, &one_nonce)?;
+        one_challenge = challenge - zero_challenge;
+        one_response = actual_nonce + one_challenge * bit_blinding;
+    }
+
+    Ok(SfcsZkPrivateVmBitProof {
+        zero_nonce_commitment: point_to_hex(&zero_nonce)?,
+        one_nonce_commitment: point_to_hex(&one_nonce)?,
+        zero_challenge: scalar_to_hex(&zero_challenge)?,
+        one_challenge: scalar_to_hex(&one_challenge)?,
+        zero_response: scalar_to_hex(&zero_response)?,
+        one_response: scalar_to_hex(&one_response)?,
+    })
+}
+
+fn private_vm_binary_linear_relation_preimage(
+    step_index: u64,
+    relation: &str,
+    lhs: u32,
+    rhs: u32,
+    output: u32,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmLinearRelationPreimage, SfcsZkError> {
+    let prefix = format!("linear:{step_index}:{relation}");
+    let lhs_blinding = private_vm_blinding_scalar(&format!("{prefix}:lhs"), seed);
+    let rhs_blinding = private_vm_blinding_scalar(&format!("{prefix}:rhs"), seed);
+    let output_blinding = private_vm_blinding_scalar(&format!("{prefix}:output"), seed);
+    let lhs_commitment = pedersen_commit(lhs, lhs_blinding);
+    let rhs_commitment = pedersen_commit(rhs, rhs_blinding);
+    let output_commitment = pedersen_commit(output, output_blinding);
+    let (relation_commitment, relation_blinding) = match relation {
+        "add" => (
+            output_commitment - lhs_commitment - rhs_commitment,
+            output_blinding - lhs_blinding - rhs_blinding,
+        ),
+        "sub" => (
+            output_commitment - lhs_commitment + rhs_commitment,
+            output_blinding - lhs_blinding + rhs_blinding,
+        ),
+        _ => {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported binary linear relation {relation}"
+            )))
+        }
+    };
+    let nonce_blinding = private_vm_nonce_scalar(&prefix, "relation", seed);
+    let nonce_commitment = blinding_base().mul_bigint(nonce_blinding.into_bigint());
+    Ok(SfcsZkPrivateVmLinearRelationPreimage {
+        step_index,
+        relation: relation.to_string(),
+        lhs_commitment,
+        rhs_commitment: Some(rhs_commitment),
+        public_constant: None,
+        output_commitment,
+        relation_commitment,
+        relation_blinding,
+        nonce_commitment,
+        nonce_blinding,
+        range_inputs: vec![
+            SfcsZkPrivateVmRangeInput {
+                label: format!("{prefix}:lhs"),
+                value: lhs,
+                blinding: lhs_blinding,
+                commitment: lhs_commitment,
+            },
+            SfcsZkPrivateVmRangeInput {
+                label: format!("{prefix}:rhs"),
+                value: rhs,
+                blinding: rhs_blinding,
+                commitment: rhs_commitment,
+            },
+            SfcsZkPrivateVmRangeInput {
+                label: format!("{prefix}:output"),
+                value: output,
+                blinding: output_blinding,
+                commitment: output_commitment,
+            },
+        ],
+    })
+}
+
+fn private_vm_immediate_linear_relation_preimage(
+    step_index: u64,
+    relation: &str,
+    lhs: u32,
+    constant: u32,
+    output: u32,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmLinearRelationPreimage, SfcsZkError> {
+    let prefix = format!("linear:{step_index}:{relation}");
+    let lhs_blinding = private_vm_blinding_scalar(&format!("{prefix}:lhs"), seed);
+    let output_blinding = private_vm_blinding_scalar(&format!("{prefix}:output"), seed);
+    let lhs_commitment = pedersen_commit(lhs, lhs_blinding);
+    let output_commitment = pedersen_commit(output, output_blinding);
+    let (relation_commitment, relation_blinding) = match relation {
+        "addi" => (
+            output_commitment
+                - lhs_commitment
+                - value_base().mul_bigint(Fr::from(constant).into_bigint()),
+            output_blinding - lhs_blinding,
+        ),
+        "subi" => (
+            output_commitment - lhs_commitment
+                + value_base().mul_bigint(Fr::from(constant).into_bigint()),
+            output_blinding - lhs_blinding,
+        ),
+        "scale" => (
+            output_commitment - lhs_commitment.mul_bigint(Fr::from(constant).into_bigint()),
+            output_blinding - lhs_blinding * Fr::from(constant),
+        ),
+        _ => {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported immediate linear relation {relation}"
+            )))
+        }
+    };
+    let nonce_blinding = private_vm_nonce_scalar(&prefix, "relation", seed);
+    let nonce_commitment = blinding_base().mul_bigint(nonce_blinding.into_bigint());
+    Ok(SfcsZkPrivateVmLinearRelationPreimage {
+        step_index,
+        relation: relation.to_string(),
+        lhs_commitment,
+        rhs_commitment: None,
+        public_constant: Some(constant),
+        output_commitment,
+        relation_commitment,
+        relation_blinding,
+        nonce_commitment,
+        nonce_blinding,
+        range_inputs: vec![
+            SfcsZkPrivateVmRangeInput {
+                label: format!("{prefix}:lhs"),
+                value: lhs,
+                blinding: lhs_blinding,
+                commitment: lhs_commitment,
+            },
+            SfcsZkPrivateVmRangeInput {
+                label: format!("{prefix}:output"),
+                value: output,
+                blinding: output_blinding,
+                commitment: output_commitment,
+            },
+        ],
+    })
+}
+
 fn private_vm_blinding_scalar(label: &str, seed: &[u8; 32]) -> Fr {
     let mut hasher = Sha256::new();
     hasher.update(ZK_PRIVATE_VM_BLINDING_DOMAIN);
@@ -826,6 +1755,7 @@ fn derive_challenge(
 fn derive_private_vm_challenge(
     statement: &SfcsZkPrivateVmStatement,
     nonce_commitments: &[(String, Fr, Fr, String)],
+    linear_relation_preimages: &[SfcsZkPrivateVmLinearRelationPreimage],
 ) -> Result<Fr, SfcsZkError> {
     let mut hasher = Sha256::new();
     hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
@@ -834,6 +1764,87 @@ fn derive_private_vm_challenge(
         hasher.update(label.as_bytes());
         hasher.update(nonce_commitment.as_bytes());
     }
+    for relation in linear_relation_preimages {
+        hasher.update(relation.step_index.to_le_bytes());
+        hasher.update(relation.relation.as_bytes());
+        hasher.update(point_to_hex(&relation.nonce_commitment)?.as_bytes());
+    }
+    Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
+}
+
+fn derive_private_vm_challenge_from_proof(
+    statement: &SfcsZkPrivateVmStatement,
+    nonce_commitments: &[(String, Fr, Fr, String)],
+    linear_relation_proofs: &[SfcsZkPrivateVmLinearRelationProof],
+) -> Result<Fr, SfcsZkError> {
+    let mut hasher = Sha256::new();
+    hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
+    hasher.update(serde_json::to_vec(statement)?);
+    for (label, _, _, nonce_commitment) in nonce_commitments {
+        hasher.update(label.as_bytes());
+        hasher.update(nonce_commitment.as_bytes());
+    }
+    for relation in linear_relation_proofs {
+        hasher.update(relation.step_index.to_le_bytes());
+        hasher.update(relation.relation.as_bytes());
+        hasher.update(relation.nonce_commitment.as_bytes());
+    }
+    Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
+}
+
+fn derive_range_bit_challenge(
+    label: &str,
+    index: usize,
+    bit_commitment: &EdwardsProjective,
+    zero_nonce: &EdwardsProjective,
+    one_nonce: &EdwardsProjective,
+) -> Result<Fr, SfcsZkError> {
+    let mut hasher = Sha256::new();
+    hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
+    hasher.update(b"range-bit\0");
+    hasher.update(label.as_bytes());
+    hasher.update((index as u64).to_le_bytes());
+    hasher.update(point_to_bytes(bit_commitment)?);
+    hasher.update(point_to_bytes(zero_nonce)?);
+    hasher.update(point_to_bytes(one_nonce)?);
+    Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
+}
+
+fn derive_range_recomposition_challenge(
+    label: &str,
+    value_commitment: &EdwardsProjective,
+    bit_commitments: &[EdwardsProjective],
+    recomposition_commitment: &EdwardsProjective,
+    nonce_commitment: &EdwardsProjective,
+) -> Result<Fr, SfcsZkError> {
+    let mut hasher = Sha256::new();
+    hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
+    hasher.update(b"range-recomposition\0");
+    hasher.update(label.as_bytes());
+    hasher.update(point_to_bytes(value_commitment)?);
+    for bit_commitment in bit_commitments {
+        hasher.update(point_to_bytes(bit_commitment)?);
+    }
+    hasher.update(point_to_bytes(recomposition_commitment)?);
+    hasher.update(point_to_bytes(nonce_commitment)?);
+    Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
+}
+
+fn derive_equality_challenge(
+    label: &str,
+    left_commitment: &EdwardsProjective,
+    right_commitment: &EdwardsProjective,
+    difference_commitment: &EdwardsProjective,
+    nonce_commitment: &EdwardsProjective,
+) -> Result<Fr, SfcsZkError> {
+    let mut hasher = Sha256::new();
+    hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
+    hasher.update(b"equality\0");
+    hasher.update(label.as_bytes());
+    hasher.update(point_to_bytes(left_commitment)?);
+    hasher.update(point_to_bytes(right_commitment)?);
+    hasher.update(point_to_bytes(difference_commitment)?);
+    hasher.update(point_to_bytes(nonce_commitment)?);
     Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
 }
 

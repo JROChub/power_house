@@ -180,7 +180,8 @@ pub use sfcs::vm::{
 pub use sfcs::zk::{
     encode_rv32_add, verify_private_add_embedding, verify_private_add_program,
     verify_private_vm_embedding, SfcsZkError, SfcsZkPrivateAddProof, SfcsZkPrivateAddStatement,
-    SfcsZkPrivateAddWitness, SfcsZkPrivateVmOpeningProof, SfcsZkPrivateVmProof,
+    SfcsZkPrivateAddWitness, SfcsZkPrivateVmBitProof, SfcsZkPrivateVmLinearRelationProof,
+    SfcsZkPrivateVmOpeningProof, SfcsZkPrivateVmProof, SfcsZkPrivateVmRangeProof,
     SfcsZkPrivateVmStatement, SfcsZkPrivateVmWitness, SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
     SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT,
 };

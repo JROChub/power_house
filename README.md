@@ -48,9 +48,10 @@ The primary workflow is **Power House Identity + Rootprint**:
   plans, a deterministic RV32I VM execution foundation, public VM transition
   constraint proofs with memory/range coverage, broader Rust-subset,
   LLVM-style SSA, and WASM-style stack compiler paths, the first
-  privacy-preserving private-add and private-VM commitment profiles, an
-  offline `julian sfcs` CLI, and `.pha` embedding verification without
-  mutating Rootprint v1.
+  privacy-preserving private-add and private-VM proof profiles, verifier-side
+  private linear transition checks, zero-knowledge u32 range proofs for
+  committed VM values, an offline `julian sfcs` CLI, and `.pha` embedding
+  verification without mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -170,8 +171,11 @@ audited, and tested end to end
 without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
 currently provides two auditable privacy milestones: a constrained Rust-subset
 `u32 + u32 -> u32` compiler with a private no-overflow RV32I add proof, and a
-general private-VM commitment profile that hides private inputs and trace data
-while publishing public outputs, commitments, and constraint coverage.
+general private-VM profile that hides private inputs and trace data while
+  publishing public outputs, digest commitments, verifier-side homomorphic
+  transition checks for linear/no-overflow VM relations, zero-knowledge u32 range
+  proofs for those committed VM values, private read-after-write memory
+  consistency proofs, and constraint coverage.
 
 ```bash
 cargo install power_house --features sfcs-zk
@@ -320,9 +324,16 @@ The complete procedure and expected rejection behavior are documented in the
   first privacy-preserving SFCS proof profile, proving committed private add
   inputs match a public output without exposing the inputs.
 - [`SfcsZkPrivateVmProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmProof.html):
-  general private VM commitment profile for supported RV32I executions, hiding
-  private inputs and trace data while binding public outputs and coverage
-  counters.
+  general private VM proof profile for supported RV32I executions, hiding
+  private inputs and trace data while binding public outputs, digest
+  commitments, linear transition proofs, u32 range proofs, private memory
+  consistency proofs, and coverage counters.
+- [`SfcsZkPrivateVmLinearRelationProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmLinearRelationProof.html):
+  homomorphic verifier-side proof for private `add`, `addi`, `sub`, `subi`,
+  and no-overflow public-scale VM relations.
+- [`SfcsZkPrivateVmRangeProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmRangeProof.html):
+  zero-knowledge 32-bit bit-decomposition and recomposition proof for committed
+  private VM values.
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 

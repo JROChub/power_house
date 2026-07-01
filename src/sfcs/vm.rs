@@ -127,6 +127,7 @@ impl SfcsVmProgram {
         for step_index in 0..self.max_steps {
             let pc = state.pc;
             let instruction = self.fetch(pc)?;
+            let registers_before = state.registers;
             let registers_before_digest = register_digest(&state.registers)?;
             let memory_before_digest = memory_digest(&state.memory)?;
             let state_before_digest = state_digest(&state)?;
@@ -144,6 +145,15 @@ impl SfcsVmProgram {
                 rd: decoded.rd,
                 rs1: decoded.rs1,
                 rs2: decoded.rs2,
+                rd_value_after: decoded
+                    .rd
+                    .map(|register| state.registers[register as usize]),
+                rs1_value_before: decoded
+                    .rs1
+                    .map(|register| registers_before[register as usize]),
+                rs2_value_before: decoded
+                    .rs2
+                    .map(|register| registers_before[register as usize]),
                 immediate: decoded.immediate,
                 next_pc: state.pc,
                 branch_taken: result.branch_taken,
@@ -496,6 +506,15 @@ pub struct SfcsVmTraceStep {
     /// Source register 2, when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rs2: Option<u8>,
+    /// Destination register value after execution, when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rd_value_after: Option<u32>,
+    /// Source register 1 value before execution, when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rs1_value_before: Option<u32>,
+    /// Source register 2 value before execution, when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rs2_value_before: Option<u32>,
     /// Decoded immediate, when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub immediate: Option<i32>,
@@ -534,6 +553,9 @@ impl SfcsVmTraceStep {
             "rd": self.rd,
             "rs1": self.rs1,
             "rs2": self.rs2,
+            "rd_value_after": self.rd_value_after,
+            "rs1_value_before": self.rs1_value_before,
+            "rs2_value_before": self.rs2_value_before,
             "immediate": self.immediate,
             "next_pc": self.next_pc,
             "branch_taken": self.branch_taken,
