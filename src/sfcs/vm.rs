@@ -582,6 +582,15 @@ pub struct SfcsVmMemoryAccess {
     pub width: u8,
     /// Value loaded or stored.
     pub value: u32,
+    /// Little-endian bytes read from or written to memory.
+    ///
+    /// The full `value` field records the architectural load/store register
+    /// value. This byte vector records the actual addressed bytes so
+    /// partial-width memory proofs can bind `sb`, `sh`, `lb`, `lh`, `lbu`, and
+    /// `lhu` without conflating stored bytes with sign-extended register
+    /// values.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub bytes: Vec<u8>,
 }
 
 /// Public VM outputs.
@@ -820,20 +829,40 @@ fn execute_instruction(
         0x03 => {
             let address =
                 state.registers[rs1(instruction) as usize].wrapping_add(imm_i(instruction) as u32);
-            let loaded = match funct3(instruction) {
-                0x0 => sign_extend(load_u8(&state.memory, address)? as u32, 8) as u32,
+            let (loaded, bytes) = match funct3(instruction) {
+                0x0 => {
+                    let bytes = vec![load_u8(&state.memory, address)?];
+                    (sign_extend(bytes[0] as u32, 8) as u32, bytes)
+                }
                 0x1 => {
                     ensure_aligned(address, 2)?;
-                    sign_extend(load_u16(&state.memory, address)? as u32, 16) as u32
+                    let raw = load_u16(&state.memory, address)?;
+                    (
+                        sign_extend(raw as u32, 16) as u32,
+                        vec![raw as u8, (raw >> 8) as u8],
+                    )
                 }
                 0x2 => {
                     ensure_aligned(address, 4)?;
-                    load_u32(&state.memory, address)?
+                    let raw = load_u32(&state.memory, address)?;
+                    (
+                        raw,
+                        vec![
+                            raw as u8,
+                            (raw >> 8) as u8,
+                            (raw >> 16) as u8,
+                            (raw >> 24) as u8,
+                        ],
+                    )
                 }
-                0x4 => load_u8(&state.memory, address)? as u32,
+                0x4 => {
+                    let bytes = vec![load_u8(&state.memory, address)?];
+                    (bytes[0] as u32, bytes)
+                }
                 0x5 => {
                     ensure_aligned(address, 2)?;
-                    load_u16(&state.memory, address)? as u32
+                    let raw = load_u16(&state.memory, address)?;
+                    (raw as u32, vec![raw as u8, (raw >> 8) as u8])
                 }
                 _ => return Err(invalid_instruction(instruction, "unsupported load funct3")),
             };
@@ -843,26 +872,35 @@ fn execute_instruction(
                 address,
                 width: load_width(funct3(instruction))?,
                 value: loaded,
+                bytes,
             });
         }
         0x23 => {
             let address =
                 state.registers[rs1(instruction) as usize].wrapping_add(imm_s(instruction) as u32);
             let value = state.registers[rs2(instruction) as usize];
-            let width = match funct3(instruction) {
+            let (width, bytes) = match funct3(instruction) {
                 0x0 => {
-                    store_u8(&mut state.memory, address, value as u8);
-                    1
+                    let bytes = vec![value as u8];
+                    store_u8(&mut state.memory, address, bytes[0]);
+                    (1, bytes)
                 }
                 0x1 => {
                     ensure_aligned(address, 2)?;
+                    let bytes = vec![value as u8, (value >> 8) as u8];
                     store_u16(&mut state.memory, address, value as u16);
-                    2
+                    (2, bytes)
                 }
                 0x2 => {
                     ensure_aligned(address, 4)?;
+                    let bytes = vec![
+                        value as u8,
+                        (value >> 8) as u8,
+                        (value >> 16) as u8,
+                        (value >> 24) as u8,
+                    ];
                     store_u32(&mut state.memory, address, value);
-                    4
+                    (4, bytes)
                 }
                 _ => return Err(invalid_instruction(instruction, "unsupported store funct3")),
             };
@@ -871,6 +909,7 @@ fn execute_instruction(
                 address,
                 width,
                 value,
+                bytes,
             });
         }
         0x13 => {

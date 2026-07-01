@@ -1,5 +1,23 @@
 # Release Notes
 
+## v0.3.20 - 2026-07-01
+
+### SFCS Private VM Proof Coverage
+- Added finite-relation private bitwise proofs for `and`, `or`, `xor`,
+  `andi`, `ori`, and `xori`, tied to the same bit commitments used by the
+  private VM range layer.
+- Added signed and unsigned private comparison proofs for `slt`, `sltu`,
+  `slti`, and `sltiu`.
+- Added non-equality and order branch proofs for `beq`, `bne`, `blt`, `bge`,
+  `bltu`, and `bgeu`, while retaining equality proofs for the equality branch
+  cases.
+- Added byte-level private memory semantics for partial-width RV32I loads and
+  stores, including low-byte store extraction, byte read-after-write
+  consistency, and `lb`/`lh` sign-extension versus `lbu`/`lhu` zero-extension.
+- Added CLI/report counters for `zk_memory_byte_proofs`,
+  `zk_bitwise_proofs`, and `zk_comparison_proofs`, with mutation tests for all
+  new proof families.
+
 ## v0.3.19 - 2026-06-30
 
 ### SFCS Private Proof Pipeline

@@ -1998,6 +1998,9 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
         "zk_range_proofs": proof.statement.zk_range_proofs,
         "zk_memory_consistency_proofs": proof.statement.zk_memory_consistency_proofs,
         "zk_memory_value_proofs": proof.statement.zk_memory_value_proofs,
+        "zk_memory_byte_proofs": proof.statement.zk_memory_byte_proofs,
+        "zk_bitwise_proofs": proof.statement.zk_bitwise_proofs,
+        "zk_comparison_proofs": proof.statement.zk_comparison_proofs,
         "zk_branch_proofs": proof.statement.zk_branch_proofs,
         "commitments": proof.statement.commitments,
         "proof_digest": proof.proof_digest,
@@ -2045,6 +2048,18 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
     println!(
         "zk_memory_value_proofs: {}",
         report["zk_memory_value_proofs"].as_u64().unwrap_or(0)
+    );
+    println!(
+        "zk_memory_byte_proofs: {}",
+        report["zk_memory_byte_proofs"].as_u64().unwrap_or(0)
+    );
+    println!(
+        "zk_bitwise_proofs: {}",
+        report["zk_bitwise_proofs"].as_u64().unwrap_or(0)
+    );
+    println!(
+        "zk_comparison_proofs: {}",
+        report["zk_comparison_proofs"].as_u64().unwrap_or(0)
     );
     println!(
         "zk_branch_proofs: {}",
@@ -2096,6 +2111,15 @@ fn cmd_sfcs_verify_zk_pha(args: Vec<String>) {
                 println!(
                     "zk_memory_value_proofs: {}",
                     proof.statement.zk_memory_value_proofs
+                );
+                println!(
+                    "zk_memory_byte_proofs: {}",
+                    proof.statement.zk_memory_byte_proofs
+                );
+                println!("zk_bitwise_proofs: {}", proof.statement.zk_bitwise_proofs);
+                println!(
+                    "zk_comparison_proofs: {}",
+                    proof.statement.zk_comparison_proofs
                 );
                 println!("zk_branch_proofs: {}", proof.statement.zk_branch_proofs);
                 println!("private_witness_embedded: false");

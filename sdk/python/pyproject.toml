@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "power-house-sdk"
-version = "0.3.19"
+version = "0.3.20"
 description = "Zero-dependency Python SDK for Power House identities, Archive, and Rootprint v1"
 readme = "README.md"
 requires-python = ">=3.9"

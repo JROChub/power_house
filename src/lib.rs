@@ -180,9 +180,13 @@ pub use sfcs::vm::{
 pub use sfcs::zk::{
     encode_rv32_add, verify_private_add_embedding, verify_private_add_program,
     verify_private_vm_embedding, SfcsZkError, SfcsZkPrivateAddProof, SfcsZkPrivateAddStatement,
-    SfcsZkPrivateAddWitness, SfcsZkPrivateVmBitProof, SfcsZkPrivateVmLinearRelationProof,
+    SfcsZkPrivateAddWitness, SfcsZkPrivateVmBitProof, SfcsZkPrivateVmBitwiseProof,
+    SfcsZkPrivateVmBranchProof, SfcsZkPrivateVmComparisonProof, SfcsZkPrivateVmEqualityProof,
+    SfcsZkPrivateVmLinearRelationProof, SfcsZkPrivateVmMemoryByteProof,
+    SfcsZkPrivateVmMemoryConsistencyProof, SfcsZkPrivateVmMemoryValueProof,
     SfcsZkPrivateVmOpeningProof, SfcsZkPrivateVmProof, SfcsZkPrivateVmRangeProof,
-    SfcsZkPrivateVmStatement, SfcsZkPrivateVmWitness, SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
+    SfcsZkPrivateVmSelectiveBranchProof, SfcsZkPrivateVmSelectiveProof, SfcsZkPrivateVmStatement,
+    SfcsZkPrivateVmWitness, SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
     SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT,
 };
 #[cfg(feature = "sfcs")]

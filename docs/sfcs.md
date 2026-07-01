@@ -402,9 +402,15 @@ coverage, and publishes only:
   those linear transition proofs;
 - zero-knowledge memory equality proofs for eligible private read-after-write
   events;
-- private memory access/register value equality proofs for eligible `lw/sw`
+- private memory access/register value equality proofs for eligible load/store
   transitions;
-- zero-knowledge equality-branch proofs for covered `beq`/`bne` cases;
+- byte-level memory semantics proofs for partial-width RV32I loads and stores,
+  including low-byte store extraction, byte consistency, and sign/zero
+  extension binding;
+- finite-relation bitwise proofs for private logical operations;
+- signed and unsigned comparison proofs for private comparison instructions;
+- branch-condition proofs for equality, non-equality, signed order, and
+  unsigned order branches;
 - a `.pha` artifact that does not embed raw private inputs or raw trace data.
 
 CLI workflow:
@@ -527,11 +533,11 @@ proof_digest: sha256:...
 public_output: x3=12
 ```
 
-This is a real privacy profile, but it is not a full arbitrary VM proof. It is
-accepted as Phase Gate 2 groundwork only for the constrained no-overflow add
-program. Arbitrary private VM execution remains blocked until a proof system
-verifies the full instruction transition semantics, range constraints, memory
-consistency, and public output binding for general traces.
+This is a real privacy profile for the supported RV32I private-VM subset. It is
+still not a production unrestricted zkVM: promotion requires broader
+conformance vectors, independent security review, performance hardening, and
+normal Rust/LLVM/binary-WASM compatibility without weakening `.pha` or
+Rootprint identity rules.
 
 ## Corrected Architecture
 

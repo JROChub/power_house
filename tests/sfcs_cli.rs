@@ -541,9 +541,12 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(prove_stdout.contains("proof_digest: sha256:"));
     assert!(prove_stdout.contains("transition_checks: 6"));
     assert!(prove_stdout.contains("linear_relation_checks: 5"));
-    assert!(prove_stdout.contains("zk_range_proofs: 19"));
+    assert!(prove_stdout.contains("zk_range_proofs: 33"));
     assert!(prove_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(prove_stdout.contains("zk_memory_value_proofs: 2"));
+    assert!(prove_stdout.contains("zk_memory_byte_proofs: 2"));
+    assert!(prove_stdout.contains("zk_bitwise_proofs: 0"));
+    assert!(prove_stdout.contains("zk_comparison_proofs: 0"));
     assert!(prove_stdout.contains("zk_branch_proofs: 0"));
     assert!(prove_stdout.contains("private_witness_embedded: false"));
 
@@ -555,9 +558,12 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert_eq!(report_json["public_outputs"]["registers"]["x4"], 12);
     assert_eq!(report_json["public_outputs"]["memory"]["0"], 12);
     assert_eq!(report_json["linear_relation_checks"], 5);
-    assert_eq!(report_json["zk_range_proofs"], 19);
+    assert_eq!(report_json["zk_range_proofs"], 33);
     assert_eq!(report_json["zk_memory_consistency_proofs"], 1);
     assert_eq!(report_json["zk_memory_value_proofs"], 2);
+    assert_eq!(report_json["zk_memory_byte_proofs"], 2);
+    assert_eq!(report_json["zk_bitwise_proofs"], 0);
+    assert_eq!(report_json["zk_comparison_proofs"], 0);
     assert_eq!(report_json["zk_branch_proofs"], 0);
     assert_eq!(report_json["private_witness_embedded"], false);
     assert!(report_json["commitments"]["trace_digest"]
@@ -576,9 +582,12 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(verify_stdout.contains("SFCS ZK PRIVATE VM PHA VALID"));
     assert!(verify_stdout.contains("transition_checks: 6"));
     assert!(verify_stdout.contains("linear_relation_checks: 5"));
-    assert!(verify_stdout.contains("zk_range_proofs: 19"));
+    assert!(verify_stdout.contains("zk_range_proofs: 33"));
     assert!(verify_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(verify_stdout.contains("zk_memory_value_proofs: 2"));
+    assert!(verify_stdout.contains("zk_memory_byte_proofs: 2"));
+    assert!(verify_stdout.contains("zk_bitwise_proofs: 0"));
+    assert!(verify_stdout.contains("zk_comparison_proofs: 0"));
     assert!(verify_stdout.contains("zk_branch_proofs: 0"));
     assert!(verify_stdout.contains("private_witness_embedded: false"));
 }
