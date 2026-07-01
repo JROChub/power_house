@@ -23,17 +23,18 @@ use power_house::net::{
     ValidatorRegistration, ValidatorRegistry, OBSERVER_REGISTRY_SCHEMA, VALIDATOR_REGISTRY_SCHEMA,
 };
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
+#[cfg(feature = "sfcs")]
+use power_house::{
+    compile_llvm_ir_source, compile_public_rust_source, compile_wasm_stack_source,
+    verify_sfcs_execution_embedding, verify_sfcs_pha_embedding,
+    verify_sfcs_vm_constraint_embedding, verify_sfcs_vm_execution_embedding, SfcsCompilerError,
+    SfcsError, SfcsGraph, SfcsVmConstraintError, SfcsVmConstraintProof, SfcsVmError, SfcsVmInputs,
+    SfcsVmProgram,
+};
 #[cfg(feature = "sfcs-zk")]
 use power_house::{
     compile_private_add_source, verify_sfcs_zk_private_add_embedding, SfcsZkError,
     SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
-};
-#[cfg(feature = "sfcs")]
-use power_house::{
-    compile_public_rust_source, compile_wasm_stack_source, verify_sfcs_execution_embedding,
-    verify_sfcs_pha_embedding, verify_sfcs_vm_constraint_embedding,
-    verify_sfcs_vm_execution_embedding, SfcsCompilerError, SfcsError, SfcsGraph,
-    SfcsVmConstraintError, SfcsVmConstraintProof, SfcsVmError, SfcsVmInputs, SfcsVmProgram,
 };
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
@@ -209,6 +210,9 @@ fn print_sfcs_help() {
     println!("Usage: julian sfcs <source|eval|inspect|verify-pha|vm-run|verify-vm-pha> ...");
     println!("  source <source.sfcs> --output <graph.json>");
     println!("  rust-public <source.rs> --graph-output <graph.json> \\");
+    println!("       [--semantic-output <packet.json>] [--artifact-output <graph.pha>] \\");
+    println!("       [--report <report.json>] [--label <name>]");
+    println!("  llvm-ir <source.ll> --graph-output <graph.json> \\");
     println!("       [--semantic-output <packet.json>] [--artifact-output <graph.pha>] \\");
     println!("       [--report <report.json>] [--label <name>]");
     println!("  wasm-stack <source.wasmstack> --graph-output <graph.json> \\");
@@ -639,6 +643,7 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
         "-h" | "--help" => print_sfcs_help(),
         "source" => cmd_sfcs_source(tail),
         "rust-public" => cmd_sfcs_rust_public(tail),
+        "llvm-ir" => cmd_sfcs_llvm_ir(tail),
         "wasm-stack" => cmd_sfcs_wasm_stack(tail),
         "eval" => cmd_sfcs_eval(tail),
         "inspect" => cmd_sfcs_inspect(tail),
@@ -995,6 +1000,88 @@ fn cmd_sfcs_rust_public(args: Vec<String>) {
         write_json(&path, &report);
     }
     println!("SFCS RUST PUBLIC");
+    println!(
+        "source_digest: {}",
+        report["source_digest"].as_str().unwrap_or("")
+    );
+    println!("graph_digest: {graph_digest}");
+    println!("nodes: {}", report["graph_nodes"].as_u64().unwrap_or(0));
+    println!(
+        "semantic_packet_digest: {}",
+        report["semantic_packet_digest"].as_str().unwrap_or("")
+    );
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_llvm_ir(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut graph_output = None;
+    let mut semantic_output = None;
+    let mut artifact_output = None;
+    let mut report_path = None;
+    let mut label = "sfcs-llvm-ir".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--graph-output" => {
+                graph_output = Some(PathBuf::from(take_option(&mut iter, "--graph-output")))
+            }
+            "--semantic-output" => {
+                semantic_output = Some(PathBuf::from(take_option(&mut iter, "--semantic-output")))
+            }
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path = source_path.unwrap_or_else(|| fatal("sfcs llvm-ir requires <source.ll>"));
+    let graph_output = graph_output.unwrap_or_else(|| fatal("--graph-output is required"));
+    let source = fs::read_to_string(&source_path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", source_path.display())));
+    let compiled = compile_llvm_ir_source(&source).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_compiler_exit_for_error(&err),
+            &format!("SFCS LLVM IR compilation failed: {err}"),
+        )
+    });
+    let graph_digest = compiled
+        .graph_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS LLVM IR graph digest failed: {err}")));
+    write_json(&graph_output, &compiled.graph);
+    if let Some(path) = semantic_output {
+        write_json(&path, &compiled.semantic_packet);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = compiled
+            .graph
+            .to_pha_artifact(&label)
+            .unwrap_or_else(|err| fatal(&format!("SFCS LLVM IR .pha failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-llvm-ir-cli-report/v1",
+        "source": source_path.display().to_string(),
+        "compiler_schema": compiled.schema,
+        "source_digest": compiled.source_digest,
+        "function_name": compiled.function_name,
+        "parameters": compiled.parameters,
+        "graph_digest": graph_digest,
+        "graph_nodes": compiled.graph.nodes.len(),
+        "graph_outputs": compiled.graph.outputs,
+        "semantic_packet_digest": compiled.semantic_packet["packet_digest"],
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    println!("SFCS LLVM IR");
     println!(
         "source_digest: {}",
         report["source_digest"].as_str().unwrap_or("")

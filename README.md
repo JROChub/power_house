@@ -46,10 +46,10 @@ The primary workflow is **Power House Identity + Rootprint**:
 - **SFCS draft primitives** are opt-in through `--features sfcs` and provide
   direct fractal parsing, dense integer and memory execution traces, synthesis
   plans, a deterministic RV32I VM execution foundation, public VM transition
-  constraint proofs with memory/range coverage, broader Rust-subset and
-  WASM-style stack compiler paths, the first privacy-preserving private-add
-  profile, an offline `julian sfcs` CLI, and `.pha` embedding verification
-  without mutating Rootprint v1.
+  constraint proofs with memory/range coverage, broader Rust-subset,
+  LLVM-style SSA, and WASM-style stack compiler paths, the first
+  privacy-preserving private-add profile, an offline `julian sfcs` CLI, and
+  `.pha` embedding verification without mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -158,13 +158,14 @@ Compile broader public source frontends directly into SFCS graphs:
 
 ```bash
 julian sfcs rust-public score.rs --graph-output score.graph.json
+julian sfcs llvm-ir score.ll --graph-output score-llvm.graph.json
 julian sfcs wasm-stack score.wasmstack --graph-output score-wasm.graph.json
 ```
 
 The VM foundation is not a complete zkVM release. The real zero-knowledge
-privacy layer for arbitrary private VM execution and the full Rust/LLVM/WASM
-compiler family are
-release-gated until they are implemented, audited, and tested end to end
+privacy layer for arbitrary private VM execution and the full unrestricted
+Rust/LLVM/WASM compiler family are release-gated until they are implemented,
+audited, and tested end to end
 without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
 currently provides the first auditable end-to-end privacy path: a constrained
 Rust-subset `u32 + u32 -> u32` compiler, a private no-overflow RV32I add proof
@@ -300,6 +301,9 @@ The complete procedure and expected rejection behavior are documented in the
 - [`compile_public_rust_source`](https://docs.rs/power_house/latest/power_house/fn.compile_public_rust_source.html):
   public Rust-subset compiler that lowers multi-parameter expressions directly
   into SFCS graphs.
+- [`compile_llvm_ir_source`](https://docs.rs/power_house/latest/power_house/fn.compile_llvm_ir_source.html):
+  deterministic LLVM-style SSA subset compiler for i32 arithmetic,
+  comparisons, `select`, and explicit returns into SFCS graphs.
 - [`compile_wasm_stack_source`](https://docs.rs/power_house/latest/power_house/fn.compile_wasm_stack_source.html):
   deterministic WASM-style stack IR compiler that lowers i32 stack operations
   directly into SFCS graphs.

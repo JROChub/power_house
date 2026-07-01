@@ -15,12 +15,13 @@ use crate::memory::{semantic_packet_digest, MemoryError};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
 const SOURCE_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs-compiler:v1-draft:source\0";
 const PUBLIC_RUST_SCHEMA: &str = "power-house/sfcs-rust-public/v1-draft";
+const LLVM_IR_SCHEMA: &str = "power-house/sfcs-llvm-ir/v1-draft";
 const WASM_STACK_SCHEMA: &str = "power-house/sfcs-wasm-stack/v1-draft";
 #[cfg(feature = "sfcs-zk")]
 const PRIVATE_ADD_SCHEMA: &str = "power-house/sfcs-rust-private-add/v1-draft";
@@ -48,6 +49,25 @@ pub struct SfcsCompiledPublicRust {
     pub semantic_packet: Value,
 }
 
+/// Compiler output for the LLVM-style SSA IR to SFCS path.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsCompiledLlvmIr {
+    /// Compiler schema.
+    pub schema: String,
+    /// Source language.
+    pub language: String,
+    /// Source digest after deterministic normalization.
+    pub source_digest: String,
+    /// Function name.
+    pub function_name: String,
+    /// Ordered parameter names without `%`.
+    pub parameters: Vec<String>,
+    /// Generated SFCS graph.
+    pub graph: SfcsGraph,
+    /// Non-core semantic packet for Observatory/slbit-style display.
+    pub semantic_packet: Value,
+}
+
 /// Compiler output for the WASM-style stack IR to SFCS path.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsCompiledWasmStack {
@@ -66,6 +86,13 @@ pub struct SfcsCompiledWasmStack {
 }
 
 impl SfcsCompiledWasmStack {
+    /// Returns the generated SFCS graph digest.
+    pub fn graph_digest(&self) -> Result<String, SfcsCompilerError> {
+        Ok(self.graph.fractal_digest()?)
+    }
+}
+
+impl SfcsCompiledLlvmIr {
     /// Returns the generated SFCS graph digest.
     pub fn graph_digest(&self) -> Result<String, SfcsCompilerError> {
         Ok(self.graph.fractal_digest()?)
@@ -201,6 +228,91 @@ pub fn compile_public_rust_source(
         parameters: parsed.parameters,
         return_type: "u32".to_string(),
         sfcs_source,
+        graph,
+        semantic_packet: packet,
+    })
+}
+
+/// Compiles a deterministic LLVM-style SSA subset directly into an SFCS graph.
+///
+/// Supported line-oriented IR:
+///
+/// - `define i32 @name(i32 %a, i32 %b) {`
+/// - `%x = add|sub|mul|and|or|xor|shl|lshr i32 <lhs>, <rhs>`
+/// - `%x = icmp eq|ult|ugt|ule|uge i32 <lhs>, <rhs>`
+/// - `%x = select i1 <cond>, i32 <true>, i32 <false>`
+/// - `ret i32 <value>`
+pub fn compile_llvm_ir_source(source: &str) -> Result<SfcsCompiledLlvmIr, SfcsCompilerError> {
+    let normalized = normalize_llvm_ir_source(source)?;
+    let source_digest = source_digest(&normalized);
+    let mut compiler = LlvmIrCompiler::new();
+    for (line_index, line) in normalized.lines().enumerate() {
+        compiler.process_line(line, line_index + 1)?;
+    }
+    let (function_name, parameters, graph) = compiler.finish()?;
+    let graph_digest = graph.fractal_digest()?;
+    let mut packet = json!({
+        "schema": "slbit/viz-packet/v3",
+        "packet_id": format!("slp_sfcs_llvm_ir_{}", &source_digest["sha256:".len()..18]),
+        "packet_digest": "",
+        "claim": {
+            "claim_id": format!("claim_{}", function_name),
+            "label": format!("LLVM-style SSA function {} compiled directly to SFCS", function_name),
+            "domain": "sfcs-llvm-ir-compiler",
+            "status": "explained",
+            "bound_core": {
+                "source_digest": source_digest,
+                "graph_digest": graph_digest,
+                "compiler_schema": LLVM_IR_SCHEMA
+            }
+        },
+        "transcript": {
+            "rounds": [
+                {
+                    "index": 0,
+                    "component": "llvm-ir-parser",
+                    "note": "Accepted a deterministic i32 SSA subset with explicit return."
+                },
+                {
+                    "index": 1,
+                    "component": "sfcs-fractal-emitter",
+                    "note": "Lowered SSA instructions directly into SFCS graph nodes without circuit flattening."
+                },
+                {
+                    "index": 2,
+                    "component": "truth-boundary",
+                    "note": "Generated semantic packet is non-core and cannot alter graph or .pha identity."
+                }
+            ]
+        },
+        "semantic_dag": {
+            "nodes": [
+                {"id": "llvm-ir-source", "type": "artifact", "label": "LLVM-style IR"},
+                {"id": "sfcs-graph", "type": "artifact", "label": "SFCS graph"}
+            ],
+            "edges": [
+                {"from": "llvm-ir-source", "to": "sfcs-graph", "kind": "lowered-to"}
+            ]
+        },
+        "views": {
+            "timeline": [],
+            "claim_cards": [],
+            "graphs": [],
+            "diffs": []
+        },
+        "explanation_constraints": {
+            "allowed_sources": ["packet_nodes", "transcript_rounds", "bound_core_metadata"],
+            "forbid_unbound_claims": true,
+            "mark_generated_text_non_authoritative": true
+        }
+    });
+    packet["packet_digest"] = json!(semantic_packet_digest(&packet)?);
+    Ok(SfcsCompiledLlvmIr {
+        schema: LLVM_IR_SCHEMA.to_string(),
+        language: "llvm-ir-subset".to_string(),
+        source_digest,
+        function_name,
+        parameters,
         graph,
         semantic_packet: packet,
     })
@@ -608,6 +720,375 @@ fn matching_brace(value: &str, open_index: usize) -> Result<usize, SfcsCompilerE
     Err(SfcsCompilerError::InvalidSource(
         "unclosed brace in if expression".to_string(),
     ))
+}
+
+fn normalize_llvm_ir_source(source: &str) -> Result<String, SfcsCompilerError> {
+    if source
+        .chars()
+        .any(|ch| ch.is_control() && ch != '\n' && ch != '\r' && ch != '\t')
+    {
+        return Err(SfcsCompilerError::InvalidSource(
+            "LLVM IR source contains unsupported control characters".to_string(),
+        ));
+    }
+    let lines = source
+        .lines()
+        .filter_map(|line| {
+            let line = line.split_once(';').map(|(head, _)| head).unwrap_or(line);
+            let normalized = line.split_whitespace().collect::<Vec<_>>().join(" ");
+            if normalized.is_empty() {
+                None
+            } else {
+                Some(normalized)
+            }
+        })
+        .collect::<Vec<_>>();
+    if lines.is_empty() {
+        return Err(SfcsCompilerError::InvalidSource(
+            "LLVM IR source is empty".to_string(),
+        ));
+    }
+    Ok(lines.join("\n"))
+}
+
+struct LlvmIrCompiler {
+    graph: SfcsGraph,
+    function_name: Option<String>,
+    parameters: Vec<String>,
+    values: BTreeMap<String, String>,
+    temp_counter: u64,
+    function_open: bool,
+    returned: bool,
+    closed: bool,
+}
+
+impl LlvmIrCompiler {
+    fn new() -> Self {
+        Self {
+            graph: SfcsGraph::new(Vec::new()),
+            function_name: None,
+            parameters: Vec::new(),
+            values: BTreeMap::new(),
+            temp_counter: 0,
+            function_open: false,
+            returned: false,
+            closed: false,
+        }
+    }
+
+    fn process_line(&mut self, line: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        if line.starts_with("define ") {
+            return self.define(line, line_number);
+        }
+        if line == "}" {
+            return self.close(line_number);
+        }
+        if self.closed {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: instructions after closing brace are not supported"
+            )));
+        }
+        if !self.function_open {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: LLVM IR must start with a define line"
+            )));
+        }
+        if line.ends_with(':') {
+            validate_identifier(line.trim_end_matches(':'))?;
+            return Ok(());
+        }
+        if self.returned {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: instructions after ret are not supported"
+            )));
+        }
+        if line.starts_with("ret ") {
+            return self.ret(line, line_number);
+        }
+        let Some((lhs, rhs)) = line.split_once(" = ") else {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: expected SSA assignment or ret"
+            )));
+        };
+        self.assignment(lhs.trim(), rhs.trim(), line_number)
+    }
+
+    fn finish(self) -> Result<(String, Vec<String>, SfcsGraph), SfcsCompilerError> {
+        if !self.function_open {
+            return Err(SfcsCompilerError::InvalidSource(
+                "LLVM IR did not define a function".to_string(),
+            ));
+        }
+        if !self.returned {
+            return Err(SfcsCompilerError::InvalidSource(
+                "LLVM IR function must return one i32 value".to_string(),
+            ));
+        }
+        if !self.closed {
+            return Err(SfcsCompilerError::InvalidSource(
+                "LLVM IR function must close with }".to_string(),
+            ));
+        }
+        self.graph.verify()?;
+        Ok((
+            self.function_name.unwrap_or_default(),
+            self.parameters,
+            self.graph,
+        ))
+    }
+
+    fn define(&mut self, line: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        if self.function_open {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: only one LLVM IR function is supported"
+            )));
+        }
+        let rest = line.strip_prefix("define i32 @").ok_or_else(|| {
+            SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: only `define i32 @name(...) {{` is supported"
+            ))
+        })?;
+        let (name, after_name) = rest.split_once('(').ok_or_else(|| {
+            SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: define line must include parameter list"
+            ))
+        })?;
+        validate_identifier(name)?;
+        let (params, after_params) = after_name.split_once(')').ok_or_else(|| {
+            SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: define parameter list is not closed"
+            ))
+        })?;
+        if after_params.trim() != "{" {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: define line must end with opening brace"
+            )));
+        }
+        self.function_name = Some(name.to_string());
+        let mut seen = BTreeSet::new();
+        if !params.trim().is_empty() {
+            for param in params.split(',') {
+                let parts = param.split_whitespace().collect::<Vec<_>>();
+                if parts.len() != 2 || parts[0] != "i32" {
+                    return Err(SfcsCompilerError::InvalidSource(format!(
+                        "line {line_number}: parameters must use `i32 %name`"
+                    )));
+                }
+                let source_name = parts[1];
+                if !source_name.starts_with('%') {
+                    return Err(SfcsCompilerError::InvalidSource(format!(
+                        "line {line_number}: parameter names must start with %"
+                    )));
+                }
+                let node_id = llvm_value_id(source_name)?;
+                if !seen.insert(node_id.clone()) {
+                    return Err(SfcsCompilerError::InvalidSource(format!(
+                        "line {line_number}: duplicate parameter {source_name}"
+                    )));
+                }
+                self.values.insert(source_name.to_string(), node_id.clone());
+                self.parameters
+                    .push(source_name.trim_start_matches('%').to_string());
+                self.graph
+                    .insert_node(SfcsNode::new(&node_id, SfcsOp::Input, Vec::new()))?;
+            }
+        }
+        self.function_open = true;
+        Ok(())
+    }
+
+    fn close(&mut self, line_number: usize) -> Result<(), SfcsCompilerError> {
+        if self.closed {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: duplicate closing brace"
+            )));
+        }
+        if !self.function_open {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: unexpected closing brace"
+            )));
+        }
+        if !self.returned {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: closing brace before ret"
+            )));
+        }
+        self.closed = true;
+        Ok(())
+    }
+
+    fn assignment(
+        &mut self,
+        lhs: &str,
+        rhs: &str,
+        line_number: usize,
+    ) -> Result<(), SfcsCompilerError> {
+        if !lhs.starts_with('%') {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: assignment target must be an SSA value"
+            )));
+        }
+        if self.values.contains_key(lhs) {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: SSA value {lhs} is already defined"
+            )));
+        }
+        let parts = rhs.split_whitespace().collect::<Vec<_>>();
+        match parts.as_slice() {
+            [op, "i32", left, right] => {
+                let op = match *op {
+                    "add" => SfcsOp::Add,
+                    "sub" => SfcsOp::Sub,
+                    "mul" => SfcsOp::Mul,
+                    "and" => SfcsOp::BitAnd,
+                    "or" => SfcsOp::BitOr,
+                    "xor" => SfcsOp::BitXor,
+                    "shl" => SfcsOp::Shl,
+                    "lshr" => SfcsOp::Shr,
+                    other => {
+                        return Err(SfcsCompilerError::InvalidSource(format!(
+                            "line {line_number}: unsupported LLVM i32 op `{other}`"
+                        )));
+                    }
+                };
+                let left = self.operand(left, line_number)?;
+                let right = self.operand(right, line_number)?;
+                self.define_node(lhs, op, vec![left, right], line_number)
+            }
+            ["icmp", predicate, "i32", left, right] => {
+                let op = match *predicate {
+                    "eq" => SfcsOp::Eq,
+                    "ult" => SfcsOp::Lt,
+                    "ugt" => SfcsOp::Gt,
+                    "ule" => SfcsOp::Le,
+                    "uge" => SfcsOp::Ge,
+                    other => {
+                        return Err(SfcsCompilerError::InvalidSource(format!(
+                            "line {line_number}: unsupported LLVM icmp predicate `{other}`"
+                        )));
+                    }
+                };
+                let left = self.operand(left, line_number)?;
+                let right = self.operand(right, line_number)?;
+                self.define_node(lhs, op, vec![left, right], line_number)
+            }
+            ["select", "i1", condition, "i32", true_value, "i32", false_value] => {
+                let condition = self.operand(condition, line_number)?;
+                let true_value = self.operand(true_value, line_number)?;
+                let false_value = self.operand(false_value, line_number)?;
+                self.define_node(
+                    lhs,
+                    SfcsOp::Branch,
+                    vec![condition, true_value, false_value],
+                    line_number,
+                )
+            }
+            _ => Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: unsupported LLVM IR assignment `{rhs}`"
+            ))),
+        }
+    }
+
+    fn define_node(
+        &mut self,
+        lhs: &str,
+        op: SfcsOp,
+        inputs: Vec<String>,
+        line_number: usize,
+    ) -> Result<(), SfcsCompilerError> {
+        let node_id = llvm_value_id(lhs)?;
+        if self.graph.nodes.contains_key(&node_id) {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: generated node id {node_id} collides"
+            )));
+        }
+        let inputs = self.distinct_inputs(inputs)?;
+        self.graph.insert_node(
+            SfcsNode::new(&node_id, op, inputs).with_metadata("source_op", "llvm-ir"),
+        )?;
+        self.values.insert(lhs.to_string(), node_id);
+        Ok(())
+    }
+
+    fn ret(&mut self, line: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        let parts = line.split_whitespace().collect::<Vec<_>>();
+        let ["ret", "i32", value] = parts.as_slice() else {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: only `ret i32 <value>` is supported"
+            )));
+        };
+        let output = self.operand(value, line_number)?;
+        self.graph.outputs = vec![output];
+        self.returned = true;
+        Ok(())
+    }
+
+    fn operand(&mut self, value: &str, line_number: usize) -> Result<String, SfcsCompilerError> {
+        let value = value.trim_end_matches(',').trim();
+        if value.starts_with('%') {
+            return self.values.get(value).cloned().ok_or_else(|| {
+                SfcsCompilerError::InvalidSource(format!(
+                    "line {line_number}: unknown LLVM value {value}"
+                ))
+            });
+        }
+        let parsed = value.parse::<u64>().map_err(|error| {
+            SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: invalid LLVM integer operand `{value}`: {error}"
+            ))
+        })?;
+        if parsed > u32::MAX as u64 {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: LLVM i32 constant is outside u32 range"
+            )));
+        }
+        let id = self.next_temp("const");
+        self.graph
+            .insert_node(SfcsNode::constant(&id, parsed as i64))?;
+        Ok(id)
+    }
+
+    fn distinct_inputs(&mut self, inputs: Vec<String>) -> Result<Vec<String>, SfcsCompilerError> {
+        let mut seen = BTreeSet::new();
+        let mut distinct = Vec::new();
+        for input in inputs {
+            if seen.insert(input.clone()) {
+                distinct.push(input);
+                continue;
+            }
+            let alias_id = self.next_temp("alias");
+            self.graph
+                .insert_node(SfcsNode::new(&alias_id, SfcsOp::Alias, vec![input]))?;
+            distinct.push(alias_id);
+        }
+        Ok(distinct)
+    }
+
+    fn next_temp(&mut self, label: &str) -> String {
+        loop {
+            let id = format!("__llvm_{label}_{:06}", self.temp_counter);
+            self.temp_counter += 1;
+            if !self.graph.nodes.contains_key(&id) {
+                return id;
+            }
+        }
+    }
+}
+
+fn llvm_value_id(value: &str) -> Result<String, SfcsCompilerError> {
+    let raw = value.trim_start_matches('%');
+    if raw.is_empty() {
+        return Err(SfcsCompilerError::InvalidSource(
+            "LLVM SSA value cannot be empty".to_string(),
+        ));
+    }
+    let id = if raw.chars().next().unwrap().is_ascii_digit() {
+        format!("v_{raw}")
+    } else {
+        raw.to_string()
+    };
+    validate_identifier(&id)?;
+    Ok(id)
 }
 
 fn normalize_wasm_stack_source(source: &str) -> Result<String, SfcsCompilerError> {
