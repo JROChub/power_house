@@ -11,9 +11,10 @@ computational identities.
 Power House includes the opt-in Sovereign Fractal Computation Substrate (SFCS):
 source text maps directly into deterministic computational-fractal graphs,
 executable dense integer and memory traces replay into digest-bound `.pha`
-artifacts, and synthesis plans record connected sub-fractal regions that route
-to the Sovereign fast path. Rootprint v1 and existing `.pha` identity rules
-remain unchanged.
+artifacts, VM executions can be recorded through a deterministic RV32I trace,
+and synthesis plans record connected sub-fractal regions that route to the
+Sovereign fast path. Rootprint v1 and existing `.pha` identity rules remain
+unchanged.
 
 The SFCS objective is to make direct source-to-fractal execution the native
 Power House path so traditional circuit compilers and zkVM workflows become
@@ -44,8 +45,9 @@ The primary workflow is **Power House Identity + Rootprint**:
   over `.pha` core identities.
 - **SFCS draft primitives** are opt-in through `--features sfcs` and provide
   direct fractal parsing, dense integer and memory execution traces, synthesis
-  plans, an offline `julian sfcs` CLI, and `.pha` execution embedding
-  verification without mutating Rootprint v1.
+  plans, a deterministic RV32I VM execution foundation, an offline
+  `julian sfcs` CLI, and `.pha` execution embedding verification without
+  mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -128,6 +130,22 @@ julian observatory verify \
   proof.rootprint.json \
   proof.observatory.json
 ```
+
+Run the opt-in SFCS VM foundation:
+
+```bash
+cargo install power_house --features sfcs
+julian sfcs vm-run rv32i.program.json \
+  --inputs rv32i.inputs.json \
+  --artifact-output rv32i.execution.pha \
+  --report rv32i.report.json
+julian sfcs verify-vm-pha rv32i.execution.pha
+```
+
+The VM foundation is not a complete zkVM release. The real zero-knowledge
+privacy layer and Rust compiler are release-gated until they are implemented,
+audited, and tested end to end without changing `.pha` or Rootprint identity
+rules. See the [SFCS zkVM gate](docs/sfcs_zkvm.md).
 
 See the [Power House + slbit Observatory guide](docs/slbit.md) for the complete
 Rust workflow, schemas, trust boundary, browser rendering, and conformance

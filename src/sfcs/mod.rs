@@ -5,6 +5,8 @@
 //! fractal can be committed as ordinary `.pha` core data and then anchored by
 //! Rootprint, but Rootprint v1 branch identity remains unchanged.
 
+pub mod vm;
+
 use crate::provenance::{PhaArtifact, PhaError};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

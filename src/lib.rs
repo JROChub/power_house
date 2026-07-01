@@ -159,6 +159,12 @@ pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs")]
+pub use sfcs::vm::{
+    verify_vm_execution_embedding, SfcsVmError, SfcsVmExecutionEmbeddingReport,
+    SfcsVmExecutionTrace, SfcsVmInputs, SfcsVmMemoryAccess, SfcsVmMemoryRange, SfcsVmProgram,
+    SfcsVmPublicOutputs, SfcsVmTraceStep,
+};
+#[cfg(feature = "sfcs")]
 pub use sfcs::{
     SfcsDiscoveryReport, SfcsEmbeddingReport, SfcsError, SfcsExecutionEmbeddingReport,
     SfcsExecutionTrace, SfcsFastPathCertificate, SfcsFastPathWorkload, SfcsGraph, SfcsNode, SfcsOp,
@@ -194,4 +200,16 @@ pub fn verify_sfcs_execution_embedding(
     artifact: &provenance::pha::PhaArtifact,
 ) -> Result<SfcsExecutionEmbeddingReport, SfcsError> {
     sfcs::verify_execution_embedding(artifact)
+}
+
+/// Verify that a `.pha` artifact contains a deterministic SFCS VM execution.
+///
+/// This checks the RV32I program image, public inputs, full instruction trace,
+/// memory/register digests, and public output binding without changing
+/// Rootprint v1 or `.pha` core fingerprint rules.
+#[cfg(feature = "sfcs")]
+pub fn verify_sfcs_vm_execution_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsVmExecutionEmbeddingReport, SfcsVmError> {
+    sfcs::vm::verify_vm_execution_embedding(artifact)
 }

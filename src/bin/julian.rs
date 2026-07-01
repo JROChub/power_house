@@ -31,7 +31,8 @@ use power_house::{
 };
 #[cfg(feature = "sfcs")]
 use power_house::{
-    verify_sfcs_execution_embedding, verify_sfcs_pha_embedding, SfcsError, SfcsGraph,
+    verify_sfcs_execution_embedding, verify_sfcs_pha_embedding, verify_sfcs_vm_execution_embedding,
+    SfcsError, SfcsGraph, SfcsVmError, SfcsVmInputs, SfcsVmProgram,
 };
 #[cfg(feature = "sfcs")]
 use std::collections::BTreeMap;
@@ -198,13 +199,16 @@ fn print_memory_help() {
 
 #[cfg(feature = "sfcs")]
 fn print_sfcs_help() {
-    println!("Usage: julian sfcs <source|eval|inspect|verify-pha> ...");
+    println!("Usage: julian sfcs <source|eval|inspect|verify-pha|vm-run|verify-vm-pha> ...");
     println!("  source <source.sfcs> --output <graph.json>");
     println!("  eval <source.sfcs> --input <name=value> [--input <name=value>] \\");
     println!("       [--report <report.json>] [--graph-output <graph.json>] \\");
     println!("       [--artifact-output <exec.pha>] [--label <name>]");
     println!("  inspect <graph.json>");
     println!("  verify-pha <artifact.pha>");
+    println!("  vm-run <program.json> --inputs <inputs.json> \\");
+    println!("       [--report <report.json>] [--artifact-output <vm.pha>] [--label <name>]");
+    println!("  verify-vm-pha <artifact.pha>");
     println!();
     println!("SFCS commands are offline and do not alter Rootprint or .pha identity rules.");
 }
@@ -602,6 +606,8 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
         "eval" => cmd_sfcs_eval(tail),
         "inspect" => cmd_sfcs_inspect(tail),
         "verify-pha" => cmd_sfcs_verify_pha(tail),
+        "vm-run" => cmd_sfcs_vm_run(tail),
+        "verify-vm-pha" => cmd_sfcs_verify_vm_pha(tail),
         _ => fatal(&format!("unknown sfcs subcommand: {sub}")),
     }
 }
@@ -682,6 +688,38 @@ fn read_sfcs_source(path: &Path) -> SfcsGraph {
     })
 }
 
+#[cfg(feature = "sfcs")]
+fn read_sfcs_vm_program(path: &Path) -> SfcsVmProgram {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    let program: SfcsVmProgram = serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid SFCS VM program JSON in {}: {err}",
+            path.display()
+        ))
+    });
+    program
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("invalid SFCS VM program: {err}")));
+    program
+}
+
+#[cfg(feature = "sfcs")]
+fn read_sfcs_vm_inputs(path: &Path) -> SfcsVmInputs {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    let inputs: SfcsVmInputs = serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid SFCS VM inputs JSON in {}: {err}",
+            path.display()
+        ))
+    });
+    inputs
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("invalid SFCS VM inputs: {err}")));
+    inputs
+}
+
 fn write_json<T: serde::Serialize>(path: &Path, value: &T) {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).unwrap_or_else(|err| {
@@ -733,6 +771,19 @@ fn sfcs_exit_for_error(error: &SfcsError) -> i32 {
         | SfcsError::DuplicateNode(_)
         | SfcsError::InvalidId(_) => 1,
         SfcsError::Json(_) | SfcsError::Pha(_) => 5,
+    }
+}
+
+#[cfg(feature = "sfcs")]
+fn sfcs_vm_exit_for_error(error: &SfcsVmError) -> i32 {
+    match error {
+        SfcsVmError::InvalidProgram(_) | SfcsVmError::InvalidInput(_) => 2,
+        SfcsVmError::UnsupportedSchema(_) => 3,
+        SfcsVmError::InvalidDigest(_)
+        | SfcsVmError::InvalidEmbedding(_)
+        | SfcsVmError::Sfcs(_)
+        | SfcsVmError::Execution(_) => 1,
+        SfcsVmError::Json(_) | SfcsVmError::Pha(_) => 5,
     }
 }
 
@@ -916,6 +967,123 @@ fn cmd_sfcs_verify_pha(args: Vec<String>) {
                 ),
             ),
         },
+    }
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_vm_run(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut program_path = None;
+    let mut inputs_path = None;
+    let mut report_path = None;
+    let mut artifact_output = None;
+    let mut label = "sfcs-vm-execution".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--inputs" => inputs_path = Some(PathBuf::from(take_option(&mut iter, "--inputs"))),
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if program_path.is_none() => program_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let program_path = program_path.unwrap_or_else(|| fatal("sfcs vm-run requires <program.json>"));
+    let inputs_path = inputs_path.unwrap_or_else(|| fatal("--inputs is required"));
+    let program = read_sfcs_vm_program(&program_path);
+    let inputs = read_sfcs_vm_inputs(&inputs_path);
+    let trace = program.execute(&inputs).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_vm_exit_for_error(&err),
+            &format!("SFCS VM execution failed: {err}"),
+        )
+    });
+    let execution_fractal = trace.to_fractal_graph().unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_vm_exit_for_error(&err),
+            &format!("SFCS VM execution fractal failed: {err}"),
+        )
+    });
+    let execution_fractal_digest = execution_fractal
+        .fractal_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS VM execution fractal digest failed: {err}")));
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-vm-cli-report/v1",
+        "program": program_path.display().to_string(),
+        "inputs": inputs_path.display().to_string(),
+        "architecture": trace.architecture,
+        "program_digest": trace.program_digest,
+        "input_digest": trace.input_digest,
+        "trace_digest": trace.trace_digest,
+        "execution_fractal_digest": execution_fractal_digest,
+        "initial_state_digest": trace.initial_state_digest,
+        "final_state_digest": trace.final_state_digest,
+        "final_memory_digest": trace.final_memory_digest,
+        "final_pc": trace.final_pc,
+        "steps": trace.steps.len(),
+        "public_outputs": trace.public_outputs,
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = program
+            .to_execution_pha_artifact(&label, &inputs)
+            .unwrap_or_else(|err| fatal(&format!("SFCS VM .pha embedding failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    println!("SFCS VM RUN");
+    println!(
+        "program_digest: {}",
+        report["program_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "trace_digest: {}",
+        report["trace_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "final_state_digest: {}",
+        report["final_state_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "execution_fractal_digest: {}",
+        report["execution_fractal_digest"].as_str().unwrap_or("")
+    );
+    println!("steps: {}", report["steps"].as_u64().unwrap_or(0));
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_verify_vm_pha(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-vm-pha requires <artifact.pha>");
+    }
+    let artifact = read_pha(Path::new(&args[0]));
+    match verify_sfcs_vm_execution_embedding(&artifact) {
+        Ok(report) => {
+            println!("SFCS VM EXECUTION PHA VALID");
+            println!("program_digest: {}", report.program_digest);
+            println!("trace_digest: {}", report.trace_digest);
+            println!(
+                "execution_fractal_digest: {}",
+                report.execution_fractal_digest
+            );
+            println!("final_state_digest: {}", report.final_state_digest);
+            println!("steps: {}", report.steps);
+        }
+        Err(error) => fatal_code(
+            sfcs_vm_exit_for_error(&error),
+            &format!("SFCS VM .pha verification failed: {error}"),
+        ),
     }
 }
 

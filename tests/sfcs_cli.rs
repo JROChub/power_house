@@ -102,3 +102,73 @@ fn cli_parses_executes_and_verifies_sfcs_source() {
     assert!(verify_stdout.contains("SFCS EXECUTION PHA VALID"));
     assert!(verify_stdout.contains("trace_digest: sha256:"));
 }
+
+#[test]
+fn cli_runs_and_verifies_sfcs_vm_program() {
+    let dir = temp_dir();
+    let program = dir.join("rv32i.program.json");
+    let inputs = dir.join("rv32i.inputs.json");
+    let report = dir.join("rv32i.report.json");
+    let artifact = dir.join("rv32i.execution.pha");
+
+    fs::write(
+        &program,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "power-house/sfcs-vm-program/v1-draft",
+            "architecture": "rv32i",
+            "entry_pc": 0,
+            "max_steps": 16,
+            "instructions": [
+                0x00500093_u32,
+                0x00700113_u32,
+                0x002081b3_u32,
+                0x00302023_u32,
+                0x00002203_u32,
+                0x00000073_u32
+            ]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        &inputs,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "public_registers": [4],
+            "public_memory": [{"start": 0, "len": 4}]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let run_stdout = run(&[
+        "sfcs",
+        "vm-run",
+        program.to_str().unwrap(),
+        "--inputs",
+        inputs.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--label",
+        "rv32i-cli",
+    ]);
+    assert!(run_stdout.contains("SFCS VM RUN"));
+    assert!(run_stdout.contains("trace_digest: sha256:"));
+    assert!(run_stdout.contains("execution_fractal_digest: sha256:"));
+    assert!(artifact.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["steps"], 6);
+    assert!(report_json["execution_fractal_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+    assert_eq!(report_json["public_outputs"]["registers"]["x4"], 12);
+    assert_eq!(report_json["public_outputs"]["memory"]["0"], 12);
+
+    let verify_stdout = run(&["sfcs", "verify-vm-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS VM EXECUTION PHA VALID"));
+    assert!(verify_stdout.contains("execution_fractal_digest: sha256:"));
+    assert!(verify_stdout.contains("final_state_digest: sha256:"));
+}
