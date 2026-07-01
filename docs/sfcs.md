@@ -98,8 +98,12 @@ covers a reproducible executable SFCS workflow:
 - VM module: `src/sfcs/vm.rs`
 - VM program schema: `power-house/sfcs-vm-program/v1-draft`
 - VM execution protocol: `power-house/sfcs-vm-execution/v1-draft`
+- VM constraint protocol: `power-house/sfcs-vm-constraints/v1-draft`
+- public Rust compiler schema: `power-house/sfcs-rust-public/v1-draft`
+- WASM stack compiler schema: `power-house/sfcs-wasm-stack/v1-draft`
 - ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
-- CLI: `julian sfcs source|eval|inspect|verify-pha|vm-run|verify-vm-pha`
+- CLI:
+  `julian sfcs source|rust-public|wasm-stack|eval|inspect|verify-pha|vm-run|verify-vm-pha|vm-constraints|verify-vm-constraints-pha`
   when built with `--features sfcs`;
   `rust-private-add|zk-private-add|verify-zk-pha` when built with
   `--features sfcs-zk`
@@ -203,17 +207,104 @@ execution_fractal_digest: sha256:...
 final_state_digest: sha256:...
 ```
 
+## Public VM Constraint Proofs
+
+The `sfcs` feature includes a transparent public constraint proof for arbitrary
+RV32I executions supported by the VM module:
+
+```text
+power-house/sfcs-vm-constraints/v1-draft
+```
+
+This proof is not zero-knowledge. It is the public transition proving layer:
+the verifier recomputes execution from the program and public inputs, checks
+instruction transitions, memory consistency, register range coverage, memory
+range coverage, trace digest, final state digest, and execution-fractal
+binding, then verifies the `.pha` public inputs and provenance fields.
+
+CLI workflow:
+
+```bash
+julian sfcs vm-constraints rv32i.program.json \
+  --inputs rv32i.inputs.json \
+  --artifact-output rv32i.constraints.pha \
+  --report rv32i.constraints.report.json
+
+julian sfcs verify-vm-constraints-pha rv32i.constraints.pha
+```
+
+Expected output includes:
+
+```text
+SFCS VM CONSTRAINT PHA VALID
+program_digest: sha256:...
+trace_digest: sha256:...
+proof_digest: sha256:...
+transition_checks: ...
+memory_consistency_checks: ...
+```
+
+This closes the public trace proving gap for the supported VM class. The
+remaining private arbitrary-VM ZK gap is separate: the same transition and
+memory rules must still be represented inside a zero-knowledge proof system
+before the complete private zkVM claim is allowed.
+
+## Broader Compiler Frontends
+
+The public Rust-subset compiler lowers multi-parameter `u32` expression
+functions directly into SFCS graphs:
+
+```rust
+pub fn score(a: u32, b: u32, c: u32) -> u32 {
+    if a > b { (a - b) * c } else { (b - a) * c }
+}
+```
+
+```bash
+julian sfcs rust-public score.rs \
+  --graph-output score.graph.json \
+  --semantic-output score.semantic.json \
+  --artifact-output score.pha \
+  --report score.report.json
+```
+
+The WASM-style stack compiler lowers deterministic i32 stack instructions into
+SFCS graphs:
+
+```text
+param a i32
+param b i32
+local.get a
+local.get b
+i32.add
+i32.const 2
+i32.mul
+return
+```
+
+```bash
+julian sfcs wasm-stack score.wasmstack \
+  --graph-output score-wasm.graph.json \
+  --semantic-output score-wasm.semantic.json \
+  --artifact-output score-wasm.pha \
+  --report score-wasm.report.json
+```
+
+These frontends are direct source-to-fractal paths. They are not full Rust,
+LLVM, or binary WebAssembly compatibility layers yet. They establish the
+deterministic compiler architecture that broader language support must extend.
+
 ### zkVM Release Boundary
 
-The VM foundation must not be described as the finished general zkVM. A
-complete provenance-first zkVM requires all of the following to be implemented
-and tested before release:
+The VM foundation and public constraint proof must not be described as the
+finished private general zkVM. A complete provenance-first zkVM requires all of
+the following to be implemented and tested before release:
 
-1. a real zero-knowledge proof layer over VM execution semantics;
+1. a real zero-knowledge proof layer over arbitrary VM execution semantics;
 2. private trace or private input handling where the verifier learns only
    declared public outputs and commitments;
-3. a compiler frontend, initially Rust or a defined safe subset, that lowers
-   source code into the VM/SFCS execution path;
+3. full Rust/LLVM/WASM compiler paths or explicitly scoped safe subsets that
+   lower source code into the VM/SFCS execution path;
 4. end-to-end packaging into `.pha`, Rootprint, Memory Capsule, and slbit
    observability artifacts;
 5. mutation, conformance, property-based, cross-platform, and performance
@@ -224,8 +315,9 @@ Until those gates pass, the implemented claim is:
 
 ```text
 SFCS provides a deterministic RV32I VM execution foundation whose trace,
-state transitions, public outputs, and execution-fractal projection can be
-committed into `.pha` and verified offline without changing Rootprint v1.
+state transitions, memory consistency, range coverage, public outputs,
+execution-fractal projection, and public compiler frontends can be committed
+into `.pha` and verified offline without changing Rootprint v1.
 ```
 
 ## First ZK Profile

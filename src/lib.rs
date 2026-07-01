@@ -159,7 +159,17 @@ pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs-zk")]
-pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd, SfcsCompilerError};
+pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd};
+#[cfg(feature = "sfcs")]
+pub use sfcs::compiler::{
+    compile_public_rust_source, compile_wasm_stack_source, SfcsCompiledPublicRust,
+    SfcsCompiledWasmStack, SfcsCompilerError,
+};
+#[cfg(feature = "sfcs")]
+pub use sfcs::constraints::{
+    verify_vm_constraint_embedding, SfcsVmConstraintError, SfcsVmConstraintProof,
+    SfcsVmMemoryConstraintEvent, SfcsVmTransitionCommitment, SFCS_VM_CONSTRAINT_PROTOCOL_V1_DRAFT,
+};
 #[cfg(feature = "sfcs")]
 pub use sfcs::vm::{
     verify_vm_execution_embedding, SfcsVmError, SfcsVmExecutionEmbeddingReport,
@@ -220,6 +230,19 @@ pub fn verify_sfcs_vm_execution_embedding(
     artifact: &provenance::pha::PhaArtifact,
 ) -> Result<SfcsVmExecutionEmbeddingReport, SfcsVmError> {
     sfcs::vm::verify_vm_execution_embedding(artifact)
+}
+
+/// Verify that a `.pha` artifact contains a public SFCS VM constraint proof.
+///
+/// This recomputes the supported RV32I execution and verifies transition,
+/// memory consistency, range-check coverage, trace digest, and execution
+/// fractal binding. It is a transparent public proof layer, not a
+/// zero-knowledge proof.
+#[cfg(feature = "sfcs")]
+pub fn verify_sfcs_vm_constraint_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsVmConstraintProof, SfcsVmConstraintError> {
+    sfcs::constraints::verify_vm_constraint_embedding(artifact)
 }
 
 /// Verify that a `.pha` artifact contains the SFCS ZK private-add proof profile.

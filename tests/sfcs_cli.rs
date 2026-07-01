@@ -104,6 +104,115 @@ fn cli_parses_executes_and_verifies_sfcs_source() {
 }
 
 #[test]
+fn cli_compiles_public_rust_subset_to_sfcs_graph() {
+    let dir = temp_dir();
+    let source = dir.join("score.rs");
+    let graph = dir.join("score.graph.json");
+    let semantic = dir.join("score.semantic.json");
+    let report = dir.join("score.report.json");
+    let artifact = dir.join("score.pha");
+
+    fs::write(
+        &source,
+        "pub fn score(a: u32, b: u32, c: u32) -> u32 { if a > b { (a - b) * c } else { (b - a) * c } }\n",
+    )
+    .unwrap();
+
+    let compile_stdout = run(&[
+        "sfcs",
+        "rust-public",
+        source.to_str().unwrap(),
+        "--graph-output",
+        graph.to_str().unwrap(),
+        "--semantic-output",
+        semantic.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--label",
+        "score-rust-public",
+    ]);
+    assert!(compile_stdout.contains("SFCS RUST PUBLIC"));
+    assert!(compile_stdout.contains("graph_digest: sha256:"));
+    assert!(compile_stdout.contains("semantic_packet_digest: sha256:"));
+    assert!(graph.exists());
+    assert!(semantic.exists());
+    assert!(artifact.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["function_name"], "score");
+    assert_eq!(
+        report_json["parameters"],
+        serde_json::json!(["a", "b", "c"])
+    );
+    assert!(report_json["graph_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+
+    let verify_stdout = run(&["sfcs", "verify-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS GRAPH PHA VALID"));
+}
+
+#[test]
+fn cli_compiles_wasm_stack_subset_to_sfcs_graph() {
+    let dir = temp_dir();
+    let source = dir.join("score.wasmstack");
+    let graph = dir.join("score-wasm.graph.json");
+    let semantic = dir.join("score-wasm.semantic.json");
+    let report = dir.join("score-wasm.report.json");
+    let artifact = dir.join("score-wasm.pha");
+
+    fs::write(
+        &source,
+        r#"
+        param a i32
+        param b i32
+        local.get a
+        local.get b
+        i32.add
+        i32.const 2
+        i32.mul
+        return
+        "#,
+    )
+    .unwrap();
+
+    let compile_stdout = run(&[
+        "sfcs",
+        "wasm-stack",
+        source.to_str().unwrap(),
+        "--graph-output",
+        graph.to_str().unwrap(),
+        "--semantic-output",
+        semantic.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--label",
+        "score-wasm-stack",
+    ]);
+    assert!(compile_stdout.contains("SFCS WASM STACK"));
+    assert!(compile_stdout.contains("graph_digest: sha256:"));
+    assert!(compile_stdout.contains("semantic_packet_digest: sha256:"));
+    assert!(graph.exists());
+    assert!(semantic.exists());
+    assert!(artifact.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["parameters"], serde_json::json!(["a", "b"]));
+    assert!(report_json["graph_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+
+    let verify_stdout = run(&["sfcs", "verify-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS GRAPH PHA VALID"));
+}
+
+#[test]
 fn cli_runs_and_verifies_sfcs_vm_program() {
     let dir = temp_dir();
     let program = dir.join("rv32i.program.json");
@@ -171,6 +280,81 @@ fn cli_runs_and_verifies_sfcs_vm_program() {
     assert!(verify_stdout.contains("SFCS VM EXECUTION PHA VALID"));
     assert!(verify_stdout.contains("execution_fractal_digest: sha256:"));
     assert!(verify_stdout.contains("final_state_digest: sha256:"));
+}
+
+#[test]
+fn cli_proves_and_verifies_sfcs_vm_constraints() {
+    let dir = temp_dir();
+    let program = dir.join("rv32i.constraints.program.json");
+    let inputs = dir.join("rv32i.constraints.inputs.json");
+    let report = dir.join("rv32i.constraints.report.json");
+    let artifact = dir.join("rv32i.constraints.pha");
+
+    fs::write(
+        &program,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "power-house/sfcs-vm-program/v1-draft",
+            "architecture": "rv32i",
+            "entry_pc": 0,
+            "max_steps": 16,
+            "instructions": [
+                0x00500093_u32,
+                0x00700113_u32,
+                0x002081b3_u32,
+                0x00302023_u32,
+                0x00002203_u32,
+                0x00000073_u32
+            ]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        &inputs,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "public_registers": [4],
+            "public_memory": [{"start": 0, "len": 4}]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let prove_stdout = run(&[
+        "sfcs",
+        "vm-constraints",
+        program.to_str().unwrap(),
+        "--inputs",
+        inputs.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--label",
+        "rv32i-constraints-cli",
+    ]);
+    assert!(prove_stdout.contains("SFCS VM CONSTRAINTS"));
+    assert!(prove_stdout.contains("proof_digest: sha256:"));
+    assert!(prove_stdout.contains("transition_checks: 6"));
+    assert!(prove_stdout.contains("memory_consistency_checks: 2"));
+    assert!(artifact.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["steps"], 6);
+    assert_eq!(report_json["transition_checks"], 6);
+    assert_eq!(report_json["memory_consistency_checks"], 2);
+    assert!(report_json["proof_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+
+    let verify_stdout = run(&[
+        "sfcs",
+        "verify-vm-constraints-pha",
+        artifact.to_str().unwrap(),
+    ]);
+    assert!(verify_stdout.contains("SFCS VM CONSTRAINT PHA VALID"));
+    assert!(verify_stdout.contains("transition_checks: 6"));
+    assert!(verify_stdout.contains("memory_consistency_checks: 2"));
 }
 
 #[cfg(feature = "sfcs-zk")]

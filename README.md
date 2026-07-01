@@ -45,10 +45,11 @@ The primary workflow is **Power House Identity + Rootprint**:
   over `.pha` core identities.
 - **SFCS draft primitives** are opt-in through `--features sfcs` and provide
   direct fractal parsing, dense integer and memory execution traces, synthesis
-  plans, a deterministic RV32I VM execution foundation, the first
-  privacy-preserving private-add profile, a constrained Rust-subset compiler
-  path for that profile, an offline `julian sfcs` CLI, and `.pha` execution
-  embedding verification without mutating Rootprint v1.
+  plans, a deterministic RV32I VM execution foundation, public VM transition
+  constraint proofs with memory/range coverage, broader Rust-subset and
+  WASM-style stack compiler paths, the first privacy-preserving private-add
+  profile, an offline `julian sfcs` CLI, and `.pha` embedding verification
+  without mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -143,8 +144,26 @@ julian sfcs vm-run rv32i.program.json \
 julian sfcs verify-vm-pha rv32i.execution.pha
 ```
 
+Prove public VM transition, memory consistency, and range-check coverage:
+
+```bash
+julian sfcs vm-constraints rv32i.program.json \
+  --inputs rv32i.inputs.json \
+  --artifact-output rv32i.constraints.pha \
+  --report rv32i.constraints.report.json
+julian sfcs verify-vm-constraints-pha rv32i.constraints.pha
+```
+
+Compile broader public source frontends directly into SFCS graphs:
+
+```bash
+julian sfcs rust-public score.rs --graph-output score.graph.json
+julian sfcs wasm-stack score.wasmstack --graph-output score-wasm.graph.json
+```
+
 The VM foundation is not a complete zkVM release. The real zero-knowledge
-privacy layer for arbitrary VM execution and the full Rust compiler are
+privacy layer for arbitrary private VM execution and the full Rust/LLVM/WASM
+compiler family are
 release-gated until they are implemented, audited, and tested end to end
 without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
 currently provides the first auditable end-to-end privacy path: a constrained
@@ -273,8 +292,17 @@ The complete procedure and expected rejection behavior are documented in the
   explicit SFCS `.pha` embedding verifier.
 - [`verify_sfcs_execution_embedding`](https://docs.rs/power_house/latest/power_house/fn.verify_sfcs_execution_embedding.html):
   explicit SFCS graph, trace, synthesis, output, and invariant verifier.
+- [`SfcsVmConstraintProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsVmConstraintProof.html):
+  transparent public VM transition, memory consistency, range coverage, and
+  execution-fractal proof object.
 - [`compile_private_add_source`](https://docs.rs/power_house/latest/power_house/fn.compile_private_add_source.html):
   constrained Rust-subset compiler for the first `sfcs-zk` private-add profile.
+- [`compile_public_rust_source`](https://docs.rs/power_house/latest/power_house/fn.compile_public_rust_source.html):
+  public Rust-subset compiler that lowers multi-parameter expressions directly
+  into SFCS graphs.
+- [`compile_wasm_stack_source`](https://docs.rs/power_house/latest/power_house/fn.compile_wasm_stack_source.html):
+  deterministic WASM-style stack IR compiler that lowers i32 stack operations
+  directly into SFCS graphs.
 - [`SfcsZkPrivateAddProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateAddProof.html):
   first privacy-preserving SFCS proof profile, proving committed private add
   inputs match a public output without exposing the inputs.

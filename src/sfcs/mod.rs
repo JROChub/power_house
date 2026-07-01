@@ -5,8 +5,8 @@
 //! fractal can be committed as ordinary `.pha` core data and then anchored by
 //! Rootprint, but Rootprint v1 branch identity remains unchanged.
 
-#[cfg(feature = "sfcs-zk")]
 pub mod compiler;
+pub mod constraints;
 pub mod vm;
 #[cfg(feature = "sfcs-zk")]
 pub mod zk;
