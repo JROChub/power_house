@@ -121,6 +121,8 @@ pub struct SfcsZkPrivateVmStatement {
     pub zk_memory_consistency_proofs: u64,
     /// Number of zero-knowledge memory access/register value binding proofs.
     pub zk_memory_value_proofs: u64,
+    /// Number of zero-knowledge equality-based branch proofs.
+    pub zk_branch_proofs: u64,
     /// Pedersen commitments to private execution digests.
     pub commitments: BTreeMap<String, String>,
 }
@@ -252,6 +254,20 @@ pub struct SfcsZkPrivateVmMemoryValueProof {
     pub value_equality: SfcsZkPrivateVmEqualityProof,
 }
 
+/// Zero-knowledge proof for equality-based private branch conditions.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmBranchProof {
+    /// Branch step index.
+    pub step_index: u64,
+    /// Branch mnemonic, currently `beq` or `bne`.
+    pub branch: String,
+    /// Public branch decision observed in the private execution trace.
+    pub branch_taken: bool,
+    /// Hidden equality proof for branch cases whose decision requires operand
+    /// equality (`beq` taken or `bne` not taken).
+    pub equality: SfcsZkPrivateVmEqualityProof,
+}
+
 /// Non-interactive private VM proof.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmProof {
@@ -273,6 +289,9 @@ pub struct SfcsZkPrivateVmProof {
     /// Zero-knowledge memory access/register value binding proofs.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub memory_value_proofs: Vec<SfcsZkPrivateVmMemoryValueProof>,
+    /// Zero-knowledge equality-based branch proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub branch_proofs: Vec<SfcsZkPrivateVmBranchProof>,
     /// Domain-separated proof digest.
     pub proof_digest: String,
 }
@@ -480,6 +499,7 @@ impl SfcsZkPrivateVmProof {
             private_vm_memory_consistency_preimages(&trace, &witness.blinding_seed)?;
         let memory_value_preimages =
             private_vm_memory_value_preimages(&trace, &witness.blinding_seed)?;
+        let branch_preimages = private_vm_branch_preimages(&trace, &witness.blinding_seed)?;
         let range_proof_count = linear_relation_preimages
             .iter()
             .map(|relation| relation.range_inputs.len() as u64)
@@ -489,6 +509,10 @@ impl SfcsZkPrivateVmProof {
                 .map(|proof| proof.range_inputs.len() as u64)
                 .sum::<u64>()
             + memory_value_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>()
+            + branch_preimages
                 .iter()
                 .map(|proof| proof.range_inputs.len() as u64)
                 .sum::<u64>();
@@ -506,6 +530,7 @@ impl SfcsZkPrivateVmProof {
             zk_range_proofs: range_proof_count,
             zk_memory_consistency_proofs: memory_consistency_preimages.len() as u64,
             zk_memory_value_proofs: memory_value_preimages.len() as u64,
+            zk_branch_proofs: branch_preimages.len() as u64,
             commitments,
         };
         let nonce_commitments = statement
@@ -578,6 +603,13 @@ impl SfcsZkPrivateVmProof {
             }
             memory_value_proofs.push(memory_preimage.proof);
         }
+        let mut branch_proofs = Vec::new();
+        for branch_preimage in branch_preimages {
+            for range_input in &branch_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            branch_proofs.push(branch_preimage.proof);
+        }
         let mut proof = Self {
             statement,
             challenge: scalar_to_hex(&challenge)?,
@@ -586,6 +618,7 @@ impl SfcsZkPrivateVmProof {
             range_proofs,
             memory_consistency_proofs,
             memory_value_proofs,
+            branch_proofs,
             proof_digest: String::new(),
         };
         proof.proof_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &proof.preimage())?;
@@ -659,6 +692,11 @@ impl SfcsZkPrivateVmProof {
         if self.statement.zk_memory_value_proofs != self.memory_value_proofs.len() as u64 {
             return Err(SfcsZkError::InvalidProof(
                 "private VM memory value proof count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_branch_proofs != self.branch_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM branch proof count does not match proofs".to_string(),
             ));
         }
         let mut previous_relation_step = None;
@@ -736,6 +774,9 @@ impl SfcsZkPrivateVmProof {
         for proof in &self.memory_value_proofs {
             proof.verify()?;
         }
+        for proof in &self.branch_proofs {
+            proof.verify()?;
+        }
         let expected_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &self.preimage())?;
         if self.proof_digest != expected_digest {
             return Err(SfcsZkError::InvalidProof(
@@ -775,6 +816,7 @@ impl SfcsZkPrivateVmProof {
                 "zk_range_proofs": self.statement.zk_range_proofs,
                 "zk_memory_consistency_proofs": self.statement.zk_memory_consistency_proofs,
                 "zk_memory_value_proofs": self.statement.zk_memory_value_proofs,
+                "zk_branch_proofs": self.statement.zk_branch_proofs,
                 "commitments": self.statement.commitments,
                 "proof_digest": self.proof_digest,
             }),
@@ -795,6 +837,7 @@ impl SfcsZkPrivateVmProof {
             "range_proofs": self.range_proofs,
             "memory_consistency_proofs": self.memory_consistency_proofs,
             "memory_value_proofs": self.memory_value_proofs,
+            "branch_proofs": self.branch_proofs,
         })
     }
 }
@@ -1046,6 +1089,26 @@ impl SfcsZkPrivateVmMemoryValueProof {
     }
 }
 
+impl SfcsZkPrivateVmBranchProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        match (self.branch.as_str(), self.branch_taken) {
+            ("beq", true) | ("bne", false) => {}
+            _ => {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "unsupported equality branch proof {} taken={}",
+                    self.branch, self.branch_taken
+                )))
+            }
+        }
+        let label = format!(
+            "branch:{}:{}:{}",
+            self.step_index, self.branch, self.branch_taken
+        );
+        self.equality.verify(&label)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct SfcsZkPrivateAddEmbedding {
     program: SfcsVmProgram,
@@ -1090,6 +1153,12 @@ struct SfcsZkPrivateVmMemoryConsistencyPreimage {
 #[derive(Debug, Clone)]
 struct SfcsZkPrivateVmMemoryValuePreimage {
     proof: SfcsZkPrivateVmMemoryValueProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmBranchPreimage {
+    proof: SfcsZkPrivateVmBranchProof,
     range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
 }
 
@@ -1193,6 +1262,7 @@ pub fn verify_private_vm_embedding(
         "zk_range_proofs",
         "zk_memory_consistency_proofs",
         "zk_memory_value_proofs",
+        "zk_branch_proofs",
         "commitments",
     ] {
         let public = artifact
@@ -1226,6 +1296,7 @@ pub fn verify_private_vm_embedding(
             "zk_memory_value_proofs" => {
                 serde_json::json!(embedding.proof.statement.zk_memory_value_proofs)
             }
+            "zk_branch_proofs" => serde_json::json!(embedding.proof.statement.zk_branch_proofs),
             "commitments" => serde_json::to_value(&embedding.proof.statement.commitments)?,
             _ => unreachable!(),
         };
@@ -1651,6 +1722,61 @@ fn private_vm_memory_value_preimage(
             value_equality,
         },
         range_inputs: vec![register, memory],
+    })
+}
+
+fn private_vm_branch_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmBranchPreimage>, SfcsZkError> {
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        let supported = matches!(
+            (step.mnemonic.as_str(), step.branch_taken),
+            ("beq", true) | ("bne", false)
+        );
+        if !supported {
+            continue;
+        }
+        let (Some(left_value), Some(right_value)) = (step.rs1_value_before, step.rs2_value_before)
+        else {
+            continue;
+        };
+        if left_value != right_value {
+            continue;
+        }
+        proofs.push(private_vm_branch_preimage(
+            step.step_index,
+            &step.mnemonic,
+            step.branch_taken,
+            left_value,
+            right_value,
+            seed,
+        )?);
+    }
+    Ok(proofs)
+}
+
+fn private_vm_branch_preimage(
+    step_index: u64,
+    branch: &str,
+    branch_taken: bool,
+    left_value: u32,
+    right_value: u32,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmBranchPreimage, SfcsZkError> {
+    let label = format!("branch:{step_index}:{branch}:{branch_taken}");
+    let left = private_vm_range_input(&format!("{label}:left"), left_value, seed);
+    let right = private_vm_range_input(&format!("{label}:right"), right_value, seed);
+    let equality = private_vm_equality_proof(&label, &left, &right, seed)?;
+    Ok(SfcsZkPrivateVmBranchPreimage {
+        proof: SfcsZkPrivateVmBranchProof {
+            step_index,
+            branch: branch.to_string(),
+            branch_taken,
+            equality,
+        },
+        range_inputs: vec![left, right],
     })
 }
 

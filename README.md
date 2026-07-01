@@ -176,7 +176,8 @@ general private-VM profile that hides private inputs and trace data while
   transition checks for linear/no-overflow VM relations, zero-knowledge u32 range
   proofs for those committed VM values, private read-after-write memory
   consistency proofs, private memory access/register value binding proofs, and
-  constraint coverage.
+  equality-branch proofs for covered `beq`/`bne` cases, and constraint
+  coverage.
 
 ```bash
 cargo install power_house --features sfcs-zk
@@ -328,8 +329,8 @@ The complete procedure and expected rejection behavior are documented in the
   general private VM proof profile for supported RV32I executions, hiding
   private inputs and trace data while binding public outputs, digest
   commitments, linear transition proofs, u32 range proofs, private memory
-  consistency proofs, private memory value binding proofs, and coverage
-  counters.
+  consistency proofs, private memory value binding proofs, equality-branch
+  proofs, and coverage counters.
 - [`SfcsZkPrivateVmLinearRelationProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmLinearRelationProof.html):
   homomorphic verifier-side proof for private `add`, `addi`, `sub`, `subi`,
   and no-overflow public-scale VM relations.

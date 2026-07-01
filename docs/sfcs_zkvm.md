@@ -93,6 +93,7 @@ Implemented groundwork:
 - private `lw/sw` address-calculation proofs where the address relation is
   eligible for the linear proof layer, plus equality proofs binding memory
   access values to the source or destination register values;
+- zero-knowledge equality-branch proofs for `beq` taken and `bne` not taken;
 - public output, transition coverage, register range coverage, memory range
   coverage, memory consistency, and branch coverage binding for private VM
   proof statements;

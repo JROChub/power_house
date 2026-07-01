@@ -544,6 +544,7 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(prove_stdout.contains("zk_range_proofs: 19"));
     assert!(prove_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(prove_stdout.contains("zk_memory_value_proofs: 2"));
+    assert!(prove_stdout.contains("zk_branch_proofs: 0"));
     assert!(prove_stdout.contains("private_witness_embedded: false"));
 
     let report_json = read_json(&report);
@@ -557,6 +558,7 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert_eq!(report_json["zk_range_proofs"], 19);
     assert_eq!(report_json["zk_memory_consistency_proofs"], 1);
     assert_eq!(report_json["zk_memory_value_proofs"], 2);
+    assert_eq!(report_json["zk_branch_proofs"], 0);
     assert_eq!(report_json["private_witness_embedded"], false);
     assert!(report_json["commitments"]["trace_digest"]
         .as_str()
@@ -577,6 +579,7 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(verify_stdout.contains("zk_range_proofs: 19"));
     assert!(verify_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(verify_stdout.contains("zk_memory_value_proofs: 2"));
+    assert!(verify_stdout.contains("zk_branch_proofs: 0"));
     assert!(verify_stdout.contains("private_witness_embedded: false"));
 }
 
