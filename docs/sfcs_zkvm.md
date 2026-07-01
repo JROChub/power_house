@@ -104,19 +104,23 @@ output binding for the supported VM class.
 
 ## Phase Gate 3: Compiler Frontend
 
-Partially implemented for scoped Rust and WASM-style subsets.
+Partially implemented for scoped Rust, LLVM-style SSA, and WASM-style subsets.
 
 Implemented groundwork:
 
 - compiler API `compile_private_add_source(...)`;
 - compiler API `compile_public_rust_source(...)`;
+- compiler API `compile_llvm_ir_source(...)`;
 - compiler API `compile_wasm_stack_source(...)`;
 - schema `power-house/sfcs-rust-private-add/v1-draft`;
 - schema `power-house/sfcs-rust-public/v1-draft`;
+- schema `power-house/sfcs-llvm-ir/v1-draft`;
 - schema `power-house/sfcs-wasm-stack/v1-draft`;
 - accepted source shape: one `u32 + u32 -> u32` function;
 - public Rust-subset expression functions with multiple `u32` parameters,
   arithmetic, comparisons, and `if { } else { }` expressions;
+- LLVM-style SSA i32 functions with arithmetic, bitwise operations, unsigned
+  comparisons, `select`, constants, labels, and explicit returns;
 - WASM-style i32 stack IR with params, locals, constants, arithmetic, bitwise
   operations, comparisons, `select`, and `return`;
 - deterministic lowering to the private-add RV32I `add; ecall` program;
@@ -127,14 +131,15 @@ Implemented groundwork:
 - one-command CLI pipeline `julian sfcs rust-private-add` that creates a
   `.pha` artifact, Rootprint graph, Observatory sidecar, Memory Capsule, and
   machine-readable report;
-- public CLI compiler commands `julian sfcs rust-public` and
+- public CLI compiler commands `julian sfcs rust-public`,
+  `julian sfcs llvm-ir`, and
   `julian sfcs wasm-stack`;
 - compiler acceptance/rejection tests and CLI end-to-end tests.
 
 This satisfies scoped source-to-fractal compiler milestones and the first
 source-to-proof-to-memory-capsule milestone for the private-add profile. It
-does not satisfy the full compiler gate for normal Rust crates, LLVM IR, or
-binary WebAssembly modules.
+does not satisfy the full compiler gate for normal Rust crates, unrestricted
+LLVM IR, or binary WebAssembly modules.
 
 Required before promotion:
 
@@ -221,8 +226,9 @@ VM/compiler class, documentation must say:
 
 ```text
 SFCS has a deterministic VM execution foundation, public VM transition and
-memory constraint proofs, scoped Rust/WASM-style source-to-fractal compilers,
-and a constrained end-to-end private-add source-to-proof-to-Memory-Capsule path.
+memory constraint proofs, scoped Rust/LLVM/WASM-style source-to-fractal
+compilers, and a constrained end-to-end private-add
+source-to-proof-to-Memory-Capsule path.
 ```
 
 It must not say:

@@ -156,6 +156,62 @@ fn cli_compiles_public_rust_subset_to_sfcs_graph() {
 }
 
 #[test]
+fn cli_compiles_llvm_ir_subset_to_sfcs_graph() {
+    let dir = temp_dir();
+    let source = dir.join("score.ll");
+    let graph = dir.join("score-llvm.graph.json");
+    let semantic = dir.join("score-llvm.semantic.json");
+    let report = dir.join("score-llvm.report.json");
+    let artifact = dir.join("score-llvm.pha");
+
+    fs::write(
+        &source,
+        r#"
+        define i32 @score(i32 %a, i32 %b) {
+        entry:
+          %sum = add i32 %a, %b
+          %out = mul i32 %sum, 2
+          ret i32 %out
+        }
+        "#,
+    )
+    .unwrap();
+
+    let compile_stdout = run(&[
+        "sfcs",
+        "llvm-ir",
+        source.to_str().unwrap(),
+        "--graph-output",
+        graph.to_str().unwrap(),
+        "--semantic-output",
+        semantic.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--label",
+        "score-llvm-ir",
+    ]);
+    assert!(compile_stdout.contains("SFCS LLVM IR"));
+    assert!(compile_stdout.contains("graph_digest: sha256:"));
+    assert!(compile_stdout.contains("semantic_packet_digest: sha256:"));
+    assert!(graph.exists());
+    assert!(semantic.exists());
+    assert!(artifact.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["function_name"], "score");
+    assert_eq!(report_json["parameters"], serde_json::json!(["a", "b"]));
+    assert!(report_json["graph_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+
+    let verify_stdout = run(&["sfcs", "verify-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS GRAPH PHA VALID"));
+}
+
+#[test]
 fn cli_compiles_wasm_stack_subset_to_sfcs_graph() {
     let dir = temp_dir();
     let source = dir.join("score.wasmstack");

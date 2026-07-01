@@ -15,6 +15,9 @@
 - Added `compile_public_rust_source(...)` and `julian sfcs rust-public`, a
   broader public Rust-subset source-to-fractal compiler for multi-parameter
   `u32` expression functions.
+- Added `compile_llvm_ir_source(...)` and `julian sfcs llvm-ir`, a
+  deterministic LLVM-style SSA i32 subset compiler for arithmetic, bitwise
+  operations, unsigned comparisons, `select`, constants, and explicit returns.
 - Added `compile_wasm_stack_source(...)` and `julian sfcs wasm-stack`, a
   deterministic WASM-style i32 stack IR source-to-fractal compiler.
 - Added `compile_private_add_source(...)`, a constrained Rust-subset frontend

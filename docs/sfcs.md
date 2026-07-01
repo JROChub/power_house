@@ -100,10 +100,11 @@ covers a reproducible executable SFCS workflow:
 - VM execution protocol: `power-house/sfcs-vm-execution/v1-draft`
 - VM constraint protocol: `power-house/sfcs-vm-constraints/v1-draft`
 - public Rust compiler schema: `power-house/sfcs-rust-public/v1-draft`
+- LLVM-style SSA compiler schema: `power-house/sfcs-llvm-ir/v1-draft`
 - WASM stack compiler schema: `power-house/sfcs-wasm-stack/v1-draft`
 - ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
 - CLI:
-  `julian sfcs source|rust-public|wasm-stack|eval|inspect|verify-pha|vm-run|verify-vm-pha|vm-constraints|verify-vm-constraints-pha`
+  `julian sfcs source|rust-public|llvm-ir|wasm-stack|eval|inspect|verify-pha|vm-run|verify-vm-pha|vm-constraints|verify-vm-constraints-pha`
   when built with `--features sfcs`;
   `rust-private-add|zk-private-add|verify-zk-pha` when built with
   `--features sfcs-zk`
@@ -127,7 +128,8 @@ becomes the graph itself, not as an external circuit artifact.
 The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
 It is the first required layer for the provenance-first zkVM roadmap, but it is
 not a complete zkVM by itself because it does not yet provide a real
-zero-knowledge privacy proof or a Rust compiler frontend.
+zero-knowledge proof for arbitrary private VM execution or unrestricted
+Rust/LLVM/binary-WASM compiler compatibility.
 
 The VM foundation implements:
 
@@ -268,6 +270,25 @@ julian sfcs rust-public score.rs \
   --report score.report.json
 ```
 
+The LLVM-style SSA compiler lowers a deterministic i32 subset into SFCS graphs:
+
+```llvm
+define i32 @score(i32 %a, i32 %b) {
+entry:
+  %sum = add i32 %a, %b
+  %out = mul i32 %sum, 2
+  ret i32 %out
+}
+```
+
+```bash
+julian sfcs llvm-ir score.ll \
+  --graph-output score-llvm.graph.json \
+  --semantic-output score-llvm.semantic.json \
+  --artifact-output score-llvm.pha \
+  --report score-llvm.report.json
+```
+
 The WASM-style stack compiler lowers deterministic i32 stack instructions into
 SFCS graphs:
 
@@ -290,9 +311,10 @@ julian sfcs wasm-stack score.wasmstack \
   --report score-wasm.report.json
 ```
 
-These frontends are direct source-to-fractal paths. They are not full Rust,
-LLVM, or binary WebAssembly compatibility layers yet. They establish the
-deterministic compiler architecture that broader language support must extend.
+These frontends are direct source-to-fractal paths. They are scoped safe
+subsets, not full Rust crates, unrestricted LLVM IR, or binary WebAssembly
+compatibility layers yet. They establish the deterministic compiler
+architecture that broader language support must extend.
 
 ### zkVM Release Boundary
 
@@ -316,8 +338,9 @@ Until those gates pass, the implemented claim is:
 ```text
 SFCS provides a deterministic RV32I VM execution foundation whose trace,
 state transitions, memory consistency, range coverage, public outputs,
-execution-fractal projection, and public compiler frontends can be committed
-into `.pha` and verified offline without changing Rootprint v1.
+execution-fractal projection, and scoped Rust/LLVM/WASM-style public compiler
+frontends can be committed into `.pha` and verified offline without changing
+Rootprint v1.
 ```
 
 ## First ZK Profile

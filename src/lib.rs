@@ -158,13 +158,13 @@ pub use merkle::{
 pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
 pub use prng::SimplePrng;
-#[cfg(feature = "sfcs-zk")]
-pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd};
 #[cfg(feature = "sfcs")]
 pub use sfcs::compiler::{
-    compile_public_rust_source, compile_wasm_stack_source, SfcsCompiledPublicRust,
-    SfcsCompiledWasmStack, SfcsCompilerError,
+    compile_llvm_ir_source, compile_public_rust_source, compile_wasm_stack_source,
+    SfcsCompiledLlvmIr, SfcsCompiledPublicRust, SfcsCompiledWasmStack, SfcsCompilerError,
 };
+#[cfg(feature = "sfcs-zk")]
+pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd};
 #[cfg(feature = "sfcs")]
 pub use sfcs::constraints::{
     verify_vm_constraint_embedding, SfcsVmConstraintError, SfcsVmConstraintProof,
