@@ -1,6 +1,6 @@
 # Truth Boundary
 
-Status: active security statement for Power House v0.3.22.
+Status: active security statement for Power House v0.3.23.
 
 ## What Power House Proves
 

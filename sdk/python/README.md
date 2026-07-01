@@ -1,6 +1,6 @@
 # Power House Python SDK
 
-Version: 0.3.22
+Version: 0.3.23
 
 The default `power_house` namespace implements immutable identity operations,
 `.pha` v1, and Rootprint v1 without requiring network access or interpreting

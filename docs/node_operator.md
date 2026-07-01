@@ -1,6 +1,6 @@
 # MFENX Node Operator Guide
 
-Release scope: Power House v0.3.22.
+Release scope: Power House v0.3.23.
 
 This guide starts a public observer. Validator admission additionally requires
 a consensus identity approved by the active membership policy.
@@ -19,14 +19,14 @@ unless a firewall and authenticated reverse proxy explicitly protect them.
 ## Install
 
 ```bash
-cargo install power_house --version 0.3.22 --features net --locked
+cargo install power_house --version 0.3.23 --features net --locked
 julian --version
 ```
 
 Or use the release container:
 
 ```bash
-docker pull ghcr.io/jrochub/power_house:0.3.22
+docker pull ghcr.io/jrochub/power_house:0.3.23
 ```
 
 ## Create An Identity

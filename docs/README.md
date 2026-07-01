@@ -1,6 +1,6 @@
 # Power House Documentation
 
-This index is the authoritative map for Power House v0.3.22 documentation.
+This index is the authoritative map for Power House v0.3.23 documentation.
 
 ## Start Here
 
