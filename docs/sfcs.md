@@ -103,10 +103,11 @@ covers a reproducible executable SFCS workflow:
 - LLVM-style SSA compiler schema: `power-house/sfcs-llvm-ir/v1-draft`
 - WASM stack compiler schema: `power-house/sfcs-wasm-stack/v1-draft`
 - ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
+- ZK private-VM protocol: `power-house/sfcs-zk-private-vm/v1-draft`
 - CLI:
   `julian sfcs source|rust-public|llvm-ir|wasm-stack|eval|inspect|verify-pha|vm-run|verify-vm-pha|vm-constraints|verify-vm-constraints-pha`
   when built with `--features sfcs`;
-  `rust-private-add|zk-private-add|verify-zk-pha` when built with
+  `rust-private-add|zk-private-add|zk-private-vm|verify-zk-pha` when built with
   `--features sfcs-zk`
 
 The feature is not in the default feature set. Enabling it adds draft types for
@@ -372,6 +373,66 @@ blindings. The proof publishes:
 
 The verifier learns the public output and commitments, but the private input
 values and blindings are not embedded into the proof artifact.
+
+## General Private VM Commitment Profile
+
+The `sfcs-zk` feature also includes a general private VM commitment profile:
+
+```text
+power-house/sfcs-zk-private-vm/v1-draft
+```
+
+The prover supplies a private `SfcsVmInputs` witness and a private blinding
+seed. The prover runs the supported RV32I VM locally, derives the execution
+trace, projects the trace into SFCS fractal form, computes VM constraint
+coverage, and publishes only:
+
+- the program digest;
+- selected public register and memory outputs;
+- transition, register-range, memory-range, memory-consistency, and branch
+  coverage counters;
+- Pedersen commitments to the private input digest, trace digest,
+  execution-fractal digest, final state digest, final memory digest, and
+  private constraint-proof digest;
+- Fiat-Shamir Schnorr opening proofs for those committed digests;
+- a `.pha` artifact that does not embed raw private inputs or raw trace data.
+
+CLI workflow:
+
+```bash
+julian sfcs zk-private-vm rv32i.program.json \
+  --witness private-vm.witness.json \
+  --artifact-output private-vm.pha \
+  --report private-vm.report.json
+
+julian sfcs verify-zk-pha private-vm.pha
+```
+
+Witness file shape:
+
+```json
+{
+  "inputs": {
+    "registers": {
+      "10": 777777777
+    },
+    "memory": {
+      "128": 99
+    },
+    "public_registers": [4],
+    "public_memory": [
+      {"start": 0, "len": 4}
+    ]
+  },
+  "blinding_seed_hex": "4242424242424242424242424242424242424242424242424242424242424242"
+}
+```
+
+This profile closes the raw-witness leakage gap for arbitrary supported VM
+executions and gives `.pha`/Rootprint a private execution object to carry.
+The remaining cryptographic hardening step is to move the full VM transition
+relation itself inside the zero-knowledge verifier, rather than relying on
+committed private execution digests plus prover-side deterministic replay.
 
 The same feature also includes the first constrained source-to-proof pipeline:
 

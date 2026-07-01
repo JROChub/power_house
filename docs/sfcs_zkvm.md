@@ -70,17 +70,30 @@ Implemented groundwork:
 
 - feature flag `sfcs-zk`;
 - protocol `power-house/sfcs-zk-private-add/v1-draft`;
+- protocol `power-house/sfcs-zk-private-vm/v1-draft`;
 - private no-overflow RV32I add statement;
 - Pedersen commitments to hidden input registers;
 - Fiat-Shamir Schnorr proof that committed private inputs sum to the public
   output;
+- private VM witness file support with hidden initial registers, memory, trace
+  digest, execution-fractal digest, final state digest, final memory digest,
+  and private constraint-proof digest;
+- Fiat-Shamir Schnorr opening proofs for committed private VM execution
+  digests;
+- public output, transition coverage, register range coverage, memory range
+  coverage, memory consistency, and branch coverage binding for private VM
+  proof statements;
 - `.pha` embedding and replay verification;
-- CLI commands `julian sfcs zk-private-add` and `julian sfcs verify-zk-pha`;
-- mutation tests for public output, proof body, challenge, overflow, and wrong
-  program shape.
+- CLI commands `julian sfcs zk-private-add`, `julian sfcs zk-private-vm`, and
+  `julian sfcs verify-zk-pha`;
+- mutation tests for public output, proof body, challenge, overflow, wrong
+  program shape, private VM commitments, private VM public fields, and opening
+  responses.
 
-This profile is accepted only as the first privacy layer. It does not satisfy
-the full arbitrary VM privacy gate.
+These profiles are accepted as privacy milestones. The private-VM profile
+hides arbitrary supported VM witnesses and trace data, but the full arbitrary
+VM privacy gate still requires verifier-side proof of the VM transition
+relation itself.
 
 Required before promotion:
 
@@ -94,13 +107,14 @@ Required before promotion:
 - `.pha` and Rootprint integration remains offline-verifiable;
 - security review of soundness and zero-knowledge assumptions.
 
-Commitment-only hiding is not enough. A release must include a verifier that
-checks a real proof of execution.
+Commitment-only hiding is not enough for the final arbitrary private zkVM
+claim. A release must include a verifier that checks a real proof of execution.
 
 For the complete gate, the proof system must cover more than the current
-private-add profile. It must verify instruction decoding, register transition,
-range constraints, memory consistency, branch behavior, halting, and public
-output binding for the supported VM class.
+private-add and private-VM commitment profiles. It must verify instruction
+decoding, register transition, range constraints, memory consistency, branch
+behavior, halting, and public output binding for the supported VM class inside
+the zero-knowledge relation.
 
 ## Phase Gate 3: Compiler Frontend
 
@@ -228,7 +242,8 @@ VM/compiler class, documentation must say:
 SFCS has a deterministic VM execution foundation, public VM transition and
 memory constraint proofs, scoped Rust/LLVM/WASM-style source-to-fractal
 compilers, and a constrained end-to-end private-add
-source-to-proof-to-Memory-Capsule path.
+source-to-proof-to-Memory-Capsule path plus a general private-VM commitment
+profile that hides private witness inputs and trace data.
 ```
 
 It must not say:

@@ -479,6 +479,97 @@ fn cli_proves_and_verifies_sfcs_zk_private_add() {
 
 #[cfg(feature = "sfcs-zk")]
 #[test]
+fn cli_proves_and_verifies_sfcs_zk_private_vm() {
+    let dir = temp_dir();
+    let program = dir.join("private-vm.program.json");
+    let witness = dir.join("private-vm.witness.json");
+    let report = dir.join("private-vm.report.json");
+    let artifact = dir.join("private-vm.pha");
+
+    fs::write(
+        &program,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "power-house/sfcs-vm-program/v1-draft",
+            "architecture": "rv32i",
+            "entry_pc": 0,
+            "max_steps": 16,
+            "instructions": [
+                0x00500093_u32,
+                0x00700113_u32,
+                0x002081b3_u32,
+                0x00302023_u32,
+                0x00002203_u32,
+                0x00000073_u32
+            ]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        &witness,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "inputs": {
+                "registers": {
+                    "10": 777777777_u32,
+                    "11": 222222222_u32
+                },
+                "memory": {
+                    "128": 99,
+                    "129": 88
+                },
+                "public_registers": [4],
+                "public_memory": [{"start": 0, "len": 4}]
+            },
+            "blinding_seed_hex": "4242424242424242424242424242424242424242424242424242424242424242"
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let prove_stdout = run(&[
+        "sfcs",
+        "zk-private-vm",
+        program.to_str().unwrap(),
+        "--witness",
+        witness.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+    ]);
+    assert!(prove_stdout.contains("SFCS ZK PRIVATE VM"));
+    assert!(prove_stdout.contains("proof_digest: sha256:"));
+    assert!(prove_stdout.contains("transition_checks: 6"));
+    assert!(prove_stdout.contains("private_witness_embedded: false"));
+
+    let report_json = read_json(&report);
+    assert_eq!(
+        report_json["profile"],
+        "power-house/sfcs-zk-private-vm/v1-draft"
+    );
+    assert_eq!(report_json["public_outputs"]["registers"]["x4"], 12);
+    assert_eq!(report_json["public_outputs"]["memory"]["0"], 12);
+    assert_eq!(report_json["private_witness_embedded"], false);
+    assert!(report_json["commitments"]["trace_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("edwards:"));
+    assert!(artifact.exists());
+
+    let artifact_json = fs::read_to_string(&artifact).unwrap();
+    assert!(!artifact_json.contains("777777777"));
+    assert!(!artifact_json.contains("222222222"));
+    assert!(!artifact_json.contains("\"inputs\""));
+    assert!(!artifact_json.contains("\"trace\""));
+
+    let verify_stdout = run(&["sfcs", "verify-zk-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS ZK PRIVATE VM PHA VALID"));
+    assert!(verify_stdout.contains("transition_checks: 6"));
+    assert!(verify_stdout.contains("private_witness_embedded: false"));
+}
+
+#[cfg(feature = "sfcs-zk")]
+#[test]
 fn cli_runs_rust_private_add_end_to_end() {
     let dir = temp_dir();
     let source = dir.join("private_add.rs");
