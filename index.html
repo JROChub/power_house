@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#010405">
-  <meta name="description" content="MFENX Power House: deterministic verification for portable computational identities, .pha artifacts, and Rootprint graphs.">
-  <meta property="og:title" content="MFENX Power House Identity Observatory">
-  <meta property="og:description" content="Verify public proofs and navigate deterministic provenance from one planetary instrument.">
+  <meta name="description" content="MFENX Power House: deterministic verification, private SFCS proof coverage, .pha artifacts, Rootprint graphs, and SLBIT meaning observability.">
+  <meta property="og:title" content="MFENX Power House Verification Observatory">
+  <meta property="og:description" content="Verify public proofs, inspect SFCS private proof coverage, and navigate deterministic provenance from one planetary instrument.">
   <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
   <title>MFENX Power House | Identity Observatory</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
@@ -104,7 +104,7 @@
         </button>
         <button class="proof-mode" data-mode="sfcs" type="button" aria-pressed="false">
           <span class="mode-index">02</span>
-          <span class="mode-copy"><b>SFCS</b><small>FRACTAL / PHA BRIDGE</small></span>
+          <span class="mode-copy"><b>SFCS-ZK</b><small>BITWISE / ORDER / BYTE MEMORY</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="constant" type="button" aria-pressed="false">
@@ -135,7 +135,7 @@
       </button>
 
       <div class="rail-status" aria-label="Release state">
-        <div><span>RELEASE</span><b>v0.3.19</b></div>
+        <div><span>RELEASE</span><b>v0.3.20</b></div>
         <div><span>CORE</span><b>DETERMINISTIC</b></div>
       </div>
 
@@ -149,8 +149,8 @@
           <b>MEANING OBSERVATORY</b>
         </a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs.md" title="Open the SFCS draft gate">
-          <span>SFCS DRAFT</span>
-          <b>FRACTAL DIGEST / PHA BRIDGE</b>
+          <span>SFCS-ZK GATE</span>
+          <b>BITWISE / COMPARISON / BYTE MEMORY</b>
         </a>
         <a href="campaign.html" title="Open the 72-hour reliability campaign">
           <span>72H RELIABILITY</span>
@@ -200,6 +200,28 @@
           <div><dt>CORE</dt><dd>UNCHANGED</dd></div>
           <div><dt>FAST PATH</dt><dd>STRUCTURE ONLY</dd></div>
         </dl>
+      </section>
+
+      <section class="zk-cockpit" aria-label="SFCS private VM proof coverage">
+        <div class="zk-cockpit-head">
+          <span>SFCS PRIVATE VM / v0.3.20</span>
+          <b>WITNESS HIDDEN / MUTATION TESTED</b>
+        </div>
+        <div class="zk-proof-grid">
+          <div><span>BITWISE</span><b>AND OR XOR</b><i></i></div>
+          <div><span>COMPARE</span><b>SLT SLTU</b><i></i></div>
+          <div><span>BRANCH</span><b>BEQ BNE BLT BGE</b><i></i></div>
+          <div><span>MEMORY</span><b>SB SH LB LH</b><i></i></div>
+        </div>
+        <dl>
+          <div><dt>RANGE PROOFS</dt><dd>88</dd></div>
+          <div><dt>BYTE SEMANTICS</dt><dd>6</dd></div>
+          <div><dt>MUTATIONS</dt><dd>4 / 4 REJECT</dd></div>
+        </dl>
+        <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md">
+          <span>OPEN GATE EVIDENCE</span>
+          <span data-icon="chevron-right"></span>
+        </a>
       </section>
     </main>
 
@@ -353,7 +375,7 @@
         <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/identity.md">IDENTITY API</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
-        <a href="https://crates.io/crates/power_house">CRATE v0.3.19</a>
+        <a href="https://crates.io/crates/power_house">CRATE v0.3.20</a>
       </div>
     </aside>
 
@@ -433,7 +455,7 @@
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
         <div><span>MODE</span><b id="mode-value">ROOTPRINT</b></div>
-        <div><span>RELEASE</span><b>v0.3.19</b></div>
+        <div><span>RELEASE</span><b>v0.3.20</b></div>
       </div>
     </section>
 
@@ -442,6 +464,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0319.js"></script>
+  <script type="module" src="app-v0320.js"></script>
 </body>
 </html>
