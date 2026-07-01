@@ -15,7 +15,7 @@ use super::{
 use crate::provenance::{PhaArtifact, PhaError};
 use ark_ec::{AffineRepr, CurveGroup, Group};
 use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective, Fr};
-use ark_ff::PrimeField;
+use ark_ff::{PrimeField, Zero};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -121,7 +121,13 @@ pub struct SfcsZkPrivateVmStatement {
     pub zk_memory_consistency_proofs: u64,
     /// Number of zero-knowledge memory access/register value binding proofs.
     pub zk_memory_value_proofs: u64,
-    /// Number of zero-knowledge equality-based branch proofs.
+    /// Number of zero-knowledge byte-level memory semantics proofs.
+    pub zk_memory_byte_proofs: u64,
+    /// Number of zero-knowledge private bitwise operation proofs.
+    pub zk_bitwise_proofs: u64,
+    /// Number of zero-knowledge private comparison proofs.
+    pub zk_comparison_proofs: u64,
+    /// Number of zero-knowledge private branch condition proofs.
     pub zk_branch_proofs: u64,
     /// Pedersen commitments to private execution digests.
     pub commitments: BTreeMap<String, String>,
@@ -254,18 +260,112 @@ pub struct SfcsZkPrivateVmMemoryValueProof {
     pub value_equality: SfcsZkPrivateVmEqualityProof,
 }
 
-/// Zero-knowledge proof for equality-based private branch conditions.
+/// One branch inside a zero-knowledge selective OR proof.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmSelectiveBranchProof {
+    /// Nonce commitments, one for each constrained component in the branch.
+    pub nonce_commitments: Vec<String>,
+    /// Fiat-Shamir branch challenge share.
+    pub challenge: String,
+    /// Schnorr responses, one for each constrained component in the branch.
+    pub responses: Vec<String>,
+}
+
+/// Zero-knowledge OR proof that committed components match one row of a
+/// finite relation. `null` candidate entries are wildcards and are not
+/// constrained for that branch.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmSelectiveProof {
+    /// Stable proof label.
+    pub label: String,
+    /// Component commitments.
+    pub commitments: Vec<String>,
+    /// Candidate rows. `null` means wildcard for that component in that row.
+    pub candidates: Vec<Vec<Option<u32>>>,
+    /// One OR branch proof per candidate row.
+    pub branches: Vec<SfcsZkPrivateVmSelectiveBranchProof>,
+}
+
+/// Zero-knowledge bitwise relation proof tied to range-proof bit commitments.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmBitwiseProof {
+    /// VM step index.
+    pub step_index: u64,
+    /// Operation: `and`, `or`, `xor`, `andi`, `ori`, or `xori`.
+    pub operation: String,
+    /// Range-proof label for lhs.
+    pub lhs_range_label: String,
+    /// Optional range-proof label for rhs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rhs_range_label: Option<String>,
+    /// Optional public immediate value for immediate bitwise operations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub public_constant: Option<u32>,
+    /// Range-proof label for output.
+    pub output_range_label: String,
+    /// One finite-relation proof per bit.
+    pub bit_proofs: Vec<SfcsZkPrivateVmSelectiveProof>,
+}
+
+/// Zero-knowledge comparison/order proof tied to range-proof commitments.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmComparisonProof {
+    /// VM step index or branch step index.
+    pub step_index: u64,
+    /// Relation: `slt`, `sltu`, `slti`, `sltiu`, `blt`, `bge`, `bltu`, or `bgeu`.
+    pub relation: String,
+    /// Whether the comparison uses signed order.
+    pub signed: bool,
+    /// Range-proof label for lhs.
+    pub lhs_range_label: String,
+    /// Optional range-proof label for rhs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rhs_range_label: Option<String>,
+    /// Optional public immediate value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub public_constant: Option<u32>,
+    /// Range-proof label for the hidden comparison result.
+    pub output_range_label: String,
+    /// Range-proof label for the 32-bit comparison slack.
+    pub diff_range_label: String,
+    /// Selective proof for the comparison predicate.
+    pub relation_proof: SfcsZkPrivateVmSelectiveProof,
+}
+
+/// Zero-knowledge byte-level memory access proof.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmMemoryByteProof {
+    /// Memory access step index.
+    pub step_index: u64,
+    /// `read` or `write`.
+    pub kind: String,
+    /// Load/store mnemonic.
+    pub mnemonic: String,
+    /// Access width in bytes.
+    pub width: u8,
+    /// Byte-level read-after-write equality proofs for bytes supplied by a
+    /// prior private write.
+    pub byte_consistency: Vec<SfcsZkPrivateVmEqualityProof>,
+    /// Proof tying the architectural register value to addressed bytes and
+    /// the required sign/zero extension or low-byte extraction semantics.
+    pub value_semantics: SfcsZkPrivateVmSelectiveProof,
+}
+
+/// Zero-knowledge proof for private branch conditions.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmBranchProof {
     /// Branch step index.
     pub step_index: u64,
-    /// Branch mnemonic, currently `beq` or `bne`.
+    /// Branch mnemonic.
     pub branch: String,
     /// Public branch decision observed in the private execution trace.
     pub branch_taken: bool,
-    /// Hidden equality proof for branch cases whose decision requires operand
-    /// equality (`beq` taken or `bne` not taken).
-    pub equality: SfcsZkPrivateVmEqualityProof,
+    /// Equality proof for `beq` taken and `bne` not taken.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub equality: Option<SfcsZkPrivateVmEqualityProof>,
+    /// Non-equality/order proof for the remaining branch cases.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition: Option<SfcsZkPrivateVmSelectiveProof>,
 }
 
 /// Non-interactive private VM proof.
@@ -289,7 +389,16 @@ pub struct SfcsZkPrivateVmProof {
     /// Zero-knowledge memory access/register value binding proofs.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub memory_value_proofs: Vec<SfcsZkPrivateVmMemoryValueProof>,
-    /// Zero-knowledge equality-based branch proofs.
+    /// Zero-knowledge byte-level memory semantics proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub memory_byte_proofs: Vec<SfcsZkPrivateVmMemoryByteProof>,
+    /// Zero-knowledge bitwise operation proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub bitwise_proofs: Vec<SfcsZkPrivateVmBitwiseProof>,
+    /// Zero-knowledge comparison/order proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub comparison_proofs: Vec<SfcsZkPrivateVmComparisonProof>,
+    /// Zero-knowledge branch condition proofs.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub branch_proofs: Vec<SfcsZkPrivateVmBranchProof>,
     /// Domain-separated proof digest.
@@ -499,6 +608,10 @@ impl SfcsZkPrivateVmProof {
             private_vm_memory_consistency_preimages(&trace, &witness.blinding_seed)?;
         let memory_value_preimages =
             private_vm_memory_value_preimages(&trace, &witness.blinding_seed)?;
+        let memory_byte_preimages =
+            private_vm_memory_byte_preimages(&trace, &witness.blinding_seed)?;
+        let bitwise_preimages = private_vm_bitwise_preimages(&trace, &witness.blinding_seed)?;
+        let comparison_preimages = private_vm_comparison_preimages(&trace, &witness.blinding_seed)?;
         let branch_preimages = private_vm_branch_preimages(&trace, &witness.blinding_seed)?;
         let range_proof_count = linear_relation_preimages
             .iter()
@@ -509,6 +622,18 @@ impl SfcsZkPrivateVmProof {
                 .map(|proof| proof.range_inputs.len() as u64)
                 .sum::<u64>()
             + memory_value_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>()
+            + memory_byte_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>()
+            + bitwise_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>()
+            + comparison_preimages
                 .iter()
                 .map(|proof| proof.range_inputs.len() as u64)
                 .sum::<u64>()
@@ -530,6 +655,9 @@ impl SfcsZkPrivateVmProof {
             zk_range_proofs: range_proof_count,
             zk_memory_consistency_proofs: memory_consistency_preimages.len() as u64,
             zk_memory_value_proofs: memory_value_preimages.len() as u64,
+            zk_memory_byte_proofs: memory_byte_preimages.len() as u64,
+            zk_bitwise_proofs: bitwise_preimages.len() as u64,
+            zk_comparison_proofs: comparison_preimages.len() as u64,
             zk_branch_proofs: branch_preimages.len() as u64,
             commitments,
         };
@@ -603,6 +731,27 @@ impl SfcsZkPrivateVmProof {
             }
             memory_value_proofs.push(memory_preimage.proof);
         }
+        let mut memory_byte_proofs = Vec::new();
+        for memory_preimage in memory_byte_preimages {
+            for range_input in &memory_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            memory_byte_proofs.push(memory_preimage.proof);
+        }
+        let mut bitwise_proofs = Vec::new();
+        for bitwise_preimage in bitwise_preimages {
+            for range_input in &bitwise_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            bitwise_proofs.push(bitwise_preimage.proof);
+        }
+        let mut comparison_proofs = Vec::new();
+        for comparison_preimage in comparison_preimages {
+            for range_input in &comparison_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            comparison_proofs.push(comparison_preimage.proof);
+        }
         let mut branch_proofs = Vec::new();
         for branch_preimage in branch_preimages {
             for range_input in &branch_preimage.range_inputs {
@@ -618,6 +767,9 @@ impl SfcsZkPrivateVmProof {
             range_proofs,
             memory_consistency_proofs,
             memory_value_proofs,
+            memory_byte_proofs,
+            bitwise_proofs,
+            comparison_proofs,
             branch_proofs,
             proof_digest: String::new(),
         };
@@ -694,6 +846,21 @@ impl SfcsZkPrivateVmProof {
                 "private VM memory value proof count does not match proofs".to_string(),
             ));
         }
+        if self.statement.zk_memory_byte_proofs != self.memory_byte_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM memory byte proof count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_bitwise_proofs != self.bitwise_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM bitwise proof count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_comparison_proofs != self.comparison_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM comparison proof count does not match proofs".to_string(),
+            ));
+        }
         if self.statement.zk_branch_proofs != self.branch_proofs.len() as u64 {
             return Err(SfcsZkError::InvalidProof(
                 "private VM branch proof count does not match proofs".to_string(),
@@ -768,11 +935,25 @@ impl SfcsZkPrivateVmProof {
         for proof in &self.range_proofs {
             proof.verify()?;
         }
+        let range_map = self
+            .range_proofs
+            .iter()
+            .map(|proof| (proof.label.as_str(), proof))
+            .collect::<BTreeMap<_, _>>();
         for proof in &self.memory_consistency_proofs {
             proof.verify()?;
         }
         for proof in &self.memory_value_proofs {
             proof.verify()?;
+        }
+        for proof in &self.memory_byte_proofs {
+            proof.verify()?;
+        }
+        for proof in &self.bitwise_proofs {
+            proof.verify(&range_map)?;
+        }
+        for proof in &self.comparison_proofs {
+            proof.verify(&range_map)?;
         }
         for proof in &self.branch_proofs {
             proof.verify()?;
@@ -816,6 +997,9 @@ impl SfcsZkPrivateVmProof {
                 "zk_range_proofs": self.statement.zk_range_proofs,
                 "zk_memory_consistency_proofs": self.statement.zk_memory_consistency_proofs,
                 "zk_memory_value_proofs": self.statement.zk_memory_value_proofs,
+                "zk_memory_byte_proofs": self.statement.zk_memory_byte_proofs,
+                "zk_bitwise_proofs": self.statement.zk_bitwise_proofs,
+                "zk_comparison_proofs": self.statement.zk_comparison_proofs,
                 "zk_branch_proofs": self.statement.zk_branch_proofs,
                 "commitments": self.statement.commitments,
                 "proof_digest": self.proof_digest,
@@ -837,6 +1021,9 @@ impl SfcsZkPrivateVmProof {
             "range_proofs": self.range_proofs,
             "memory_consistency_proofs": self.memory_consistency_proofs,
             "memory_value_proofs": self.memory_value_proofs,
+            "memory_byte_proofs": self.memory_byte_proofs,
+            "bitwise_proofs": self.bitwise_proofs,
+            "comparison_proofs": self.comparison_proofs,
             "branch_proofs": self.branch_proofs,
         })
     }
@@ -1061,6 +1248,287 @@ impl SfcsZkPrivateVmEqualityProof {
     }
 }
 
+impl SfcsZkPrivateVmSelectiveProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        if self.commitments.is_empty() {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "selective proof {} has no commitments",
+                self.label
+            )));
+        }
+        if self.candidates.is_empty() || self.candidates.len() != self.branches.len() {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "selective proof {} candidate/branch count mismatch",
+                self.label
+            )));
+        }
+        let commitments = self
+            .commitments
+            .iter()
+            .map(|commitment| point_from_hex(commitment))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut nonce_branches = Vec::with_capacity(self.branches.len());
+        let mut challenge_sum = Fr::from(0_u64);
+        for (candidate, branch) in self.candidates.iter().zip(self.branches.iter()) {
+            if candidate.len() != commitments.len() {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "selective proof {} candidate arity mismatch",
+                    self.label
+                )));
+            }
+            let constrained = candidate.iter().filter(|value| value.is_some()).count();
+            if constrained == 0
+                || branch.nonce_commitments.len() != constrained
+                || branch.responses.len() != constrained
+            {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "selective proof {} branch arity mismatch",
+                    self.label
+                )));
+            }
+            let nonces = branch
+                .nonce_commitments
+                .iter()
+                .map(|nonce| point_from_hex(nonce))
+                .collect::<Result<Vec<_>, _>>()?;
+            nonce_branches.push(nonces);
+            challenge_sum += scalar_from_hex(&branch.challenge)?;
+        }
+        let challenge = derive_selective_challenge(
+            &self.label,
+            &commitments,
+            &self.candidates,
+            &nonce_branches,
+        )?;
+        if challenge_sum != challenge {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "selective proof {} challenge split mismatch",
+                self.label
+            )));
+        }
+        for ((candidate, branch), nonces) in self
+            .candidates
+            .iter()
+            .zip(self.branches.iter())
+            .zip(nonce_branches.iter())
+        {
+            let branch_challenge = scalar_from_hex(&branch.challenge)?;
+            let mut constrained_index = 0;
+            for (component_index, candidate_value) in candidate.iter().enumerate() {
+                let Some(candidate_value) = candidate_value else {
+                    continue;
+                };
+                let response = scalar_from_hex(&branch.responses[constrained_index])?;
+                let nonce = nonces[constrained_index];
+                let relation = commitments[component_index]
+                    - value_base().mul_bigint(Fr::from(*candidate_value).into_bigint());
+                let left = blinding_base().mul_bigint(response.into_bigint());
+                let right = nonce + relation.mul_bigint(branch_challenge.into_bigint());
+                if left != right {
+                    return Err(SfcsZkError::InvalidProof(format!(
+                        "selective proof {} branch component {} failed",
+                        self.label, component_index
+                    )));
+                }
+                constrained_index += 1;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmBitwiseProof {
+    fn verify(
+        &self,
+        range_map: &BTreeMap<&str, &SfcsZkPrivateVmRangeProof>,
+    ) -> Result<(), SfcsZkError> {
+        if self.bit_proofs.len() != 32 {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "bitwise proof at step {} must contain 32 bit proofs",
+                self.step_index
+            )));
+        }
+        if matches!(self.operation.as_str(), "and" | "or" | "xor") {
+            if self.rhs_range_label.is_none() || self.public_constant.is_some() {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "binary bitwise proof {} must carry rhs range label only",
+                    self.operation
+                )));
+            }
+        } else if matches!(self.operation.as_str(), "andi" | "ori" | "xori") {
+            if self.rhs_range_label.is_some() || self.public_constant.is_none() {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "immediate bitwise proof {} must carry public constant only",
+                    self.operation
+                )));
+            }
+        } else {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported bitwise proof operation {}",
+                self.operation
+            )));
+        }
+        let lhs = range_map
+            .get(self.lhs_range_label.as_str())
+            .ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "bitwise proof missing lhs range label {}",
+                    self.lhs_range_label
+                ))
+            })?;
+        let output = range_map
+            .get(self.output_range_label.as_str())
+            .ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "bitwise proof missing output range label {}",
+                    self.output_range_label
+                ))
+            })?;
+        let rhs = self
+            .rhs_range_label
+            .as_ref()
+            .map(|label| {
+                range_map.get(label.as_str()).ok_or_else(|| {
+                    SfcsZkError::InvalidProof(format!(
+                        "bitwise proof missing rhs range label {label}"
+                    ))
+                })
+            })
+            .transpose()?;
+        for (index, proof) in self.bit_proofs.iter().enumerate() {
+            let expected = if let Some(rhs) = rhs {
+                vec![
+                    lhs.bit_commitments[index].clone(),
+                    rhs.bit_commitments[index].clone(),
+                    output.bit_commitments[index].clone(),
+                ]
+            } else {
+                vec![
+                    lhs.bit_commitments[index].clone(),
+                    output.bit_commitments[index].clone(),
+                ]
+            };
+            if proof.commitments != expected {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "bitwise proof {} bit {} is not tied to range proof bits",
+                    self.operation, index
+                )));
+            }
+            proof.verify()?;
+        }
+        Ok(())
+    }
+}
+
+impl SfcsZkPrivateVmComparisonProof {
+    fn verify(
+        &self,
+        range_map: &BTreeMap<&str, &SfcsZkPrivateVmRangeProof>,
+    ) -> Result<(), SfcsZkError> {
+        let expected_signed = matches!(self.relation.as_str(), "slt" | "slti" | "blt" | "bge");
+        if expected_signed != self.signed {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "comparison proof {} signedness mismatch",
+                self.relation
+            )));
+        }
+        let lhs = range_map
+            .get(self.lhs_range_label.as_str())
+            .ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "comparison proof missing lhs range label {}",
+                    self.lhs_range_label
+                ))
+            })?;
+        let output = range_map
+            .get(self.output_range_label.as_str())
+            .ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "comparison proof missing output range label {}",
+                    self.output_range_label
+                ))
+            })?;
+        let diff = range_map
+            .get(self.diff_range_label.as_str())
+            .ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "comparison proof missing diff range label {}",
+                    self.diff_range_label
+                ))
+            })?;
+        let mut expected = Vec::new();
+        expected.push(output.bit_commitments[0].clone());
+        expected.extend(output.bit_commitments.iter().skip(1).cloned());
+        expected.push(lhs.bit_commitments[31].clone());
+        let rhs = if let Some(rhs_label) = &self.rhs_range_label {
+            Some(*range_map.get(rhs_label.as_str()).ok_or_else(|| {
+                SfcsZkError::InvalidProof(format!(
+                    "comparison proof missing rhs range label {rhs_label}"
+                ))
+            })?)
+        } else {
+            None
+        };
+        if let Some(rhs) = rhs {
+            expected.push(rhs.bit_commitments[31].clone());
+        }
+        expected.push(diff.value_commitment.clone());
+        let lhs_commitment = point_from_hex(&lhs.value_commitment)?;
+        let rhs_commitment = if let Some(rhs) = rhs {
+            point_from_hex(&rhs.value_commitment)?
+        } else {
+            value_base().mul_bigint(
+                Fr::from(self.public_constant.ok_or_else(|| {
+                    SfcsZkError::InvalidProof(format!(
+                        "comparison proof {} missing rhs source",
+                        self.relation
+                    ))
+                })?)
+                .into_bigint(),
+            )
+        };
+        let diff_commitment = point_from_hex(&diff.value_commitment)?;
+        let residual_lt = rhs_commitment
+            - lhs_commitment
+            - value_base().mul_bigint(Fr::from(1_u64).into_bigint())
+            - diff_commitment;
+        let residual_ge = lhs_commitment - rhs_commitment - diff_commitment;
+        expected.push(point_to_hex(&residual_lt)?);
+        expected.push(point_to_hex(&residual_ge)?);
+        if self.relation_proof.commitments != expected {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "comparison proof {} is not tied to range proof commitments",
+                self.relation
+            )));
+        }
+        self.relation_proof.verify()
+    }
+}
+
+impl SfcsZkPrivateVmMemoryByteProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        if !matches!(self.kind.as_str(), "read" | "write") {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported memory byte proof kind {}",
+                self.kind
+            )));
+        }
+        if !matches!(self.width, 1 | 2 | 4) {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported memory byte proof width {}",
+                self.width
+            )));
+        }
+        for (index, equality) in self.byte_consistency.iter().enumerate() {
+            equality.verify(&format!(
+                "memory-byte:{}:{}:{}",
+                self.step_index, self.kind, index
+            ))?;
+        }
+        self.value_semantics.verify()
+    }
+}
+
 impl SfcsZkPrivateVmMemoryConsistencyProof {
     fn verify(&self) -> Result<(), SfcsZkError> {
         if self.write_step_index >= self.read_step_index {
@@ -1091,20 +1559,49 @@ impl SfcsZkPrivateVmMemoryValueProof {
 
 impl SfcsZkPrivateVmBranchProof {
     fn verify(&self) -> Result<(), SfcsZkError> {
-        match (self.branch.as_str(), self.branch_taken) {
-            ("beq", true) | ("bne", false) => {}
-            _ => {
-                return Err(SfcsZkError::InvalidProof(format!(
-                    "unsupported equality branch proof {} taken={}",
-                    self.branch, self.branch_taken
-                )))
-            }
-        }
         let label = format!(
             "branch:{}:{}:{}",
             self.step_index, self.branch, self.branch_taken
         );
-        self.equality.verify(&label)?;
+        match (self.branch.as_str(), self.branch_taken) {
+            ("beq", true) | ("bne", false) => {
+                let Some(equality) = &self.equality else {
+                    return Err(SfcsZkError::InvalidProof(format!(
+                        "branch proof {label} missing equality proof"
+                    )));
+                };
+                if self.condition.is_some() {
+                    return Err(SfcsZkError::InvalidProof(format!(
+                        "branch proof {label} must not carry a condition proof"
+                    )));
+                }
+                equality.verify(&label)?;
+            }
+            ("beq", false)
+            | ("bne", true)
+            | ("blt", _)
+            | ("bge", _)
+            | ("bltu", _)
+            | ("bgeu", _) => {
+                let Some(condition) = &self.condition else {
+                    return Err(SfcsZkError::InvalidProof(format!(
+                        "branch proof {label} missing condition proof"
+                    )));
+                };
+                if self.equality.is_some() {
+                    return Err(SfcsZkError::InvalidProof(format!(
+                        "branch proof {label} must not carry an equality proof"
+                    )));
+                }
+                condition.verify()?;
+            }
+            _ => {
+                return Err(SfcsZkError::InvalidProof(format!(
+                    "unsupported branch proof {} taken={}",
+                    self.branch, self.branch_taken
+                )))
+            }
+        }
         Ok(())
     }
 }
@@ -1153,6 +1650,24 @@ struct SfcsZkPrivateVmMemoryConsistencyPreimage {
 #[derive(Debug, Clone)]
 struct SfcsZkPrivateVmMemoryValuePreimage {
     proof: SfcsZkPrivateVmMemoryValueProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmMemoryBytePreimage {
+    proof: SfcsZkPrivateVmMemoryByteProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmBitwisePreimage {
+    proof: SfcsZkPrivateVmBitwiseProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmComparisonPreimage {
+    proof: SfcsZkPrivateVmComparisonProof,
     range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
 }
 
@@ -1262,6 +1777,9 @@ pub fn verify_private_vm_embedding(
         "zk_range_proofs",
         "zk_memory_consistency_proofs",
         "zk_memory_value_proofs",
+        "zk_memory_byte_proofs",
+        "zk_bitwise_proofs",
+        "zk_comparison_proofs",
         "zk_branch_proofs",
         "commitments",
     ] {
@@ -1295,6 +1813,15 @@ pub fn verify_private_vm_embedding(
             }
             "zk_memory_value_proofs" => {
                 serde_json::json!(embedding.proof.statement.zk_memory_value_proofs)
+            }
+            "zk_memory_byte_proofs" => {
+                serde_json::json!(embedding.proof.statement.zk_memory_byte_proofs)
+            }
+            "zk_bitwise_proofs" => {
+                serde_json::json!(embedding.proof.statement.zk_bitwise_proofs)
+            }
+            "zk_comparison_proofs" => {
+                serde_json::json!(embedding.proof.statement.zk_comparison_proofs)
             }
             "zk_branch_proofs" => serde_json::json!(embedding.proof.statement.zk_branch_proofs),
             "commitments" => serde_json::to_value(&embedding.proof.statement.commitments)?,
@@ -1610,14 +2137,16 @@ fn private_vm_memory_consistency_preimages(
             }
             "read" => {
                 if let Some((write_step_index, write_value)) = writes.get(&key).copied() {
-                    proofs.push(private_vm_memory_consistency_preimage(
-                        write_step_index,
-                        step.step_index,
-                        access.address,
-                        write_value,
-                        access.value,
-                        seed,
-                    )?);
+                    if write_value == access.value {
+                        proofs.push(private_vm_memory_consistency_preimage(
+                            write_step_index,
+                            step.step_index,
+                            access.address,
+                            write_value,
+                            access.value,
+                            seed,
+                        )?);
+                    }
                 }
             }
             _ => {}
@@ -1725,26 +2254,277 @@ fn private_vm_memory_value_preimage(
     })
 }
 
+fn private_vm_memory_byte_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmMemoryBytePreimage>, SfcsZkError> {
+    let mut writes = BTreeMap::<u32, (u64, u8)>::new();
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        let Some(access) = &step.memory_access else {
+            continue;
+        };
+        if access.bytes.len() != access.width as usize {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "memory access at step {} has inconsistent byte width",
+                step.step_index
+            )));
+        }
+        let mut consistency = Vec::new();
+        let mut range_inputs = Vec::new();
+        let mut byte_inputs = Vec::new();
+        for (offset, byte) in access.bytes.iter().copied().enumerate() {
+            let address = access.address.wrapping_add(offset as u32);
+            let byte_input = private_vm_range_input(
+                &format!("memory-byte:{}:byte:{offset}", step.step_index),
+                byte as u32,
+                seed,
+            );
+            if access.kind == "read" {
+                if let Some((write_step, write_byte)) = writes.get(&address).copied() {
+                    let write_input = private_vm_range_input(
+                        &format!(
+                            "memory-byte:{write_step}:byte:{offset}:read:{}",
+                            step.step_index
+                        ),
+                        write_byte as u32,
+                        seed,
+                    );
+                    consistency.push(private_vm_equality_proof(
+                        &format!("memory-byte:{}:{}:{}", step.step_index, access.kind, offset),
+                        &write_input,
+                        &byte_input,
+                        seed,
+                    )?);
+                    range_inputs.push(write_input);
+                }
+            }
+            byte_inputs.push(byte_input.clone());
+            range_inputs.push(byte_input);
+        }
+        let register_value = match access.kind.as_str() {
+            "read" => step.rd_value_after,
+            "write" => step.rs2_value_before,
+            _ => None,
+        }
+        .ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!(
+                "memory access at step {} lacks register value",
+                step.step_index
+            ))
+        })?;
+        let register = private_vm_range_input(
+            &format!("memory-byte:{}:register", step.step_index),
+            register_value,
+            seed,
+        );
+        let (value_semantics, extra_ranges) = private_vm_memory_value_semantics(
+            PrivateVmMemoryValueInputs {
+                step_index: step.step_index,
+                mnemonic: &step.mnemonic,
+                kind: access.kind.as_str(),
+                width: access.width,
+                register_value,
+                register: &register,
+                bytes: &byte_inputs,
+            },
+            seed,
+        )?;
+        range_inputs.push(register);
+        range_inputs.extend(extra_ranges);
+        proofs.push(SfcsZkPrivateVmMemoryBytePreimage {
+            proof: SfcsZkPrivateVmMemoryByteProof {
+                step_index: step.step_index,
+                kind: access.kind.clone(),
+                mnemonic: step.mnemonic.clone(),
+                width: access.width,
+                byte_consistency: consistency,
+                value_semantics,
+            },
+            range_inputs,
+        });
+        if access.kind == "write" {
+            for (offset, byte) in access.bytes.iter().copied().enumerate() {
+                writes.insert(
+                    access.address.wrapping_add(offset as u32),
+                    (step.step_index, byte),
+                );
+            }
+        }
+    }
+    Ok(proofs)
+}
+
+fn private_vm_bitwise_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmBitwisePreimage>, SfcsZkError> {
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        if step.rd == Some(0) {
+            continue;
+        }
+        let op = step.mnemonic.as_str();
+        if !matches!(op, "and" | "or" | "xor" | "andi" | "ori" | "xori") {
+            continue;
+        }
+        let (Some(lhs), Some(output)) = (step.rs1_value_before, step.rd_value_after) else {
+            continue;
+        };
+        let rhs = if matches!(op, "and" | "or" | "xor") {
+            step.rs2_value_before
+        } else {
+            step.immediate.map(|value| value as u32)
+        }
+        .ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!(
+                "bitwise step {} lacks rhs source",
+                step.step_index
+            ))
+        })?;
+        let expected = match op {
+            "and" | "andi" => lhs & rhs,
+            "or" | "ori" => lhs | rhs,
+            "xor" | "xori" => lhs ^ rhs,
+            _ => unreachable!(),
+        };
+        if expected != output {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "bitwise step {} output does not match trace",
+                step.step_index
+            )));
+        }
+        let prefix = format!("bitwise:{}:{op}", step.step_index);
+        let lhs_input = private_vm_range_input(&format!("{prefix}:lhs"), lhs, seed);
+        let output_input = private_vm_range_input(&format!("{prefix}:output"), output, seed);
+        let rhs_input = matches!(op, "and" | "or" | "xor")
+            .then(|| private_vm_range_input(&format!("{prefix}:rhs"), rhs, seed));
+        let lhs_bits = private_vm_range_bits(&lhs_input, seed)?;
+        let output_bits = private_vm_range_bits(&output_input, seed)?;
+        let rhs_bits = rhs_input
+            .as_ref()
+            .map(|input| private_vm_range_bits(input, seed))
+            .transpose()?;
+        let mut bit_proofs = Vec::new();
+        for index in 0..32 {
+            if let Some(rhs_bits) = &rhs_bits {
+                let values = vec![lhs_bits[index].0, rhs_bits[index].0, output_bits[index].0];
+                let blindings = vec![lhs_bits[index].1, rhs_bits[index].1, output_bits[index].1];
+                let commitments = vec![lhs_bits[index].2, rhs_bits[index].2, output_bits[index].2];
+                bit_proofs.push(private_vm_selective_proof(
+                    &format!("{prefix}:bit:{index}"),
+                    &values,
+                    &blindings,
+                    &commitments,
+                    &bitwise_candidates(op, None),
+                    seed,
+                )?);
+            } else {
+                let constant_bit = (rhs >> index) & 1;
+                let values = vec![lhs_bits[index].0, output_bits[index].0];
+                let blindings = vec![lhs_bits[index].1, output_bits[index].1];
+                let commitments = vec![lhs_bits[index].2, output_bits[index].2];
+                bit_proofs.push(private_vm_selective_proof(
+                    &format!("{prefix}:bit:{index}"),
+                    &values,
+                    &blindings,
+                    &commitments,
+                    &bitwise_candidates(op, Some(constant_bit)),
+                    seed,
+                )?);
+            }
+        }
+        let mut range_inputs = vec![lhs_input.clone(), output_input.clone()];
+        if let Some(rhs_input) = rhs_input.clone() {
+            range_inputs.push(rhs_input);
+        }
+        proofs.push(SfcsZkPrivateVmBitwisePreimage {
+            proof: SfcsZkPrivateVmBitwiseProof {
+                step_index: step.step_index,
+                operation: op.to_string(),
+                lhs_range_label: lhs_input.label,
+                rhs_range_label: rhs_input.as_ref().map(|input| input.label.clone()),
+                public_constant: matches!(op, "andi" | "ori" | "xori").then_some(rhs),
+                output_range_label: output_input.label,
+                bit_proofs,
+            },
+            range_inputs,
+        });
+    }
+    Ok(proofs)
+}
+
+fn private_vm_comparison_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmComparisonPreimage>, SfcsZkError> {
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        if step.rd == Some(0) {
+            continue;
+        }
+        let relation = step.mnemonic.as_str();
+        if !matches!(relation, "slt" | "sltu" | "slti" | "sltiu") {
+            continue;
+        }
+        let (Some(lhs), Some(output)) = (step.rs1_value_before, step.rd_value_after) else {
+            continue;
+        };
+        let rhs = if matches!(relation, "slt" | "sltu") {
+            step.rs2_value_before
+        } else {
+            step.immediate.map(|value| value as u32)
+        }
+        .ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!(
+                "comparison step {} lacks rhs source",
+                step.step_index
+            ))
+        })?;
+        let signed = matches!(relation, "slt" | "slti");
+        let expected = if signed {
+            u32::from((lhs as i32) < (rhs as i32))
+        } else {
+            u32::from(lhs < rhs)
+        };
+        if output != expected {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "comparison step {} output does not match trace",
+                step.step_index
+            )));
+        }
+        proofs.push(private_vm_comparison_preimage(
+            PrivateVmComparisonInputs {
+                step_index: step.step_index,
+                relation,
+                signed,
+                lhs_value: lhs,
+                rhs_value: rhs,
+                output_value: output,
+                rhs_is_public_constant: !matches!(relation, "slt" | "sltu"),
+            },
+            seed,
+        )?);
+    }
+    Ok(proofs)
+}
+
 fn private_vm_branch_preimages(
     trace: &SfcsVmExecutionTrace,
     seed: &[u8; 32],
 ) -> Result<Vec<SfcsZkPrivateVmBranchPreimage>, SfcsZkError> {
     let mut proofs = Vec::new();
     for step in &trace.steps {
-        let supported = matches!(
-            (step.mnemonic.as_str(), step.branch_taken),
-            ("beq", true) | ("bne", false)
-        );
-        if !supported {
+        if !matches!(
+            step.mnemonic.as_str(),
+            "beq" | "bne" | "blt" | "bge" | "bltu" | "bgeu"
+        ) {
             continue;
         }
         let (Some(left_value), Some(right_value)) = (step.rs1_value_before, step.rs2_value_before)
         else {
             continue;
         };
-        if left_value != right_value {
-            continue;
-        }
         proofs.push(private_vm_branch_preimage(
             step.step_index,
             &step.mnemonic,
@@ -1768,15 +2548,684 @@ fn private_vm_branch_preimage(
     let label = format!("branch:{step_index}:{branch}:{branch_taken}");
     let left = private_vm_range_input(&format!("{label}:left"), left_value, seed);
     let right = private_vm_range_input(&format!("{label}:right"), right_value, seed);
-    let equality = private_vm_equality_proof(&label, &left, &right, seed)?;
+    if matches!((branch, branch_taken), ("beq", true) | ("bne", false)) {
+        if left_value != right_value {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "branch {label} expected equal operands"
+            )));
+        }
+        let equality = private_vm_equality_proof(&label, &left, &right, seed)?;
+        return Ok(SfcsZkPrivateVmBranchPreimage {
+            proof: SfcsZkPrivateVmBranchProof {
+                step_index,
+                branch: branch.to_string(),
+                branch_taken,
+                equality: Some(equality),
+                condition: None,
+            },
+            range_inputs: vec![left, right],
+        });
+    }
+    let condition = match branch {
+        "beq" | "bne" => {
+            if left_value == right_value {
+                return Err(SfcsZkError::InvalidWitness(format!(
+                    "branch {label} expected non-equal operands"
+                )));
+            }
+            private_vm_inequality_condition(&label, &left, &right, seed)?
+        }
+        "bltu" | "bgeu" => {
+            let output = u32::from(if branch == "bltu" {
+                branch_taken
+            } else {
+                !branch_taken
+            });
+            private_vm_comparison_condition(&label, false, left_value, right_value, output, seed)?
+        }
+        "blt" | "bge" => {
+            let output = u32::from(if branch == "blt" {
+                branch_taken
+            } else {
+                !branch_taken
+            });
+            private_vm_comparison_condition(&label, true, left_value, right_value, output, seed)?
+        }
+        _ => {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "unsupported branch {branch}"
+            )))
+        }
+    };
+    let mut range_inputs = vec![left, right];
+    range_inputs.extend(condition.1);
     Ok(SfcsZkPrivateVmBranchPreimage {
         proof: SfcsZkPrivateVmBranchProof {
             step_index,
             branch: branch.to_string(),
             branch_taken,
-            equality,
+            equality: None,
+            condition: Some(condition.0),
         },
-        range_inputs: vec![left, right],
+        range_inputs,
+    })
+}
+
+struct PrivateVmComparisonInputs<'a> {
+    step_index: u64,
+    relation: &'a str,
+    signed: bool,
+    lhs_value: u32,
+    rhs_value: u32,
+    output_value: u32,
+    rhs_is_public_constant: bool,
+}
+
+fn private_vm_comparison_preimage(
+    inputs: PrivateVmComparisonInputs<'_>,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmComparisonPreimage, SfcsZkError> {
+    let PrivateVmComparisonInputs {
+        step_index,
+        relation,
+        signed,
+        lhs_value,
+        rhs_value,
+        output_value,
+        rhs_is_public_constant,
+    } = inputs;
+    let label = format!("comparison:{step_index}:{relation}");
+    let lhs = private_vm_range_input(&format!("{label}:lhs"), lhs_value, seed);
+    let rhs = private_vm_range_input(&format!("{label}:rhs"), rhs_value, seed);
+    let output = private_vm_range_input(&format!("{label}:output"), output_value, seed);
+    let diff_value = comparison_diff(signed, lhs_value, rhs_value, output_value)?;
+    let diff = private_vm_range_input(&format!("{label}:diff"), diff_value, seed);
+    let condition = private_vm_comparison_condition_from_inputs(
+        &label, signed, &lhs, &rhs, &output, &diff, seed,
+    )?;
+    let range_inputs = vec![lhs.clone(), output.clone(), diff.clone(), rhs.clone()];
+    Ok(SfcsZkPrivateVmComparisonPreimage {
+        proof: SfcsZkPrivateVmComparisonProof {
+            step_index,
+            relation: relation.to_string(),
+            signed,
+            lhs_range_label: lhs.label,
+            rhs_range_label: Some(rhs.label),
+            public_constant: rhs_is_public_constant.then_some(rhs_value),
+            output_range_label: output.label,
+            diff_range_label: diff.label,
+            relation_proof: condition,
+        },
+        range_inputs,
+    })
+}
+
+fn private_vm_comparison_condition(
+    label: &str,
+    signed: bool,
+    lhs_value: u32,
+    rhs_value: u32,
+    output_value: u32,
+    seed: &[u8; 32],
+) -> Result<
+    (
+        SfcsZkPrivateVmSelectiveProof,
+        Vec<SfcsZkPrivateVmRangeInput>,
+    ),
+    SfcsZkError,
+> {
+    let lhs = private_vm_range_input(&format!("{label}:lhs"), lhs_value, seed);
+    let rhs = private_vm_range_input(&format!("{label}:rhs"), rhs_value, seed);
+    let output = private_vm_range_input(&format!("{label}:output"), output_value, seed);
+    let diff = private_vm_range_input(
+        &format!("{label}:diff"),
+        comparison_diff(signed, lhs_value, rhs_value, output_value)?,
+        seed,
+    );
+    let proof = private_vm_comparison_condition_from_inputs(
+        label, signed, &lhs, &rhs, &output, &diff, seed,
+    )?;
+    Ok((proof, vec![lhs, rhs, output, diff]))
+}
+
+fn private_vm_comparison_condition_from_inputs(
+    label: &str,
+    signed: bool,
+    lhs: &SfcsZkPrivateVmRangeInput,
+    rhs: &SfcsZkPrivateVmRangeInput,
+    output: &SfcsZkPrivateVmRangeInput,
+    diff: &SfcsZkPrivateVmRangeInput,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmSelectiveProof, SfcsZkError> {
+    let lhs_bits = private_vm_range_bits(lhs, seed)?;
+    let rhs_bits = private_vm_range_bits(rhs, seed)?;
+    let output_bits = private_vm_range_bits(output, seed)?;
+    let residual_lt_commitment = rhs.commitment
+        - lhs.commitment
+        - value_base().mul_bigint(Fr::from(1_u64).into_bigint())
+        - diff.commitment;
+    let residual_lt_blinding = rhs.blinding - lhs.blinding - diff.blinding;
+    let residual_ge_commitment = lhs.commitment - rhs.commitment - diff.commitment;
+    let residual_ge_blinding = lhs.blinding - rhs.blinding - diff.blinding;
+    let mut values = Vec::new();
+    let mut blindings = Vec::new();
+    let mut commitments = Vec::new();
+    for bit in &output_bits {
+        values.push(bit.0);
+        blindings.push(bit.1);
+        commitments.push(bit.2);
+    }
+    values.push(lhs_bits[31].0);
+    blindings.push(lhs_bits[31].1);
+    commitments.push(lhs_bits[31].2);
+    values.push(rhs_bits[31].0);
+    blindings.push(rhs_bits[31].1);
+    commitments.push(rhs_bits[31].2);
+    values.push(diff.value);
+    blindings.push(diff.blinding);
+    commitments.push(diff.commitment);
+    values.push(0);
+    blindings.push(residual_lt_blinding);
+    commitments.push(residual_lt_commitment);
+    values.push(0);
+    blindings.push(residual_ge_blinding);
+    commitments.push(residual_ge_commitment);
+    let candidates = comparison_candidates(signed);
+    private_vm_selective_proof(label, &values, &blindings, &commitments, &candidates, seed)
+}
+
+fn private_vm_inequality_condition(
+    label: &str,
+    lhs: &SfcsZkPrivateVmRangeInput,
+    rhs: &SfcsZkPrivateVmRangeInput,
+    seed: &[u8; 32],
+) -> Result<
+    (
+        SfcsZkPrivateVmSelectiveProof,
+        Vec<SfcsZkPrivateVmRangeInput>,
+    ),
+    SfcsZkError,
+> {
+    let lhs_value = lhs.value;
+    let rhs_value = rhs.value;
+    let diff_value = if lhs_value < rhs_value {
+        rhs_value.wrapping_sub(lhs_value).wrapping_sub(1)
+    } else {
+        lhs_value.wrapping_sub(rhs_value).wrapping_sub(1)
+    };
+    let diff = private_vm_range_input(&format!("{label}:neq-diff"), diff_value, seed);
+    let residual_lt_commitment = rhs.commitment
+        - lhs.commitment
+        - value_base().mul_bigint(Fr::from(1_u64).into_bigint())
+        - diff.commitment;
+    let residual_lt_blinding = rhs.blinding - lhs.blinding - diff.blinding;
+    let residual_gt_commitment = lhs.commitment
+        - rhs.commitment
+        - value_base().mul_bigint(Fr::from(1_u64).into_bigint())
+        - diff.commitment;
+    let residual_gt_blinding = lhs.blinding - rhs.blinding - diff.blinding;
+    let values = vec![diff.value, 0, 0];
+    let blindings = vec![diff.blinding, residual_lt_blinding, residual_gt_blinding];
+    let commitments = vec![
+        diff.commitment,
+        residual_lt_commitment,
+        residual_gt_commitment,
+    ];
+    let candidates = if lhs_value < rhs_value {
+        vec![vec![None, Some(0), None], vec![None, None, Some(0)]]
+    } else {
+        vec![vec![None, None, Some(0)], vec![None, Some(0), None]]
+    };
+    Ok((
+        private_vm_selective_proof(label, &values, &blindings, &commitments, &candidates, seed)?,
+        vec![diff],
+    ))
+}
+
+fn comparison_diff(signed: bool, lhs: u32, rhs: u32, output: u32) -> Result<u32, SfcsZkError> {
+    if output > 1 {
+        return Err(SfcsZkError::InvalidWitness(
+            "comparison output must be 0 or 1".to_string(),
+        ));
+    }
+    if signed {
+        let lhs_sign = (lhs >> 31) & 1;
+        let rhs_sign = (rhs >> 31) & 1;
+        if lhs_sign != rhs_sign {
+            return Ok(0);
+        }
+    }
+    if output == 1 {
+        rhs.checked_sub(lhs)
+            .and_then(|value| value.checked_sub(1))
+            .ok_or_else(|| {
+                SfcsZkError::InvalidWitness("invalid less-than comparison slack".to_string())
+            })
+    } else {
+        lhs.checked_sub(rhs).ok_or_else(|| {
+            SfcsZkError::InvalidWitness("invalid greater/equal comparison slack".to_string())
+        })
+    }
+}
+
+struct PrivateVmMemoryValueInputs<'a> {
+    step_index: u64,
+    mnemonic: &'a str,
+    kind: &'a str,
+    width: u8,
+    register_value: u32,
+    register: &'a SfcsZkPrivateVmRangeInput,
+    bytes: &'a [SfcsZkPrivateVmRangeInput],
+}
+
+fn private_vm_memory_value_semantics(
+    inputs: PrivateVmMemoryValueInputs<'_>,
+    seed: &[u8; 32],
+) -> Result<
+    (
+        SfcsZkPrivateVmSelectiveProof,
+        Vec<SfcsZkPrivateVmRangeInput>,
+    ),
+    SfcsZkError,
+> {
+    let PrivateVmMemoryValueInputs {
+        step_index,
+        mnemonic,
+        kind,
+        width,
+        register_value,
+        register,
+        bytes,
+    } = inputs;
+    if bytes.len() != width as usize {
+        return Err(SfcsZkError::InvalidWitness(format!(
+            "memory step {step_index} byte count does not match width"
+        )));
+    }
+    let raw = bytes.iter().enumerate().fold(0_u32, |acc, (index, byte)| {
+        acc | (byte.value << (index * 8))
+    });
+    let signed_load = matches!(mnemonic, "lb" | "lh");
+    let unsigned_or_word = matches!(mnemonic, "lbu" | "lhu" | "lw");
+    let store = kind == "write";
+    let low_mask = match width {
+        1 => 0x0000_00ff,
+        2 => 0x0000_ffff,
+        4 => u32::MAX,
+        _ => {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "unsupported memory width {width}"
+            )))
+        }
+    };
+    let extension = match width {
+        1 => 0xffff_ff00,
+        2 => 0xffff_0000,
+        4 => 0,
+        _ => unreachable!(),
+    };
+    let raw_commitment =
+        bytes
+            .iter()
+            .enumerate()
+            .fold(EdwardsProjective::zero(), |acc, (index, byte)| {
+                acc + byte
+                    .commitment
+                    .mul_bigint(Fr::from(1_u64 << (index * 8)).into_bigint())
+            });
+    let raw_blinding = bytes
+        .iter()
+        .enumerate()
+        .fold(Fr::from(0_u64), |acc, (index, byte)| {
+            acc + byte.blinding * Fr::from(1_u64 << (index * 8))
+        });
+    let mut values = Vec::new();
+    let mut blindings = Vec::new();
+    let mut commitments = Vec::new();
+    for byte in bytes {
+        let bits = private_vm_range_bits(byte, seed)?;
+        for bit in bits.iter().skip(8) {
+            values.push(bit.0);
+            blindings.push(bit.1);
+            commitments.push(bit.2);
+        }
+    }
+    let zero_residual = register.commitment - raw_commitment;
+    let zero_residual_blinding = register.blinding - raw_blinding;
+    values.push(0);
+    blindings.push(zero_residual_blinding);
+    commitments.push(zero_residual);
+    let sign_residual = register.commitment
+        - raw_commitment
+        - value_base().mul_bigint(Fr::from(extension).into_bigint());
+    let sign_residual_blinding = register.blinding - raw_blinding;
+    values.push(0);
+    blindings.push(sign_residual_blinding);
+    commitments.push(sign_residual);
+    let sign_bit = if width == 4 {
+        None
+    } else {
+        let top_byte = bytes.last().ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!("memory step {step_index} has no bytes"))
+        })?;
+        let bits = private_vm_range_bits(top_byte, seed)?;
+        let bit = bits[7];
+        values.push(bit.0);
+        blindings.push(bit.1);
+        commitments.push(bit.2);
+        Some(bit.0)
+    };
+    let mut base = vec![Some(0); bytes.len() * 24];
+    if store {
+        if register_value & low_mask != raw {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "store step {step_index} low bytes do not match register"
+            )));
+        }
+        let shift = (width as u32) * 8;
+        let coefficient = if shift == 32 { 0 } else { 1_u64 << shift };
+        let high_value = if shift == 32 {
+            0
+        } else {
+            register_value >> shift
+        };
+        let high = private_vm_range_input(
+            &format!("memory-byte:{step_index}:{mnemonic}:store-high"),
+            high_value,
+            seed,
+        );
+        let trunc_residual = if shift == 32 {
+            register.commitment - raw_commitment
+        } else {
+            register.commitment
+                - raw_commitment
+                - high
+                    .commitment
+                    .mul_bigint(Fr::from(coefficient).into_bigint())
+        };
+        let trunc_residual_blinding = if shift == 32 {
+            register.blinding - raw_blinding
+        } else {
+            register.blinding - raw_blinding - high.blinding * Fr::from(coefficient)
+        };
+        values.push(0);
+        blindings.push(trunc_residual_blinding);
+        commitments.push(trunc_residual);
+        base.push(None);
+        base.push(None);
+        if sign_bit.is_some() {
+            base.push(None);
+        }
+        base.push(Some(0));
+        return Ok((
+            private_vm_selective_proof(
+                &format!("memory-byte:{step_index}:{mnemonic}:store"),
+                &values,
+                &blindings,
+                &commitments,
+                &[base],
+                seed,
+            )?,
+            if shift == 32 { Vec::new() } else { vec![high] },
+        ));
+    }
+    if unsigned_or_word {
+        if register_value != raw {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "load step {step_index} zero-extension does not match register"
+            )));
+        }
+        base.push(Some(0));
+        base.push(None);
+        if sign_bit.is_some() {
+            base.push(None);
+        }
+        return Ok((
+            private_vm_selective_proof(
+                &format!("memory-byte:{step_index}:{mnemonic}:unsigned"),
+                &values,
+                &blindings,
+                &commitments,
+                &[base],
+                seed,
+            )?,
+            Vec::new(),
+        ));
+    }
+    if signed_load {
+        let sign_bit = sign_bit.ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!("signed load step {step_index} missing sign bit"))
+        })?;
+        let expected = if sign_bit == 0 { raw } else { raw | extension };
+        if register_value != expected {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "load step {step_index} sign-extension does not match register"
+            )));
+        }
+        let mut positive = base.clone();
+        positive.push(Some(0));
+        positive.push(None);
+        positive.push(Some(0));
+        let mut negative = base;
+        negative.push(None);
+        negative.push(Some(0));
+        negative.push(Some(1));
+        return Ok((
+            private_vm_selective_proof(
+                &format!("memory-byte:{step_index}:{mnemonic}:signed"),
+                &values,
+                &blindings,
+                &commitments,
+                &[positive, negative],
+                seed,
+            )?,
+            Vec::new(),
+        ));
+    }
+    Err(SfcsZkError::InvalidWitness(format!(
+        "unsupported memory semantic proof for {mnemonic}"
+    )))
+}
+
+fn private_vm_range_bits(
+    input: &SfcsZkPrivateVmRangeInput,
+    seed: &[u8; 32],
+) -> Result<Vec<(u32, Fr, EdwardsProjective)>, SfcsZkError> {
+    let mut bits = Vec::with_capacity(32);
+    for index in 0..32 {
+        let bit = (input.value >> index) & 1;
+        let bit_label = format!("range:{}:bit:{index}", input.label);
+        let bit_blinding = private_vm_blinding_scalar(&bit_label, seed);
+        let bit_commitment = commit_secret(Fr::from(bit), bit_blinding);
+        bits.push((bit, bit_blinding, bit_commitment));
+    }
+    Ok(bits)
+}
+
+fn bitwise_candidates(operation: &str, immediate_bit: Option<u32>) -> Vec<Vec<Option<u32>>> {
+    let mut rows = Vec::new();
+    for lhs in 0..=1 {
+        let rhs_values: Vec<u32> = immediate_bit.map_or_else(|| vec![0, 1], |bit| vec![bit]);
+        for rhs in rhs_values {
+            let output = match operation {
+                "and" | "andi" => lhs & rhs,
+                "or" | "ori" => lhs | rhs,
+                "xor" | "xori" => lhs ^ rhs,
+                _ => 0,
+            };
+            if immediate_bit.is_some() {
+                rows.push(vec![Some(lhs), Some(output)]);
+            } else {
+                rows.push(vec![Some(lhs), Some(rhs), Some(output)]);
+            }
+        }
+    }
+    rows
+}
+
+fn comparison_candidates(signed: bool) -> Vec<Vec<Option<u32>>> {
+    let output_bits = |value: u32| {
+        let mut row = vec![Some(value)];
+        row.extend((1..32).map(|_| Some(0)));
+        row
+    };
+    let mut rows = Vec::new();
+    if signed {
+        let mut sign_true = output_bits(1);
+        sign_true.extend([Some(1), Some(0), None, None, None]);
+        rows.push(sign_true);
+        let mut sign_false = output_bits(0);
+        sign_false.extend([Some(0), Some(1), None, None, None]);
+        rows.push(sign_false);
+        let mut pos_lt = output_bits(1);
+        pos_lt.extend([Some(0), Some(0), None, Some(0), None]);
+        rows.push(pos_lt);
+        let mut pos_ge = output_bits(0);
+        pos_ge.extend([Some(0), Some(0), None, None, Some(0)]);
+        rows.push(pos_ge);
+        let mut neg_lt = output_bits(1);
+        neg_lt.extend([Some(1), Some(1), None, Some(0), None]);
+        rows.push(neg_lt);
+        let mut neg_ge = output_bits(0);
+        neg_ge.extend([Some(1), Some(1), None, None, Some(0)]);
+        rows.push(neg_ge);
+    } else {
+        let mut lt = output_bits(1);
+        lt.extend([None, None, None, Some(0), None]);
+        rows.push(lt);
+        let mut ge = output_bits(0);
+        ge.extend([None, None, None, None, Some(0)]);
+        rows.push(ge);
+    }
+    rows
+}
+
+fn private_vm_selective_proof(
+    label: &str,
+    values: &[u32],
+    blindings: &[Fr],
+    commitments: &[EdwardsProjective],
+    candidates: &[Vec<Option<u32>>],
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmSelectiveProof, SfcsZkError> {
+    if values.len() != blindings.len() || values.len() != commitments.len() {
+        return Err(SfcsZkError::InvalidWitness(format!(
+            "selective proof {label} input arity mismatch"
+        )));
+    }
+    let actual_index = candidates
+        .iter()
+        .position(|candidate| {
+            candidate.len() == values.len()
+                && candidate
+                    .iter()
+                    .zip(values.iter())
+                    .all(|(candidate, value)| candidate.is_none_or(|candidate| candidate == *value))
+        })
+        .ok_or_else(|| {
+            SfcsZkError::InvalidWitness(format!(
+                "selective proof {label} has no candidate for actual values"
+            ))
+        })?;
+    let mut branches = Vec::with_capacity(candidates.len());
+    let mut nonce_points = Vec::with_capacity(candidates.len());
+    let mut simulated_challenge_sum = Fr::from(0_u64);
+    let mut actual_nonces = Vec::new();
+    for (branch_index, candidate) in candidates.iter().enumerate() {
+        let constrained = candidate
+            .iter()
+            .enumerate()
+            .filter(|(_, value)| value.is_some())
+            .map(|(component_index, _)| component_index)
+            .collect::<Vec<_>>();
+        if constrained.is_empty() {
+            return Err(SfcsZkError::InvalidWitness(format!(
+                "selective proof {label} candidate {branch_index} has no constraints"
+            )));
+        }
+        if branch_index == actual_index {
+            let mut nonces = Vec::new();
+            let mut nonce_hex = Vec::new();
+            for component_index in &constrained {
+                let nonce = private_vm_nonce_scalar(
+                    &format!("{label}:branch:{branch_index}:component:{component_index}"),
+                    "actual",
+                    seed,
+                );
+                let nonce_point = blinding_base().mul_bigint(nonce.into_bigint());
+                nonce_hex.push(point_to_hex(&nonce_point)?);
+                nonces.push(nonce);
+            }
+            actual_nonces = nonces;
+            nonce_points.push(
+                nonce_hex
+                    .iter()
+                    .map(|nonce| point_from_hex(nonce))
+                    .collect::<Result<Vec<_>, _>>()?,
+            );
+            branches.push(SfcsZkPrivateVmSelectiveBranchProof {
+                nonce_commitments: nonce_hex,
+                challenge: String::new(),
+                responses: Vec::new(),
+            });
+        } else {
+            let challenge = private_vm_nonce_scalar(
+                &format!("{label}:branch:{branch_index}"),
+                "simulated-challenge",
+                seed,
+            );
+            simulated_challenge_sum += challenge;
+            let mut nonce_hex = Vec::new();
+            let mut responses = Vec::new();
+            let mut nonce_branch = Vec::new();
+            for component_index in &constrained {
+                let response = private_vm_nonce_scalar(
+                    &format!("{label}:branch:{branch_index}:component:{component_index}"),
+                    "simulated-response",
+                    seed,
+                );
+                let candidate_value = candidate[*component_index].unwrap();
+                let relation = commitments[*component_index]
+                    - value_base().mul_bigint(Fr::from(candidate_value).into_bigint());
+                let nonce_point = blinding_base().mul_bigint(response.into_bigint())
+                    - relation.mul_bigint(challenge.into_bigint());
+                nonce_hex.push(point_to_hex(&nonce_point)?);
+                nonce_branch.push(nonce_point);
+                responses.push(scalar_to_hex(&response)?);
+            }
+            nonce_points.push(nonce_branch);
+            branches.push(SfcsZkPrivateVmSelectiveBranchProof {
+                nonce_commitments: nonce_hex,
+                challenge: scalar_to_hex(&challenge)?,
+                responses,
+            });
+        }
+    }
+    let challenge = derive_selective_challenge(label, commitments, candidates, &nonce_points)?;
+    let actual_challenge = challenge - simulated_challenge_sum;
+    let actual_constrained = candidates[actual_index]
+        .iter()
+        .enumerate()
+        .filter(|(_, value)| value.is_some())
+        .map(|(component_index, _)| component_index)
+        .collect::<Vec<_>>();
+    let responses = actual_constrained
+        .iter()
+        .zip(actual_nonces.iter())
+        .map(|(component_index, nonce)| {
+            scalar_to_hex(&(*nonce + actual_challenge * blindings[*component_index]))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    branches[actual_index].challenge = scalar_to_hex(&actual_challenge)?;
+    branches[actual_index].responses = responses;
+    Ok(SfcsZkPrivateVmSelectiveProof {
+        label: label.to_string(),
+        commitments: commitments
+            .iter()
+            .map(point_to_hex)
+            .collect::<Result<Vec<_>, _>>()?,
+        candidates: candidates.to_vec(),
+        branches,
     })
 }
 
@@ -2142,6 +3591,38 @@ fn derive_equality_challenge(
     hasher.update(point_to_bytes(right_commitment)?);
     hasher.update(point_to_bytes(difference_commitment)?);
     hasher.update(point_to_bytes(nonce_commitment)?);
+    Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
+}
+
+fn derive_selective_challenge(
+    label: &str,
+    commitments: &[EdwardsProjective],
+    candidates: &[Vec<Option<u32>>],
+    nonce_branches: &[Vec<EdwardsProjective>],
+) -> Result<Fr, SfcsZkError> {
+    let mut hasher = Sha256::new();
+    hasher.update(ZK_PRIVATE_VM_CHALLENGE_DOMAIN);
+    hasher.update(b"selective-or\0");
+    hasher.update(label.as_bytes());
+    for commitment in commitments {
+        hasher.update(point_to_bytes(commitment)?);
+    }
+    for candidate in candidates {
+        for value in candidate {
+            match value {
+                Some(value) => {
+                    hasher.update([1]);
+                    hasher.update(value.to_le_bytes());
+                }
+                None => hasher.update([0]),
+            }
+        }
+    }
+    for branch in nonce_branches {
+        for nonce in branch {
+            hasher.update(point_to_bytes(nonce)?);
+        }
+    }
     Ok(Fr::from_le_bytes_mod_order(&hasher.finalize()))
 }
 

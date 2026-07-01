@@ -93,7 +93,15 @@ Implemented groundwork:
 - private `lw/sw` address-calculation proofs where the address relation is
   eligible for the linear proof layer, plus equality proofs binding memory
   access values to the source or destination register values;
-- zero-knowledge equality-branch proofs for `beq` taken and `bne` not taken;
+- byte-level memory semantics proofs for `sb`, `sh`, `sw`, `lb`, `lh`, `lw`,
+  `lbu`, and `lhu`, including low-byte store extraction, byte read-after-write
+  consistency, and sign/zero extension binding;
+- finite-relation bitwise proofs for `and`, `or`, `xor`, `andi`, `ori`, and
+  `xori`, tied to the same bit commitments used by the range layer;
+- unsigned and signed comparison proofs for `slt`, `sltu`, `slti`, and
+  `sltiu` using 32-bit slack commitments and finite-relation OR proofs;
+- branch condition proofs for equality, non-equality, signed order, and
+  unsigned order branches (`beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`);
 - public output, transition coverage, register range coverage, memory range
   coverage, memory consistency, and branch coverage binding for private VM
   proof statements;
@@ -106,12 +114,13 @@ Implemented groundwork:
   equality proofs.
 
 These profiles are accepted as privacy milestones. The private-VM profile
-hides arbitrary supported VM witnesses and trace data and proves a concrete
-linear/range/memory-consistency subset of private VM transition semantics. The
-full arbitrary VM privacy gate still requires verifier-side proof coverage for
-every supported instruction class, especially bitwise operations, comparisons,
-unaligned/partial-width memory edge cases, branch behavior, and halting
-semantics.
+hides supported VM witnesses and trace data while proving verifier-side
+evidence for linear arithmetic, range/bitness, bitwise operations, comparisons,
+byte-addressed memory semantics, memory consistency, memory/register binding,
+and branch conditions for the supported RV32I execution subset. The full
+production arbitrary-private-zkVM gate remains a larger security and compiler
+target: it requires independent review, broader conformance vectors,
+performance hardening, and unrestricted Rust/LLVM/binary-WASM compatibility.
 
 Required before promotion:
 
@@ -126,15 +135,16 @@ Required before promotion:
 - security review of soundness and zero-knowledge assumptions.
 
 Commitment-only hiding is not enough for the final arbitrary private zkVM
-claim. The current linear/range proof layer is real verifier-side ZK evidence
-for the relations it covers, but the final claim requires complete VM
-transition coverage.
+claim. The current private-VM proof layer now carries real verifier-side ZK
+evidence for the supported RV32I linear, range, bitwise, comparison, byte
+memory, memory-binding, and branch relations it admits, but production
+promotion still requires reviewed coverage for every admitted VM class.
 
-For the complete gate, the proof system must cover more than the current
-private-add and private-VM commitment profiles. It must verify instruction
-decoding, register transition, range constraints, memory consistency, branch
-behavior, halting, and public output binding for the supported VM class inside
-the zero-knowledge relation.
+For the complete gate, the proof system must continue expanding from the
+current supported RV32I subset into a reviewed production relation that covers
+instruction decoding, register transition, range constraints, byte memory,
+branch behavior, halting, and public output binding for every admitted VM
+class inside the zero-knowledge relation.
 
 ## Phase Gate 3: Compiler Frontend
 

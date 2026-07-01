@@ -1,6 +1,6 @@
 # MFENX Testnet To Mainnet Process
 
-Release scope: Power House v0.3.19.
+Release scope: Power House v0.3.20.
 
 Chain metadata currently identifies chain `177155` as active. Future mainnet
 launches or incompatible resets must use this process rather than silently

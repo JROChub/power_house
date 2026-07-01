@@ -30,7 +30,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.19**
+Current release: **v0.3.20**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -172,12 +172,12 @@ without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
 currently provides two auditable privacy milestones: a constrained Rust-subset
 `u32 + u32 -> u32` compiler with a private no-overflow RV32I add proof, and a
 general private-VM profile that hides private inputs and trace data while
-  publishing public outputs, digest commitments, verifier-side homomorphic
-  transition checks for linear/no-overflow VM relations, zero-knowledge u32 range
-  proofs for those committed VM values, private read-after-write memory
-  consistency proofs, private memory access/register value binding proofs, and
-  equality-branch proofs for covered `beq`/`bne` cases, and constraint
-  coverage.
+publishing public outputs, digest commitments, verifier-side homomorphic
+transition checks for linear/no-overflow VM relations, zero-knowledge u32 range
+proofs for committed VM values, private read-after-write memory consistency
+proofs, memory access/register binding proofs, byte-level partial-width memory
+proofs, private bitwise proofs, private comparison proofs, private branch
+condition proofs, and constraint coverage.
 
 ```bash
 cargo install power_house --features sfcs-zk
@@ -329,14 +329,24 @@ The complete procedure and expected rejection behavior are documented in the
   general private VM proof profile for supported RV32I executions, hiding
   private inputs and trace data while binding public outputs, digest
   commitments, linear transition proofs, u32 range proofs, private memory
-  consistency proofs, private memory value binding proofs, equality-branch
-  proofs, and coverage counters.
+  consistency proofs, private memory value binding proofs, byte-level
+  partial-width memory proofs, bitwise proofs, comparison proofs, branch
+  condition proofs, and coverage counters.
 - [`SfcsZkPrivateVmLinearRelationProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmLinearRelationProof.html):
   homomorphic verifier-side proof for private `add`, `addi`, `sub`, `subi`,
   and no-overflow public-scale VM relations.
 - [`SfcsZkPrivateVmRangeProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmRangeProof.html):
   zero-knowledge 32-bit bit-decomposition and recomposition proof for committed
   private VM values.
+- [`SfcsZkPrivateVmBitwiseProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmBitwiseProof.html):
+  finite-relation proof for private `and`, `or`, `xor`, `andi`, `ori`, and
+  `xori` operations tied to range-proof bit commitments.
+- [`SfcsZkPrivateVmComparisonProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmComparisonProof.html):
+  signed and unsigned private comparison proof using committed 32-bit slack and
+  selective OR rows.
+- [`SfcsZkPrivateVmMemoryByteProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmMemoryByteProof.html):
+  byte-addressed partial-width load/store semantics for `sb`, `sh`, `sw`,
+  `lb`, `lh`, `lw`, `lbu`, and `lhu`.
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 

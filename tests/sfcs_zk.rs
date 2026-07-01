@@ -72,8 +72,64 @@ fn sw(rs2: u8, rs1: u8, imm: i32) -> u32 {
     s_type(imm, rs2, rs1, 0x2, 0x23)
 }
 
+fn sb(rs2: u8, rs1: u8, imm: i32) -> u32 {
+    s_type(imm, rs2, rs1, 0x0, 0x23)
+}
+
+fn sh(rs2: u8, rs1: u8, imm: i32) -> u32 {
+    s_type(imm, rs2, rs1, 0x1, 0x23)
+}
+
 fn beq(rs1: u8, rs2: u8, imm: i32) -> u32 {
     b_type(imm, rs2, rs1, 0x0, 0x63)
+}
+
+fn bne(rs1: u8, rs2: u8, imm: i32) -> u32 {
+    b_type(imm, rs2, rs1, 0x1, 0x63)
+}
+
+fn bltu(rs1: u8, rs2: u8, imm: i32) -> u32 {
+    b_type(imm, rs2, rs1, 0x6, 0x63)
+}
+
+fn bgeu(rs1: u8, rs2: u8, imm: i32) -> u32 {
+    b_type(imm, rs2, rs1, 0x7, 0x63)
+}
+
+fn and(rd: u8, rs1: u8, rs2: u8) -> u32 {
+    r_type(0x00, rs2, rs1, 0x7, rd, 0x33)
+}
+
+fn xor(rd: u8, rs1: u8, rs2: u8) -> u32 {
+    r_type(0x00, rs2, rs1, 0x4, rd, 0x33)
+}
+
+fn ori(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x6, rd, 0x13)
+}
+
+fn sltu(rd: u8, rs1: u8, rs2: u8) -> u32 {
+    r_type(0x00, rs2, rs1, 0x3, rd, 0x33)
+}
+
+fn slti(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x2, rd, 0x13)
+}
+
+fn lb(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x0, rd, 0x03)
+}
+
+fn lh(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x1, rd, 0x03)
+}
+
+fn lbu(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x4, rd, 0x03)
+}
+
+fn lhu(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x5, rd, 0x03)
 }
 
 fn ecall() -> u32 {
@@ -180,12 +236,16 @@ fn private_vm_proof_verifies_embeds_and_hides_witness_inputs() {
     assert_eq!(proof.statement.memory_consistency_checks, 2);
     assert_eq!(proof.statement.linear_relation_checks, 6);
     assert_eq!(proof.linear_relation_proofs.len(), 6);
-    assert_eq!(proof.statement.zk_range_proofs, 23);
-    assert_eq!(proof.range_proofs.len(), 23);
+    assert_eq!(proof.statement.zk_range_proofs, 37);
+    assert_eq!(proof.range_proofs.len(), 37);
     assert_eq!(proof.statement.zk_memory_consistency_proofs, 1);
     assert_eq!(proof.memory_consistency_proofs.len(), 1);
     assert_eq!(proof.statement.zk_memory_value_proofs, 2);
     assert_eq!(proof.memory_value_proofs.len(), 2);
+    assert_eq!(proof.statement.zk_memory_byte_proofs, 2);
+    assert_eq!(proof.memory_byte_proofs.len(), 2);
+    assert_eq!(proof.statement.zk_bitwise_proofs, 0);
+    assert_eq!(proof.statement.zk_comparison_proofs, 0);
     assert_eq!(proof.statement.zk_branch_proofs, 1);
     assert_eq!(proof.branch_proofs.len(), 1);
     assert_eq!(proof.statement.commitments.len(), 6);
@@ -346,9 +406,112 @@ fn private_vm_linear_relations_cover_sub_subi_and_scale() {
 
     let mut mutated_branch =
         SfcsZkPrivateVmProof::prove(&memory_program, private_vm_witness()).unwrap();
-    mutated_branch.branch_proofs[0].equality.response_blinding = "fr:00".to_string();
+    mutated_branch.branch_proofs[0]
+        .equality
+        .as_mut()
+        .unwrap()
+        .response_blinding = "fr:00".to_string();
     assert!(matches!(
         mutated_branch.verify(&memory_program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+}
+
+#[test]
+fn private_vm_proves_bitwise_comparison_order_branches_and_partial_memory() {
+    let program = SfcsVmProgram::rv32i(vec![
+        addi(1, 0, 12),  // x1 = 12
+        addi(2, 0, 10),  // x2 = 10
+        and(3, 1, 2),    // x3 = 8
+        xor(4, 1, 2),    // x4 = 6
+        ori(5, 4, 1),    // x5 = 7
+        sltu(6, 4, 1),   // x6 = 1
+        slti(7, 4, 10),  // x7 = 1
+        bne(1, 2, 8),    // taken, proves non-equality
+        addi(8, 0, 99),  // skipped
+        bltu(2, 1, 8),   // taken, proves unsigned order
+        addi(8, 0, 98),  // skipped
+        bgeu(1, 2, 8),   // taken, proves inverted unsigned order
+        addi(8, 0, 97),  // skipped
+        addi(9, 0, 256), // x9 = byte-memory base
+        sb(10, 9, 0),    // byte 0xff
+        lbu(11, 9, 0),   // zero-extend 0xff
+        lb(12, 9, 0),    // sign-extend 0xff
+        sh(10, 9, 2),    // bytes 0xff, 0x80
+        lhu(13, 9, 2),   // zero-extend 0x80ff
+        lh(14, 9, 2),    // sign-extend 0x80ff
+        ecall(),
+    ])
+    .with_max_steps(64);
+    let witness = SfcsZkPrivateVmWitness {
+        inputs: SfcsVmInputs {
+            registers: BTreeMap::from([(10, 0xffff_80ff)]),
+            memory: BTreeMap::new(),
+            public_registers: vec![3, 4, 5, 6, 7, 11, 12, 13, 14],
+            public_memory: vec![SfcsVmMemoryRange { start: 256, len: 4 }],
+        },
+        blinding_seed: [77_u8; 32],
+    };
+    let proof = SfcsZkPrivateVmProof::prove(&program, witness).unwrap();
+    proof.verify(&program).unwrap();
+
+    assert_eq!(proof.statement.public_outputs.registers["x3"], 8);
+    assert_eq!(proof.statement.public_outputs.registers["x4"], 6);
+    assert_eq!(proof.statement.public_outputs.registers["x5"], 7);
+    assert_eq!(proof.statement.public_outputs.registers["x6"], 1);
+    assert_eq!(proof.statement.public_outputs.registers["x7"], 1);
+    assert_eq!(proof.statement.public_outputs.registers["x11"], 0xff);
+    assert_eq!(proof.statement.public_outputs.registers["x12"], 0xffff_ffff);
+    assert_eq!(proof.statement.public_outputs.registers["x13"], 0x80ff);
+    assert_eq!(proof.statement.public_outputs.registers["x14"], 0xffff_80ff);
+    assert_eq!(proof.statement.zk_bitwise_proofs, 3);
+    assert_eq!(proof.bitwise_proofs.len(), 3);
+    assert_eq!(proof.statement.zk_comparison_proofs, 2);
+    assert_eq!(proof.comparison_proofs.len(), 2);
+    assert_eq!(proof.statement.zk_branch_proofs, 3);
+    assert_eq!(proof.branch_proofs.len(), 3);
+    assert_eq!(proof.statement.zk_memory_byte_proofs, 6);
+    assert_eq!(proof.memory_byte_proofs.len(), 6);
+    assert_eq!(proof.statement.zk_memory_consistency_proofs, 1);
+    assert_eq!(proof.statement.zk_memory_value_proofs, 6);
+    assert_eq!(proof.statement.zk_range_proofs, 88);
+
+    let mut bitwise_mutation = proof.clone();
+    bitwise_mutation.bitwise_proofs[0].bit_proofs[0].branches[0].responses[0] = "fr:00".to_string();
+    assert!(matches!(
+        bitwise_mutation.verify(&program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut comparison_mutation = proof.clone();
+    comparison_mutation.comparison_proofs[0]
+        .relation_proof
+        .branches[0]
+        .responses[0] = "fr:00".to_string();
+    assert!(matches!(
+        comparison_mutation.verify(&program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut branch_mutation = proof.clone();
+    branch_mutation.branch_proofs[0]
+        .condition
+        .as_mut()
+        .unwrap()
+        .branches[0]
+        .responses[0] = "fr:00".to_string();
+    assert!(matches!(
+        branch_mutation.verify(&program),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut memory_mutation = proof;
+    memory_mutation.memory_byte_proofs[0]
+        .value_semantics
+        .branches[0]
+        .responses[0] = "fr:00".to_string();
+    assert!(matches!(
+        memory_mutation.verify(&program),
         Err(SfcsZkError::InvalidProof(_))
     ));
 }
