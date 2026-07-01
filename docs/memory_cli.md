@@ -1,6 +1,6 @@
 # Memory CLI
 
-Status: active CLI guide for Power House v0.3.21.
+Status: active CLI guide for Power House v0.3.22.
 
 The `julian memory` commands operate offline by default.
 

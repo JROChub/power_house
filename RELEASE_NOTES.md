@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.3.22 - 2026-07-01
+
+### README Badge Cache Fix
+- Updated the crates.io README badge URL with a cache-busting Shields query so
+  GitHub and crates.io do not render the stale cached `v0.3.20` badge while
+  the crate, docs.rs, and source README are already on the current release.
+- Updated active documentation, SDK metadata, network metadata, Docker labels,
+  and website release labels for `v0.3.22`.
+
 ## v0.3.21 - 2026-07-01
 
 ### SFCS Private VM Proof Memory Pipeline

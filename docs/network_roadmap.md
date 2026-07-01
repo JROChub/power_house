@@ -1,6 +1,6 @@
 # MFENX Stable Public Network Roadmap
 
-Release scope: Power House v0.3.21.
+Release scope: Power House v0.3.22.
 
 The target is a public network that fails predictably, recovers automatically,
 and exposes enough evidence for operators and users to determine its state.
