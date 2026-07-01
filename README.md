@@ -45,9 +45,10 @@ The primary workflow is **Power House Identity + Rootprint**:
   over `.pha` core identities.
 - **SFCS draft primitives** are opt-in through `--features sfcs` and provide
   direct fractal parsing, dense integer and memory execution traces, synthesis
-  plans, a deterministic RV32I VM execution foundation, an offline
-  `julian sfcs` CLI, and `.pha` execution embedding verification without
-  mutating Rootprint v1.
+  plans, a deterministic RV32I VM execution foundation, the first
+  privacy-preserving private-add profile, a constrained Rust-subset compiler
+  path for that profile, an offline `julian sfcs` CLI, and `.pha` execution
+  embedding verification without mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -143,9 +144,31 @@ julian sfcs verify-vm-pha rv32i.execution.pha
 ```
 
 The VM foundation is not a complete zkVM release. The real zero-knowledge
-privacy layer and Rust compiler are release-gated until they are implemented,
-audited, and tested end to end without changing `.pha` or Rootprint identity
-rules. See the [SFCS zkVM gate](docs/sfcs_zkvm.md).
+privacy layer for arbitrary VM execution and the full Rust compiler are
+release-gated until they are implemented, audited, and tested end to end
+without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
+currently provides the first auditable end-to-end privacy path: a constrained
+Rust-subset `u32 + u32 -> u32` compiler, a private no-overflow RV32I add proof
+that commits private inputs, a `.pha` proof artifact, Rootprint lineage, an
+Observatory semantic sidecar, and a verified Memory Capsule.
+
+```bash
+cargo install power_house --features sfcs-zk
+julian sfcs rust-private-add private_add.rs \
+  --lhs-value 144 \
+  --rhs-value 233 \
+  --lhs-blinding 1111111111111111111111111111111111111111111111111111111111111111 \
+  --rhs-blinding 2222222222222222222222222222222222222222222222222222222222222222 \
+  --artifact-output private-add.pha \
+  --rootprint-output private-add.rootprint.json \
+  --sidecar-output private-add.observatory.json \
+  --capsule-output private-add.phm \
+  --report private-add.report.json
+julian sfcs verify-zk-pha private-add.pha
+julian memory verify private-add.phm
+```
+
+See the [SFCS zkVM gate](docs/sfcs_zkvm.md).
 
 See the [Power House + slbit Observatory guide](docs/slbit.md) for the complete
 Rust workflow, schemas, trust boundary, browser rendering, and conformance
@@ -250,6 +273,11 @@ The complete procedure and expected rejection behavior are documented in the
   explicit SFCS `.pha` embedding verifier.
 - [`verify_sfcs_execution_embedding`](https://docs.rs/power_house/latest/power_house/fn.verify_sfcs_execution_embedding.html):
   explicit SFCS graph, trace, synthesis, output, and invariant verifier.
+- [`compile_private_add_source`](https://docs.rs/power_house/latest/power_house/fn.compile_private_add_source.html):
+  constrained Rust-subset compiler for the first `sfcs-zk` private-add profile.
+- [`SfcsZkPrivateAddProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateAddProof.html):
+  first privacy-preserving SFCS proof profile, proving committed private add
+  inputs match a public output without exposing the inputs.
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 

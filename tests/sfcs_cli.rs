@@ -172,3 +172,146 @@ fn cli_runs_and_verifies_sfcs_vm_program() {
     assert!(verify_stdout.contains("execution_fractal_digest: sha256:"));
     assert!(verify_stdout.contains("final_state_digest: sha256:"));
 }
+
+#[cfg(feature = "sfcs-zk")]
+#[test]
+fn cli_proves_and_verifies_sfcs_zk_private_add() {
+    let dir = temp_dir();
+    let program = dir.join("private-add.program.json");
+    let report = dir.join("private-add.report.json");
+    let artifact = dir.join("private-add.pha");
+
+    fs::write(
+        &program,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "power-house/sfcs-vm-program/v1-draft",
+            "architecture": "rv32i",
+            "entry_pc": 0,
+            "max_steps": 8,
+            "instructions": [
+                0x00b501b3_u32,
+                0x00000073_u32
+            ]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let prove_stdout = run(&[
+        "sfcs",
+        "zk-private-add",
+        program.to_str().unwrap(),
+        "--lhs-register",
+        "10",
+        "--rhs-register",
+        "11",
+        "--output-register",
+        "3",
+        "--lhs-value",
+        "5",
+        "--rhs-value",
+        "7",
+        "--lhs-blinding",
+        "0707070707070707070707070707070707070707070707070707070707070707",
+        "--rhs-blinding",
+        "0909090909090909090909090909090909090909090909090909090909090909",
+        "--report",
+        report.to_str().unwrap(),
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+    ]);
+    assert!(prove_stdout.contains("SFCS ZK PRIVATE ADD"));
+    assert!(prove_stdout.contains("proof_digest: sha256:"));
+    assert!(prove_stdout.contains("output x3=12"));
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["output_value"], 12);
+    assert!(report_json["lhs_commitment"]
+        .as_str()
+        .unwrap()
+        .starts_with("edwards:"));
+    assert!(artifact.exists());
+
+    let verify_stdout = run(&["sfcs", "verify-zk-pha", artifact.to_str().unwrap()]);
+    assert!(verify_stdout.contains("SFCS ZK PRIVATE ADD PHA VALID"));
+    assert!(verify_stdout.contains("public_output: x3=12"));
+}
+
+#[cfg(feature = "sfcs-zk")]
+#[test]
+fn cli_runs_rust_private_add_end_to_end() {
+    let dir = temp_dir();
+    let source = dir.join("private_add.rs");
+    let report = dir.join("private-add.e2e.report.json");
+    let artifact = dir.join("private-add.e2e.pha");
+    let rootprint = dir.join("private-add.e2e.rootprint.json");
+    let sidecar = dir.join("private-add.e2e.observatory.json");
+    let capsule = dir.join("private-add.e2e.phm");
+
+    fs::write(
+        &source,
+        "pub fn add(lhs: u32, rhs: u32) -> u32 { return lhs + rhs; }\n",
+    )
+    .unwrap();
+
+    let prove_stdout = run(&[
+        "sfcs",
+        "rust-private-add",
+        source.to_str().unwrap(),
+        "--lhs-value",
+        "144",
+        "--rhs-value",
+        "233",
+        "--lhs-blinding",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "--rhs-blinding",
+        "2222222222222222222222222222222222222222222222222222222222222222",
+        "--artifact-output",
+        artifact.to_str().unwrap(),
+        "--rootprint-output",
+        rootprint.to_str().unwrap(),
+        "--sidecar-output",
+        sidecar.to_str().unwrap(),
+        "--capsule-output",
+        capsule.to_str().unwrap(),
+        "--report",
+        report.to_str().unwrap(),
+        "--label",
+        "rust-private-add-e2e",
+    ]);
+    assert!(prove_stdout.contains("SFCS RUST PRIVATE ADD"));
+    assert!(prove_stdout.contains("proof_digest: sha256:"));
+    assert!(prove_stdout.contains("capsule_digest: sha256:"));
+    assert!(prove_stdout.contains("output x3=377"));
+    assert!(prove_stdout.contains("truth_boundary: semantic packet data is non-core"));
+
+    assert!(artifact.exists());
+    assert!(rootprint.exists());
+    assert!(sidecar.exists());
+    assert!(capsule.exists());
+    assert!(report.exists());
+
+    let report_json = read_json(&report);
+    assert_eq!(report_json["output_value"], 377);
+    assert_eq!(report_json["memory_core_valid"], true);
+    assert_eq!(report_json["memory_rootprint_valid"], true);
+    assert_eq!(report_json["memory_replay_valid"], true);
+    assert_eq!(report_json["memory_sidecar_valid"], true);
+    assert_eq!(report_json["memory_semantic_valid"], true);
+    assert!(report_json["source_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+
+    let verify_zk_stdout = run(&["sfcs", "verify-zk-pha", artifact.to_str().unwrap()]);
+    assert!(verify_zk_stdout.contains("SFCS ZK PRIVATE ADD PHA VALID"));
+    assert!(verify_zk_stdout.contains("public_output: x3=377"));
+
+    let memory_stdout = run(&["memory", "verify", capsule.to_str().unwrap()]);
+    assert!(memory_stdout.contains("POWER HOUSE MEMORY VERIFY"));
+    assert!(memory_stdout.contains("CORE        VALID"));
+    assert!(memory_stdout.contains("ROOTPRINT   VALID"));
+    assert!(memory_stdout.contains("REPLAY      VALID"));
+    assert!(memory_stdout.contains("SIDECAR     VALID"));
+    assert!(memory_stdout.contains("SEMANTIC    VALID"));
+}

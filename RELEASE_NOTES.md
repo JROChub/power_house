@@ -2,6 +2,19 @@
 
 ## v0.3.19 - 2026-06-30
 
+### SFCS Private Proof Pipeline
+- Added the opt-in `sfcs-zk` feature with the first privacy-preserving SFCS
+  proof profile: a private no-overflow RV32I `add; ecall` relation using
+  Pedersen commitments and a Fiat-Shamir Schnorr proof.
+- Added `compile_private_add_source(...)`, a constrained Rust-subset frontend
+  for `pub fn add(lhs: u32, rhs: u32) -> u32 { lhs + rhs }`, emitting the
+  deterministic private-add VM profile and a slbit-style semantic packet.
+- Added `julian sfcs rust-private-add`, which runs the constrained source
+  through compile -> prove -> `.pha` -> Rootprint -> Observatory sidecar ->
+  Memory Capsule and verifies the capsule before reporting success.
+- Added mutation, compiler, and CLI coverage proving private witness data is
+  not embedded in the proof artifact and semantic packets remain non-core.
+
 ### SFCS Dense Memory Execution
 - Expanded the opt-in SFCS source-to-fractal frontend with deterministic
   division, remainder, comparisons, bitwise integer operations, shifts, and

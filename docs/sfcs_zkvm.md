@@ -42,7 +42,23 @@ branch semantics.
 
 ## Phase Gate 2: Real Zero-Knowledge Privacy
 
-Blocked until implemented.
+Partially implemented for one constrained profile.
+
+Implemented groundwork:
+
+- feature flag `sfcs-zk`;
+- protocol `power-house/sfcs-zk-private-add/v1-draft`;
+- private no-overflow RV32I add statement;
+- Pedersen commitments to hidden input registers;
+- Fiat-Shamir Schnorr proof that committed private inputs sum to the public
+  output;
+- `.pha` embedding and replay verification;
+- CLI commands `julian sfcs zk-private-add` and `julian sfcs verify-zk-pha`;
+- mutation tests for public output, proof body, challenge, overflow, and wrong
+  program shape.
+
+This profile is accepted only as the first privacy layer. It does not satisfy
+the full arbitrary VM privacy gate.
 
 Required before promotion:
 
@@ -59,9 +75,32 @@ Required before promotion:
 Commitment-only hiding is not enough. A release must include a verifier that
 checks a real proof of execution.
 
+For the complete gate, the proof system must cover more than the current
+private-add profile. It must verify instruction decoding, register transition,
+range constraints, memory consistency, branch behavior, halting, and public
+output binding for the supported VM class.
+
 ## Phase Gate 3: Compiler Frontend
 
-Blocked until implemented.
+Partially implemented for one constrained Rust subset.
+
+Implemented groundwork:
+
+- compiler API `compile_private_add_source(...)`;
+- schema `power-house/sfcs-rust-private-add/v1-draft`;
+- accepted source shape: one `u32 + u32 -> u32` function;
+- deterministic lowering to the private-add RV32I `add; ecall` program;
+- deterministic source digest and semantic packet digest;
+- slbit-style semantic packet generation with non-authoritative explanation
+  constraints;
+- one-command CLI pipeline `julian sfcs rust-private-add` that creates a
+  `.pha` artifact, Rootprint graph, Observatory sidecar, Memory Capsule, and
+  machine-readable report;
+- compiler acceptance/rejection tests and CLI end-to-end tests.
+
+This satisfies the first source-to-proof-to-memory-capsule milestone for the
+private-add profile only. It does not satisfy the full compiler gate for normal
+Rust programs.
 
 Required before promotion:
 
@@ -78,7 +117,27 @@ identity layer.
 
 ## Phase Gate 4: Full Pipeline
 
-Blocked until all earlier gates pass.
+Partially implemented for the constrained private-add path.
+
+Implemented command shape:
+
+```bash
+julian sfcs rust-private-add private_add.rs \
+  --lhs-value 144 \
+  --rhs-value 233 \
+  --lhs-blinding 1111111111111111111111111111111111111111111111111111111111111111 \
+  --rhs-blinding 2222222222222222222222222222222222222222222222222222222222222222 \
+  --artifact-output private-add.pha \
+  --rootprint-output private-add.rootprint.json \
+  --sidecar-output private-add.observatory.json \
+  --capsule-output private-add.phm \
+  --report private-add.report.json
+julian sfcs verify-zk-pha private-add.pha
+julian memory verify private-add.phm
+```
+
+Required full general-purpose command shape remains blocked until all earlier
+gates pass:
 
 Required command shape:
 
@@ -123,10 +182,12 @@ Every rejection must name the layer where the falsehood failed.
 
 ## Public Claim Rule
 
-Until Phase Gates 2, 3, and 4 are complete, documentation must say:
+Until Phase Gates 2, 3, and 4 are complete for the general VM/compiler class,
+documentation must say:
 
 ```text
-SFCS has a deterministic VM execution foundation.
+SFCS has a deterministic VM execution foundation and a constrained end-to-end
+private-add source-to-proof-to-Memory-Capsule path.
 ```
 
 It must not say:
