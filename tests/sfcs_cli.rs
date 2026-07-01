@@ -540,6 +540,9 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(prove_stdout.contains("SFCS ZK PRIVATE VM"));
     assert!(prove_stdout.contains("proof_digest: sha256:"));
     assert!(prove_stdout.contains("transition_checks: 6"));
+    assert!(prove_stdout.contains("linear_relation_checks: 3"));
+    assert!(prove_stdout.contains("zk_range_proofs: 11"));
+    assert!(prove_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(prove_stdout.contains("private_witness_embedded: false"));
 
     let report_json = read_json(&report);
@@ -549,6 +552,9 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     );
     assert_eq!(report_json["public_outputs"]["registers"]["x4"], 12);
     assert_eq!(report_json["public_outputs"]["memory"]["0"], 12);
+    assert_eq!(report_json["linear_relation_checks"], 3);
+    assert_eq!(report_json["zk_range_proofs"], 11);
+    assert_eq!(report_json["zk_memory_consistency_proofs"], 1);
     assert_eq!(report_json["private_witness_embedded"], false);
     assert!(report_json["commitments"]["trace_digest"]
         .as_str()
@@ -565,6 +571,9 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     let verify_stdout = run(&["sfcs", "verify-zk-pha", artifact.to_str().unwrap()]);
     assert!(verify_stdout.contains("SFCS ZK PRIVATE VM PHA VALID"));
     assert!(verify_stdout.contains("transition_checks: 6"));
+    assert!(verify_stdout.contains("linear_relation_checks: 3"));
+    assert!(verify_stdout.contains("zk_range_proofs: 11"));
+    assert!(verify_stdout.contains("zk_memory_consistency_proofs: 1"));
     assert!(verify_stdout.contains("private_witness_embedded: false"));
 }
 

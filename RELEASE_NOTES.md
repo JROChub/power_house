@@ -24,9 +24,19 @@
   for `pub fn add(lhs: u32, rhs: u32) -> u32 { lhs + rhs }`, emitting the
   deterministic private-add VM profile and a slbit-style semantic packet.
 - Added `SfcsZkPrivateVmProof` and `julian sfcs zk-private-vm`, a general
-  private VM commitment profile for supported RV32I executions that keeps
-  private inputs and trace data out of `.pha` while binding public outputs,
+  private VM proof profile for supported RV32I executions that keeps private
+  inputs and trace data out of `.pha` while binding public outputs, digest
   commitments, and transition/memory/range coverage counters.
+- Added verifier-side homomorphic private VM transition proofs for
+  no-overflow/no-underflow linear relations (`add`, `addi`, `sub`, `subi`) and
+  public-scale relations such as no-overflow `slli`.
+- Added zero-knowledge 32-bit range proofs for committed private VM values used
+  by those private transition relations, using bit commitments, Fiat-Shamir OR
+  proofs for bitness, and homomorphic recomposition back to the original value
+  commitment.
+- Added zero-knowledge read-after-write memory consistency proofs for private
+  VM memory events, proving hidden read addresses and values match prior hidden
+  writes without revealing the addresses or values.
 - Added `julian sfcs rust-private-add`, which runs the constrained source
   through compile -> prove -> `.pha` -> Rootprint -> Observatory sidecar ->
   Memory Capsule and verifies the capsule before reporting success.
