@@ -1,23 +1,86 @@
-//! Deterministic Rust-subset frontend for SFCS zkVM profiles.
+//! Deterministic Rust-subset frontends for SFCS profiles.
 //!
-//! This compiler intentionally starts with a small safe Rust subset: a single
-//! `u32 + u32 -> u32` function. It emits the RV32I program consumed by the
-//! private-add ZK profile and a deterministic semantic packet for observability.
+//! The public compiler lowers a small safe Rust expression subset directly
+//! into SFCS fractal graphs. With `sfcs-zk`, the module also exposes the
+//! narrower private-add compiler that emits the RV32I program consumed by the
+//! private-add ZK profile.
 
+#[cfg(feature = "sfcs-zk")]
 use super::{
     vm::SfcsVmProgram,
     zk::{encode_rv32_add, SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT},
 };
+use super::{SfcsGraph, SfcsNode, SfcsOp};
 use crate::memory::{semantic_packet_digest, MemoryError};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeSet;
 use std::error::Error;
 use std::fmt;
 
 const SOURCE_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs-compiler:v1-draft:source\0";
+const PUBLIC_RUST_SCHEMA: &str = "power-house/sfcs-rust-public/v1-draft";
+const WASM_STACK_SCHEMA: &str = "power-house/sfcs-wasm-stack/v1-draft";
+#[cfg(feature = "sfcs-zk")]
+const PRIVATE_ADD_SCHEMA: &str = "power-house/sfcs-rust-private-add/v1-draft";
+
+/// Compiler output for the public Rust-subset-to-SFCS path.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsCompiledPublicRust {
+    /// Compiler schema.
+    pub schema: String,
+    /// Source language.
+    pub language: String,
+    /// Source digest after deterministic normalization.
+    pub source_digest: String,
+    /// Function name.
+    pub function_name: String,
+    /// Ordered parameter names.
+    pub parameters: Vec<String>,
+    /// Return type.
+    pub return_type: String,
+    /// Generated SFCS source.
+    pub sfcs_source: String,
+    /// Generated SFCS graph.
+    pub graph: SfcsGraph,
+    /// Non-core semantic packet for Observatory/slbit-style display.
+    pub semantic_packet: Value,
+}
+
+/// Compiler output for the WASM-style stack IR to SFCS path.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsCompiledWasmStack {
+    /// Compiler schema.
+    pub schema: String,
+    /// Source language.
+    pub language: String,
+    /// Source digest after deterministic normalization.
+    pub source_digest: String,
+    /// Ordered parameter names.
+    pub parameters: Vec<String>,
+    /// Generated SFCS graph.
+    pub graph: SfcsGraph,
+    /// Non-core semantic packet for Observatory/slbit-style display.
+    pub semantic_packet: Value,
+}
+
+impl SfcsCompiledWasmStack {
+    /// Returns the generated SFCS graph digest.
+    pub fn graph_digest(&self) -> Result<String, SfcsCompilerError> {
+        Ok(self.graph.fractal_digest()?)
+    }
+}
+
+impl SfcsCompiledPublicRust {
+    /// Returns the generated SFCS graph digest.
+    pub fn graph_digest(&self) -> Result<String, SfcsCompilerError> {
+        Ok(self.graph.fractal_digest()?)
+    }
+}
 
 /// Compiler output for the first Rust-subset private-add profile.
+#[cfg(feature = "sfcs-zk")]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsCompiledPrivateAdd {
     /// Compiler schema.
@@ -46,6 +109,7 @@ pub struct SfcsCompiledPrivateAdd {
     pub semantic_packet: Value,
 }
 
+#[cfg(feature = "sfcs-zk")]
 impl SfcsCompiledPrivateAdd {
     /// Returns the emitted VM program digest.
     pub fn program_digest(&self) -> Result<String, SfcsCompilerError> {
@@ -53,7 +117,178 @@ impl SfcsCompiledPrivateAdd {
     }
 }
 
+/// Compiles a public safe Rust expression function directly into an SFCS graph.
+pub fn compile_public_rust_source(
+    source: &str,
+) -> Result<SfcsCompiledPublicRust, SfcsCompilerError> {
+    let normalized = normalize_rust_source(source)?;
+    let parsed = parse_public_rust_function(&normalized)?;
+    let mut sfcs_source = String::new();
+    for parameter in &parsed.parameters {
+        sfcs_source.push_str("input ");
+        sfcs_source.push_str(parameter);
+        sfcs_source.push('\n');
+    }
+    sfcs_source.push_str("output ");
+    sfcs_source.push_str(&parsed.expression);
+    sfcs_source.push_str(" as return\n");
+    let graph = SfcsGraph::from_source(&sfcs_source)?;
+    let source_digest = source_digest(&normalized);
+    let graph_digest = graph.fractal_digest()?;
+    let mut packet = json!({
+        "schema": "slbit/viz-packet/v3",
+        "packet_id": format!("slp_sfcs_rust_public_{}", &source_digest["sha256:".len()..18]),
+        "packet_digest": "",
+        "claim": {
+            "claim_id": format!("claim_{}", parsed.function_name),
+            "label": format!("Rust subset function {} compiled directly to SFCS", parsed.function_name),
+            "domain": "sfcs-public-rust-compiler",
+            "status": "explained",
+            "bound_core": {
+                "source_digest": source_digest,
+                "graph_digest": graph_digest,
+                "compiler_schema": PUBLIC_RUST_SCHEMA
+            }
+        },
+        "transcript": {
+            "rounds": [
+                {
+                    "index": 0,
+                    "component": "rust-subset-parser",
+                    "note": "Accepted a public u32 expression function."
+                },
+                {
+                    "index": 1,
+                    "component": "sfcs-fractal-emitter",
+                    "note": "Lowered parameters and expression directly into SFCS source and graph nodes."
+                },
+                {
+                    "index": 2,
+                    "component": "truth-boundary",
+                    "note": "Generated semantic packet is non-core and cannot alter graph or .pha identity."
+                }
+            ]
+        },
+        "semantic_dag": {
+            "nodes": [
+                {"id": "source", "type": "artifact", "label": "Rust source"},
+                {"id": "sfcs-source", "type": "artifact", "label": "SFCS source"},
+                {"id": "sfcs-graph", "type": "artifact", "label": "SFCS graph"}
+            ],
+            "edges": [
+                {"from": "source", "to": "sfcs-source", "kind": "lowered-to"},
+                {"from": "sfcs-source", "to": "sfcs-graph", "kind": "parsed-as"}
+            ]
+        },
+        "views": {
+            "timeline": [],
+            "claim_cards": [],
+            "graphs": [],
+            "diffs": []
+        },
+        "explanation_constraints": {
+            "allowed_sources": ["packet_nodes", "transcript_rounds", "bound_core_metadata"],
+            "forbid_unbound_claims": true,
+            "mark_generated_text_non_authoritative": true
+        }
+    });
+    packet["packet_digest"] = json!(semantic_packet_digest(&packet)?);
+    Ok(SfcsCompiledPublicRust {
+        schema: PUBLIC_RUST_SCHEMA.to_string(),
+        language: "rust-subset".to_string(),
+        source_digest,
+        function_name: parsed.function_name,
+        parameters: parsed.parameters,
+        return_type: "u32".to_string(),
+        sfcs_source,
+        graph,
+        semantic_packet: packet,
+    })
+}
+
+/// Compiles a deterministic WASM-style stack IR directly into an SFCS graph.
+///
+/// Supported line-oriented instructions:
+///
+/// - `param <name> i32`
+/// - `local.get <name>`
+/// - `i32.const <value>`
+/// - `i32.add`, `i32.sub`, `i32.mul`, `i32.and`, `i32.or`, `i32.xor`
+/// - `i32.shl`, `i32.shr_u`, `i32.eq`, `i32.lt_u`, `i32.gt_u`
+/// - `select`
+/// - `return`
+pub fn compile_wasm_stack_source(source: &str) -> Result<SfcsCompiledWasmStack, SfcsCompilerError> {
+    let normalized = normalize_wasm_stack_source(source)?;
+    let source_digest = source_digest(&normalized);
+    let mut compiler = WasmStackCompiler::new();
+    for (line_index, line) in normalized.lines().enumerate() {
+        compiler.process_line(line, line_index + 1)?;
+    }
+    let (parameters, graph) = compiler.finish()?;
+    let graph_digest = graph.fractal_digest()?;
+    let mut packet = json!({
+        "schema": "slbit/viz-packet/v3",
+        "packet_id": format!("slp_sfcs_wasm_stack_{}", &source_digest["sha256:".len()..18]),
+        "packet_digest": "",
+        "claim": {
+            "claim_id": "claim_wasm_stack",
+            "label": "WASM-style stack IR compiled directly to SFCS",
+            "domain": "sfcs-wasm-stack-compiler",
+            "status": "explained",
+            "bound_core": {
+                "source_digest": source_digest,
+                "graph_digest": graph_digest,
+                "compiler_schema": WASM_STACK_SCHEMA
+            }
+        },
+        "transcript": {
+            "rounds": [
+                {
+                    "index": 0,
+                    "component": "wasm-stack-parser",
+                    "note": "Accepted deterministic i32 stack instructions."
+                },
+                {
+                    "index": 1,
+                    "component": "sfcs-fractal-emitter",
+                    "note": "Lowered stack operations directly into SFCS graph nodes."
+                }
+            ]
+        },
+        "semantic_dag": {
+            "nodes": [
+                {"id": "wasm-stack-source", "type": "artifact", "label": "WASM-style source"},
+                {"id": "sfcs-graph", "type": "artifact", "label": "SFCS graph"}
+            ],
+            "edges": [
+                {"from": "wasm-stack-source", "to": "sfcs-graph", "kind": "compiled-to"}
+            ]
+        },
+        "views": {
+            "timeline": [],
+            "claim_cards": [],
+            "graphs": [],
+            "diffs": []
+        },
+        "explanation_constraints": {
+            "allowed_sources": ["packet_nodes", "transcript_rounds", "bound_core_metadata"],
+            "forbid_unbound_claims": true,
+            "mark_generated_text_non_authoritative": true
+        }
+    });
+    packet["packet_digest"] = json!(semantic_packet_digest(&packet)?);
+    Ok(SfcsCompiledWasmStack {
+        schema: WASM_STACK_SCHEMA.to_string(),
+        language: "wasm-stack-subset".to_string(),
+        source_digest,
+        parameters,
+        graph,
+        semantic_packet: packet,
+    })
+}
+
 /// Compiles a safe Rust add function into the private-add profile.
+#[cfg(feature = "sfcs-zk")]
 pub fn compile_private_add_source(
     source: &str,
 ) -> Result<SfcsCompiledPrivateAdd, SfcsCompilerError> {
@@ -122,7 +357,7 @@ pub fn compile_private_add_source(
     });
     packet["packet_digest"] = json!(semantic_packet_digest(&packet)?);
     Ok(SfcsCompiledPrivateAdd {
-        schema: "power-house/sfcs-rust-private-add/v1-draft".to_string(),
+        schema: PRIVATE_ADD_SCHEMA.to_string(),
         language: "rust-subset".to_string(),
         source_digest,
         function_name: parsed.function_name,
@@ -137,11 +372,19 @@ pub fn compile_private_add_source(
     })
 }
 
+#[cfg(feature = "sfcs-zk")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ParsedPrivateAdd {
     function_name: String,
     lhs_name: String,
     rhs_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedPublicRustFunction {
+    function_name: String,
+    parameters: Vec<String>,
+    expression: String,
 }
 
 fn normalize_rust_source(source: &str) -> Result<String, SfcsCompilerError> {
@@ -170,6 +413,50 @@ fn normalize_rust_source(source: &str) -> Result<String, SfcsCompilerError> {
     Ok(normalized)
 }
 
+fn parse_public_rust_function(source: &str) -> Result<ParsedPublicRustFunction, SfcsCompilerError> {
+    let source = source.strip_prefix("pub ").unwrap_or(source);
+    let rest = source.strip_prefix("fn ").ok_or_else(|| {
+        SfcsCompilerError::InvalidSource("source must start with fn or pub fn".to_string())
+    })?;
+    let (function_name, after_name) = split_identifier(rest)?;
+    let after_name = after_name.trim_start();
+    let after_name = after_name.strip_prefix('(').ok_or_else(|| {
+        SfcsCompilerError::InvalidSource("function must declare parameters".to_string())
+    })?;
+    let (params, after_params) = after_name.split_once(')').ok_or_else(|| {
+        SfcsCompilerError::InvalidSource("function parameter list is not closed".to_string())
+    })?;
+    let parameters = if params.trim().is_empty() {
+        Vec::new()
+    } else {
+        params
+            .split(',')
+            .map(str::trim)
+            .map(parse_u32_param)
+            .collect::<Result<Vec<_>, _>>()?
+    };
+    let mut seen = std::collections::BTreeSet::new();
+    for parameter in &parameters {
+        if !seen.insert(parameter) {
+            return Err(SfcsCompilerError::InvalidSource(
+                "parameters must be distinct".to_string(),
+            ));
+        }
+    }
+    let after_params = after_params.trim_start();
+    let after_return = after_params
+        .strip_prefix("-> u32")
+        .ok_or_else(|| SfcsCompilerError::InvalidSource("function must return u32".to_string()))?;
+    let body = braced_body(after_return.trim_start())?;
+    let expression = normalize_rust_return_expression(body)?;
+    Ok(ParsedPublicRustFunction {
+        function_name: function_name.to_string(),
+        parameters,
+        expression,
+    })
+}
+
+#[cfg(feature = "sfcs-zk")]
 fn parse_private_add(source: &str) -> Result<ParsedPrivateAdd, SfcsCompilerError> {
     let source = source.strip_prefix("pub ").unwrap_or(source);
     let rest = source.strip_prefix("fn ").ok_or_else(|| {
@@ -225,6 +512,311 @@ fn parse_private_add(source: &str) -> Result<ParsedPrivateAdd, SfcsCompilerError
         lhs_name,
         rhs_name,
     })
+}
+
+fn braced_body(value: &str) -> Result<&str, SfcsCompilerError> {
+    value
+        .strip_prefix('{')
+        .and_then(|body| body.strip_suffix('}'))
+        .ok_or_else(|| {
+            SfcsCompilerError::InvalidSource("function body must use braces".to_string())
+        })
+        .map(str::trim)
+}
+
+fn normalize_rust_return_expression(body: &str) -> Result<String, SfcsCompilerError> {
+    let expression = body
+        .strip_prefix("return ")
+        .unwrap_or(body)
+        .trim_end_matches(';')
+        .trim();
+    rust_expression_to_sfcs(expression)
+}
+
+fn rust_expression_to_sfcs(expression: &str) -> Result<String, SfcsCompilerError> {
+    let expression = expression.trim();
+    if expression.is_empty() {
+        return Err(SfcsCompilerError::InvalidSource(
+            "function expression is empty".to_string(),
+        ));
+    }
+    if let Some(rest) = expression.strip_prefix("if ") {
+        return rust_if_expression_to_sfcs(rest);
+    }
+    if expression.contains('{') || expression.contains('}') {
+        return Err(SfcsCompilerError::InvalidSource(
+            "braces are only supported in if expressions".to_string(),
+        ));
+    }
+    Ok(expression.to_string())
+}
+
+fn rust_if_expression_to_sfcs(rest: &str) -> Result<String, SfcsCompilerError> {
+    let Some(open_then) = rest.find('{') else {
+        return Err(SfcsCompilerError::InvalidSource(
+            "if expression requires then block".to_string(),
+        ));
+    };
+    let condition = rest[..open_then].trim();
+    let close_then = matching_brace(rest, open_then)?;
+    let then_body = rest[open_then + 1..close_then].trim();
+    let after_then = rest[close_then + 1..].trim();
+    let after_else = after_then.strip_prefix("else").ok_or_else(|| {
+        SfcsCompilerError::InvalidSource("if expression requires else block".to_string())
+    })?;
+    let after_else = after_else.trim_start();
+    if !after_else.starts_with('{') {
+        return Err(SfcsCompilerError::InvalidSource(
+            "else block must use braces".to_string(),
+        ));
+    }
+    let close_else = matching_brace(after_else, 0)?;
+    if !after_else[close_else + 1..].trim().is_empty() {
+        return Err(SfcsCompilerError::InvalidSource(
+            "unexpected tokens after else block".to_string(),
+        ));
+    }
+    let else_body = after_else[1..close_else].trim();
+    Ok(format!(
+        "if {} then {} else {}",
+        rust_expression_to_sfcs(condition)?,
+        rust_expression_to_sfcs(then_body)?,
+        rust_expression_to_sfcs(else_body)?
+    ))
+}
+
+fn matching_brace(value: &str, open_index: usize) -> Result<usize, SfcsCompilerError> {
+    let bytes = value.as_bytes();
+    if bytes.get(open_index) != Some(&b'{') {
+        return Err(SfcsCompilerError::InvalidSource(
+            "expected opening brace".to_string(),
+        ));
+    }
+    let mut depth = 0_u32;
+    for (index, byte) in bytes.iter().enumerate().skip(open_index) {
+        match byte {
+            b'{' => depth += 1,
+            b'}' => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return Ok(index);
+                }
+            }
+            _ => {}
+        }
+    }
+    Err(SfcsCompilerError::InvalidSource(
+        "unclosed brace in if expression".to_string(),
+    ))
+}
+
+fn normalize_wasm_stack_source(source: &str) -> Result<String, SfcsCompilerError> {
+    if source
+        .chars()
+        .any(|ch| ch.is_control() && ch != '\n' && ch != '\r' && ch != '\t')
+    {
+        return Err(SfcsCompilerError::InvalidSource(
+            "WASM stack source contains unsupported control characters".to_string(),
+        ));
+    }
+    let lines = source
+        .lines()
+        .filter_map(|line| {
+            let line = line.split_once(";;").map(|(head, _)| head).unwrap_or(line);
+            let normalized = line.split_whitespace().collect::<Vec<_>>().join(" ");
+            if normalized.is_empty() {
+                None
+            } else {
+                Some(normalized)
+            }
+        })
+        .collect::<Vec<_>>();
+    if lines.is_empty() {
+        return Err(SfcsCompilerError::InvalidSource(
+            "WASM stack source is empty".to_string(),
+        ));
+    }
+    Ok(lines.join("\n"))
+}
+
+struct WasmStackCompiler {
+    graph: SfcsGraph,
+    parameters: Vec<String>,
+    parameter_set: BTreeSet<String>,
+    stack: Vec<String>,
+    temp_counter: u64,
+    returned: bool,
+}
+
+impl WasmStackCompiler {
+    fn new() -> Self {
+        Self {
+            graph: SfcsGraph::new(Vec::new()),
+            parameters: Vec::new(),
+            parameter_set: BTreeSet::new(),
+            stack: Vec::new(),
+            temp_counter: 0,
+            returned: false,
+        }
+    }
+
+    fn process_line(&mut self, line: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        if self.returned {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: instructions after return are not supported"
+            )));
+        }
+        let parts = line.split_whitespace().collect::<Vec<_>>();
+        match parts.as_slice() {
+            ["param", name, "i32"] => self.param(name, line_number),
+            ["local.get", name] => self.local_get(name, line_number),
+            ["i32.const", value] => self.i32_const(value, line_number),
+            ["i32.add"] => self.binary(SfcsOp::Add, "i32_add", line_number),
+            ["i32.sub"] => self.binary(SfcsOp::Sub, "i32_sub", line_number),
+            ["i32.mul"] => self.binary(SfcsOp::Mul, "i32_mul", line_number),
+            ["i32.and"] => self.binary(SfcsOp::BitAnd, "i32_and", line_number),
+            ["i32.or"] => self.binary(SfcsOp::BitOr, "i32_or", line_number),
+            ["i32.xor"] => self.binary(SfcsOp::BitXor, "i32_xor", line_number),
+            ["i32.shl"] => self.binary(SfcsOp::Shl, "i32_shl", line_number),
+            ["i32.shr_u"] => self.binary(SfcsOp::Shr, "i32_shr_u", line_number),
+            ["i32.eq"] => self.binary(SfcsOp::Eq, "i32_eq", line_number),
+            ["i32.lt_u"] => self.binary(SfcsOp::Lt, "i32_lt_u", line_number),
+            ["i32.gt_u"] => self.binary(SfcsOp::Gt, "i32_gt_u", line_number),
+            ["select"] => self.select(line_number),
+            ["return"] => self.return_top(line_number),
+            _ => Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: unsupported WASM stack instruction `{line}`"
+            ))),
+        }
+    }
+
+    fn finish(mut self) -> Result<(Vec<String>, SfcsGraph), SfcsCompilerError> {
+        if !self.returned {
+            if self.stack.len() == 1 {
+                self.graph.outputs = vec![self.stack.pop().unwrap()];
+            } else {
+                return Err(SfcsCompilerError::InvalidSource(
+                    "WASM stack program must return exactly one value".to_string(),
+                ));
+            }
+        }
+        self.graph.verify()?;
+        Ok((self.parameters, self.graph))
+    }
+
+    fn param(&mut self, name: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        validate_identifier(name)?;
+        if !self.parameter_set.insert(name.to_string()) {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: duplicate parameter {name}"
+            )));
+        }
+        self.parameters.push(name.to_string());
+        self.graph
+            .insert_node(SfcsNode::new(name, SfcsOp::Input, Vec::new()))?;
+        Ok(())
+    }
+
+    fn local_get(&mut self, name: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        validate_identifier(name)?;
+        if !self.parameter_set.contains(name) {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: unknown local {name}"
+            )));
+        }
+        self.stack.push(name.to_string());
+        Ok(())
+    }
+
+    fn i32_const(&mut self, value: &str, line_number: usize) -> Result<(), SfcsCompilerError> {
+        let value = value.parse::<i64>().map_err(|error| {
+            SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: invalid i32.const value: {error}"
+            ))
+        })?;
+        if !(0..=u32::MAX as i64).contains(&value) {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: i32.const is outside u32 range"
+            )));
+        }
+        let id = self.next_temp("const");
+        self.graph.insert_node(SfcsNode::constant(&id, value))?;
+        self.stack.push(id);
+        Ok(())
+    }
+
+    fn binary(
+        &mut self,
+        op: SfcsOp,
+        label: &str,
+        line_number: usize,
+    ) -> Result<(), SfcsCompilerError> {
+        let right = self.pop(line_number)?;
+        let left = self.pop(line_number)?;
+        let inputs = self.distinct_inputs(vec![left, right])?;
+        let id = self.next_temp(label);
+        self.graph
+            .insert_node(SfcsNode::new(&id, op, inputs).with_metadata("source_op", label))?;
+        self.stack.push(id);
+        Ok(())
+    }
+
+    fn select(&mut self, line_number: usize) -> Result<(), SfcsCompilerError> {
+        let false_value = self.pop(line_number)?;
+        let true_value = self.pop(line_number)?;
+        let condition = self.pop(line_number)?;
+        let inputs = self.distinct_inputs(vec![condition, true_value, false_value])?;
+        let id = self.next_temp("select");
+        self.graph.insert_node(
+            SfcsNode::new(&id, SfcsOp::Branch, inputs).with_metadata("source_op", "select"),
+        )?;
+        self.stack.push(id);
+        Ok(())
+    }
+
+    fn return_top(&mut self, line_number: usize) -> Result<(), SfcsCompilerError> {
+        let value = self.pop(line_number)?;
+        if !self.stack.is_empty() {
+            return Err(SfcsCompilerError::InvalidSource(format!(
+                "line {line_number}: return requires exactly one stack value"
+            )));
+        }
+        self.graph.outputs = vec![value];
+        self.returned = true;
+        Ok(())
+    }
+
+    fn pop(&mut self, line_number: usize) -> Result<String, SfcsCompilerError> {
+        self.stack.pop().ok_or_else(|| {
+            SfcsCompilerError::InvalidSource(format!("line {line_number}: stack underflow"))
+        })
+    }
+
+    fn distinct_inputs(&mut self, inputs: Vec<String>) -> Result<Vec<String>, SfcsCompilerError> {
+        let mut seen = BTreeSet::new();
+        let mut distinct = Vec::new();
+        for input in inputs {
+            if seen.insert(input.clone()) {
+                distinct.push(input);
+                continue;
+            }
+            let alias_id = self.next_temp("alias");
+            self.graph
+                .insert_node(SfcsNode::new(&alias_id, SfcsOp::Alias, vec![input]))?;
+            distinct.push(alias_id);
+        }
+        Ok(distinct)
+    }
+
+    fn next_temp(&mut self, label: &str) -> String {
+        loop {
+            let id = format!("__wasm_{label}_{:06}", self.temp_counter);
+            self.temp_counter += 1;
+            if !self.graph.nodes.contains_key(&id) {
+                return id;
+            }
+        }
+    }
 }
 
 fn split_identifier(value: &str) -> Result<(&str, &str), SfcsCompilerError> {
@@ -285,6 +877,8 @@ fn source_digest(source: &str) -> String {
 pub enum SfcsCompilerError {
     /// Source cannot be compiled by this profile.
     InvalidSource(String),
+    /// SFCS graph construction failed.
+    Sfcs(super::SfcsError),
     /// VM program construction failed.
     Vm(super::vm::SfcsVmError),
     /// Memory semantic packet digest failed.
@@ -297,6 +891,7 @@ impl fmt::Display for SfcsCompilerError {
             Self::InvalidSource(message) => {
                 write!(formatter, "invalid SFCS compiler source: {message}")
             }
+            Self::Sfcs(error) => write!(formatter, "SFCS compiler graph error: {error}"),
             Self::Vm(error) => write!(formatter, "SFCS compiler VM error: {error}"),
             Self::Memory(error) => {
                 write!(formatter, "SFCS compiler semantic packet error: {error}")
@@ -308,10 +903,17 @@ impl fmt::Display for SfcsCompilerError {
 impl Error for SfcsCompilerError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::Sfcs(error) => Some(error),
             Self::Vm(error) => Some(error),
             Self::Memory(error) => Some(error),
             _ => None,
         }
+    }
+}
+
+impl From<super::SfcsError> for SfcsCompilerError {
+    fn from(error: super::SfcsError) -> Self {
+        Self::Sfcs(error)
     }
 }
 

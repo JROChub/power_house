@@ -6,6 +6,17 @@
 - Added the opt-in `sfcs-zk` feature with the first privacy-preserving SFCS
   proof profile: a private no-overflow RV32I `add; ecall` relation using
   Pedersen commitments and a Fiat-Shamir Schnorr proof.
+- Added `SfcsVmConstraintProof` under the base `sfcs` feature for transparent
+  public VM transition, memory consistency, range coverage, trace digest, and
+  execution-fractal proof binding.
+- Added `julian sfcs vm-constraints` and
+  `julian sfcs verify-vm-constraints-pha` for `.pha`-embedded public VM
+  constraint proofs.
+- Added `compile_public_rust_source(...)` and `julian sfcs rust-public`, a
+  broader public Rust-subset source-to-fractal compiler for multi-parameter
+  `u32` expression functions.
+- Added `compile_wasm_stack_source(...)` and `julian sfcs wasm-stack`, a
+  deterministic WASM-style i32 stack IR source-to-fractal compiler.
 - Added `compile_private_add_source(...)`, a constrained Rust-subset frontend
   for `pub fn add(lhs: u32, rhs: u32) -> u32 { lhs + rhs }`, emitting the
   deterministic private-add VM profile and a slbit-style semantic packet.

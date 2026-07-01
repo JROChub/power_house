@@ -40,6 +40,28 @@ Implemented foundation:
 The VM core is not allowed to change `.pha` fingerprint rules or Rootprint v1
 branch semantics.
 
+## Phase Gate 1B: Public VM Constraint Proofs
+
+Implemented for arbitrary public RV32I executions supported by the VM core:
+
+- protocol `power-house/sfcs-vm-constraints/v1-draft`;
+- proof object `SfcsVmConstraintProof`;
+- verifier `verify_sfcs_vm_constraint_embedding(...)`;
+- CLI commands `julian sfcs vm-constraints` and
+  `julian sfcs verify-vm-constraints-pha`;
+- transition checks for every executed instruction;
+- register range coverage counts for every step;
+- memory range and consistency coverage for every memory access;
+- trace digest, final state digest, final memory digest, and execution-fractal
+  digest binding;
+- `.pha` embedding and Memory Capsule compatibility;
+- mutation tests for transition commitments and public input proof digest
+  substitution.
+
+This gate is transparent and public. It proves the supported VM transition and
+memory rules by deterministic replay. It does not hide private VM state and is
+not a substitute for the arbitrary private VM zero-knowledge gate.
+
 ## Phase Gate 2: Real Zero-Knowledge Privacy
 
 Partially implemented for one constrained profile.
@@ -82,25 +104,37 @@ output binding for the supported VM class.
 
 ## Phase Gate 3: Compiler Frontend
 
-Partially implemented for one constrained Rust subset.
+Partially implemented for scoped Rust and WASM-style subsets.
 
 Implemented groundwork:
 
 - compiler API `compile_private_add_source(...)`;
+- compiler API `compile_public_rust_source(...)`;
+- compiler API `compile_wasm_stack_source(...)`;
 - schema `power-house/sfcs-rust-private-add/v1-draft`;
+- schema `power-house/sfcs-rust-public/v1-draft`;
+- schema `power-house/sfcs-wasm-stack/v1-draft`;
 - accepted source shape: one `u32 + u32 -> u32` function;
+- public Rust-subset expression functions with multiple `u32` parameters,
+  arithmetic, comparisons, and `if { } else { }` expressions;
+- WASM-style i32 stack IR with params, locals, constants, arithmetic, bitwise
+  operations, comparisons, `select`, and `return`;
 - deterministic lowering to the private-add RV32I `add; ecall` program;
+- deterministic lowering to SFCS graphs for public compiler paths;
 - deterministic source digest and semantic packet digest;
 - slbit-style semantic packet generation with non-authoritative explanation
   constraints;
 - one-command CLI pipeline `julian sfcs rust-private-add` that creates a
   `.pha` artifact, Rootprint graph, Observatory sidecar, Memory Capsule, and
   machine-readable report;
+- public CLI compiler commands `julian sfcs rust-public` and
+  `julian sfcs wasm-stack`;
 - compiler acceptance/rejection tests and CLI end-to-end tests.
 
-This satisfies the first source-to-proof-to-memory-capsule milestone for the
-private-add profile only. It does not satisfy the full compiler gate for normal
-Rust programs.
+This satisfies scoped source-to-fractal compiler milestones and the first
+source-to-proof-to-memory-capsule milestone for the private-add profile. It
+does not satisfy the full compiler gate for normal Rust crates, LLVM IR, or
+binary WebAssembly modules.
 
 Required before promotion:
 
@@ -182,12 +216,13 @@ Every rejection must name the layer where the falsehood failed.
 
 ## Public Claim Rule
 
-Until Phase Gates 2, 3, and 4 are complete for the general VM/compiler class,
-documentation must say:
+Until Phase Gates 2, 3, and 4 are complete for the private arbitrary
+VM/compiler class, documentation must say:
 
 ```text
-SFCS has a deterministic VM execution foundation and a constrained end-to-end
-private-add source-to-proof-to-Memory-Capsule path.
+SFCS has a deterministic VM execution foundation, public VM transition and
+memory constraint proofs, scoped Rust/WASM-style source-to-fractal compilers,
+and a constrained end-to-end private-add source-to-proof-to-Memory-Capsule path.
 ```
 
 It must not say:

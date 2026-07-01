@@ -25,19 +25,21 @@ use power_house::net::{
 use power_house::provenance::{ExternalProofAttachment, PhaArtifact, Rootprint};
 #[cfg(feature = "sfcs-zk")]
 use power_house::{
-    compile_private_add_source, verify_sfcs_zk_private_add_embedding, SfcsCompilerError,
-    SfcsZkError, SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
+    compile_private_add_source, verify_sfcs_zk_private_add_embedding, SfcsZkError,
+    SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
+};
+#[cfg(feature = "sfcs")]
+use power_house::{
+    compile_public_rust_source, compile_wasm_stack_source, verify_sfcs_execution_embedding,
+    verify_sfcs_pha_embedding, verify_sfcs_vm_constraint_embedding,
+    verify_sfcs_vm_execution_embedding, SfcsCompilerError, SfcsError, SfcsGraph,
+    SfcsVmConstraintError, SfcsVmConstraintProof, SfcsVmError, SfcsVmInputs, SfcsVmProgram,
 };
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
     read_fold_digest_hint, reconcile_anchors_with_quorum, AnchorMetadata, AnchorVote,
     ChallengeSuite, EntryAnchor, Field, GeneralSumProof, LedgerAnchor, MemoryCapsule,
     MemoryCapsuleBuilder, MemoryError, MemoryVerificationPolicy, ObservatorySidecar, ProofStats,
-};
-#[cfg(feature = "sfcs")]
-use power_house::{
-    verify_sfcs_execution_embedding, verify_sfcs_pha_embedding, verify_sfcs_vm_execution_embedding,
-    SfcsError, SfcsGraph, SfcsVmError, SfcsVmInputs, SfcsVmProgram,
 };
 #[cfg(feature = "sfcs")]
 use std::collections::BTreeMap;
@@ -206,6 +208,12 @@ fn print_memory_help() {
 fn print_sfcs_help() {
     println!("Usage: julian sfcs <source|eval|inspect|verify-pha|vm-run|verify-vm-pha> ...");
     println!("  source <source.sfcs> --output <graph.json>");
+    println!("  rust-public <source.rs> --graph-output <graph.json> \\");
+    println!("       [--semantic-output <packet.json>] [--artifact-output <graph.pha>] \\");
+    println!("       [--report <report.json>] [--label <name>]");
+    println!("  wasm-stack <source.wasmstack> --graph-output <graph.json> \\");
+    println!("       [--semantic-output <packet.json>] [--artifact-output <graph.pha>] \\");
+    println!("       [--report <report.json>] [--label <name>]");
     println!("  eval <source.sfcs> --input <name=value> [--input <name=value>] \\");
     println!("       [--report <report.json>] [--graph-output <graph.json>] \\");
     println!("       [--artifact-output <exec.pha>] [--label <name>]");
@@ -214,6 +222,11 @@ fn print_sfcs_help() {
     println!("  vm-run <program.json> --inputs <inputs.json> \\");
     println!("       [--report <report.json>] [--artifact-output <vm.pha>] [--label <name>]");
     println!("  verify-vm-pha <artifact.pha>");
+    println!("  vm-constraints <program.json> --inputs <inputs.json> \\");
+    println!(
+        "       [--report <report.json>] [--artifact-output <constraints.pha>] [--label <name>]"
+    );
+    println!("  verify-vm-constraints-pha <artifact.pha>");
     #[cfg(feature = "sfcs-zk")]
     {
         println!("  rust-private-add <source.rs> --lhs-value <u32> --rhs-value <u32> \\");
@@ -625,11 +638,15 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
     match sub {
         "-h" | "--help" => print_sfcs_help(),
         "source" => cmd_sfcs_source(tail),
+        "rust-public" => cmd_sfcs_rust_public(tail),
+        "wasm-stack" => cmd_sfcs_wasm_stack(tail),
         "eval" => cmd_sfcs_eval(tail),
         "inspect" => cmd_sfcs_inspect(tail),
         "verify-pha" => cmd_sfcs_verify_pha(tail),
         "vm-run" => cmd_sfcs_vm_run(tail),
         "verify-vm-pha" => cmd_sfcs_verify_vm_pha(tail),
+        "vm-constraints" => cmd_sfcs_vm_constraints(tail),
+        "verify-vm-constraints-pha" => cmd_sfcs_verify_vm_constraints_pha(tail),
         #[cfg(feature = "sfcs-zk")]
         "rust-private-add" => cmd_sfcs_rust_private_add(tail),
         #[cfg(feature = "sfcs-zk")]
@@ -815,6 +832,16 @@ fn sfcs_vm_exit_for_error(error: &SfcsVmError) -> i32 {
     }
 }
 
+#[cfg(feature = "sfcs")]
+fn sfcs_vm_constraint_exit_for_error(error: &SfcsVmConstraintError) -> i32 {
+    match error {
+        SfcsVmConstraintError::UnsupportedSchema(_) => 3,
+        SfcsVmConstraintError::InvalidProof(_) | SfcsVmConstraintError::InvalidEmbedding(_) => 1,
+        SfcsVmConstraintError::Vm(_) | SfcsVmConstraintError::Sfcs(_) => 1,
+        SfcsVmConstraintError::Json(_) | SfcsVmConstraintError::Pha(_) => 5,
+    }
+}
+
 #[cfg(feature = "sfcs-zk")]
 fn sfcs_zk_exit_for_error(error: &SfcsZkError) -> i32 {
     match error {
@@ -826,10 +853,11 @@ fn sfcs_zk_exit_for_error(error: &SfcsZkError) -> i32 {
     }
 }
 
-#[cfg(feature = "sfcs-zk")]
+#[cfg(feature = "sfcs")]
 fn sfcs_compiler_exit_for_error(error: &SfcsCompilerError) -> i32 {
     match error {
         SfcsCompilerError::InvalidSource(_) => 2,
+        SfcsCompilerError::Sfcs(_) => 1,
         SfcsCompilerError::Vm(_) => 1,
         SfcsCompilerError::Memory(_) => 5,
     }
@@ -894,6 +922,171 @@ fn cmd_sfcs_source(args: Vec<String>) {
     println!("nodes: {}", graph.nodes.len());
     println!("outputs: {}", graph.outputs.len());
     println!("graph: {}", output.display());
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_rust_public(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut graph_output = None;
+    let mut semantic_output = None;
+    let mut artifact_output = None;
+    let mut report_path = None;
+    let mut label = "sfcs-rust-public".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--graph-output" => {
+                graph_output = Some(PathBuf::from(take_option(&mut iter, "--graph-output")))
+            }
+            "--semantic-output" => {
+                semantic_output = Some(PathBuf::from(take_option(&mut iter, "--semantic-output")))
+            }
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path = source_path.unwrap_or_else(|| fatal("sfcs rust-public requires <source.rs>"));
+    let graph_output = graph_output.unwrap_or_else(|| fatal("--graph-output is required"));
+    let source = fs::read_to_string(&source_path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", source_path.display())));
+    let compiled = compile_public_rust_source(&source).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_compiler_exit_for_error(&err),
+            &format!("SFCS public Rust compilation failed: {err}"),
+        )
+    });
+    let graph_digest = compiled
+        .graph_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS public Rust graph digest failed: {err}")));
+    write_json(&graph_output, &compiled.graph);
+    if let Some(path) = semantic_output {
+        write_json(&path, &compiled.semantic_packet);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = compiled
+            .graph
+            .to_pha_artifact(&label)
+            .unwrap_or_else(|err| fatal(&format!("SFCS public Rust .pha failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-rust-public-cli-report/v1",
+        "source": source_path.display().to_string(),
+        "compiler_schema": compiled.schema,
+        "source_digest": compiled.source_digest,
+        "function_name": compiled.function_name,
+        "parameters": compiled.parameters,
+        "return_type": compiled.return_type,
+        "graph_digest": graph_digest,
+        "graph_nodes": compiled.graph.nodes.len(),
+        "graph_outputs": compiled.graph.outputs,
+        "semantic_packet_digest": compiled.semantic_packet["packet_digest"],
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    println!("SFCS RUST PUBLIC");
+    println!(
+        "source_digest: {}",
+        report["source_digest"].as_str().unwrap_or("")
+    );
+    println!("graph_digest: {graph_digest}");
+    println!("nodes: {}", report["graph_nodes"].as_u64().unwrap_or(0));
+    println!(
+        "semantic_packet_digest: {}",
+        report["semantic_packet_digest"].as_str().unwrap_or("")
+    );
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_wasm_stack(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut source_path = None;
+    let mut graph_output = None;
+    let mut semantic_output = None;
+    let mut artifact_output = None;
+    let mut report_path = None;
+    let mut label = "sfcs-wasm-stack".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--graph-output" => {
+                graph_output = Some(PathBuf::from(take_option(&mut iter, "--graph-output")))
+            }
+            "--semantic-output" => {
+                semantic_output = Some(PathBuf::from(take_option(&mut iter, "--semantic-output")))
+            }
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if source_path.is_none() => source_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let source_path =
+        source_path.unwrap_or_else(|| fatal("sfcs wasm-stack requires <source.wasmstack>"));
+    let graph_output = graph_output.unwrap_or_else(|| fatal("--graph-output is required"));
+    let source = fs::read_to_string(&source_path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", source_path.display())));
+    let compiled = compile_wasm_stack_source(&source).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_compiler_exit_for_error(&err),
+            &format!("SFCS WASM stack compilation failed: {err}"),
+        )
+    });
+    let graph_digest = compiled
+        .graph_digest()
+        .unwrap_or_else(|err| fatal(&format!("SFCS WASM stack graph digest failed: {err}")));
+    write_json(&graph_output, &compiled.graph);
+    if let Some(path) = semantic_output {
+        write_json(&path, &compiled.semantic_packet);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = compiled
+            .graph
+            .to_pha_artifact(&label)
+            .unwrap_or_else(|err| fatal(&format!("SFCS WASM stack .pha failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-wasm-stack-cli-report/v1",
+        "source": source_path.display().to_string(),
+        "compiler_schema": compiled.schema,
+        "source_digest": compiled.source_digest,
+        "parameters": compiled.parameters,
+        "graph_digest": graph_digest,
+        "graph_nodes": compiled.graph.nodes.len(),
+        "graph_outputs": compiled.graph.outputs,
+        "semantic_packet_digest": compiled.semantic_packet["packet_digest"],
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    println!("SFCS WASM STACK");
+    println!(
+        "source_digest: {}",
+        report["source_digest"].as_str().unwrap_or("")
+    );
+    println!("graph_digest: {graph_digest}");
+    println!("nodes: {}", report["graph_nodes"].as_u64().unwrap_or(0));
+    println!(
+        "semantic_packet_digest: {}",
+        report["semantic_packet_digest"].as_str().unwrap_or("")
+    );
 }
 
 #[cfg(feature = "sfcs")]
@@ -1162,6 +1355,121 @@ fn cmd_sfcs_verify_vm_pha(args: Vec<String>) {
         Err(error) => fatal_code(
             sfcs_vm_exit_for_error(&error),
             &format!("SFCS VM .pha verification failed: {error}"),
+        ),
+    }
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_vm_constraints(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut program_path = None;
+    let mut inputs_path = None;
+    let mut report_path = None;
+    let mut artifact_output = None;
+    let mut label = "sfcs-vm-constraints".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--inputs" => inputs_path = Some(PathBuf::from(take_option(&mut iter, "--inputs"))),
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if program_path.is_none() => program_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let program_path =
+        program_path.unwrap_or_else(|| fatal("sfcs vm-constraints requires <program.json>"));
+    let inputs_path = inputs_path.unwrap_or_else(|| fatal("--inputs is required"));
+    let program = read_sfcs_vm_program(&program_path);
+    let inputs = read_sfcs_vm_inputs(&inputs_path);
+    let proof = SfcsVmConstraintProof::prove(&program, &inputs).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_vm_constraint_exit_for_error(&err),
+            &format!("SFCS VM constraint proof failed: {err}"),
+        )
+    });
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-vm-constraints-cli-report/v1",
+        "program": program_path.display().to_string(),
+        "inputs": inputs_path.display().to_string(),
+        "profile": power_house::SFCS_VM_CONSTRAINT_PROTOCOL_V1_DRAFT,
+        "program_digest": proof.program_digest,
+        "input_digest": proof.input_digest,
+        "trace_digest": proof.trace_digest,
+        "execution_fractal_digest": proof.execution_fractal_digest,
+        "final_state_digest": proof.final_state_digest,
+        "final_memory_digest": proof.final_memory_digest,
+        "proof_digest": proof.proof_digest,
+        "steps": proof.steps,
+        "transition_checks": proof.transition_checks,
+        "register_range_checks": proof.register_range_checks,
+        "memory_range_checks": proof.memory_range_checks,
+        "memory_consistency_checks": proof.memory_consistency_checks,
+        "branch_checks": proof.branch_checks,
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = proof
+            .to_pha_artifact(&label, &program, &inputs)
+            .unwrap_or_else(|err| fatal(&format!("SFCS VM constraint .pha failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    println!("SFCS VM CONSTRAINTS");
+    println!(
+        "program_digest: {}",
+        report["program_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "trace_digest: {}",
+        report["trace_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "proof_digest: {}",
+        report["proof_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "transition_checks: {}",
+        report["transition_checks"].as_u64().unwrap_or(0)
+    );
+    println!(
+        "memory_consistency_checks: {}",
+        report["memory_consistency_checks"].as_u64().unwrap_or(0)
+    );
+}
+
+#[cfg(feature = "sfcs")]
+fn cmd_sfcs_verify_vm_constraints_pha(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-vm-constraints-pha requires <artifact.pha>");
+    }
+    let artifact = read_pha(Path::new(&args[0]));
+    match verify_sfcs_vm_constraint_embedding(&artifact) {
+        Ok(proof) => {
+            println!("SFCS VM CONSTRAINT PHA VALID");
+            println!("program_digest: {}", proof.program_digest);
+            println!("trace_digest: {}", proof.trace_digest);
+            println!("proof_digest: {}", proof.proof_digest);
+            println!("transition_checks: {}", proof.transition_checks);
+            println!(
+                "memory_consistency_checks: {}",
+                proof.memory_consistency_checks
+            );
+        }
+        Err(error) => fatal_code(
+            sfcs_vm_constraint_exit_for_error(&error),
+            &format!("SFCS VM constraint .pha verification failed: {error}"),
         ),
     }
 }
