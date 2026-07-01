@@ -248,7 +248,13 @@ fn print_sfcs_help() {
         println!("       --lhs-blinding <64-hex> --rhs-blinding <64-hex> \\");
         println!("       [--report <report.json>] [--artifact-output <zk.pha>] [--label <name>]");
         println!("  zk-private-vm <program.json> --witness <witness.json> \\");
-        println!("       [--report <report.json>] [--artifact-output <zk.pha>] [--label <name>]");
+        println!("       [--report <report.json>] [--artifact-output <zk.pha>] \\");
+        println!(
+            "       [--rootprint-output <proof.rootprint.json>] [--sidecar-output <proof.observatory.json>] \\"
+        );
+        println!(
+            "       [--semantic-output <packet.json>] [--capsule-output <proof.phm>] [--label <name>]"
+        );
         println!("  verify-zk-pha <artifact.pha>");
     }
     println!();
@@ -1942,6 +1948,134 @@ fn cmd_sfcs_zk_private_add(args: Vec<String>) {
 }
 
 #[cfg(feature = "sfcs-zk")]
+fn sfcs_private_vm_semantic_packet(label: &str, proof: &SfcsZkPrivateVmProof) -> serde_json::Value {
+    let digest_suffix = proof
+        .proof_digest
+        .strip_prefix("sha256:")
+        .unwrap_or(&proof.proof_digest)
+        .chars()
+        .take(16)
+        .collect::<String>();
+    let mut packet = serde_json::json!({
+        "schema": "slbit/viz-packet/v3",
+        "packet_id": format!("slp_sfcs_private_vm_{digest_suffix}"),
+        "packet_digest": "",
+        "claim": {
+            "claim_id": format!("claim_sfcs_private_vm_{digest_suffix}"),
+            "label": label,
+            "domain": "sfcs-zk-private-vm",
+            "status": "explained",
+            "bound_core": {
+                "program_digest": proof.statement.program_digest,
+                "proof_digest": proof.proof_digest,
+                "profile": power_house::SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT,
+                "steps": proof.statement.steps,
+                "public_outputs": proof.statement.public_outputs
+            }
+        },
+        "transcript": {
+            "rounds": [
+                {
+                    "index": 0,
+                    "component": "rv32i-private-vm",
+                    "note": "Supported RV32I execution is proven from commitments without embedding private witness inputs or private trace data."
+                },
+                {
+                    "index": 1,
+                    "component": "sfcs-zk-private-vm",
+                    "note": "The proof binds public outputs to private commitments, transition evidence, range/bitness checks, bitwise/comparison/branch checks, and byte-addressed memory semantics for admitted instructions."
+                },
+                {
+                    "index": 2,
+                    "component": "power-house-memory",
+                    "note": "The .pha artifact, Rootprint replay state, Observatory sidecar, and Memory Capsule are verified as separate layers."
+                },
+                {
+                    "index": 3,
+                    "component": "truth-boundary",
+                    "note": "Semantic packet data is non-core and cannot alter .pha or Rootprint proof identity."
+                }
+            ]
+        },
+        "semantic_dag": {
+            "nodes": [
+                {
+                    "id": "node_program",
+                    "type": "artifact",
+                    "label": "Private VM program",
+                    "authority": "core",
+                    "proof_status": "bound",
+                    "digest": proof.statement.program_digest
+                },
+                {
+                    "id": "node_proof",
+                    "type": "evidence",
+                    "label": "SFCS private VM proof",
+                    "authority": "core",
+                    "proof_status": "verified",
+                    "digest": proof.proof_digest
+                },
+                {
+                    "id": "node_public_outputs",
+                    "type": "claim",
+                    "label": "Public outputs",
+                    "authority": "core",
+                    "proof_status": "verified",
+                    "value": proof.statement.public_outputs
+                },
+                {
+                    "id": "node_semantic_boundary",
+                    "type": "warning",
+                    "label": "Semantic boundary",
+                    "authority": "semantic",
+                    "proof_status": "explains_verified_core"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "node_program",
+                    "to": "node_proof",
+                    "kind": "verified-by"
+                },
+                {
+                    "from": "node_proof",
+                    "to": "node_public_outputs",
+                    "kind": "binds-output"
+                },
+                {
+                    "from": "node_semantic_boundary",
+                    "to": "node_proof",
+                    "kind": "explains-without-mutating"
+                }
+            ]
+        },
+        "views": {
+            "claim_cards": [
+                {
+                    "title": "SFCS Private VM",
+                    "authority": "semantic explanation bound to verified core state",
+                    "core_status": "verified",
+                    "semantic_status": "non-authoritative display"
+                }
+            ]
+        },
+        "explanation_constraints": {
+            "allowed_sources": [
+                "packet_nodes",
+                "transcript_rounds",
+                "bound_core_metadata"
+            ],
+            "forbid_unbound_claims": true,
+            "mark_generated_text_non_authoritative": true
+        }
+    });
+    let packet_digest = power_house::memory::semantic_packet_digest(&packet)
+        .unwrap_or_else(|err| fatal(&format!("semantic packet digest failed: {err}")));
+    packet["packet_digest"] = serde_json::json!(packet_digest);
+    packet
+}
+
+#[cfg(feature = "sfcs-zk")]
 fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
     if args.iter().any(|arg| arg == "-h" || arg == "--help") {
         print_sfcs_help();
@@ -1951,6 +2085,10 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
     let mut witness_path = None;
     let mut report_path = None;
     let mut artifact_output = None;
+    let mut rootprint_output = None;
+    let mut sidecar_output = None;
+    let mut semantic_output = None;
+    let mut capsule_output = None;
     let mut label = "sfcs-zk-private-vm".to_string();
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -1959,6 +2097,18 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
             "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
             "--artifact-output" => {
                 artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            "--sidecar-output" => {
+                sidecar_output = Some(PathBuf::from(take_option(&mut iter, "--sidecar-output")))
+            }
+            "--semantic-output" => {
+                semantic_output = Some(PathBuf::from(take_option(&mut iter, "--semantic-output")))
+            }
+            "--capsule-output" => {
+                capsule_output = Some(PathBuf::from(take_option(&mut iter, "--capsule-output")))
             }
             "--label" => label = take_option(&mut iter, "--label"),
             value if program_path.is_none() => program_path = Some(PathBuf::from(value)),
@@ -1982,6 +2132,49 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
             &format!("SFCS ZK private-VM verification failed: {err}"),
         )
     });
+    let artifact = proof
+        .to_pha_artifact(&label, &program)
+        .unwrap_or_else(|err| fatal(&format!("SFCS ZK private-VM .pha failed: {err}")));
+    let rootprint = Rootprint::new(&label, artifact.clone())
+        .unwrap_or_else(|err| fatal(&format!("Rootprint creation failed: {err}")));
+    let semantic_packet = sfcs_private_vm_semantic_packet(&label, &proof);
+    let sidecar_nodes = BTreeMap::from([(rootprint.root_branch.clone(), semantic_packet.clone())]);
+    let sidecar = ObservatorySidecar::new(&rootprint, sidecar_nodes)
+        .unwrap_or_else(|err| fatal(&format!("Observatory sidecar creation failed: {err}")));
+    sidecar
+        .verify(&rootprint)
+        .unwrap_or_else(|err| fatal(&format!("Observatory sidecar verification failed: {err}")));
+    let packet_schema = semantic_packet
+        .get("schema")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("slbit/viz-packet/v3")
+        .to_string();
+    let packet_id = semantic_packet
+        .get("packet_id")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("sfcs-zk-private-vm")
+        .to_string();
+    let capsule = MemoryCapsuleBuilder::new(&label)
+        .producer("mfenx", env!("CARGO_PKG_VERSION"))
+        .with_pha(artifact.clone())
+        .with_rootprint(rootprint.clone())
+        .with_replay_required()
+        .with_sidecar(sidecar.clone())
+        .with_semantic_packet(
+            packet_schema,
+            packet_id,
+            &rootprint.root_branch,
+            &sidecar.rootprint_state_fingerprint,
+            "claim_view",
+            semantic_packet.clone(),
+        )
+        .unwrap_or_else(|err| fatal(&format!("semantic packet binding failed: {err}")))
+        .with_challenge_suite(ChallengeSuite::standard())
+        .build()
+        .unwrap_or_else(|err| fatal(&format!("Memory Capsule creation failed: {err}")));
+    let memory_report = capsule
+        .verify(MemoryVerificationPolicy::strict())
+        .unwrap_or_else(|err| fatal(&format!("Memory Capsule verification failed: {err}")));
     let report = serde_json::json!({
         "schema": "power-house/sfcs-zk-private-vm-cli-report/v1",
         "program": program_path.display().to_string(),
@@ -2004,16 +2197,39 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
         "zk_branch_proofs": proof.statement.zk_branch_proofs,
         "commitments": proof.statement.commitments,
         "proof_digest": proof.proof_digest,
+        "pha_fingerprint": artifact.phx_fingerprint,
+        "rootprint_root": rootprint.root_branch,
+        "rootprint_replay_fingerprint": sidecar.rootprint_state_fingerprint,
+        "sidecar_sha256": sidecar.sidecar_sha256,
+        "semantic_packet_digest": semantic_packet["packet_digest"],
+        "capsule_digest": capsule.header.capsule_digest,
+        "memory_core_valid": memory_report.core_valid,
+        "memory_rootprint_valid": memory_report.rootprint_valid,
+        "memory_replay_valid": memory_report.replay_valid,
+        "memory_sidecar_valid": memory_report.sidecar_valid,
+        "memory_semantic_valid": memory_report.semantic_valid,
         "private_witness_embedded": false,
+        "truth_boundary": "semantic packet data is non-core and cannot alter .pha or Rootprint proof identity",
     });
     if let Some(path) = report_path {
         write_json(&path, &report);
     }
     if let Some(path) = artifact_output {
-        let artifact = proof
-            .to_pha_artifact(&label, &program)
-            .unwrap_or_else(|err| fatal(&format!("SFCS ZK private-VM .pha failed: {err}")));
         write_json(&path, &artifact);
+    }
+    if let Some(path) = rootprint_output {
+        write_json(&path, &rootprint);
+    }
+    if let Some(path) = sidecar_output {
+        write_json(&path, &sidecar);
+    }
+    if let Some(path) = semantic_output {
+        write_json(&path, &semantic_packet);
+    }
+    if let Some(path) = capsule_output {
+        capsule
+            .write_canonical(&path)
+            .unwrap_or_else(|err| fatal(&format!("failed to write capsule: {err}")));
     }
     println!("SFCS ZK PRIVATE VM");
     println!(
@@ -2023,6 +2239,20 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
     println!(
         "proof_digest: {}",
         report["proof_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "rootprint_replay_fingerprint: {}",
+        report["rootprint_replay_fingerprint"]
+            .as_str()
+            .unwrap_or("")
+    );
+    println!(
+        "semantic_packet_digest: {}",
+        report["semantic_packet_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "capsule_digest: {}",
+        report["capsule_digest"].as_str().unwrap_or("")
     );
     println!("steps: {}", report["steps"].as_u64().unwrap_or(0));
     println!(
@@ -2066,6 +2296,7 @@ fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
         report["zk_branch_proofs"].as_u64().unwrap_or(0)
     );
     println!("private_witness_embedded: false");
+    println!("truth_boundary: semantic packet data is non-core");
 }
 
 #[cfg(feature = "sfcs-zk")]
@@ -6018,7 +6249,7 @@ fn cmd_node_run(args: Vec<String>) {
         std::process::exit(1);
     }
     let node_id = &args[0];
-    println!("{NETWORK_ID} node {node_id} starting…");
+    println!("{NETWORK_ID} node {node_id} starting...");
     let log_dir = Path::new(&args[1]);
     let output = Path::new(&args[2]);
     let anchor = match load_anchor_from_logs(log_dir) {

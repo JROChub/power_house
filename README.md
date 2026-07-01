@@ -30,7 +30,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.20**
+Current release: **v0.3.21**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -164,20 +164,20 @@ julian sfcs llvm-ir score.ll --graph-output score-llvm.graph.json
 julian sfcs wasm-stack score.wasmstack --graph-output score-wasm.graph.json
 ```
 
-The VM foundation is not a complete zkVM release. The real zero-knowledge
-privacy layer for arbitrary private VM execution and the full unrestricted
-Rust/LLVM/WASM compiler family are release-gated until they are implemented,
-audited, and tested end to end
-without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
-currently provides two auditable privacy milestones: a constrained Rust-subset
-`u32 + u32 -> u32` compiler with a private no-overflow RV32I add proof, and a
-general private-VM profile that hides private inputs and trace data while
-publishing public outputs, digest commitments, verifier-side homomorphic
-transition checks for linear/no-overflow VM relations, zero-knowledge u32 range
-proofs for committed VM values, private read-after-write memory consistency
-proofs, memory access/register binding proofs, byte-level partial-width memory
-proofs, private bitwise proofs, private comparison proofs, private branch
-condition proofs, and constraint coverage.
+The SFCS private execution track now combines a deterministic RV32I VM,
+public VM constraint proofs, scoped Rust/LLVM/WASM-style source-to-fractal
+frontends, and proof-memory packaging. The `sfcs-zk` feature provides a
+constrained Rust-subset `u32 + u32 -> u32` compiler with a private no-overflow
+RV32I add proof, plus a private-VM profile that hides private inputs and trace
+data while publishing public outputs, digest commitments, verifier-side
+homomorphic transition checks for linear/no-overflow VM relations,
+zero-knowledge u32 range proofs for committed VM values, private
+read-after-write memory consistency proofs, memory access/register binding
+proofs, byte-level partial-width memory proofs, private bitwise proofs, private
+comparison proofs, private branch condition proofs, and constraint coverage.
+The broader Rust/LLVM/binary-WASM compiler family advances under the same
+release gate: implemented, audited, and tested end to end without changing
+`.pha` or Rootprint identity rules.
 
 ```bash
 cargo install power_house --features sfcs-zk

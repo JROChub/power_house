@@ -1,6 +1,6 @@
 # 72-Hour Reliability Campaign
 
-Release scope: Power House v0.3.20.
+Release scope: Power House v0.3.21.
 
 The production reliability campaign is controlled from an external machine,
 not from the validator cluster. It measures the public edge and all three

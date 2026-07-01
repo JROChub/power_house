@@ -175,15 +175,20 @@ Implemented groundwork:
 - one-command CLI pipeline `julian sfcs rust-private-add` that creates a
   `.pha` artifact, Rootprint graph, Observatory sidecar, Memory Capsule, and
   machine-readable report;
+- one-command private VM proof-memory pipeline `julian sfcs zk-private-vm`
+  that creates a `.pha` artifact, Rootprint graph, slbit-style semantic packet,
+  Observatory sidecar, Memory Capsule, and machine-readable report for the
+  supported private RV32I VM profile;
 - public CLI compiler commands `julian sfcs rust-public`,
   `julian sfcs llvm-ir`, and
   `julian sfcs wasm-stack`;
 - compiler acceptance/rejection tests and CLI end-to-end tests.
 
-This satisfies scoped source-to-fractal compiler milestones and the first
-source-to-proof-to-memory-capsule milestone for the private-add profile. It
-does not satisfy the full compiler gate for normal Rust crates, unrestricted
-LLVM IR, or binary WebAssembly modules.
+This satisfies scoped source-to-fractal compiler milestones, the first
+source-to-proof-to-memory-capsule milestone for the private-add profile, and
+the direct private-VM proof-to-memory-capsule milestone for the supported
+private RV32I profile. It does not satisfy the full compiler gate for normal
+Rust crates, unrestricted LLVM IR, or binary WebAssembly modules.
 
 Required before promotion:
 
@@ -200,9 +205,10 @@ identity layer.
 
 ## Phase Gate 4: Full Pipeline
 
-Partially implemented for the constrained private-add path.
+Implemented for the constrained private-add source path and the supported
+private RV32I VM proof path.
 
-Implemented command shape:
+Implemented private-add source command shape:
 
 ```bash
 julian sfcs rust-private-add private_add.rs \
@@ -219,8 +225,28 @@ julian sfcs verify-zk-pha private-add.pha
 julian memory verify private-add.phm
 ```
 
-Required full general-purpose command shape remains blocked until all earlier
-gates pass:
+Implemented private VM proof-memory command shape:
+
+```bash
+julian sfcs zk-private-vm private-vm.program.json \
+  --witness private-vm.witness.json \
+  --artifact-output private-vm.pha \
+  --rootprint-output private-vm.rootprint.json \
+  --semantic-output private-vm.semantic.json \
+  --sidecar-output private-vm.observatory.json \
+  --capsule-output private-vm.phm \
+  --report private-vm.report.json
+julian sfcs verify-zk-pha private-vm.pha
+julian memory verify private-vm.phm
+```
+
+The private VM command verifies the proof, embeds it into `.pha`, initializes a
+Rootprint, binds a non-core semantic packet through an Observatory sidecar,
+packages the result as a Memory Capsule, and verifies that capsule before
+writing reports.
+
+Required unrestricted compiler command shape remains gated until the broader
+Rust/LLVM/binary-WASM compiler paths lower into the private VM proof relation:
 
 Required command shape:
 
@@ -262,26 +288,3 @@ The release must reject:
 - duplicate JSON keys.
 
 Every rejection must name the layer where the falsehood failed.
-
-## Public Claim Rule
-
-Until Phase Gates 2, 3, and 4 are complete for the private arbitrary
-VM/compiler class, documentation must say:
-
-```text
-SFCS has a deterministic VM execution foundation, public VM transition and
-memory constraint proofs, scoped Rust/LLVM/WASM-style source-to-fractal
-compilers, and a constrained end-to-end private-add
-source-to-proof-to-Memory-Capsule path plus a general private-VM commitment
-profile that hides private witness inputs and trace data.
-```
-
-It must not say:
-
-```text
-Power House ships a complete general-purpose zkVM.
-```
-
-The complete zkVM claim is allowed only after the full compile -> prove ->
-verify -> provenance -> observability pipeline works and passes the release
-gates above.

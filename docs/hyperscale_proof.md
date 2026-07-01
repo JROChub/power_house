@@ -1,6 +1,6 @@
 # Hyperscale Seeded-Affine Proof
 
-Status: active proof profile for Power House v0.3.20.
+Status: active proof profile for Power House v0.3.21.
 
 `examples/hyperscale_affine.rs` demonstrates a non-constant sum-check
 certificate over domains far larger than sextillion scale.

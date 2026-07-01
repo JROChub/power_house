@@ -1,5 +1,23 @@
 # Release Notes
 
+## v0.3.21 - 2026-07-01
+
+### SFCS Private VM Proof Memory Pipeline
+- Extended `julian sfcs zk-private-vm` so the supported private RV32I VM
+  profile now emits and verifies the complete proof-memory bundle: `.pha`,
+  Rootprint, slbit-style semantic packet, Observatory sidecar, Memory Capsule,
+  and machine-readable report.
+- Added private VM semantic packet generation with explicit truth-boundary
+  metadata: semantic packet data explains verified core state but cannot alter
+  `.pha` or Rootprint proof identity.
+- Added CLI end-to-end coverage proving `zk-private-vm` output verifies through
+  both `julian sfcs verify-zk-pha` and `julian memory verify`.
+- Updated SFCS and README positioning to remove confusing incomplete-claim
+  wording while preserving the audited release gates for broader
+  Rust/LLVM/binary-WASM compiler expansion.
+- Updated active documentation, Python SDK metadata, Docker labels, network
+  metadata, and website release labels for `v0.3.21`.
+
 ## v0.3.20 - 2026-07-01
 
 ### SFCS Private VM Proof Coverage
