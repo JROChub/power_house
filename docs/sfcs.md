@@ -95,8 +95,11 @@ covers a reproducible executable SFCS workflow:
 - execution bridge: `SfcsGraph::to_execution_pha_artifact(...)`
 - native source bridge: `SfcsGraph::from_source(...)`
 - execution protocol: `power-house/sfcs-execution/v1-draft`
-- CLI: `julian sfcs source|eval|inspect|verify-pha` when built with
-  `--features sfcs`
+- VM module: `src/sfcs/vm.rs`
+- VM program schema: `power-house/sfcs-vm-program/v1-draft`
+- VM execution protocol: `power-house/sfcs-vm-execution/v1-draft`
+- CLI: `julian sfcs source|eval|inspect|verify-pha|vm-run|verify-vm-pha`
+  when built with `--features sfcs`
 
 The feature is not in the default feature set. Enabling it adds draft types for
 computational fractal nodes, deterministic graph digestion, strict duplicate-key
@@ -111,6 +114,116 @@ comparisons, boolean control, bitwise integer operations, deterministic shifts,
 branching, and ordered `load(...)` / `store(...)` memory operations. This is the
 preferred SFCS direction because developers express computation as source that
 becomes the graph itself, not as an external circuit artifact.
+
+## SFCS VM Foundation
+
+The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
+It is the first required layer for the provenance-first zkVM roadmap, but it is
+not a complete zkVM by itself because it does not yet provide a real
+zero-knowledge privacy proof or a Rust compiler frontend.
+
+The VM foundation implements:
+
+- RV32I integer instructions: `lui`, `auipc`, `jal`, `jalr`, conditional
+  branches, loads, stores, immediate arithmetic/logical operations,
+  register-register arithmetic/logical operations, `fence`, `ecall`, and
+  `ebreak`;
+- deterministic little-endian byte-addressed memory;
+- deterministic register file state where `x0` is always zero;
+- explicit rejection for unsupported instructions, misaligned `lh`, `lw`,
+  `sh`, and `sw`, unaligned PCs, missing halt, oversized step budgets, and
+  invalid public-output ranges;
+- per-step register, memory, state, and instruction digests;
+- public-output selection for registers and memory ranges;
+- `.pha` embedding under `power-house/sfcs-vm-execution/v1-draft`;
+- replay verification through `verify_sfcs_vm_execution_embedding(...)`;
+- an execution-fractal projection where every instruction, register write,
+  and memory access becomes committed SFCS graph data.
+
+The execution-fractal projection is important: VM traces are not only raw log
+records. They are replayed into first-class SFCS graph nodes and the resulting
+`execution_fractal_digest` is committed in provenance and public inputs. If a
+trace, public output, or projected graph node is changed, the VM embedding
+verifier rejects the artifact.
+
+Example VM program JSON:
+
+```json
+{
+  "schema": "power-house/sfcs-vm-program/v1-draft",
+  "architecture": "rv32i",
+  "entry_pc": 0,
+  "max_steps": 16,
+  "instructions": [
+    5243027,
+    7340307,
+    2130355,
+    3153955,
+    8707,
+    115
+  ]
+}
+```
+
+Example VM inputs:
+
+```json
+{
+  "public_registers": [4],
+  "public_memory": [
+    {
+      "start": 0,
+      "len": 4
+    }
+  ]
+}
+```
+
+CLI workflow:
+
+```bash
+julian sfcs vm-run rv32i.program.json \
+  --inputs rv32i.inputs.json \
+  --artifact-output rv32i.execution.pha \
+  --report rv32i.report.json
+
+julian sfcs verify-vm-pha rv32i.execution.pha
+```
+
+Expected verifier output includes:
+
+```text
+SFCS VM EXECUTION PHA VALID
+program_digest: sha256:...
+trace_digest: sha256:...
+execution_fractal_digest: sha256:...
+final_state_digest: sha256:...
+```
+
+### zkVM Release Boundary
+
+The VM foundation must not be described as the finished general zkVM. A
+complete provenance-first zkVM requires all of the following to be implemented
+and tested before release:
+
+1. a real zero-knowledge proof layer over VM execution semantics;
+2. private trace or private input handling where the verifier learns only
+   declared public outputs and commitments;
+3. a compiler frontend, initially Rust or a defined safe subset, that lowers
+   source code into the VM/SFCS execution path;
+4. end-to-end packaging into `.pha`, Rootprint, Memory Capsule, and slbit
+   observability artifacts;
+5. mutation, conformance, property-based, cross-platform, and performance
+   gates for the full compile -> prove -> verify -> provenance -> observability
+   pipeline.
+
+Until those gates pass, the implemented claim is:
+
+```text
+SFCS provides a deterministic RV32I VM execution foundation whose trace,
+state transitions, public outputs, and execution-fractal projection can be
+committed into `.pha` and verified offline without changing Rootprint v1.
+```
 
 ## Corrected Architecture
 
