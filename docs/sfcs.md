@@ -127,10 +127,12 @@ becomes the graph itself, not as an external circuit artifact.
 ## SFCS VM Foundation
 
 The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
-It is the first required layer for the provenance-first zkVM roadmap, but it is
-not a complete zkVM by itself because it does not yet provide a real
-zero-knowledge proof for arbitrary private VM execution or unrestricted
-Rust/LLVM/binary-WASM compiler compatibility.
+It anchors the provenance-first zkVM roadmap with replayable execution,
+public VM constraint proofs, private proof profiles behind `sfcs-zk`, and
+Memory Capsule packaging that preserves `.pha` and Rootprint identity rules.
+The unrestricted Rust/LLVM/binary-WASM compiler family is advanced only through
+audited, tested gates that keep deterministic replay and offline verification
+intact.
 
 The VM foundation implements:
 

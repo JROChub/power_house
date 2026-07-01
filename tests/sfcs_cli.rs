@@ -485,6 +485,10 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     let witness = dir.join("private-vm.witness.json");
     let report = dir.join("private-vm.report.json");
     let artifact = dir.join("private-vm.pha");
+    let rootprint = dir.join("private-vm.rootprint.json");
+    let sidecar = dir.join("private-vm.observatory.json");
+    let semantic = dir.join("private-vm.semantic.json");
+    let capsule = dir.join("private-vm.phm");
 
     fs::write(
         &program,
@@ -536,9 +540,22 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
         report.to_str().unwrap(),
         "--artifact-output",
         artifact.to_str().unwrap(),
+        "--rootprint-output",
+        rootprint.to_str().unwrap(),
+        "--sidecar-output",
+        sidecar.to_str().unwrap(),
+        "--semantic-output",
+        semantic.to_str().unwrap(),
+        "--capsule-output",
+        capsule.to_str().unwrap(),
+        "--label",
+        "private-vm-e2e",
     ]);
     assert!(prove_stdout.contains("SFCS ZK PRIVATE VM"));
     assert!(prove_stdout.contains("proof_digest: sha256:"));
+    assert!(prove_stdout.contains("rootprint_replay_fingerprint: sha256:"));
+    assert!(prove_stdout.contains("semantic_packet_digest: sha256:"));
+    assert!(prove_stdout.contains("capsule_digest: sha256:"));
     assert!(prove_stdout.contains("transition_checks: 6"));
     assert!(prove_stdout.contains("linear_relation_checks: 5"));
     assert!(prove_stdout.contains("zk_range_proofs: 33"));
@@ -549,6 +566,7 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(prove_stdout.contains("zk_comparison_proofs: 0"));
     assert!(prove_stdout.contains("zk_branch_proofs: 0"));
     assert!(prove_stdout.contains("private_witness_embedded: false"));
+    assert!(prove_stdout.contains("truth_boundary: semantic packet data is non-core"));
 
     let report_json = read_json(&report);
     assert_eq!(
@@ -565,12 +583,33 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert_eq!(report_json["zk_bitwise_proofs"], 0);
     assert_eq!(report_json["zk_comparison_proofs"], 0);
     assert_eq!(report_json["zk_branch_proofs"], 0);
+    assert_eq!(report_json["memory_core_valid"], true);
+    assert_eq!(report_json["memory_rootprint_valid"], true);
+    assert_eq!(report_json["memory_replay_valid"], true);
+    assert_eq!(report_json["memory_sidecar_valid"], true);
+    assert_eq!(report_json["memory_semantic_valid"], true);
     assert_eq!(report_json["private_witness_embedded"], false);
+    assert!(report_json["rootprint_replay_fingerprint"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+    assert!(report_json["semantic_packet_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+    assert!(report_json["capsule_digest"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
     assert!(report_json["commitments"]["trace_digest"]
         .as_str()
         .unwrap()
         .starts_with("edwards:"));
     assert!(artifact.exists());
+    assert!(rootprint.exists());
+    assert!(sidecar.exists());
+    assert!(semantic.exists());
+    assert!(capsule.exists());
 
     let artifact_json = fs::read_to_string(&artifact).unwrap();
     assert!(!artifact_json.contains("777777777"));
@@ -590,6 +629,14 @@ fn cli_proves_and_verifies_sfcs_zk_private_vm() {
     assert!(verify_stdout.contains("zk_comparison_proofs: 0"));
     assert!(verify_stdout.contains("zk_branch_proofs: 0"));
     assert!(verify_stdout.contains("private_witness_embedded: false"));
+
+    let memory_stdout = run(&["memory", "verify", capsule.to_str().unwrap()]);
+    assert!(memory_stdout.contains("POWER HOUSE MEMORY VERIFY"));
+    assert!(memory_stdout.contains("CORE        VALID"));
+    assert!(memory_stdout.contains("ROOTPRINT   VALID"));
+    assert!(memory_stdout.contains("REPLAY      VALID"));
+    assert!(memory_stdout.contains("SIDECAR     VALID"));
+    assert!(memory_stdout.contains("SEMANTIC    VALID"));
 }
 
 #[cfg(feature = "sfcs-zk")]
