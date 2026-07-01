@@ -90,6 +90,9 @@ Implemented groundwork:
 - zero-knowledge read-after-write memory consistency proofs for private memory
   events where a read is backed by a prior hidden write to the same hidden
   address and width;
+- private `lw/sw` address-calculation proofs where the address relation is
+  eligible for the linear proof layer, plus equality proofs binding memory
+  access values to the source or destination register values;
 - public output, transition coverage, register range coverage, memory range
   coverage, memory consistency, and branch coverage binding for private VM
   proof statements;
@@ -106,7 +109,7 @@ hides arbitrary supported VM witnesses and trace data and proves a concrete
 linear/range/memory-consistency subset of private VM transition semantics. The
 full arbitrary VM privacy gate still requires verifier-side proof coverage for
 every supported instruction class, especially bitwise operations, comparisons,
-complete memory load/store transition binding, branch behavior, and halting
+unaligned/partial-width memory edge cases, branch behavior, and halting
 semantics.
 
 Required before promotion:
