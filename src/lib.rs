@@ -178,9 +178,11 @@ pub use sfcs::vm::{
 };
 #[cfg(feature = "sfcs-zk")]
 pub use sfcs::zk::{
-    encode_rv32_add, verify_private_add_embedding, verify_private_add_program, SfcsZkError,
-    SfcsZkPrivateAddProof, SfcsZkPrivateAddStatement, SfcsZkPrivateAddWitness,
-    SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
+    encode_rv32_add, verify_private_add_embedding, verify_private_add_program,
+    verify_private_vm_embedding, SfcsZkError, SfcsZkPrivateAddProof, SfcsZkPrivateAddStatement,
+    SfcsZkPrivateAddWitness, SfcsZkPrivateVmOpeningProof, SfcsZkPrivateVmProof,
+    SfcsZkPrivateVmStatement, SfcsZkPrivateVmWitness, SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT,
+    SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT,
 };
 #[cfg(feature = "sfcs")]
 pub use sfcs::{
@@ -251,4 +253,12 @@ pub fn verify_sfcs_zk_private_add_embedding(
     artifact: &provenance::pha::PhaArtifact,
 ) -> Result<SfcsZkPrivateAddProof, SfcsZkError> {
     sfcs::zk::verify_private_add_embedding(artifact)
+}
+
+/// Verify that a `.pha` artifact contains the SFCS ZK private VM proof profile.
+#[cfg(feature = "sfcs-zk")]
+pub fn verify_sfcs_zk_private_vm_embedding(
+    artifact: &provenance::pha::PhaArtifact,
+) -> Result<SfcsZkPrivateVmProof, SfcsZkError> {
+    sfcs::zk::verify_private_vm_embedding(artifact)
 }

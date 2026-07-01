@@ -33,8 +33,9 @@ use power_house::{
 };
 #[cfg(feature = "sfcs-zk")]
 use power_house::{
-    compile_private_add_source, verify_sfcs_zk_private_add_embedding, SfcsZkError,
-    SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
+    compile_private_add_source, verify_sfcs_zk_private_add_embedding,
+    verify_sfcs_zk_private_vm_embedding, SfcsZkError, SfcsZkPrivateAddProof,
+    SfcsZkPrivateAddWitness, SfcsZkPrivateVmProof, SfcsZkPrivateVmWitness,
 };
 use power_house::{
     compute_fold_digest, identity::Identity, julian_genesis_anchor, parse_log_file,
@@ -245,6 +246,8 @@ fn print_sfcs_help() {
         println!("  zk-private-add <program.json> --lhs-register <N> --rhs-register <N> \\");
         println!("       --output-register <N> --lhs-value <u32> --rhs-value <u32> \\");
         println!("       --lhs-blinding <64-hex> --rhs-blinding <64-hex> \\");
+        println!("       [--report <report.json>] [--artifact-output <zk.pha>] [--label <name>]");
+        println!("  zk-private-vm <program.json> --witness <witness.json> \\");
         println!("       [--report <report.json>] [--artifact-output <zk.pha>] [--label <name>]");
         println!("  verify-zk-pha <artifact.pha>");
     }
@@ -657,6 +660,8 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
         #[cfg(feature = "sfcs-zk")]
         "zk-private-add" => cmd_sfcs_zk_private_add(tail),
         #[cfg(feature = "sfcs-zk")]
+        "zk-private-vm" => cmd_sfcs_zk_private_vm(tail),
+        #[cfg(feature = "sfcs-zk")]
         "verify-zk-pha" => cmd_sfcs_verify_zk_pha(tail),
         _ => fatal(&format!("unknown sfcs subcommand: {sub}")),
     }
@@ -770,6 +775,35 @@ fn read_sfcs_vm_inputs(path: &Path) -> SfcsVmInputs {
     inputs
 }
 
+#[cfg(feature = "sfcs-zk")]
+fn read_sfcs_private_vm_witness(path: &Path) -> SfcsZkPrivateVmWitness {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|err| fatal(&format!("failed to read {}: {err}", path.display())));
+    let value: serde_json::Value = serde_json::from_str(&contents).unwrap_or_else(|err| {
+        fatal(&format!(
+            "invalid SFCS private VM witness JSON in {}: {err}",
+            path.display()
+        ))
+    });
+    let inputs_value = value
+        .get("inputs")
+        .cloned()
+        .unwrap_or_else(|| fatal("private VM witness requires `inputs`"));
+    let inputs: SfcsVmInputs = serde_json::from_value(inputs_value)
+        .unwrap_or_else(|err| fatal(&format!("invalid private VM witness inputs: {err}")));
+    inputs
+        .verify()
+        .unwrap_or_else(|err| fatal(&format!("invalid private VM witness inputs: {err}")));
+    let blinding_hex = value
+        .get("blinding_seed_hex")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_else(|| fatal("private VM witness requires `blinding_seed_hex`"));
+    SfcsZkPrivateVmWitness {
+        inputs,
+        blinding_seed: parse_seed_hex(blinding_hex, "blinding_seed_hex"),
+    }
+}
+
 fn write_json<T: serde::Serialize>(path: &Path, value: &T) {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).unwrap_or_else(|err| {
@@ -853,7 +887,7 @@ fn sfcs_zk_exit_for_error(error: &SfcsZkError) -> i32 {
         SfcsZkError::InvalidProgram(_) | SfcsZkError::InvalidWitness(_) => 2,
         SfcsZkError::UnsupportedSchema(_) => 3,
         SfcsZkError::InvalidProof(_) | SfcsZkError::InvalidEmbedding(_) => 1,
-        SfcsZkError::Vm(_) | SfcsZkError::Sfcs(_) => 1,
+        SfcsZkError::Vm(_) | SfcsZkError::VmConstraint(_) | SfcsZkError::Sfcs(_) => 1,
         SfcsZkError::Serialization(_) | SfcsZkError::Json(_) | SfcsZkError::Pha(_) => 5,
     }
 }
@@ -1908,6 +1942,93 @@ fn cmd_sfcs_zk_private_add(args: Vec<String>) {
 }
 
 #[cfg(feature = "sfcs-zk")]
+fn cmd_sfcs_zk_private_vm(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut program_path = None;
+    let mut witness_path = None;
+    let mut report_path = None;
+    let mut artifact_output = None;
+    let mut label = "sfcs-zk-private-vm".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--witness" => witness_path = Some(PathBuf::from(take_option(&mut iter, "--witness"))),
+            "--report" => report_path = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if program_path.is_none() => program_path = Some(PathBuf::from(value)),
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let program_path =
+        program_path.unwrap_or_else(|| fatal("sfcs zk-private-vm requires <program.json>"));
+    let witness_path = witness_path.unwrap_or_else(|| fatal("--witness is required"));
+    let program = read_sfcs_vm_program(&program_path);
+    let witness = read_sfcs_private_vm_witness(&witness_path);
+    let proof = SfcsZkPrivateVmProof::prove(&program, witness).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_zk_exit_for_error(&err),
+            &format!("SFCS ZK private-VM proof failed: {err}"),
+        )
+    });
+    proof.verify(&program).unwrap_or_else(|err| {
+        fatal_code(
+            sfcs_zk_exit_for_error(&err),
+            &format!("SFCS ZK private-VM verification failed: {err}"),
+        )
+    });
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-zk-private-vm-cli-report/v1",
+        "program": program_path.display().to_string(),
+        "profile": power_house::SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT,
+        "program_digest": proof.statement.program_digest,
+        "public_outputs": proof.statement.public_outputs,
+        "steps": proof.statement.steps,
+        "transition_checks": proof.statement.transition_checks,
+        "register_range_checks": proof.statement.register_range_checks,
+        "memory_range_checks": proof.statement.memory_range_checks,
+        "memory_consistency_checks": proof.statement.memory_consistency_checks,
+        "branch_checks": proof.statement.branch_checks,
+        "commitments": proof.statement.commitments,
+        "proof_digest": proof.proof_digest,
+        "private_witness_embedded": false,
+    });
+    if let Some(path) = report_path {
+        write_json(&path, &report);
+    }
+    if let Some(path) = artifact_output {
+        let artifact = proof
+            .to_pha_artifact(&label, &program)
+            .unwrap_or_else(|err| fatal(&format!("SFCS ZK private-VM .pha failed: {err}")));
+        write_json(&path, &artifact);
+    }
+    println!("SFCS ZK PRIVATE VM");
+    println!(
+        "program_digest: {}",
+        report["program_digest"].as_str().unwrap_or("")
+    );
+    println!(
+        "proof_digest: {}",
+        report["proof_digest"].as_str().unwrap_or("")
+    );
+    println!("steps: {}", report["steps"].as_u64().unwrap_or(0));
+    println!(
+        "transition_checks: {}",
+        report["transition_checks"].as_u64().unwrap_or(0)
+    );
+    println!(
+        "memory_consistency_checks: {}",
+        report["memory_consistency_checks"].as_u64().unwrap_or(0)
+    );
+    println!("private_witness_embedded: false");
+}
+
+#[cfg(feature = "sfcs-zk")]
 fn cmd_sfcs_verify_zk_pha(args: Vec<String>) {
     if args.iter().any(|arg| arg == "-h" || arg == "--help") {
         print_sfcs_help();
@@ -1927,10 +2048,26 @@ fn cmd_sfcs_verify_zk_pha(args: Vec<String>) {
                 proof.statement.output_register, proof.statement.output_value
             );
         }
-        Err(error) => fatal_code(
-            sfcs_zk_exit_for_error(&error),
-            &format!("SFCS ZK .pha verification failed: {error}"),
-        ),
+        Err(add_error) => match verify_sfcs_zk_private_vm_embedding(&artifact) {
+            Ok(proof) => {
+                println!("SFCS ZK PRIVATE VM PHA VALID");
+                println!("program_digest: {}", proof.statement.program_digest);
+                println!("proof_digest: {}", proof.proof_digest);
+                println!("steps: {}", proof.statement.steps);
+                println!("transition_checks: {}", proof.statement.transition_checks);
+                println!(
+                    "memory_consistency_checks: {}",
+                    proof.statement.memory_consistency_checks
+                );
+                println!("private_witness_embedded: false");
+            }
+            Err(vm_error) => fatal_code(
+                sfcs_zk_exit_for_error(&vm_error),
+                &format!(
+                    "SFCS ZK .pha verification failed: private-add error: {add_error}; private-vm error: {vm_error}"
+                ),
+            ),
+        },
     }
 }
 

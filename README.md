@@ -48,8 +48,9 @@ The primary workflow is **Power House Identity + Rootprint**:
   plans, a deterministic RV32I VM execution foundation, public VM transition
   constraint proofs with memory/range coverage, broader Rust-subset,
   LLVM-style SSA, and WASM-style stack compiler paths, the first
-  privacy-preserving private-add profile, an offline `julian sfcs` CLI, and
-  `.pha` embedding verification without mutating Rootprint v1.
+  privacy-preserving private-add and private-VM commitment profiles, an
+  offline `julian sfcs` CLI, and `.pha` embedding verification without
+  mutating Rootprint v1.
 - **External proof attachments (EPA)** are optional transport data and remain
   outside the Power House core fingerprint and Rootprint branch identity.
 - **Observatory sidecars** optionally bind human-readable semantic packets to
@@ -167,10 +168,10 @@ privacy layer for arbitrary private VM execution and the full unrestricted
 Rust/LLVM/WASM compiler family are release-gated until they are implemented,
 audited, and tested end to end
 without changing `.pha` or Rootprint identity rules. The `sfcs-zk` feature
-currently provides the first auditable end-to-end privacy path: a constrained
-Rust-subset `u32 + u32 -> u32` compiler, a private no-overflow RV32I add proof
-that commits private inputs, a `.pha` proof artifact, Rootprint lineage, an
-Observatory semantic sidecar, and a verified Memory Capsule.
+currently provides two auditable privacy milestones: a constrained Rust-subset
+`u32 + u32 -> u32` compiler with a private no-overflow RV32I add proof, and a
+general private-VM commitment profile that hides private inputs and trace data
+while publishing public outputs, commitments, and constraint coverage.
 
 ```bash
 cargo install power_house --features sfcs-zk
@@ -186,6 +187,14 @@ julian sfcs rust-private-add private_add.rs \
   --report private-add.report.json
 julian sfcs verify-zk-pha private-add.pha
 julian memory verify private-add.phm
+```
+
+```bash
+julian sfcs zk-private-vm rv32i.program.json \
+  --witness private-vm.witness.json \
+  --artifact-output private-vm.pha \
+  --report private-vm.report.json
+julian sfcs verify-zk-pha private-vm.pha
 ```
 
 See the [SFCS zkVM gate](docs/sfcs_zkvm.md).
@@ -310,6 +319,10 @@ The complete procedure and expected rejection behavior are documented in the
 - [`SfcsZkPrivateAddProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateAddProof.html):
   first privacy-preserving SFCS proof profile, proving committed private add
   inputs match a public output without exposing the inputs.
+- [`SfcsZkPrivateVmProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsZkPrivateVmProof.html):
+  general private VM commitment profile for supported RV32I executions, hiding
+  private inputs and trace data while binding public outputs and coverage
+  counters.
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 

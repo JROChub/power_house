@@ -23,6 +23,10 @@
 - Added `compile_private_add_source(...)`, a constrained Rust-subset frontend
   for `pub fn add(lhs: u32, rhs: u32) -> u32 { lhs + rhs }`, emitting the
   deterministic private-add VM profile and a slbit-style semantic packet.
+- Added `SfcsZkPrivateVmProof` and `julian sfcs zk-private-vm`, a general
+  private VM commitment profile for supported RV32I executions that keeps
+  private inputs and trace data out of `.pha` while binding public outputs,
+  commitments, and transition/memory/range coverage counters.
 - Added `julian sfcs rust-private-add`, which runs the constrained source
   through compile -> prove -> `.pha` -> Rootprint -> Observatory sidecar ->
   Memory Capsule and verifies the capsule before reporting success.

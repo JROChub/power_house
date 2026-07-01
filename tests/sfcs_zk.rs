@@ -2,10 +2,75 @@
 
 use power_house::{
     encode_rv32_add, provenance::Rootprint, verify_sfcs_zk_private_add_embedding,
-    MemoryCapsuleBuilder, MemoryVerificationPolicy, SfcsVmProgram, SfcsZkError,
-    SfcsZkPrivateAddProof, SfcsZkPrivateAddWitness,
+    verify_sfcs_zk_private_vm_embedding, MemoryCapsuleBuilder, MemoryVerificationPolicy,
+    SfcsVmInputs, SfcsVmMemoryRange, SfcsVmProgram, SfcsZkError, SfcsZkPrivateAddProof,
+    SfcsZkPrivateAddWitness, SfcsZkPrivateVmProof, SfcsZkPrivateVmWitness,
 };
 use serde_json::json;
+use std::collections::BTreeMap;
+
+fn r_type(funct7: u32, rs2: u8, rs1: u8, funct3: u32, rd: u8, opcode: u32) -> u32 {
+    (funct7 << 25)
+        | ((rs2 as u32) << 20)
+        | ((rs1 as u32) << 15)
+        | (funct3 << 12)
+        | ((rd as u32) << 7)
+        | opcode
+}
+
+fn i_type(imm: i32, rs1: u8, funct3: u32, rd: u8, opcode: u32) -> u32 {
+    (((imm as u32) & 0x0fff) << 20)
+        | ((rs1 as u32) << 15)
+        | (funct3 << 12)
+        | ((rd as u32) << 7)
+        | opcode
+}
+
+fn s_type(imm: i32, rs2: u8, rs1: u8, funct3: u32, opcode: u32) -> u32 {
+    let imm = (imm as u32) & 0x0fff;
+    ((imm >> 5) << 25)
+        | ((rs2 as u32) << 20)
+        | ((rs1 as u32) << 15)
+        | (funct3 << 12)
+        | ((imm & 0x1f) << 7)
+        | opcode
+}
+
+fn b_type(imm: i32, rs2: u8, rs1: u8, funct3: u32, opcode: u32) -> u32 {
+    let imm = (imm as u32) & 0x1fff;
+    (((imm >> 12) & 0x1) << 31)
+        | (((imm >> 5) & 0x3f) << 25)
+        | ((rs2 as u32) << 20)
+        | ((rs1 as u32) << 15)
+        | (funct3 << 12)
+        | (((imm >> 1) & 0x0f) << 8)
+        | (((imm >> 11) & 0x1) << 7)
+        | opcode
+}
+
+fn add(rd: u8, rs1: u8, rs2: u8) -> u32 {
+    r_type(0x00, rs2, rs1, 0x0, rd, 0x33)
+}
+
+fn addi(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x0, rd, 0x13)
+}
+
+fn lw(rd: u8, rs1: u8, imm: i32) -> u32 {
+    i_type(imm, rs1, 0x2, rd, 0x03)
+}
+
+fn sw(rs2: u8, rs1: u8, imm: i32) -> u32 {
+    s_type(imm, rs2, rs1, 0x2, 0x23)
+}
+
+fn beq(rs1: u8, rs2: u8, imm: i32) -> u32 {
+    b_type(imm, rs2, rs1, 0x0, 0x63)
+}
+
+fn ecall() -> u32 {
+    0x0000_0073
+}
 
 fn private_add_program() -> SfcsVmProgram {
     SfcsVmProgram::rv32i(vec![encode_rv32_add(3, 10, 11), 0x0000_0073]).with_max_steps(8)
@@ -17,6 +82,33 @@ fn witness(lhs: u32, rhs: u32) -> SfcsZkPrivateAddWitness {
         rhs_value: rhs,
         lhs_blinding_seed: [7_u8; 32],
         rhs_blinding_seed: [9_u8; 32],
+    }
+}
+
+fn private_vm_program() -> SfcsVmProgram {
+    SfcsVmProgram::rv32i(vec![
+        addi(1, 0, 5), // x1 = 5
+        addi(2, 0, 7), // x2 = 7
+        add(3, 1, 2),  // x3 = 12
+        sw(3, 0, 0),   // memory[0..4] = 12
+        lw(4, 0, 0),   // x4 = 12
+        beq(4, 3, 8),  // skip x5 = 1
+        addi(5, 0, 1), // skipped
+        addi(5, 0, 9), // x5 = 9
+        ecall(),
+    ])
+    .with_max_steps(64)
+}
+
+fn private_vm_witness() -> SfcsZkPrivateVmWitness {
+    SfcsZkPrivateVmWitness {
+        inputs: SfcsVmInputs {
+            registers: BTreeMap::from([(10, 777_777_777), (11, 222_222_222)]),
+            memory: BTreeMap::from([(128, 99), (129, 88), (130, 77), (131, 66)]),
+            public_registers: vec![4, 5],
+            public_memory: vec![SfcsVmMemoryRange { start: 0, len: 4 }],
+        },
+        blinding_seed: [42_u8; 32],
     }
 }
 
@@ -58,6 +150,101 @@ fn private_add_proof_verifies_and_embeds_without_revealing_private_inputs() {
     assert!(report.core_valid);
     assert!(report.rootprint_valid);
     assert!(report.replay_valid);
+}
+
+#[test]
+fn private_vm_proof_verifies_embeds_and_hides_witness_inputs() {
+    let program = private_vm_program();
+    let witness = private_vm_witness();
+    let proof = SfcsZkPrivateVmProof::prove(&program, witness).unwrap();
+    proof.verify(&program).unwrap();
+
+    assert_eq!(
+        proof.statement.schema,
+        "power-house/sfcs-zk-private-vm/v1-draft"
+    );
+    assert_eq!(proof.statement.public_outputs.registers["x4"], 12);
+    assert_eq!(proof.statement.public_outputs.registers["x5"], 9);
+    assert_eq!(proof.statement.public_outputs.memory["0"], 12);
+    assert_eq!(proof.statement.steps, 8);
+    assert_eq!(proof.statement.transition_checks, 8);
+    assert_eq!(proof.statement.register_range_checks, 256);
+    assert_eq!(proof.statement.memory_consistency_checks, 2);
+    assert_eq!(proof.statement.commitments.len(), 6);
+    assert!(proof.proof_digest.starts_with("sha256:"));
+    assert!(proof
+        .statement
+        .commitments
+        .values()
+        .all(|commitment| commitment.starts_with("edwards:")));
+
+    let encoded_proof = serde_json::to_string(&proof).unwrap();
+    assert!(!encoded_proof.contains("777777777"));
+    assert!(!encoded_proof.contains("222222222"));
+
+    let artifact = proof.to_pha_artifact("private-vm", &program).unwrap();
+    artifact.verify().unwrap();
+    assert_eq!(
+        artifact.embedded_proof.protocol,
+        "power-house/sfcs-zk-private-vm/v1-draft"
+    );
+    let encoded_artifact = serde_json::to_string(&artifact).unwrap();
+    assert!(!encoded_artifact.contains("777777777"));
+    assert!(!encoded_artifact.contains("222222222"));
+    assert!(!encoded_artifact.contains("\"inputs\""));
+    assert!(!encoded_artifact.contains("\"trace\""));
+
+    let verified = verify_sfcs_zk_private_vm_embedding(&artifact).unwrap();
+    assert_eq!(verified.proof_digest, proof.proof_digest);
+
+    let rootprint = Rootprint::new("sfcs-zk-private-vm", artifact.clone()).unwrap();
+    rootprint.verify().unwrap();
+    let capsule = MemoryCapsuleBuilder::new("sfcs-zk-private-vm")
+        .with_pha(artifact)
+        .with_rootprint(rootprint)
+        .with_replay_required()
+        .build()
+        .unwrap();
+    let report = capsule.verify(MemoryVerificationPolicy::strict()).unwrap();
+    assert!(report.core_valid);
+    assert!(report.rootprint_valid);
+    assert!(report.replay_valid);
+}
+
+#[test]
+fn private_vm_embedding_rejects_mutations() {
+    let program = private_vm_program();
+    let proof = SfcsZkPrivateVmProof::prove(&program, private_vm_witness()).unwrap();
+    let artifact = proof.to_pha_artifact("private-vm", &program).unwrap();
+
+    let mut stale_public = artifact.clone();
+    stale_public.embedded_proof.public_inputs["steps"] = json!(9);
+    stale_public.refresh_phx_fingerprint().unwrap();
+    stale_public.verify().unwrap();
+    assert!(matches!(
+        verify_sfcs_zk_private_vm_embedding(&stale_public),
+        Err(SfcsZkError::InvalidEmbedding(_))
+    ));
+
+    let mut stale_commitment = artifact.clone();
+    stale_commitment.embedded_proof.proof["proof"]["statement"]["commitments"]["trace_digest"] =
+        json!("edwards:00");
+    stale_commitment.refresh_phx_fingerprint().unwrap();
+    stale_commitment.verify().unwrap();
+    assert!(matches!(
+        verify_sfcs_zk_private_vm_embedding(&stale_commitment),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
+
+    let mut stale_response = artifact;
+    stale_response.embedded_proof.proof["proof"]["opening_proofs"][0]["response_value"] =
+        json!("fr:00");
+    stale_response.refresh_phx_fingerprint().unwrap();
+    stale_response.verify().unwrap();
+    assert!(matches!(
+        verify_sfcs_zk_private_vm_embedding(&stale_response),
+        Err(SfcsZkError::InvalidProof(_))
+    ));
 }
 
 #[test]
