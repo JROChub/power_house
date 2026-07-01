@@ -402,6 +402,8 @@ coverage, and publishes only:
   those linear transition proofs;
 - zero-knowledge memory equality proofs for eligible private read-after-write
   events;
+- private memory access/register value equality proofs for eligible `lw/sw`
+  transitions;
 - a `.pha` artifact that does not embed raw private inputs or raw trace data.
 
 CLI workflow:

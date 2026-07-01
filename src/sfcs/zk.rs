@@ -119,6 +119,8 @@ pub struct SfcsZkPrivateVmStatement {
     pub zk_range_proofs: u64,
     /// Number of zero-knowledge private memory consistency proofs.
     pub zk_memory_consistency_proofs: u64,
+    /// Number of zero-knowledge memory access/register value binding proofs.
+    pub zk_memory_value_proofs: u64,
     /// Pedersen commitments to private execution digests.
     pub commitments: BTreeMap<String, String>,
 }
@@ -237,6 +239,19 @@ pub struct SfcsZkPrivateVmMemoryConsistencyProof {
     pub value_equality: SfcsZkPrivateVmEqualityProof,
 }
 
+/// Zero-knowledge proof that a memory access is bound to the VM register
+/// transition carrying its value.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SfcsZkPrivateVmMemoryValueProof {
+    /// Memory access step index.
+    pub step_index: u64,
+    /// `read` or `write`.
+    pub kind: String,
+    /// Hidden equality between the memory access value and the VM register
+    /// value that produced or consumed it.
+    pub value_equality: SfcsZkPrivateVmEqualityProof,
+}
+
 /// Non-interactive private VM proof.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmProof {
@@ -255,6 +270,9 @@ pub struct SfcsZkPrivateVmProof {
     /// Zero-knowledge memory read-after-write consistency proofs.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub memory_consistency_proofs: Vec<SfcsZkPrivateVmMemoryConsistencyProof>,
+    /// Zero-knowledge memory access/register value binding proofs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub memory_value_proofs: Vec<SfcsZkPrivateVmMemoryValueProof>,
     /// Domain-separated proof digest.
     pub proof_digest: String,
 }
@@ -460,11 +478,17 @@ impl SfcsZkPrivateVmProof {
             private_vm_linear_relation_preimages(&trace, &witness.blinding_seed)?;
         let memory_consistency_preimages =
             private_vm_memory_consistency_preimages(&trace, &witness.blinding_seed)?;
+        let memory_value_preimages =
+            private_vm_memory_value_preimages(&trace, &witness.blinding_seed)?;
         let range_proof_count = linear_relation_preimages
             .iter()
             .map(|relation| relation.range_inputs.len() as u64)
             .sum::<u64>()
             + memory_consistency_preimages
+                .iter()
+                .map(|proof| proof.range_inputs.len() as u64)
+                .sum::<u64>()
+            + memory_value_preimages
                 .iter()
                 .map(|proof| proof.range_inputs.len() as u64)
                 .sum::<u64>();
@@ -481,6 +505,7 @@ impl SfcsZkPrivateVmProof {
             linear_relation_checks: linear_relation_preimages.len() as u64,
             zk_range_proofs: range_proof_count,
             zk_memory_consistency_proofs: memory_consistency_preimages.len() as u64,
+            zk_memory_value_proofs: memory_value_preimages.len() as u64,
             commitments,
         };
         let nonce_commitments = statement
@@ -546,6 +571,13 @@ impl SfcsZkPrivateVmProof {
             }
             memory_consistency_proofs.push(memory_preimage.proof);
         }
+        let mut memory_value_proofs = Vec::new();
+        for memory_preimage in memory_value_preimages {
+            for range_input in &memory_preimage.range_inputs {
+                range_proofs.push(private_vm_range_proof(range_input, &witness.blinding_seed)?);
+            }
+            memory_value_proofs.push(memory_preimage.proof);
+        }
         let mut proof = Self {
             statement,
             challenge: scalar_to_hex(&challenge)?,
@@ -553,6 +585,7 @@ impl SfcsZkPrivateVmProof {
             linear_relation_proofs,
             range_proofs,
             memory_consistency_proofs,
+            memory_value_proofs,
             proof_digest: String::new(),
         };
         proof.proof_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &proof.preimage())?;
@@ -621,6 +654,11 @@ impl SfcsZkPrivateVmProof {
         {
             return Err(SfcsZkError::InvalidProof(
                 "private VM memory consistency proof count does not match proofs".to_string(),
+            ));
+        }
+        if self.statement.zk_memory_value_proofs != self.memory_value_proofs.len() as u64 {
+            return Err(SfcsZkError::InvalidProof(
+                "private VM memory value proof count does not match proofs".to_string(),
             ));
         }
         let mut previous_relation_step = None;
@@ -695,6 +733,9 @@ impl SfcsZkPrivateVmProof {
         for proof in &self.memory_consistency_proofs {
             proof.verify()?;
         }
+        for proof in &self.memory_value_proofs {
+            proof.verify()?;
+        }
         let expected_digest = digest_json(ZK_PRIVATE_VM_PROOF_DOMAIN, &self.preimage())?;
         if self.proof_digest != expected_digest {
             return Err(SfcsZkError::InvalidProof(
@@ -733,6 +774,7 @@ impl SfcsZkPrivateVmProof {
                 "linear_relation_checks": self.statement.linear_relation_checks,
                 "zk_range_proofs": self.statement.zk_range_proofs,
                 "zk_memory_consistency_proofs": self.statement.zk_memory_consistency_proofs,
+                "zk_memory_value_proofs": self.statement.zk_memory_value_proofs,
                 "commitments": self.statement.commitments,
                 "proof_digest": self.proof_digest,
             }),
@@ -752,6 +794,7 @@ impl SfcsZkPrivateVmProof {
             "linear_relation_proofs": self.linear_relation_proofs,
             "range_proofs": self.range_proofs,
             "memory_consistency_proofs": self.memory_consistency_proofs,
+            "memory_value_proofs": self.memory_value_proofs,
         })
     }
 }
@@ -989,6 +1032,20 @@ impl SfcsZkPrivateVmMemoryConsistencyProof {
     }
 }
 
+impl SfcsZkPrivateVmMemoryValueProof {
+    fn verify(&self) -> Result<(), SfcsZkError> {
+        if !matches!(self.kind.as_str(), "read" | "write") {
+            return Err(SfcsZkError::InvalidProof(format!(
+                "unsupported memory value proof kind {}",
+                self.kind
+            )));
+        }
+        let label = format!("memory-value:{}:{}", self.step_index, self.kind);
+        self.value_equality.verify(&label)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct SfcsZkPrivateAddEmbedding {
     program: SfcsVmProgram,
@@ -1027,6 +1084,12 @@ struct SfcsZkPrivateVmRangeInput {
 #[derive(Debug, Clone)]
 struct SfcsZkPrivateVmMemoryConsistencyPreimage {
     proof: SfcsZkPrivateVmMemoryConsistencyProof,
+    range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
+}
+
+#[derive(Debug, Clone)]
+struct SfcsZkPrivateVmMemoryValuePreimage {
+    proof: SfcsZkPrivateVmMemoryValueProof,
     range_inputs: Vec<SfcsZkPrivateVmRangeInput>,
 }
 
@@ -1129,6 +1192,7 @@ pub fn verify_private_vm_embedding(
         "linear_relation_checks",
         "zk_range_proofs",
         "zk_memory_consistency_proofs",
+        "zk_memory_value_proofs",
         "commitments",
     ] {
         let public = artifact
@@ -1158,6 +1222,9 @@ pub fn verify_private_vm_embedding(
             "zk_range_proofs" => serde_json::json!(embedding.proof.statement.zk_range_proofs),
             "zk_memory_consistency_proofs" => {
                 serde_json::json!(embedding.proof.statement.zk_memory_consistency_proofs)
+            }
+            "zk_memory_value_proofs" => {
+                serde_json::json!(embedding.proof.statement.zk_memory_value_proofs)
             }
             "commitments" => serde_json::to_value(&embedding.proof.statement.commitments)?,
             _ => unreachable!(),
@@ -1359,6 +1426,43 @@ fn private_vm_linear_relation_preimages(
             }
             _ => {}
         }
+        if matches!(
+            step.mnemonic.as_str(),
+            "lb" | "lh" | "lw" | "lbu" | "lhu" | "sb" | "sh" | "sw"
+        ) {
+            let (Some(access), Some(base), Some(immediate)) =
+                (&step.memory_access, step.rs1_value_before, step.immediate)
+            else {
+                continue;
+            };
+            if immediate >= 0 {
+                let constant = immediate as u32;
+                if base.checked_add(constant) != Some(access.address) {
+                    continue;
+                }
+                relations.push(private_vm_immediate_linear_relation_preimage(
+                    step.step_index,
+                    "addi",
+                    base,
+                    constant,
+                    access.address,
+                    seed,
+                )?);
+            } else {
+                let constant = immediate.unsigned_abs();
+                if base.checked_sub(constant) != Some(access.address) {
+                    continue;
+                }
+                relations.push(private_vm_immediate_linear_relation_preimage(
+                    step.step_index,
+                    "subi",
+                    base,
+                    constant,
+                    access.address,
+                    seed,
+                )?);
+            }
+        }
     }
     Ok(relations)
 }
@@ -1480,6 +1584,73 @@ fn private_vm_memory_consistency_preimage(
             value_equality,
         },
         range_inputs: vec![write_address, read_address, write_value, read_value],
+    })
+}
+
+fn private_vm_memory_value_preimages(
+    trace: &SfcsVmExecutionTrace,
+    seed: &[u8; 32],
+) -> Result<Vec<SfcsZkPrivateVmMemoryValuePreimage>, SfcsZkError> {
+    let mut proofs = Vec::new();
+    for step in &trace.steps {
+        let Some(access) = &step.memory_access else {
+            continue;
+        };
+        match access.kind.as_str() {
+            "write" => {
+                let Some(register_value) = step.rs2_value_before else {
+                    continue;
+                };
+                if register_value != access.value {
+                    continue;
+                }
+                proofs.push(private_vm_memory_value_preimage(
+                    step.step_index,
+                    "write",
+                    register_value,
+                    access.value,
+                    seed,
+                )?);
+            }
+            "read" => {
+                let Some(register_value) = step.rd_value_after else {
+                    continue;
+                };
+                if register_value != access.value {
+                    continue;
+                }
+                proofs.push(private_vm_memory_value_preimage(
+                    step.step_index,
+                    "read",
+                    register_value,
+                    access.value,
+                    seed,
+                )?);
+            }
+            _ => {}
+        }
+    }
+    Ok(proofs)
+}
+
+fn private_vm_memory_value_preimage(
+    step_index: u64,
+    kind: &str,
+    register_value: u32,
+    memory_value: u32,
+    seed: &[u8; 32],
+) -> Result<SfcsZkPrivateVmMemoryValuePreimage, SfcsZkError> {
+    let label = format!("memory-value:{step_index}:{kind}");
+    let register = private_vm_range_input(&format!("{label}:register"), register_value, seed);
+    let memory = private_vm_range_input(&format!("{label}:memory"), memory_value, seed);
+    let value_equality = private_vm_equality_proof(&label, &register, &memory, seed)?;
+    Ok(SfcsZkPrivateVmMemoryValuePreimage {
+        proof: SfcsZkPrivateVmMemoryValueProof {
+            step_index,
+            kind: kind.to_string(),
+            value_equality,
+        },
+        range_inputs: vec![register, memory],
     })
 }
 

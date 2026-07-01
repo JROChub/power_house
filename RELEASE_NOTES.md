@@ -37,6 +37,9 @@
 - Added zero-knowledge read-after-write memory consistency proofs for private
   VM memory events, proving hidden read addresses and values match prior hidden
   writes without revealing the addresses or values.
+- Added private memory access transition binding: `lw/sw` address calculation
+  can now be covered by the linear proof layer, while memory access values are
+  equality-bound to the register values that produce stores or consume loads.
 - Added `julian sfcs rust-private-add`, which runs the constrained source
   through compile -> prove -> `.pha` -> Rootprint -> Observatory sidecar ->
   Memory Capsule and verifies the capsule before reporting success.
