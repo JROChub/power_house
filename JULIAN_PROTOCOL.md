@@ -1,5 +1,5 @@
 MFENX Power-House Network: The JULIAN Protocol Network
-Version 0.3.22 - July 2026
+Version 0.3.23 - July 2026
 
 
 # JULIAN Protocol: Proof-Transparent Consensus via Folding-Derived Anchors

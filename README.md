@@ -1,8 +1,8 @@
 # Power House
 
 [![CI](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?branch=main&label=CI)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/power_house?cacheSeconds=60)](https://crates.io/crates/power_house)
-[![docs.rs](https://img.shields.io/docsrs/power_house)](https://docs.rs/power_house)
+[![crates.io](https://img.shields.io/badge/crates.io-v0.3.23-orange)](https://crates.io/crates/power_house)
+[![docs.rs](https://img.shields.io/badge/docs.rs-v0.3.23-blue)](https://docs.rs/power_house/0.3.23/power_house/)
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
 Power House is a deterministic verification and provenance system for portable
@@ -30,7 +30,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.22**
+Current release: **v0.3.23**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).

@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.3.23 - 2026-07-01
+
+### Static README Version Badges
+- Replaced the dynamic crates.io and docs.rs README badges with static
+  `v0.3.23` badges so GitHub, crates.io, and docs.rs renderers cannot show
+  stale cached badge versions from Shields.
+- Updated active documentation, SDK metadata, network metadata, Docker labels,
+  and website release labels for `v0.3.23`.
+
 ## v0.3.22 - 2026-07-01
 
 ### README Badge Cache Fix

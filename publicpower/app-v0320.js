@@ -89,7 +89,7 @@ const modes = {
     dossierArtifact: "SFCS ZK PRIVATE VM REPORT",
     kicker: "SOVEREIGN FRACTAL PRIVATE VM",
     description:
-      "Inspect the v0.3.22 private VM gate: bitwise rows, signed and unsigned comparisons, non-equality/order branches, and partial-width memory semantics.",
+      "Inspect the v0.3.23 private VM gate: bitwise rows, signed and unsigned comparisons, non-equality/order branches, and partial-width memory semantics.",
     title: "Run the SFCS private VM coverage bridge",
     detail:
       "The Rust release verifies the private proof families; this browser bridge checks the public fractal, .pha, Rootprint, and truth-boundary projection.",
