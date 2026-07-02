@@ -80,6 +80,13 @@ for index in 0 1 2; do
     "POWER_HOUSE_RELEASE=${POWER_HOUSE_RELEASE:?set POWER_HOUSE_RELEASE}" bash -s <<'REMOTE'
 set -euo pipefail
 chmod 0755 /usr/local/lib/powerhouse/status_api.py /usr/local/lib/powerhouse/validator_registry.py /usr/local/lib/powerhouse/observer_registry.py /usr/local/lib/powerhouse/observer_intake.py
+if [[ -d /opt/powerhouse ]]; then
+  chmod 0755 /opt/powerhouse
+fi
+if [[ -d /opt/powerhouse/releases ]]; then
+  chmod 0755 /opt/powerhouse/releases
+  find /opt/powerhouse/releases -maxdepth 1 -mindepth 1 -type d -exec chmod 0755 {} +
+fi
 chmod 0640 /etc/powerhouse/validator-registry.json
 if [[ -f /etc/powerhouse/observer-registry.json ]]; then
   chmod 0640 /etc/powerhouse/observer-registry.json
