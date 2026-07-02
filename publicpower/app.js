@@ -379,6 +379,8 @@ const el = Object.fromEntries(
     "luminous-node-title",
     "luminous-packet-digest",
     "luminous-rounds",
+    "sfcs-orbit-toggle",
+    "sfcs-orbit-panel",
   ].map((id) => [camelCase(id), document.querySelector(`#${id}`)]),
 );
 el.canvas = el.orbitalCanvas;
@@ -3240,8 +3242,13 @@ function bindInterface() {
     copyText("cargo add power_house", "Install command copied"),
   );
   el.citySearch.addEventListener("input", (event) => filterCities(event.target.value));
+  const setSfcsOrbitOpen = (open) => {
+    document.body.classList.toggle("sfcs-popout-open", open);
+    el.sfcsOrbitToggle.setAttribute("aria-expanded", String(open));
+  };
   el.observatoryToggle.addEventListener("click", () => {
     document.body.classList.remove("evaluation-open");
+    setSfcsOrbitOpen(false);
     document.body.classList.add("observatory-open");
   });
   el.observatoryClose.addEventListener("click", () =>
@@ -3253,8 +3260,23 @@ function bindInterface() {
   el.luminousExplorer.addEventListener("transitionend", (event) => {
     if (event.propertyName === "height") resize();
   });
+  el.sfcsOrbitToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setSfcsOrbitOpen(!document.body.classList.contains("sfcs-popout-open"));
+  });
+  el.canvas.addEventListener("pointerdown", () => setSfcsOrbitOpen(false));
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setSfcsOrbitOpen(false);
+  });
+  window.addEventListener("hashchange", () => {
+    if (window.location.hash === "#sfcs") setSfcsOrbitOpen(true);
+  });
+  if (window.location.hash === "#sfcs") {
+    window.requestAnimationFrame(() => setSfcsOrbitOpen(true));
+  }
   el.evaluationToggle.addEventListener("click", () => {
     document.body.classList.remove("observatory-open");
+    setSfcsOrbitOpen(false);
     document.body.classList.add("evaluation-open");
   });
   el.evaluationClose.addEventListener("click", () =>
@@ -3270,6 +3292,7 @@ function bindInterface() {
   });
   el.networkToggle.addEventListener("click", () => {
     document.body.classList.remove("evaluation-open");
+    setSfcsOrbitOpen(false);
     document.body.classList.add("observatory-open");
     window.setTimeout(
       () => el.networkConsole.scrollIntoView({ behavior: "smooth", block: "end" }),
