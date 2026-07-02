@@ -3871,3 +3871,241 @@ body[data-network="outage"] .network-ribbon-state i {
     height: var(--explorer-open);
   }
 }
+
+/* Main observatory orbit bay. This final layer keeps the globe unobstructed
+   while preserving the SFCS private VM and identity-path instruments. */
+:root {
+  --scene-right: clamp(360px, 24vw, 420px);
+  --scene-shift: -62px;
+}
+
+#orbital-canvas {
+  inset: var(--top) var(--scene-right) auto var(--scene-left);
+  width: calc(100% - var(--scene-left) - var(--scene-right));
+}
+
+.scan-grid,
+.edge-vignette {
+  inset: var(--top) var(--scene-right) var(--scene-bottom) var(--scene-left);
+}
+
+.proof-flash,
+.stage-label {
+  left: calc(50% + var(--scene-shift));
+}
+
+.target-reticle {
+  left: calc(50% + var(--scene-shift));
+}
+
+.network-ribbon {
+  right: calc(var(--scene-right) + 28px);
+}
+
+.scene-controls {
+  right: calc(var(--scene-right) + 18px);
+}
+
+.proof-event {
+  right: calc(var(--scene-right) + 42px);
+}
+
+.proof-monument {
+  left: calc(var(--scene-left) + 34px);
+  width: min(610px, calc(100% - var(--scene-left) - var(--scene-right) - 78px));
+  bottom: clamp(48px, 6vh, 88px);
+}
+
+@media (min-width: 901px) {
+  .proof-monument h1 {
+    font-size: clamp(44px, 4vw, 58px);
+  }
+
+  .domain-equation strong {
+    font-size: clamp(30px, 3vw, 42px);
+  }
+}
+
+.sfcs-orbit-dock {
+  position: absolute;
+  top: calc(var(--top) + 84px);
+  right: 18px;
+  z-index: 25;
+  display: grid;
+  gap: 10px;
+  width: min(336px, calc(var(--scene-right) - 28px));
+  max-height: calc(100% - var(--top) - var(--dock) - 106px);
+  pointer-events: none;
+}
+
+.sfcs-orbit-dock::before {
+  position: absolute;
+  inset: -18px -8px;
+  z-index: 0;
+  content: "";
+  border-left: 1px solid rgba(62, 228, 213, 0.24);
+  background:
+    radial-gradient(circle at 0 18%, rgba(62, 228, 213, 0.22), transparent 28%),
+    radial-gradient(circle at 100% 70%, rgba(186, 255, 53, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%, rgba(255, 255, 255, 0.025));
+  mask-image: linear-gradient(to bottom, transparent, black 11%, black 89%, transparent);
+}
+
+.sfcs-orbit-dock > section {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 1;
+  width: 100%;
+}
+
+.sfcs-orbit-dock .zk-cockpit {
+  overflow: hidden;
+  border-color: rgba(62, 228, 213, 0.36);
+  background:
+    linear-gradient(135deg, rgba(62, 228, 213, 0.14), rgba(186, 255, 53, 0.055) 48%, rgba(1, 7, 8, 0.9)),
+    rgba(1, 7, 8, 0.88);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 22px 54px rgba(0, 0, 0, 0.28),
+    0 0 42px rgba(62, 228, 213, 0.08);
+}
+
+.sfcs-orbit-dock .zk-cockpit-head {
+  display: grid;
+  gap: 4px;
+}
+
+.sfcs-orbit-dock .zk-cockpit-head b {
+  white-space: normal;
+}
+
+.sfcs-orbit-dock .zk-cockpit::after {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 86px;
+  height: 86px;
+  content: "";
+  border: 1px solid rgba(62, 228, 213, 0.14);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 10px rgba(62, 228, 213, 0.025),
+    inset 0 0 0 22px rgba(186, 255, 53, 0.018);
+  transform: rotate(-18deg);
+}
+
+.sfcs-orbit-dock .zk-proof-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sfcs-orbit-dock .zk-proof-grid div {
+  min-height: 48px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(2, 8, 9, 0.44);
+}
+
+.sfcs-orbit-dock .zk-cockpit a {
+  min-height: 38px;
+  pointer-events: auto;
+}
+
+.sfcs-orbit-dock .substrate-readout {
+  padding: 12px 12px 11px;
+  border-color: rgba(186, 255, 53, 0.28);
+  background:
+    linear-gradient(90deg, rgba(186, 255, 53, 0.09), transparent 44%),
+    linear-gradient(135deg, rgba(62, 228, 213, 0.08), rgba(1, 7, 8, 0.88)),
+    rgba(1, 7, 8, 0.88);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 14px 38px rgba(0, 0, 0, 0.24);
+}
+
+.sfcs-orbit-dock .substrate-readout b {
+  font-size: 13px;
+}
+
+.sfcs-orbit-dock .substrate-readout dl,
+.sfcs-orbit-dock .zk-cockpit dl {
+  gap: 6px;
+}
+
+@media (min-width: 1500px) {
+  :root {
+    --scene-right: clamp(390px, 22vw, 440px);
+    --scene-shift: -82px;
+  }
+}
+
+@media (max-width: 1180px) {
+  :root {
+    --scene-right: 0px;
+    --scene-shift: 110px;
+  }
+
+  .sfcs-orbit-dock {
+    display: none;
+  }
+
+  .network-ribbon {
+    right: 62px;
+  }
+
+  .scene-controls {
+    right: 20px;
+  }
+
+  .proof-event {
+    right: 76px;
+  }
+
+  .proof-monument {
+    left: 252px;
+    width: 48vw;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --scene-shift: 0px;
+  }
+
+  .proof-monument {
+    left: 24px;
+    width: 64vw;
+  }
+}
+
+@media (max-width: 600px) {
+  .proof-monument {
+    left: 13px;
+    width: calc(100% - 26px);
+    bottom: 12px;
+  }
+
+  .stage-label,
+  .target-reticle {
+    left: 50%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+  :root {
+    --scene-right: 0px;
+    --scene-shift: 0px;
+  }
+
+  .proof-monument {
+    left: 76px;
+    width: calc(100% - 150px);
+    bottom: 56px;
+  }
+
+  .stage-label,
+  .target-reticle {
+    left: 50%;
+  }
+}
