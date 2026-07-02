@@ -42,9 +42,9 @@ The controller samples once per minute:
 - external observer health and connection count.
 
 The public campaign state includes elapsed and remaining time, progress,
-successful and failed network samples, controller telemetry gaps, uptime, RPC
-p50/p95/p99, drill outcomes, evidence event count, evidence head hash, and
-final report hash.
+successful and failed network samples, controller telemetry gaps,
+observer-admission incidents, uptime, RPC p50/p95/p99, drill outcomes,
+evidence event count, evidence head hash, and final report hash.
 The dedicated page also renders the current pass criteria and whether the
 running evidence remains on track. Campaign UI is not added to the primary
 observatory.
@@ -80,6 +80,12 @@ network failed samples, blocked drills, or incomplete drills prevent a passing
 campaign result. Controller telemetry gaps are retained in the evidence journal
 and reported as evidence-continuity cautions, but they do not count as network
 failed samples unless the collected network sample itself failed.
+Observer intake endpoint failures are reported as admission-plane incidents
+when every RPC, validator, registry, finality, and observer-health gate remains
+healthy. They stay in the hash-chained evidence journal and on the public
+campaign page, but they do not reduce measured RPC/validator network uptime.
+The scheduled intake-recovery drill is still a required gate and still fails
+the campaign if the intake service cannot recover inside the configured window.
 
 ## Operations
 

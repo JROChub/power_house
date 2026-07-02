@@ -196,6 +196,38 @@ def main() -> None:
         assert alerted["ok"] is False
         assert "active Prometheus alerts: PowerHouseValidatorDown" in alerted["errors"]
 
+        campaign.audit_node = lambda node: {
+            **fake_node(node.name),
+            "active_alerts": (
+                ["PowerHouseObserverIntakeUnavailable"] if node.name == "validator-1" else []
+            ),
+        }
+        healthy_http = campaign._http_json
+
+        def intake_down_http(url, data=None, timeout=8):
+            if data is None and url.endswith("observer-intake-healthz"):
+                raise RuntimeError("HTTP Error 502: Bad Gateway")
+            return healthy_http(url, data=data, timeout=timeout)
+
+        campaign._http_json = intake_down_http
+        intake_incident = campaign.collect_sample()
+        assert intake_incident["ok"] is False
+        assert module.is_observer_intake_incident(intake_incident) is True
+        before_failed = campaign.state["failed_samples"]
+        before_successful = campaign.state["successful_samples"]
+        campaign.apply_sample(intake_incident)
+        status = campaign.public_status()
+        assert campaign.state["failed_samples"] == before_failed
+        assert campaign.state["successful_samples"] == before_successful + 1
+        assert status["admission_plane"]["observer_intake_incidents"] == 1
+        assert status["failures"]["observer_intake_total"] == 1
+        assert status["failures"]["total"] == campaign.network_failed_samples()
+        assert any(
+            item["kind"] == "observer_intake_incident"
+            for item in status["failures"]["recent"]
+        )
+        campaign._http_json = healthy_http
+
         campaign.state["last_sample_unix"] -= 20
         before_failed = campaign.state["failed_samples"]
         before_samples = campaign.state["sample_count"]
@@ -334,9 +366,12 @@ def main() -> None:
     assert 'id="campaign-note-title"' in html
     assert "reliability_campaign" in javascript
     assert "renderFailures" in javascript
-    assert "NETWORK ON TRACK / EVIDENCE CONTINUITY CAUTION" in javascript
+    assert "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION" in javascript
     assert "reliability_campaign" not in main_js
     assert "campaign.html" in main_html
+    deploy = (ROOT / "scripts" / "deploy_monitoring_stack.sh").read_text()
+    assert "chmod 0755 /opt/powerhouse" in deploy
+    assert "find /opt/powerhouse/releases" in deploy
     unit = (ROOT / "infra" / "systemd" / "powerhouse-reliability-campaign.service").read_text()
     assert "systemd-inhibit" in unit
     assert "ProtectSystem=strict" in unit

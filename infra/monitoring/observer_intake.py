@@ -310,6 +310,10 @@ class ObserverIntake:
     def _prepare(self) -> None:
         self.submissions.mkdir(parents=True, exist_ok=True, mode=0o750)
         self.history.mkdir(parents=True, exist_ok=True, mode=0o750)
+        if not os.access(self.settings.binary, os.X_OK):
+            raise RuntimeError(
+                f"observer intake verifier is not executable by service user: {self.settings.binary}"
+            )
         if not self.index_path.exists():
             atomic_json(
                 self.index_path,

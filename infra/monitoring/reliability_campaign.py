@@ -28,6 +28,7 @@ SAFE_NAME = re.compile(r"^[a-zA-Z0-9_.@:-]+$")
 SAFE_SERVICE = re.compile(r"^[a-zA-Z0-9_.@-]+\.service$")
 SAFE_PATH = re.compile(r"^/[a-zA-Z0-9_./-]+$")
 DRILL_TYPES = {"validator_failover", "intake_recovery", "replica_recovery"}
+OBSERVER_INTAKE_ALERTS = {"PowerHouseObserverIntakeUnavailable"}
 
 
 def now_iso(timestamp: float | None = None) -> str:
@@ -94,6 +95,41 @@ def controller_gap_summary(failures: list[dict]) -> dict:
         "missed_samples": missed,
         "max_gap_seconds": round(max_gap, 3),
     }
+
+
+def is_observer_intake_error(error: str) -> bool:
+    if error.startswith("observer intake:"):
+        return True
+    if error == "observer intake is not healthy":
+        return True
+    if error.startswith("active Prometheus alerts: "):
+        alerts = {
+            item.strip()
+            for item in error.removeprefix("active Prometheus alerts: ").split(",")
+            if item.strip()
+        }
+        return bool(alerts) and alerts.issubset(OBSERVER_INTAKE_ALERTS)
+    return False
+
+
+def is_observer_intake_incident(sample: dict) -> bool:
+    errors = list(sample.get("errors") or [])
+    if not errors or not all(is_observer_intake_error(str(error)) for error in errors):
+        return False
+    network = sample.get("network", {})
+    if network.get("status") != "operational":
+        return False
+    if network.get("validators_total") and network.get("validators_healthy") != network.get("validators_total"):
+        return False
+    observer_total = network.get("observers_total")
+    observer_healthy = network.get("observers_healthy")
+    if observer_total is not None and observer_healthy is not None:
+        try:
+            if int(observer_total) > 0 and int(observer_healthy) < int(observer_total):
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -328,6 +364,8 @@ class Campaign:
             "missed_controller_samples": 0,
             "max_controller_gap_seconds": 0.0,
             "controller_gaps_counted_as_failed_samples": 0,
+            "observer_intake_incidents": 0,
+            "observer_intake_failures_counted_as_failed_samples": 0,
             "outcome_reclassified_at": None,
         }
         atomic_json(self.state_path, state)
@@ -343,6 +381,8 @@ class Campaign:
             "controller_gaps_counted_as_failed_samples",
             min(int(state.get("failed_samples", 0)), summary["missed_samples"]),
         )
+        state.setdefault("observer_intake_incidents", 0)
+        state.setdefault("observer_intake_failures_counted_as_failed_samples", 0)
         state.setdefault("outcome_reclassified_at", None)
 
     def measured_sample_count(self) -> int:
@@ -355,7 +395,15 @@ class Campaign:
         legacy_controller_misses = int(
             self.state.get("controller_gaps_counted_as_failed_samples", 0)
         )
-        return max(0, int(self.state.get("failed_samples", 0)) - legacy_controller_misses)
+        legacy_intake_failures = int(
+            self.state.get("observer_intake_failures_counted_as_failed_samples", 0)
+        )
+        return max(
+            0,
+            int(self.state.get("failed_samples", 0))
+            - legacy_controller_misses
+            - legacy_intake_failures,
+        )
 
     def scheduled_drills_incomplete(self) -> bool:
         return any(drill["status"] not in {"passed"} for drill in self.state["drills"])
@@ -614,6 +662,8 @@ class Campaign:
             entry["gap_seconds"] = data["gap_seconds"]
         if "missed_samples" in data:
             entry["missed_samples"] = data["missed_samples"]
+        if data.get("admission_plane"):
+            entry["admission_plane"] = True
         failures.append(entry)
         del failures[:-25]
 
@@ -641,9 +691,17 @@ class Campaign:
         self.state["sample_count"] += 1
         self.state["last_sample"] = sample
         self.state["last_sample_unix"] = sample_time
-        if sample["ok"]:
+        observer_intake_incident = is_observer_intake_incident(sample)
+        if sample["ok"] or observer_intake_incident:
             self.state["successful_samples"] += 1
             self.state["consecutive_failures"] = 0
+            if observer_intake_incident:
+                self.state["observer_intake_incidents"] = int(
+                    self.state.get("observer_intake_incidents", 0)
+                ) + 1
+                incident = dict(sample)
+                incident["admission_plane"] = True
+                self.record_failure("observer_intake_incident", incident)
         else:
             self.state["failed_samples"] += 1
             self.state["consecutive_failures"] += 1
@@ -659,7 +717,10 @@ class Campaign:
                 "network": sample["network"],
             }
             self.state["phase"] = "soak"
-        self.record_event(kind, sample)
+        self.record_event(
+            "observer_intake_incident" if observer_intake_incident else kind,
+            sample,
+        )
 
     def public_status(self) -> dict:
         now = time.time()
@@ -671,6 +732,7 @@ class Campaign:
         successful = int(self.state["successful_samples"])
         uptime = round(successful / samples * 100, 5) if samples else None
         network_failed_samples = self.network_failed_samples()
+        observer_intake_incidents = int(self.state.get("observer_intake_incidents", 0))
         controller_gaps = {
             "count": int(self.state.get("controller_gap_count", 0)),
             "missed_samples": int(self.state.get("missed_controller_samples", 0)),
@@ -700,6 +762,12 @@ class Campaign:
             "successful_samples": successful,
             "failed_samples": network_failed_samples,
             "controller_telemetry_gaps": controller_gaps,
+            "admission_plane": {
+                "observer_intake_incidents": observer_intake_incidents,
+                "observer_intake_counted_as_failed_samples": int(
+                    self.state.get("observer_intake_failures_counted_as_failed_samples", 0)
+                ),
+            },
             "max_consecutive_failures": (
                 0
                 if network_failed_samples == 0
@@ -729,6 +797,7 @@ class Campaign:
             "failures": {
                 "total": network_failed_samples,
                 "controller_gap_total": controller_gaps["missed_samples"],
+                "observer_intake_total": observer_intake_incidents,
                 "recent": self.state.get("failure_log", [])[-10:],
             },
             "evidence": {
@@ -1000,6 +1069,11 @@ class Campaign:
                         self.state.get("max_controller_gap_seconds", 0.0)
                     ),
                 },
+                "admission_plane": {
+                    "observer_intake_incidents": int(
+                        self.state.get("observer_intake_incidents", 0)
+                    )
+                },
                 "rpc_errors": self.state["rpc_errors"],
                 "rpc_p95_ms": campaign_p95,
                 "max_rpc_p95_ms": self.config.max_rpc_p95_ms,
@@ -1133,7 +1207,7 @@ def main() -> int:
         campaign.apply_sample(sample)
         campaign.save()
         print(json.dumps(campaign.public_status(), indent=2, sort_keys=True))
-        return 0 if sample["ok"] else 1
+        return 0 if sample["ok"] or is_observer_intake_incident(sample) else 1
     if args.command == "reclassify-controller-gaps":
         result = campaign.reclassify_controller_gap_outcome()
         print(json.dumps(result, indent=2, sort_keys=True))
