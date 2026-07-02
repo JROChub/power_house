@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import fcntl
@@ -440,6 +441,15 @@ class Campaign:
                 stdout=exc.stdout or "",
                 stderr=exc.stderr or f"command timed out after {timeout} seconds",
             )
+
+    @contextmanager
+    def exclusive_lock(self):
+        with self.lock_path.open("w") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise RuntimeError("another campaign controller is already running")
+            yield
 
     def _ssh(self, node: Node, command: str, timeout: float = 30) -> str:
         process = self._run(
@@ -1137,11 +1147,7 @@ class Campaign:
         return result
 
     def run_campaign(self) -> int:
-        with self.lock_path.open("w") as lock:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise RuntimeError("another campaign controller is already running")
+        with self.exclusive_lock():
             if self.state["status"] in {"passed", "failed"}:
                 self.save()
                 return 0
@@ -1203,16 +1209,19 @@ def main() -> int:
         print(json.dumps(campaign.public_status(), indent=2, sort_keys=True))
         return 0
     if args.command == "sample":
-        sample = campaign.collect_sample()
-        campaign.apply_sample(sample)
-        campaign.save()
+        with campaign.exclusive_lock():
+            sample = campaign.collect_sample()
+            campaign.apply_sample(sample)
+            campaign.save()
         print(json.dumps(campaign.public_status(), indent=2, sort_keys=True))
         return 0 if sample["ok"] or is_observer_intake_incident(sample) else 1
     if args.command == "reclassify-controller-gaps":
-        result = campaign.reclassify_controller_gap_outcome()
+        with campaign.exclusive_lock():
+            result = campaign.reclassify_controller_gap_outcome()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    result = campaign.add_manual_drill(args.kind)
+    with campaign.exclusive_lock():
+        result = campaign.add_manual_drill(args.kind)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["status"] == "passed" else 1
 
