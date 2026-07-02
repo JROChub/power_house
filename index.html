@@ -15,7 +15,7 @@
   <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
   <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="preload" href="assets/earth-night-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
-  <link rel="stylesheet" href="app.css?v=20260702-sfcs-popout">
+  <link rel="stylesheet" href="app.css?v=20260702-sfcs-sheet">
 </head>
 <body>
   <div id="boot-screen" class="boot-screen" aria-live="polite">
@@ -192,48 +192,49 @@
         <b id="event-value">PRESS RUN</b>
       </div>
 
-      <div class="sfcs-orbit-dock" aria-label="SFCS verification pop-out">
-        <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS private VM panel">
-          <span data-icon="brain-circuit"></span>
-          <b>SFCS</b>
-          <small>PRIVATE VM</small>
-        </button>
-
-        <div id="sfcs-orbit-panel" class="sfcs-orbit-panel">
-          <section class="zk-cockpit" aria-label="SFCS private VM proof coverage">
-            <div class="zk-cockpit-head">
-              <span>SFCS PRIVATE VM / v0.3.24</span>
-              <b>WITNESS HIDDEN / MUTATION TESTED</b>
-            </div>
-            <div class="zk-proof-grid">
-              <div><span>BITWISE</span><b>AND OR XOR</b><i></i></div>
-              <div><span>COMPARE</span><b>SLT SLTU</b><i></i></div>
-              <div><span>BRANCH</span><b>BEQ BNE BLT BGE</b><i></i></div>
-              <div><span>MEMORY</span><b>SB SH LB LH</b><i></i></div>
-            </div>
-            <dl>
-              <div><dt>RANGE PROOFS</dt><dd>88</dd></div>
-              <div><dt>BYTE SEMANTICS</dt><dd>6</dd></div>
-              <div><dt>MUTATIONS</dt><dd>4 / 4 REJECT</dd></div>
-            </dl>
-            <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md">
-              <span>OPEN VM REFERENCE</span>
-              <span data-icon="chevron-right"></span>
-            </a>
-          </section>
-
-          <section class="substrate-readout" aria-label="SFCS truth boundary">
-            <span>SFCS IDENTITY PATH</span>
-            <b>FRACTAL DIGEST -> .PHA CORE -> ROOTPRINT SAFE</b>
-            <dl>
-              <div><dt>DEFAULT</dt><dd>OFF</dd></div>
-              <div><dt>CORE</dt><dd>UNCHANGED</dd></div>
-              <div><dt>FAST PATH</dt><dd>STRUCTURE ONLY</dd></div>
-            </dl>
-          </section>
-        </div>
-      </div>
     </main>
+
+    <div class="sfcs-orbit-dock" aria-label="SFCS verification pop-out">
+      <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS private VM panel">
+        <span data-icon="brain-circuit"></span>
+        <b>SFCS</b>
+        <small>PRIVATE VM</small>
+      </button>
+
+      <div id="sfcs-orbit-panel" class="sfcs-orbit-panel">
+        <section class="zk-cockpit" aria-label="SFCS private VM proof coverage">
+          <div class="zk-cockpit-head">
+            <span>SFCS PRIVATE VM / v0.3.24</span>
+            <b>WITNESS HIDDEN / MUTATION TESTED</b>
+          </div>
+          <div class="zk-proof-grid">
+            <div><span>BITWISE</span><b>AND OR XOR</b><i></i></div>
+            <div><span>COMPARE</span><b>SLT SLTU</b><i></i></div>
+            <div><span>BRANCH</span><b>BEQ BNE BLT BGE</b><i></i></div>
+            <div><span>MEMORY</span><b>SB SH LB LH</b><i></i></div>
+          </div>
+          <dl>
+            <div><dt>RANGE PROOFS</dt><dd>88</dd></div>
+            <div><dt>BYTE SEMANTICS</dt><dd>6</dd></div>
+            <div><dt>MUTATIONS</dt><dd>4 / 4 REJECT</dd></div>
+          </dl>
+          <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md">
+            <span>OPEN VM REFERENCE</span>
+            <span data-icon="chevron-right"></span>
+          </a>
+        </section>
+
+        <section class="substrate-readout" aria-label="SFCS truth boundary">
+          <span>SFCS IDENTITY PATH</span>
+          <b>FRACTAL DIGEST -> .PHA CORE -> ROOTPRINT SAFE</b>
+          <dl>
+            <div><dt>DEFAULT</dt><dd>OFF</dd></div>
+            <div><dt>CORE</dt><dd>UNCHANGED</dd></div>
+            <div><dt>FAST PATH</dt><dd>STRUCTURE ONLY</dd></div>
+          </dl>
+        </section>
+      </div>
+    </div>
 
     <div class="scene-controls" aria-label="Scene controls">
       <button id="focus-toggle" class="icon-button" type="button" aria-label="Focus selected city" title="Focus selected city">

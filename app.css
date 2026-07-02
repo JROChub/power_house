@@ -3906,7 +3906,7 @@ body[data-network="outage"] .network-ribbon-state i {
 }
 
 .scene-controls {
-  right: 20px;
+  right: calc(var(--sfcs-tab-width) + 32px);
 }
 
 .proof-event {
@@ -3933,7 +3933,7 @@ body[data-network="outage"] .network-ribbon-state i {
   position: fixed;
   top: calc(var(--top) + 110px);
   right: 14px;
-  z-index: 42;
+  z-index: 90;
   width: var(--sfcs-tab-width);
   min-height: 232px;
   pointer-events: auto;
@@ -4064,6 +4064,11 @@ body.sfcs-popout-open .sfcs-orbit-panel {
   transform: none;
 }
 
+body.sfcs-popout-open .scene-controls {
+  opacity: 0.18;
+  pointer-events: none;
+}
+
 .sfcs-orbit-dock .zk-cockpit,
 .sfcs-orbit-dock .substrate-readout {
   position: relative;
@@ -4162,6 +4167,15 @@ body.sfcs-popout-open .sfcs-orbit-panel {
     right: 62px;
   }
 
+  .scene-controls {
+    right: calc(var(--sfcs-tab-width) + 22px);
+  }
+
+  #sound-toggle,
+  #motion-toggle {
+    display: none;
+  }
+
   .sfcs-orbit-dock {
     top: calc(var(--top) + 82px);
     right: 10px;
@@ -4204,10 +4218,12 @@ body.sfcs-popout-open .sfcs-orbit-panel {
   }
 
   .sfcs-orbit-panel {
-    top: 46px;
-    right: 0;
-    width: min(350px, calc(100vw - 20px));
-    max-height: calc(100dvh - var(--top) - var(--dock) - var(--proof-stack) - 92px);
+    position: fixed;
+    top: calc(var(--top) + 58px);
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: calc(100dvh - var(--top) - var(--dock) - var(--proof-stack) - 72px);
     transform: translateY(-8px) scale(0.98);
     transform-origin: top right;
   }
@@ -4230,8 +4246,10 @@ body.sfcs-popout-open .sfcs-orbit-panel {
   }
 
   .sfcs-orbit-panel {
-    top: 42px;
-    width: calc(100vw - 16px);
+    top: calc(var(--top) + 52px);
+    right: 8px;
+    left: 8px;
+    width: auto;
     max-height: calc(100dvh - var(--top) - var(--dock) - var(--proof-stack) - 78px);
     padding: 8px;
   }
@@ -4269,8 +4287,32 @@ body.sfcs-popout-open .sfcs-orbit-panel {
   }
 
   .sfcs-orbit-panel {
-    top: 39px;
-    width: min(330px, calc(100vw - 16px));
-    max-height: calc(100dvh - var(--top) - var(--dock) - 54px);
+    top: calc(var(--top) + 8px);
+    right: 8px;
+    left: 78px;
+    width: auto;
+    max-height: calc(100dvh - var(--top) - 16px);
+    padding: 8px;
+  }
+
+  .sfcs-orbit-dock .zk-proof-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sfcs-orbit-dock .zk-proof-grid div {
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  .sfcs-orbit-dock .zk-cockpit,
+  .sfcs-orbit-dock .substrate-readout {
+    padding: 10px;
+  }
+}
+
+@media (max-height: 760px) {
+  #sound-toggle,
+  #motion-toggle {
+    display: none;
   }
 }
