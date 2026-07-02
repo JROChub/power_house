@@ -59,7 +59,9 @@ function drillLabel(kind) {
 function drillDetail(drill) {
   if (drill.status === "scheduled") return `SCHEDULED AT +${duration(drill.offset_seconds)}`;
   if (drill.recovery_seconds != null) {
-    return `RECOVERY ${Number(drill.recovery_seconds).toFixed(3)}S / ${Number(drill.errors_observed) || 0} EDGE ERRORS`;
+    const probes = Number(drill.errors_observed) || 0;
+    const label = drill.status === "passed" ? "CONTROLLED PROBE MISSES" : "EDGE ERRORS";
+    return `RECOVERY ${Number(drill.recovery_seconds).toFixed(3)}S / ${probes} ${label}`;
   }
   return drill.detail || drill.status.toUpperCase();
 }
