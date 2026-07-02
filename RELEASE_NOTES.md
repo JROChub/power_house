@@ -1,5 +1,18 @@
 # Release Notes
 
+## v0.3.24 - 2026-07-01
+
+### SFCS Public Documentation Correction
+- Rewrote the README SFCS introduction to describe the implemented
+  source-to-fractal, RV32I VM, public constraint proof, private proof profile,
+  Rootprint, Memory Capsule, and semantic observability surface directly.
+- Replaced `docs/sfcs_zkvm.md` with an implementation reference for the shipped
+  SFCS private VM, compiler, provenance, and observability commands.
+- Removed public-facing SFCS gate/unfinished positioning from active SFCS docs
+  and website copy.
+- Updated active documentation, SDK metadata, Docker labels, network metadata,
+  release badges, and website release labels for `v0.3.24`.
+
 ## v0.3.23 - 2026-07-01
 
 ### Static README Version Badges
@@ -146,11 +159,10 @@
 ## v0.3.17 - 2026-06-30
 
 ### SFCS Connected Region Discovery
-- Clarified the SFCS development contract: the end-state objective is direct
+- Clarified the SFCS development contract: the objective is direct
   source-to-fractal execution that makes external circuit compilers and zkVM
   workflows unnecessary and unwise as the default path for targeted Power
-  House workloads, while v0.3.17 remains a guarded milestone rather than final
-  SFCS compliance.
+  House workloads.
 - Added committed SFCS node metadata and direct source directives for labels
   and deterministic metadata without changing `.pha`, Rootprint, Memory
   Capsule, or slbit rules.

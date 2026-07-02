@@ -1,6 +1,6 @@
 # Memory Conformance
 
-Status: active conformance guide for Power House v0.3.23.
+Status: active conformance guide for Power House v0.3.24.
 
 The Memory Capsule conformance surface is currently covered by:
 

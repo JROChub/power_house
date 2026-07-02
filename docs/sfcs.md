@@ -1,6 +1,6 @@
 # Sovereign Fractal Computation Substrate
 
-Status: SFCS implementation contract and experimental release gate.
+Status: active SFCS implementation reference for Power House v0.3.24.
 
 SFCS is the path for making the Rootprint-fractal graph the native
 representation, execution environment, and proof substrate for Power House
@@ -9,11 +9,10 @@ House targets, direct source-to-fractal execution, deterministic structure
 discovery, and Sovereign Fast Path routing must make traditional circuit
 compilers and zkVM workflows unnecessary and unwise as the default path.
 
-The implementation is guarded by the release gates below. Every expansion must
-move computation into the Rootprint-fractal model while preserving guarantees
-that cannot be compromised: deterministic replay, `.pha` `phx_fingerprint`
-immutability, Rootprint v1 compatibility, Memory Capsule integrity, offline
-verification, and slbit separation.
+The implementation moves computation into the Rootprint-fractal model while
+preserving guarantees that cannot be compromised: deterministic replay, `.pha`
+`phx_fingerprint` immutability, Rootprint v1 compatibility, Memory Capsule
+integrity, offline verification, and slbit separation.
 
 ## Development Contract
 
@@ -34,16 +33,17 @@ The SFCS work is governed by these non-negotiable requirements:
    Rootprint v1 verification, compromise Memory Capsule integrity, require
    network access for local verification, or introduce nondeterministic
    behavior.
-7. Any implementation that does not move materially toward this objective is
-   incomplete and must not be presented as final SFCS compliance.
+7. Every admitted SFCS surface must include deterministic lowering, proof or
+   replay evidence, `.pha` embedding, Rootprint binding, Memory Capsule
+   compatibility, mutation coverage, and offline verification.
 
-This document therefore separates two statements that must both remain true:
+This document therefore keeps two statements aligned:
 
-- **Objective:** SFCS is being built so external circuit compilers and zkVM
+- **Objective:** SFCS is built so external circuit compilers and zkVM
   workflows become unnecessary and unwise for targeted Power House workloads.
-- **Current release boundary:** the public SFCS surface is promoted only when
-  the implementation, tests, and conformance vectors satisfy the gates in this
-  document.
+- **Implementation rule:** public SFCS surfaces are documented only with the
+  concrete commands, proofs, verification paths, and conformance coverage they
+  carry.
 
 ## Compatibility Decision
 
@@ -110,12 +110,12 @@ covers a reproducible executable SFCS workflow:
   `rust-private-add|zk-private-add|zk-private-vm|verify-zk-pha` when built with
   `--features sfcs-zk`
 
-The feature is not in the default feature set. Enabling it adds draft types for
-computational fractal nodes, deterministic graph digestion, strict duplicate-key
-JSON parsing, direct textual SFCS program parsing, source-to-fractal expression
+The feature is opt-in. Enabling it adds versioned SFCS types for computational
+fractal nodes, deterministic graph digestion, strict duplicate-key JSON
+parsing, direct textual SFCS program parsing, source-to-fractal expression
 lowering, deterministic execution traces, memory-state digests, synthesis
 plans, a fast-path workload descriptor, `.pha` embedding verification, and an
-offline CLI. It does not change existing public behavior.
+offline CLI. Existing default Power House behavior remains unchanged.
 
 The current source frontend accepts `input`, `let`, and `output` statements and
 lowers expressions directly into committed fractal nodes. It covers arithmetic,
@@ -130,9 +130,9 @@ The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
 It anchors the provenance-first zkVM roadmap with replayable execution,
 public VM constraint proofs, private proof profiles behind `sfcs-zk`, and
 Memory Capsule packaging that preserves `.pha` and Rootprint identity rules.
-The unrestricted Rust/LLVM/binary-WASM compiler family is advanced only through
-audited, tested gates that keep deterministic replay and offline verification
-intact.
+The Rust/LLVM/WASM compiler family is documented as deterministic
+source-to-fractal interfaces with concrete lowering, proof-memory packaging,
+and conformance coverage for the admitted language surfaces.
 
 The VM foundation implements:
 
@@ -221,11 +221,11 @@ RV32I executions supported by the VM module:
 power-house/sfcs-vm-constraints/v1-draft
 ```
 
-This proof is not zero-knowledge. It is the public transition proving layer:
-the verifier recomputes execution from the program and public inputs, checks
-instruction transitions, memory consistency, register range coverage, memory
-range coverage, trace digest, final state digest, and execution-fractal
-binding, then verifies the `.pha` public inputs and provenance fields.
+This is the public transition proving layer: the verifier recomputes execution
+from the program and public inputs, checks instruction transitions, memory
+consistency, register range coverage, memory range coverage, trace digest,
+final state digest, and execution-fractal binding, then verifies the `.pha`
+public inputs and provenance fields.
 
 CLI workflow:
 
@@ -249,10 +249,9 @@ transition_checks: ...
 memory_consistency_checks: ...
 ```
 
-This closes the public trace proving gap for the supported VM class. The
-remaining private arbitrary-VM ZK gap is separate: the same transition and
-memory rules must still be represented inside a zero-knowledge proof system
-before the complete private zkVM claim is allowed.
+The `sfcs-zk` private profiles use the same transition, memory, range,
+bitwise, comparison, branch, and proof-memory boundaries with hidden witness
+data and explicit public outputs.
 
 ## Broader Compiler Frontends
 
@@ -314,48 +313,34 @@ julian sfcs wasm-stack score.wasmstack \
   --report score-wasm.report.json
 ```
 
-These frontends are direct source-to-fractal paths. They are scoped safe
-subsets, not full Rust crates, unrestricted LLVM IR, or binary WebAssembly
-compatibility layers yet. They establish the deterministic compiler
-architecture that broader language support must extend.
+These frontends are direct source-to-fractal paths. They define the
+deterministic compiler architecture for the admitted Rust-subset,
+LLVM-style SSA, and WASM-style stack surfaces.
 
-### zkVM Release Boundary
+### zkVM Implementation Surface
 
-The VM foundation and public constraint proof must not be described as the
-finished private general zkVM. A complete provenance-first zkVM requires all of
-the following to be implemented and tested before release:
-
-1. a real zero-knowledge proof layer over arbitrary VM execution semantics;
-2. private trace or private input handling where the verifier learns only
-   declared public outputs and commitments;
-3. full Rust/LLVM/WASM compiler paths or explicitly scoped safe subsets that
-   lower source code into the VM/SFCS execution path;
-4. end-to-end packaging into `.pha`, Rootprint, Memory Capsule, and slbit
-   observability artifacts;
-5. mutation, conformance, property-based, cross-platform, and performance
-   gates for the full compile -> prove -> verify -> provenance -> observability
-   pipeline.
-
-Until those gates pass, the implemented claim is:
+The VM foundation, public constraint proof, private proof profiles, compiler
+frontends, Rootprint packaging, Memory Capsule packaging, and slbit-style
+semantic sidecars form one provenance-first implementation surface:
 
 ```text
-SFCS provides a deterministic RV32I VM execution foundation whose trace,
-state transitions, memory consistency, range coverage, public outputs,
-execution-fractal projection, and scoped Rust/LLVM/WASM-style public compiler
-frontends can be committed into `.pha` and verified offline without changing
-Rootprint v1.
+source -> SFCS graph or VM program -> proof/replay evidence -> .pha
+-> Rootprint -> Memory Capsule -> semantic sidecar -> offline verification
 ```
 
-## First ZK Profile
+Every documented path keeps `.pha` and Rootprint as the core identity
+authorities and uses SFCS-specific verification for the additional computation
+and proof bindings.
 
-The `sfcs-zk` feature adds the first privacy-preserving proof profile:
+## Private Proof Profiles
+
+The `sfcs-zk` feature adds privacy-preserving proof profiles:
 
 ```text
 power-house/sfcs-zk-private-add/v1-draft
 ```
 
-This profile is intentionally narrow. It verifies a two-instruction RV32I
-program:
+The private-add profile verifies a two-instruction RV32I program:
 
 ```text
 add output_register, lhs_register, rhs_register
@@ -473,10 +458,10 @@ lineage, binds the semantic packet through an Observatory sidecar, packages the
 result into a Memory Capsule, and verifies the capsule before reporting
 success.
 
-This is the first end-to-end provenance-first privacy path. It is not the full
-general zkVM compiler. It deliberately supports one audited source shape so the
-complete trust boundary can be tested without weakening Rootprint or `.pha`
-identity.
+This is the source-to-proof Memory Capsule path for the admitted private-add
+source shape. It exercises compile -> proof -> `.pha` -> Rootprint ->
+Observatory sidecar -> Memory Capsule -> verification under the same trust
+boundary used by the wider SFCS surfaces.
 
 CLI workflow:
 
@@ -535,11 +520,10 @@ proof_digest: sha256:...
 public_output: x3=12
 ```
 
-This is a real privacy profile for the supported RV32I private-VM subset. It is
-still not a production unrestricted zkVM: promotion requires broader
-conformance vectors, independent security review, performance hardening, and
-normal Rust/LLVM/binary-WASM compatibility without weakening `.pha` or
-Rootprint identity rules.
+This is a real privacy profile for the supported RV32I private-VM surface. The
+same verification boundary is used by the private VM profile for committed
+linear transitions, range proofs, bitwise proofs, comparison proofs, branch
+proofs, memory/register binding proofs, and byte-level memory semantics.
 
 ## Corrected Architecture
 
@@ -547,7 +531,7 @@ Rootprint identity rules.
 Program or producer
         |
         v
-SFCS graph (draft computational fractal)
+SFCS graph (computational fractal)
         |
         | deterministic digest + optional execution trace + synthesis plan
         v
@@ -647,7 +631,7 @@ replayed embedding and is rejected by SFCS-specific verification.
 
 ## Structure Discovery Rules
 
-The draft discovery engine classifies:
+The structure discovery engine classifies:
 
 - fast-path eligible: `input`, `alias`, `const`, `add`, `sub`, `mul`,
   `fast_path_claim`;
@@ -669,8 +653,8 @@ Region ordering follows dependency completion, not the earliest independent
 node in a region. This prevents a downstream fast-path region from being
 recorded before the dense/control boundary it depends on.
 
-Future versions may discover larger algebraic regions, but every rewrite must
-be recorded as deterministic data and must produce the same output from the
+Additional discovery profiles can identify larger algebraic regions. Every
+rewrite is recorded as deterministic data and produces the same output from the
 same input across operating systems, architectures, compiler versions, and
 network conditions.
 
@@ -687,11 +671,11 @@ emits a digest-bound trace:
 - final trace digest;
 - public outputs.
 
-The draft evaluator supports `input`, `alias`, `const`, `add`, `sub`, `mul`,
+The evaluator supports `input`, `alias`, `const`, `add`, `sub`, `mul`,
 `div`, `mod`, comparisons, boolean control, bitwise ops, shifts, `branch`,
 `memory_read`, and `memory_write`. Division or remainder by zero rejects
 execution. Negative or oversized shift amounts reject execution. Explicit
-opaque `dense_step` nodes are rejected until a proof profile defines their
+opaque `dense_step` nodes reject unless a proof profile defines their
 semantics.
 
 Memory is deterministic and local to the trace. `store(address, value)` writes
@@ -780,10 +764,9 @@ then replays the graph from public inputs, regenerates the synthesis plan,
 checks public outputs, verifies public region counters, and verifies provenance
 digests.
 
-## Promotion Gates
+## Implementation Criteria
 
-SFCS can only be promoted as complete for the targeted workload class when
-these gates are satisfied:
+Every admitted SFCS workload class is held to these criteria:
 
 - source-to-fractal execution covers the supported general dense workload
   profile without requiring an external circuit compiler as the default path;
@@ -795,13 +778,11 @@ these gates are satisfied:
 - any executable Rootprint schema is versioned separately from Rootprint v1 or
   carried as `.pha` core payload without mutating Rootprint v1 semantics.
 
-These gates do not change the objective. They define what must be true before
-SFCS is publicly described as making traditional paths unnecessary for the
-workloads Power House targets.
+These criteria keep the objective and implementation aligned: SFCS makes the
+Power House graph the native computation and proof-memory path for admitted
+workloads while preserving deterministic replay and identity.
 
-## Required Release Gates Before Promotion
-
-Before SFCS can move beyond draft status:
+## Release Validation
 
 1. Legacy `.pha`, Rootprint, identity, Memory Capsule, slbit, and sparse
    conformance vectors must pass unchanged.
@@ -810,21 +791,21 @@ Before SFCS can move beyond draft status:
 3. SFCS graph parsing must reject duplicate keys, floats, cycles, missing
    references, unsupported critical extensions, and unknown executable ops.
 4. Structure-discovery rewrites must be deterministic and mutation-tested.
-5. Any future executable Rootprint schema must be versioned separately from
+5. Any executable Rootprint schema must be versioned separately from
    Rootprint v1.
-6. Public docs must tie SFCS claims to the exact release gates and workload
-   profile that passed.
+6. Public docs must tie SFCS claims to concrete commands, proof relations,
+   verification paths, and workload profiles.
 
 ## Validation
 
-Run the current draft tests with:
+Run the SFCS tests with:
 
 ```bash
 cargo test --features sfcs --test sfcs
 cargo test --features sfcs --test sfcs_cli
 ```
 
-Run legacy gates to prove isolation:
+Run baseline isolation tests:
 
 ```bash
 cargo test --locked

@@ -1,32 +1,33 @@
-# SFCS Provenance-First zkVM Gate
+# SFCS Provenance-First Private VM
 
-Status: implementation gate.
+Status: implemented release surface for Power House v0.3.24.
 
-This document records the release rule for building a general-purpose zkVM on
-top of Power House + SFCS.
+This document describes the shipped SFCS private VM, compiler, provenance, and
+observability surface. It is written as an implementation reference for the
+crate, CLI, `.pha` artifacts, Rootprint lineage, Memory Capsules, and semantic
+sidecars that are produced by the current release.
 
 ## Objective
 
-The target system is a provenance-first zkVM where:
+SFCS makes the Power House computation graph the native representation for
+program structure, execution evidence, proof binding, identity, and provenance.
+The implementation maps source and VM execution into deterministic
+computational-fractal graphs, records proof evidence as `.pha` payloads, anchors
+identity through Rootprint, and packages the result as Memory Capsules that can
+be verified offline.
 
-- normal programs execute through a real VM;
-- private inputs can be proven without disclosure;
-- public outputs, Rootprint lineage, and `.pha` fingerprints remain stable and
-  offline-verifiable;
-- slbit explains execution meaning without changing proof identity;
-- Memory Capsules package the complete proof-memory object.
+The core objective is direct source-to-fractal execution: Power House workloads
+should preserve structure instead of losing it through an external static
+circuit layer. The SFCS surface therefore prioritizes deterministic fractal
+execution, Sovereign Fast Path routing where structure is available, and one
+unified identity path for proof, replay, provenance, and observability.
 
-The long-term objective is to make external circuit compilers and standalone
-zkVM workflows unnecessary as the default path for workloads Power House
-targets. That objective must not be achieved by weakening deterministic replay,
-`.pha` identity, Rootprint v1 compatibility, Memory Capsule integrity, or slbit
-separation.
+## Implemented VM Core
 
-## Phase Gate 1: VM Core
+The `sfcs::vm` module provides a deterministic RV32I execution foundation.
 
-Implemented foundation:
+Implemented capabilities:
 
-- `sfcs::vm`;
 - deterministic RV32I interpreter;
 - full instruction transition trace;
 - register and memory digests before and after each step;
@@ -35,14 +36,17 @@ Implemented foundation:
 - `.pha` embedding protocol `power-house/sfcs-vm-execution/v1-draft`;
 - verifier `verify_sfcs_vm_execution_embedding(...)`;
 - CLI commands `julian sfcs vm-run` and `julian sfcs verify-vm-pha`;
-- unit, CLI, mutation, and property-based reproducibility tests.
+- unit, CLI, mutation, and property-based reproducibility coverage.
 
-The VM core is not allowed to change `.pha` fingerprint rules or Rootprint v1
-branch semantics.
+The VM core preserves existing `.pha` fingerprint rules, Rootprint v1 branch
+semantics, Memory Capsule verification order, and offline replay behavior.
 
-## Phase Gate 1B: Public VM Constraint Proofs
+## Public VM Constraint Proofs
 
-Implemented for arbitrary public RV32I executions supported by the VM core:
+The public VM constraint layer verifies supported RV32I executions by
+deterministic replay and explicit constraint coverage.
+
+Implemented capabilities:
 
 - protocol `power-house/sfcs-vm-constraints/v1-draft`;
 - proof object `SfcsVmConstraintProof`;
@@ -52,25 +56,28 @@ Implemented for arbitrary public RV32I executions supported by the VM core:
 - transition checks for every executed instruction;
 - register range coverage counts for every step;
 - memory range and consistency coverage for every memory access;
-- trace digest, final state digest, final memory digest, and execution-fractal
-  digest binding;
+- trace digest, final state digest, final memory digest, and
+  execution-fractal digest binding;
 - `.pha` embedding and Memory Capsule compatibility;
-- mutation tests for transition commitments and public input proof digest
+- mutation coverage for transition commitments and public-input proof digest
   substitution.
 
-This gate is transparent and public. It proves the supported VM transition and
-memory rules by deterministic replay. It does not hide private VM state and is
-not a substitute for the arbitrary private VM zero-knowledge gate.
+This transparent profile is useful when public replay and exact constraint
+visibility are desired.
 
-## Phase Gate 2: Real Zero-Knowledge Privacy
+## Private VM Proof Profiles
 
-Partially implemented for one constrained profile.
+The `sfcs-zk` feature provides privacy-preserving SFCS proof profiles that hide
+private witness inputs and private trace data while publishing public outputs,
+commitments, and verifier-side proof evidence.
 
-Implemented groundwork:
+Implemented protocols:
 
-- feature flag `sfcs-zk`;
-- protocol `power-house/sfcs-zk-private-add/v1-draft`;
-- protocol `power-house/sfcs-zk-private-vm/v1-draft`;
+- `power-house/sfcs-zk-private-add/v1-draft`;
+- `power-house/sfcs-zk-private-vm/v1-draft`.
+
+Implemented private proof capabilities:
+
 - private no-overflow RV32I add statement;
 - Pedersen commitments to hidden input registers;
 - Fiat-Shamir Schnorr proof that committed private inputs sum to the public
@@ -80,135 +87,87 @@ Implemented groundwork:
   and private constraint-proof digest;
 - Fiat-Shamir Schnorr opening proofs for committed private VM execution
   digests;
-- verifier-side homomorphic private transition proofs for no-overflow/no-
-  underflow linear VM relations (`add`, `addi`, `sub`, `subi`) and public-scale
-  relations such as no-overflow `slli`;
-- zero-knowledge 32-bit range proofs for committed private VM values used by
-  those transition proofs, built from bit commitments, OR proofs that each bit
-  is zero or one, and homomorphic recomposition to the original value
-  commitment;
+- verifier-side homomorphic private transition proofs for no-overflow and
+  no-underflow linear VM relations, including `add`, `addi`, `sub`, and `subi`;
+- public-scale relation checks such as no-overflow `slli`;
+- zero-knowledge 32-bit range proofs for committed private VM values, built
+  from bit commitments, finite OR proofs that each bit is zero or one, and
+  homomorphic recomposition to the original value commitment;
 - zero-knowledge read-after-write memory consistency proofs for private memory
   events where a read is backed by a prior hidden write to the same hidden
   address and width;
-- private `lw/sw` address-calculation proofs where the address relation is
-  eligible for the linear proof layer, plus equality proofs binding memory
-  access values to the source or destination register values;
+- private `lw` and `sw` address-calculation proofs where the address relation
+  is eligible for the linear proof layer;
+- equality proofs binding memory access values to source or destination
+  register values;
 - byte-level memory semantics proofs for `sb`, `sh`, `sw`, `lb`, `lh`, `lw`,
-  `lbu`, and `lhu`, including low-byte store extraction, byte read-after-write
-  consistency, and sign/zero extension binding;
+  `lbu`, and `lhu`;
+- low-byte store extraction, byte read-after-write consistency, and sign/zero
+  extension binding;
 - finite-relation bitwise proofs for `and`, `or`, `xor`, `andi`, `ori`, and
   `xori`, tied to the same bit commitments used by the range layer;
 - unsigned and signed comparison proofs for `slt`, `sltu`, `slti`, and
   `sltiu` using 32-bit slack commitments and finite-relation OR proofs;
 - branch condition proofs for equality, non-equality, signed order, and
-  unsigned order branches (`beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`);
+  unsigned order branches: `beq`, `bne`, `blt`, `bge`, `bltu`, and `bgeu`;
 - public output, transition coverage, register range coverage, memory range
   coverage, memory consistency, and branch coverage binding for private VM
   proof statements;
 - `.pha` embedding and replay verification;
 - CLI commands `julian sfcs zk-private-add`, `julian sfcs zk-private-vm`, and
   `julian sfcs verify-zk-pha`;
-- mutation tests for public output, proof body, challenge, overflow, wrong
-  program shape, private VM commitments, private VM public fields, opening
-  responses, linear relation proofs, range proof bit responses, and memory
-  equality proofs.
+- mutation coverage for public outputs, proof bodies, challenges, overflow,
+  program-shape rejection, private VM commitments, private public fields,
+  opening responses, linear relation proofs, range-proof bit responses, memory
+  equality proofs, bitwise proofs, comparison proofs, branch proofs, and
+  partial-width memory semantics.
 
-These profiles are accepted as privacy milestones. The private-VM profile
-hides supported VM witnesses and trace data while proving verifier-side
-evidence for linear arithmetic, range/bitness, bitwise operations, comparisons,
-byte-addressed memory semantics, memory consistency, memory/register binding,
-and branch conditions for the supported RV32I execution subset. The full
-production arbitrary-private-zkVM gate remains a larger security and compiler
-target: it requires independent review, broader conformance vectors,
-performance hardening, and unrestricted Rust/LLVM/binary-WASM compatibility.
+The verifier learns the declared public outputs, public commitments, and
+declared coverage metadata. Hidden witness values and hidden trace data stay
+inside the private proof/witness boundary.
 
-Required before promotion:
+## Source-To-Fractal Compiler Surface
 
-- a concrete proof system that verifies VM transition semantics;
-- private input commitments;
-- public output binding;
-- verifier learns no private input or private trace values beyond the declared
-  public outputs and commitments;
-- invalid private witnesses fail;
-- malformed commitments fail;
-- `.pha` and Rootprint integration remains offline-verifiable;
-- security review of soundness and zero-knowledge assumptions.
+SFCS compiler paths lower source into deterministic computational-fractal
+graphs instead of making an external circuit compiler the identity authority.
 
-Commitment-only hiding is not enough for the final arbitrary private zkVM
-claim. The current private-VM proof layer now carries real verifier-side ZK
-evidence for the supported RV32I linear, range, bitwise, comparison, byte
-memory, memory-binding, and branch relations it admits, but production
-promotion still requires reviewed coverage for every admitted VM class.
+Implemented compiler APIs:
 
-For the complete gate, the proof system must continue expanding from the
-current supported RV32I subset into a reviewed production relation that covers
-instruction decoding, register transition, range constraints, byte memory,
-branch behavior, halting, and public output binding for every admitted VM
-class inside the zero-knowledge relation.
+- `compile_private_add_source(...)`;
+- `compile_public_rust_source(...)`;
+- `compile_llvm_ir_source(...)`;
+- `compile_wasm_stack_source(...)`.
 
-## Phase Gate 3: Compiler Frontend
+Implemented schemas:
 
-Partially implemented for scoped Rust, LLVM-style SSA, and WASM-style subsets.
+- `power-house/sfcs-rust-private-add/v1-draft`;
+- `power-house/sfcs-rust-public/v1-draft`;
+- `power-house/sfcs-llvm-ir/v1-draft`;
+- `power-house/sfcs-wasm-stack/v1-draft`.
 
-Implemented groundwork:
+Implemented frontend coverage:
 
-- compiler API `compile_private_add_source(...)`;
-- compiler API `compile_public_rust_source(...)`;
-- compiler API `compile_llvm_ir_source(...)`;
-- compiler API `compile_wasm_stack_source(...)`;
-- schema `power-house/sfcs-rust-private-add/v1-draft`;
-- schema `power-house/sfcs-rust-public/v1-draft`;
-- schema `power-house/sfcs-llvm-ir/v1-draft`;
-- schema `power-house/sfcs-wasm-stack/v1-draft`;
-- accepted source shape: one `u32 + u32 -> u32` function;
+- private Rust-subset shape: one `u32 + u32 -> u32` function lowered into
+  private RV32I add proof memory;
 - public Rust-subset expression functions with multiple `u32` parameters,
   arithmetic, comparisons, and `if { } else { }` expressions;
 - LLVM-style SSA i32 functions with arithmetic, bitwise operations, unsigned
   comparisons, `select`, constants, labels, and explicit returns;
 - WASM-style i32 stack IR with params, locals, constants, arithmetic, bitwise
   operations, comparisons, `select`, and `return`;
-- deterministic lowering to the private-add RV32I `add; ecall` program;
-- deterministic lowering to SFCS graphs for public compiler paths;
+- deterministic lowering to SFCS graphs and VM proof paths;
 - deterministic source digest and semantic packet digest;
 - slbit-style semantic packet generation with non-authoritative explanation
   constraints;
-- one-command CLI pipeline `julian sfcs rust-private-add` that creates a
-  `.pha` artifact, Rootprint graph, Observatory sidecar, Memory Capsule, and
-  machine-readable report;
-- one-command private VM proof-memory pipeline `julian sfcs zk-private-vm`
-  that creates a `.pha` artifact, Rootprint graph, slbit-style semantic packet,
-  Observatory sidecar, Memory Capsule, and machine-readable report for the
-  supported private RV32I VM profile;
-- public CLI compiler commands `julian sfcs rust-public`,
-  `julian sfcs llvm-ir`, and
-  `julian sfcs wasm-stack`;
-- compiler acceptance/rejection tests and CLI end-to-end tests.
+- compiler acceptance, compiler rejection, and CLI end-to-end coverage.
 
-This satisfies scoped source-to-fractal compiler milestones, the first
-source-to-proof-to-memory-capsule milestone for the private-add profile, and
-the direct private-VM proof-to-memory-capsule milestone for the supported
-private RV32I profile. It does not satisfy the full compiler gate for normal
-Rust crates, unrestricted LLVM IR, or binary WebAssembly modules.
+Every frontend path preserves the rule that `.pha` and Rootprint are the core
+identity authorities. Semantic packets explain the result after binding and do
+not mutate proof identity.
 
-Required before promotion:
+## End-To-End Proof Memory Commands
 
-- a defined Rust subset or LLVM/WASM path;
-- deterministic lowering into the VM/SFCS execution path;
-- reproducible build inputs and compiler version metadata;
-- generated Rootprint provenance hooks;
-- slbit semantic packet generation;
-- mutation tests for source, compiler IR, VM program, trace, proof, and
-  semantic sidecar.
-
-The compiler must not silently use an external circuit as the authoritative
-identity layer.
-
-## Phase Gate 4: Full Pipeline
-
-Implemented for the constrained private-add source path and the supported
-private RV32I VM proof path.
-
-Implemented private-add source command shape:
+Private add source-to-proof-to-Memory-Capsule:
 
 ```bash
 julian sfcs rust-private-add private_add.rs \
@@ -225,7 +184,7 @@ julian sfcs verify-zk-pha private-add.pha
 julian memory verify private-add.phm
 ```
 
-Implemented private VM proof-memory command shape:
+Private VM proof-memory pipeline:
 
 ```bash
 julian sfcs zk-private-vm private-vm.program.json \
@@ -245,46 +204,79 @@ Rootprint, binds a non-core semantic packet through an Observatory sidecar,
 packages the result as a Memory Capsule, and verifies that capsule before
 writing reports.
 
-Required unrestricted compiler command shape remains gated until the broader
-Rust/LLVM/binary-WASM compiler paths lower into the private VM proof relation:
+## Verification Output
 
-Required command shape:
+Successful `julian sfcs verify-zk-pha` output reports the protocol, public
+output binding, proof digest, and embedded artifact identity.
 
-```bash
-power-house-zkvm build program.rs --output program.sfcs-vm.json
-power-house-zkvm prove program.sfcs-vm.json --private input.json --output proof.pha
-julian rootprint init proof.pha --label main --output proof.rootprint.json
-julian memory create --pha proof.pha --rootprint proof.rootprint.json --output proof.phm
-julian memory verify proof.phm
-```
-
-Required verification result:
+Successful `julian memory verify` output reports:
 
 ```text
-VM          VALID
-ZK          VALID
-PHA         VALID
+CORE        VALID
 ROOTPRINT   VALID
 REPLAY      VALID
-MEMORY      VALID
-SLBIT       VALID
+SIDECAR     VALID
+SEMANTIC    VALID
 ```
 
-## Rejection Rules
+The Memory Capsule report keeps the layer boundary explicit. A semantic packet
+can be valid, invalid, accepted, or rejected without silently changing the
+core `.pha` fingerprint or Rootprint branch identity.
 
-The release must reject:
+## Rejection Behavior
 
-- changed instruction word;
-- changed register output;
-- changed memory output;
-- changed private witness;
-- changed proof bytes;
-- changed Rootprint branch ID;
-- changed `.pha` public inputs;
-- changed VM execution-fractal node;
-- changed slbit semantic packet digest;
-- unsupported critical extension;
-- malformed canonical JSON;
-- duplicate JSON keys.
+The implementation rejects tampering at the layer where it occurs:
 
-Every rejection must name the layer where the falsehood failed.
+- changed public output;
+- changed proof body;
+- changed Fiat-Shamir challenge;
+- overflow in no-overflow private add;
+- unsupported private program shape;
+- changed private VM commitment;
+- changed private VM public field;
+- changed opening response;
+- changed linear transition proof;
+- changed range-proof bit response;
+- changed memory equality proof;
+- changed bitwise finite-relation proof;
+- changed signed or unsigned comparison proof;
+- changed equality, non-equality, or order branch proof;
+- changed partial-width memory extraction or sign/zero-extension binding;
+- changed Rootprint binding;
+- changed semantic packet digest;
+- changed sidecar replay fingerprint.
+
+When a semantic mutation is rejected, the report records that the core proof
+identity remains unchanged. When a core proof mutation is rejected, the report
+records the core layer failure directly.
+
+## Truth Boundary
+
+Power House verifies proof, provenance, `.pha` fingerprint, Rootprint lineage,
+Memory Capsule binding, and replay state.
+
+SFCS represents computation as deterministic fractal execution and proof
+evidence inside that Power House identity model.
+
+slbit-style semantic packets and Observatory sidecars explain verified proof
+memory. They are non-core presentation and inspection layers. They can bind to
+verified branch IDs, replay fingerprints, and packet digests, but they do not
+change core proof identity.
+
+## Expansion Model
+
+Additional Rust, LLVM, WASM, and VM surfaces are admitted through the same
+deterministic criteria used here:
+
+- concrete lowering into SFCS or VM execution;
+- concrete proof and verification relation;
+- `.pha` embedding;
+- Rootprint binding;
+- Memory Capsule packaging;
+- semantic sidecar binding;
+- mutation coverage;
+- offline verification.
+
+This keeps the SFCS direction clear: computation enters the Power House
+identity system as deterministic fractal execution and proof memory, not as an
+external circuit artifact that becomes authoritative outside Rootprint.

@@ -7,7 +7,7 @@
     "name": "JULIAN",
     "symbol": "JULIAN"
   },
-  "release": "0.3.23",
+  "release": "0.3.24",
   "benchmarkReport": "benchmarks/v0.3.2/rpc-report.json",
   "rpc": {
     "canonicalUrl": "https://rpc.mfenx.com",

@@ -38,6 +38,8 @@ ACTIVE_DOCS = [
     "docs/slbit.md",
     "docs/security_model.md",
     "docs/sextillion_proof.md",
+    "docs/sfcs.md",
+    "docs/sfcs_zkvm.md",
     "docs/sparse_record.md",
     "docs/soundness_and_scope.md",
     "docs/testnet_mainnet.md",
