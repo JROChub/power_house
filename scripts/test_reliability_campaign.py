@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import fcntl
 import subprocess
 import sys
 import tempfile
@@ -187,6 +188,16 @@ def main() -> None:
             "validator validator_registry_sha256 values differ" in " ".join(item["errors"])
             for item in status["failures"]["recent"]
         )
+
+        with campaign.lock_path.open("w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                with campaign.exclusive_lock():
+                    raise AssertionError("campaign accepted a concurrent mutating command")
+            except RuntimeError as error:
+                assert "another campaign controller" in str(error)
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
 
         campaign.audit_node = lambda node: {
             **fake_node(node.name),
