@@ -1,6 +1,6 @@
 # MFENX Orbital Observatory
 
-Release surface: Power House v0.3.23.
+Release surface: Power House v0.3.24.
 
 `mfenx.com` presents Power House as an interactive planetary proof
 observatory. It combines live celestial telemetry, world time, published proof

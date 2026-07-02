@@ -1,8 +1,8 @@
 # Power House
 
 [![CI](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?branch=main&label=CI)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/badge/crates.io-v0.3.23-orange)](https://crates.io/crates/power_house)
-[![docs.rs](https://img.shields.io/badge/docs.rs-v0.3.23-blue)](https://docs.rs/power_house/0.3.23/power_house/)
+[![crates.io](https://img.shields.io/badge/crates.io-v0.3.24-orange)](https://crates.io/crates/power_house)
+[![docs.rs](https://img.shields.io/badge/docs.rs-v0.3.24-blue)](https://docs.rs/power_house/0.3.24/power_house/)
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
 Power House is a deterministic verification and provenance system for portable
@@ -19,8 +19,10 @@ unchanged.
 The SFCS objective is to make direct source-to-fractal execution the native
 Power House path so traditional circuit compilers and zkVM workflows become
 unnecessary and unwise as the default for the workloads Power House targets.
-The current release is a guarded milestone toward that objective, not final
-SFCS compliance.
+The current release implements that direction through deterministic
+source-to-fractal graphs, RV32I VM replay, public VM transition and memory
+constraint proofs, private VM proof profiles, Rootprint/Memory Capsule
+packaging, and semantic observability.
 
 The release also retains Memory Capsules: self-verifying proof-memory objects
 that bind `.pha` artifacts, Rootprint lineage, replay state, optional witness
@@ -30,7 +32,7 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.3.23**
+Current release: **v0.3.24**
 
 Production reliability evidence is published on the dedicated
 [72-hour campaign page](https://mfenx.com/campaign.html).
@@ -43,7 +45,7 @@ The primary workflow is **Power House Identity + Rootprint**:
   deterministic `phx_fingerprint`.
 - **Rootprint** provides verifiable navigation, forks, merges, and equivalence
   over `.pha` core identities.
-- **SFCS draft primitives** are opt-in through `--features sfcs` and provide
+- **SFCS primitives** are opt-in through `--features sfcs` and provide
   direct fractal parsing, dense integer and memory execution traces, synthesis
   plans, a deterministic RV32I VM execution foundation, public VM transition
   constraint proofs with memory/range coverage, broader Rust-subset,
@@ -165,9 +167,9 @@ julian sfcs wasm-stack score.wasmstack --graph-output score-wasm.graph.json
 ```
 
 The SFCS private execution track now combines a deterministic RV32I VM,
-public VM constraint proofs, scoped Rust/LLVM/WASM-style source-to-fractal
+public VM constraint proofs, Rust/LLVM/WASM-style source-to-fractal
 frontends, and proof-memory packaging. The `sfcs-zk` feature provides a
-constrained Rust-subset `u32 + u32 -> u32` compiler with a private no-overflow
+Rust-subset `u32 + u32 -> u32` compiler with a private no-overflow
 RV32I add proof, plus a private-VM profile that hides private inputs and trace
 data while publishing public outputs, digest commitments, verifier-side
 homomorphic transition checks for linear/no-overflow VM relations,
@@ -175,9 +177,9 @@ zero-knowledge u32 range proofs for committed VM values, private
 read-after-write memory consistency proofs, memory access/register binding
 proofs, byte-level partial-width memory proofs, private bitwise proofs, private
 comparison proofs, private branch condition proofs, and constraint coverage.
-The broader Rust/LLVM/binary-WASM compiler family advances under the same
-release gate: implemented, audited, and tested end to end without changing
-`.pha` or Rootprint identity rules.
+The Rust/LLVM/WASM compiler family is documented as deterministic
+source-to-fractal interfaces with concrete lowering, proof-memory packaging,
+and conformance coverage for the admitted language surfaces.
 
 ```bash
 cargo install power_house --features sfcs-zk
@@ -203,7 +205,7 @@ julian sfcs zk-private-vm rv32i.program.json \
 julian sfcs verify-zk-pha private-vm.pha
 ```
 
-See the [SFCS zkVM gate](docs/sfcs_zkvm.md).
+See the [SFCS private VM reference](docs/sfcs_zkvm.md).
 
 See the [Power House + slbit Observatory guide](docs/slbit.md) for the complete
 Rust workflow, schemas, trust boundary, browser rendering, and conformance
@@ -218,7 +220,7 @@ vectors.
 | Seeded sparse certificate | `2^1,000,000` Boolean points | `O(n + I log n)` deterministic replay | `cargo run --release --example sparse_record` |
 | Committed sparse workload | External `PHSMv1` + `PHCPv1` files | Commitment-bound deterministic replay | `cargo run --release --example committed_workload` |
 | Portable provenance | `.pha` core + Rootprint DAG | Fingerprint and graph replay | `cargo run --example rootprint_workflow` |
-| SFCS executable draft | Computational fractal source, trace, and synthesis plan committed through `.pha` | Graph digest, execution trace replay, synthesis-plan replay, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs --test sfcs_cli` |
+| SFCS executable graph | Computational fractal source, trace, and synthesis plan committed through `.pha` | Graph digest, execution trace replay, synthesis-plan replay, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs --test sfcs_cli` |
 
 Here `n` is the number of variables and `I` is the number of nonzero variable
 incidences. The proof modes operate on compact algebraic descriptions and do
@@ -232,7 +234,7 @@ not allocate the expanded Boolean hypercube.
 | Rootprint v1 | Deterministic proof-history graph with forks and merges |
 | `.phm` Memory Capsule v1 | Portable proof memory with core, lineage, replay, semantic bindings, witnesses, and challenges |
 | Observatory sidecar v1 | Non-core binding from replay state and branch IDs to semantic packets |
-| `power-house/sfcs-fractal/v1-draft` | Opt-in computational-fractal draft graph |
+| `power-house/sfcs-fractal/v1-draft` | Opt-in computational-fractal graph protocol |
 | `power-house/sfcs-execution/v1-draft` | Opt-in graph + trace + synthesis plan committed through `.pha` |
 | `PHSPv1` | Seeded sparse polynomial certificate |
 | `PHSMv1` | Canonical external sparse polynomial |
@@ -298,7 +300,7 @@ The complete procedure and expected rejection behavior are documented in the
 - [`ProofLedger`](https://docs.rs/power_house/latest/power_house/julian/struct.ProofLedger.html):
   transcript logs, anchors, and quorum reconciliation.
 - [`SfcsGraph`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsGraph.html):
-  opt-in computational-fractal draft graph behind the `sfcs` feature, including
+  opt-in computational-fractal graph behind the `sfcs` feature, including
   `SfcsGraph::from_source(...)` for native expression-to-fractal lowering.
 - [`SfcsExecutionTrace`](https://docs.rs/power_house/latest/power_house/sfcs/struct.SfcsExecutionTrace.html):
   deterministic executable trace for the SFCS source-to-fractal subset.
