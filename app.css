@@ -3872,92 +3872,208 @@ body[data-network="outage"] .network-ribbon-state i {
   }
 }
 
-/* Main observatory orbit bay. This final layer keeps the globe unobstructed
-   while preserving the SFCS private VM and identity-path instruments. */
+/* SFCS orbit pop-out. The globe keeps the full orbital viewport; SFCS opens
+   only when requested, so proof text and instrument panels cannot crowd it. */
 :root {
-  --scene-right: clamp(360px, 24vw, 420px);
-  --scene-shift: -62px;
+  --scene-right: 0px;
+  --scene-shift: 0px;
+  --sfcs-tab-width: 48px;
+  --sfcs-panel-width: min(382px, calc(100vw - var(--scene-left) - 96px));
 }
 
 #orbital-canvas {
-  inset: var(--top) var(--scene-right) auto var(--scene-left);
-  width: calc(100% - var(--scene-left) - var(--scene-right));
+  inset: var(--top) 0 auto var(--scene-left);
+  width: calc(100% - var(--scene-left));
 }
 
 .scan-grid,
 .edge-vignette {
-  inset: var(--top) var(--scene-right) var(--scene-bottom) var(--scene-left);
+  inset: var(--top) 0 var(--scene-bottom) var(--scene-left);
 }
 
 .proof-flash,
 .stage-label {
-  left: calc(50% + var(--scene-shift));
+  left: 50%;
 }
 
 .target-reticle {
-  left: calc(50% + var(--scene-shift));
+  left: 57%;
 }
 
 .network-ribbon {
-  right: calc(var(--scene-right) + 28px);
+  right: 70px;
+  max-width: calc(100% - var(--scene-left) - 94px);
 }
 
 .scene-controls {
-  right: calc(var(--scene-right) + 18px);
+  right: 20px;
 }
 
 .proof-event {
-  right: calc(var(--scene-right) + 42px);
+  right: 76px;
 }
 
 .proof-monument {
-  left: calc(var(--scene-left) + 34px);
-  width: min(610px, calc(100% - var(--scene-left) - var(--scene-right) - 78px));
-  bottom: clamp(48px, 6vh, 88px);
+  left: clamp(298px, 22vw, 390px);
+  width: min(640px, 48vw);
+  bottom: clamp(64px, 8vh, 112px);
 }
 
 @media (min-width: 901px) {
   .proof-monument h1 {
-    font-size: clamp(44px, 4vw, 58px);
+    font-size: clamp(54px, 4.6vw, 70px);
   }
 
   .domain-equation strong {
-    font-size: clamp(30px, 3vw, 42px);
+    font-size: clamp(34px, 3.3vw, 48px);
   }
 }
 
 .sfcs-orbit-dock {
+  position: fixed;
+  top: calc(var(--top) + 110px);
+  right: 14px;
+  z-index: 42;
+  width: var(--sfcs-tab-width);
+  min-height: 232px;
+  pointer-events: auto;
+}
+
+.sfcs-orbit-toggle {
+  position: relative;
+  display: grid;
+  grid-template-rows: 34px 1fr auto;
+  justify-items: center;
+  gap: 8px;
+  width: var(--sfcs-tab-width);
+  min-height: 232px;
+  padding: 10px 7px;
+  overflow: hidden;
+  color: var(--paper);
+  border: 1px solid rgba(62, 228, 213, 0.34);
+  background:
+    linear-gradient(180deg, rgba(62, 228, 213, 0.16), rgba(186, 255, 53, 0.07) 45%, rgba(1, 7, 8, 0.9)),
+    rgba(1, 7, 8, 0.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 44px rgba(0, 0, 0, 0.32),
+    0 0 30px rgba(62, 228, 213, 0.08);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+}
+
+.sfcs-orbit-toggle::before {
   position: absolute;
-  top: calc(var(--top) + 84px);
-  right: 18px;
-  z-index: 25;
+  inset: 7px;
+  content: "";
+  border: 1px solid rgba(186, 255, 53, 0.14);
+  background:
+    linear-gradient(transparent 0 9px, rgba(255, 255, 255, 0.07) 9px 10px, transparent 10px 19px),
+    linear-gradient(90deg, transparent 0 12px, rgba(62, 228, 213, 0.2) 12px 13px, transparent 13px 25px);
+  background-size: 100% 19px, 25px 100%;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+  opacity: 0.42;
+}
+
+.sfcs-orbit-toggle > * {
+  position: relative;
+}
+
+.sfcs-orbit-toggle [data-icon] {
+  width: 22px;
+  height: 22px;
+  color: var(--cyan);
+}
+
+.sfcs-orbit-toggle b {
+  color: var(--acid);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  writing-mode: vertical-rl;
+}
+
+.sfcs-orbit-toggle small {
+  color: #91a19b;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  writing-mode: vertical-rl;
+}
+
+.sfcs-orbit-toggle:hover,
+.sfcs-orbit-toggle:focus-visible,
+body.sfcs-popout-open .sfcs-orbit-toggle {
+  border-color: rgba(186, 255, 53, 0.58);
+  background:
+    linear-gradient(180deg, rgba(186, 255, 53, 0.14), rgba(62, 228, 213, 0.14)),
+    rgba(1, 7, 8, 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+    0 22px 54px rgba(0, 0, 0, 0.36),
+    0 0 42px rgba(62, 228, 213, 0.18);
+}
+
+.sfcs-orbit-panel {
+  position: absolute;
+  top: 0;
+  right: calc(var(--sfcs-tab-width) + 10px);
   display: grid;
   gap: 10px;
-  width: min(336px, calc(var(--scene-right) - 28px));
-  max-height: calc(100% - var(--top) - var(--dock) - 106px);
-  pointer-events: none;
-}
-
-.sfcs-orbit-dock::before {
-  position: absolute;
-  inset: -18px -8px;
-  z-index: 0;
-  content: "";
-  border-left: 1px solid rgba(62, 228, 213, 0.24);
+  width: var(--sfcs-panel-width);
+  max-height: calc(100dvh - var(--top) - var(--dock) - 126px);
+  padding: 10px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  color: #d6e6df;
+  border: 1px solid rgba(62, 228, 213, 0.24);
   background:
-    radial-gradient(circle at 0 18%, rgba(62, 228, 213, 0.22), transparent 28%),
-    radial-gradient(circle at 100% 70%, rgba(186, 255, 53, 0.14), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%, rgba(255, 255, 255, 0.025));
-  mask-image: linear-gradient(to bottom, transparent, black 11%, black 89%, transparent);
+    radial-gradient(circle at 0 0, rgba(62, 228, 213, 0.2), transparent 35%),
+    radial-gradient(circle at 100% 88%, rgba(186, 255, 53, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(4, 18, 19, 0.96), rgba(1, 6, 7, 0.9));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 28px 72px rgba(0, 0, 0, 0.48),
+    0 0 58px rgba(62, 228, 213, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(18px) scale(0.98);
+  transform-origin: top right;
+  transition:
+    opacity 180ms ease,
+    visibility 180ms ease,
+    transform 220ms cubic-bezier(0.16, 0.84, 0.2, 1);
+  backdrop-filter: blur(20px);
 }
 
-.sfcs-orbit-dock > section {
+.sfcs-orbit-panel::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  background:
+    linear-gradient(90deg, rgba(62, 228, 213, 0.42), transparent 30%, transparent 70%, rgba(186, 255, 53, 0.34)) top / 100% 1px no-repeat,
+    linear-gradient(90deg, rgba(186, 255, 53, 0.3), transparent 26%, transparent 74%, rgba(62, 228, 213, 0.36)) bottom / 100% 1px no-repeat;
+}
+
+body.sfcs-popout-open .sfcs-orbit-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+.sfcs-orbit-dock .zk-cockpit,
+.sfcs-orbit-dock .substrate-readout {
   position: relative;
   top: auto;
   right: auto;
   bottom: auto;
   z-index: 1;
+  display: block;
   width: 100%;
+  pointer-events: auto;
 }
 
 .sfcs-orbit-dock .zk-cockpit {
@@ -3968,7 +4084,7 @@ body[data-network="outage"] .network-ribbon-state i {
     rgba(1, 7, 8, 0.88);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    0 22px 54px rgba(0, 0, 0, 0.28),
+    0 20px 50px rgba(0, 0, 0, 0.28),
     0 0 42px rgba(62, 228, 213, 0.08);
 }
 
@@ -4009,7 +4125,6 @@ body[data-network="outage"] .network-ribbon-state i {
 
 .sfcs-orbit-dock .zk-cockpit a {
   min-height: 38px;
-  pointer-events: auto;
 }
 
 .sfcs-orbit-dock .substrate-readout {
@@ -4033,49 +4148,68 @@ body[data-network="outage"] .network-ribbon-state i {
   gap: 6px;
 }
 
-@media (min-width: 1500px) {
-  :root {
-    --scene-right: clamp(390px, 22vw, 440px);
-    --scene-shift: -82px;
-  }
-}
-
 @media (max-width: 1180px) {
   :root {
-    --scene-right: 0px;
-    --scene-shift: 110px;
-  }
-
-  .sfcs-orbit-dock {
-    display: none;
-  }
-
-  .network-ribbon {
-    right: 62px;
-  }
-
-  .scene-controls {
-    right: 20px;
-  }
-
-  .proof-event {
-    right: 76px;
+    --sfcs-panel-width: min(350px, calc(100vw - 86px));
   }
 
   .proof-monument {
     left: 252px;
     width: 48vw;
   }
+
+  .network-ribbon {
+    right: 62px;
+  }
+
+  .sfcs-orbit-dock {
+    top: calc(var(--top) + 82px);
+    right: 10px;
+  }
 }
 
 @media (max-width: 900px) {
-  :root {
-    --scene-shift: 0px;
+  .target-reticle,
+  .stage-label {
+    left: 50%;
   }
 
   .proof-monument {
     left: 24px;
     width: 64vw;
+  }
+
+  .sfcs-orbit-dock {
+    top: calc(var(--top) + 14px);
+    right: 10px;
+    width: auto;
+    min-height: 0;
+  }
+
+  .sfcs-orbit-toggle {
+    grid-template-rows: none;
+    grid-template-columns: 20px auto;
+    width: auto;
+    min-height: 38px;
+    padding: 0 10px;
+  }
+
+  .sfcs-orbit-toggle b,
+  .sfcs-orbit-toggle small {
+    writing-mode: initial;
+  }
+
+  .sfcs-orbit-toggle small {
+    display: none;
+  }
+
+  .sfcs-orbit-panel {
+    top: 46px;
+    right: 0;
+    width: min(350px, calc(100vw - 20px));
+    max-height: calc(100dvh - var(--top) - var(--dock) - var(--proof-stack) - 92px);
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
   }
 }
 
@@ -4086,18 +4220,33 @@ body[data-network="outage"] .network-ribbon-state i {
     bottom: 12px;
   }
 
-  .stage-label,
-  .target-reticle {
-    left: 50%;
+  .sfcs-orbit-dock {
+    right: 8px;
+  }
+
+  .sfcs-orbit-toggle {
+    min-height: 34px;
+    padding: 0 9px;
+  }
+
+  .sfcs-orbit-panel {
+    top: 42px;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - var(--top) - var(--dock) - var(--proof-stack) - 78px);
+    padding: 8px;
+  }
+
+  .sfcs-orbit-dock .zk-proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sfcs-orbit-dock .zk-cockpit,
+  .sfcs-orbit-dock .substrate-readout {
+    padding: 10px;
   }
 }
 
 @media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
-  :root {
-    --scene-right: 0px;
-    --scene-shift: 0px;
-  }
-
   .proof-monument {
     left: 76px;
     width: calc(100% - 150px);
@@ -4107,5 +4256,21 @@ body[data-network="outage"] .network-ribbon-state i {
   .stage-label,
   .target-reticle {
     left: 50%;
+  }
+
+  .sfcs-orbit-dock {
+    top: calc(var(--top) + 8px);
+    right: 8px;
+  }
+
+  .sfcs-orbit-toggle {
+    min-height: 32px;
+    padding: 0 8px;
+  }
+
+  .sfcs-orbit-panel {
+    top: 39px;
+    width: min(330px, calc(100vw - 16px));
+    max-height: calc(100dvh - var(--top) - var(--dock) - 54px);
   }
 }
