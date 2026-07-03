@@ -528,6 +528,46 @@ class Campaign:
             "active_alerts": alerts,
         }
 
+    def audit_nodes(self) -> tuple[list[dict], list[str]]:
+        nodes = []
+        errors = []
+        for node in self.config.nodes:
+            try:
+                nodes.append(self.audit_node(node))
+            except Exception as exc:
+                errors.append(str(exc))
+        return nodes, errors
+
+    @staticmethod
+    def finalized_signatures(nodes: list[dict]) -> set[tuple[object, object]]:
+        return {
+            (
+                node.get("health", {}).get("finalized_block"),
+                node.get("health", {}).get("finalized_hash"),
+            )
+            for node in nodes
+        }
+
+    def finalized_states_differ(self, nodes: list[dict]) -> bool:
+        return len(nodes) == len(self.config.nodes) and len(self.finalized_signatures(nodes)) != 1
+
+    def collect_stable_validator_audits(self) -> tuple[list[dict], list[str]]:
+        nodes, errors = self.audit_nodes()
+        if not self.finalized_states_differ(nodes):
+            return nodes, errors
+
+        for _attempt in range(2):
+            time.sleep(2)
+            retry_nodes, retry_errors = self.audit_nodes()
+            if len(retry_nodes) == len(self.config.nodes):
+                nodes = retry_nodes
+                if not self.finalized_states_differ(nodes):
+                    return nodes, errors
+            else:
+                errors.extend(retry_errors)
+
+        return nodes, errors
+
     def collect_sample(self) -> dict:
         errors = []
         latencies = []
@@ -555,11 +595,8 @@ class Campaign:
                 errors.append(f"RPC {method}: {exc}")
                 self.state["rpc_requests"] += 1
                 self.state["rpc_errors"] += 1
-        for node in self.config.nodes:
-            try:
-                nodes.append(self.audit_node(node))
-            except Exception as exc:
-                errors.append(str(exc))
+        nodes, audit_errors = self.collect_stable_validator_audits()
+        errors.extend(audit_errors)
 
         if status:
             if status.get("status") != "operational":
@@ -588,14 +625,7 @@ class Campaign:
             ):
                 if len({node.get(field) for node in nodes}) != 1:
                     errors.append(f"validator {field} values differ")
-            finalized = {
-                (
-                    node.get("health", {}).get("finalized_block"),
-                    node.get("health", {}).get("finalized_hash"),
-                )
-                for node in nodes
-            }
-            if len(finalized) != 1:
+            if self.finalized_states_differ(nodes):
                 errors.append("finalized state differs across validators")
             if any(node.get("service") != "active" for node in nodes):
                 errors.append("one or more validator services are inactive")

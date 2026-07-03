@@ -142,6 +142,46 @@ def main() -> None:
         assert status["evidence"]["events"] == 1
         assert status["acceptance"]["max_rpc_p95_ms"] == 1000
 
+        calls = {"count": 0}
+
+        def transient_finality(node):
+            attempt = calls["count"] // 3
+            calls["count"] += 1
+            item = fake_node(node.name)
+            if attempt == 0 and node.name == "validator-3":
+                item["health"]["finalized_block"] = 43
+                item["health"]["finalized_hash"] = "0x" + "6" * 64
+            return item
+
+        campaign.audit_node = transient_finality
+        original_sleep = module.time.sleep
+        module.time.sleep = lambda _seconds: None
+        try:
+            transient = campaign.collect_sample()
+        finally:
+            module.time.sleep = original_sleep
+        assert transient["ok"] is True
+        assert calls["count"] == 6
+        assert "finalized state differs across validators" not in transient["errors"]
+
+        def persistent_finality(node):
+            item = fake_node(node.name)
+            if node.name == "validator-3":
+                item["health"]["finalized_block"] = 43
+                item["health"]["finalized_hash"] = "0x" + "6" * 64
+            return item
+
+        campaign.audit_node = persistent_finality
+        original_sleep = module.time.sleep
+        module.time.sleep = lambda _seconds: None
+        try:
+            divergent = campaign.collect_sample()
+        finally:
+            module.time.sleep = original_sleep
+        assert divergent["ok"] is False
+        assert "finalized state differs across validators" in divergent["errors"]
+        campaign.audit_node = lambda node: fake_node(node.name)
+
         campaign._drill_action = lambda kind: {
             "passed": True,
             "recovery_seconds": 5.25,
