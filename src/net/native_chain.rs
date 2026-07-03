@@ -34,6 +34,7 @@ const STATE_SCHEMA: &str = "mfenx.powerhouse.native-chain-state.v1";
 const MESSAGE_SCHEMA: &str = "mfenx.powerhouse.native-chain-message.v1";
 const MAX_BLOCK_TRANSACTIONS: usize = 256;
 const MAX_FUTURE_SECONDS: u64 = 30;
+const EMPTY_BLOCK_MIN_SECONDS: u64 = 12;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NativeTransaction {
@@ -257,20 +258,27 @@ impl NativeChainRuntime {
         &mut self,
         signing: &SigningKey,
     ) -> Result<Option<NativeBlockProposal>, String> {
-        if self.pending.is_empty() {
+        let state = self.state.read().await;
+        let now = now_secs();
+        let empty_heartbeat = self.pending.is_empty();
+        if empty_heartbeat
+            && state
+                .latest_timestamp()
+                .saturating_add(EMPTY_BLOCK_MIN_SECONDS)
+                > now
+        {
             return Ok(None);
         }
-        let state = self.state.read().await;
         let number = state.latest_number().saturating_add(1);
         if expected_leader(&self.validators, number) != self.local_validator {
             return Ok(None);
         }
-        if self
+        if let Some(existing) = self
             .proposals
             .values()
-            .any(|proposal| proposal.number == number)
+            .find(|proposal| proposal.number == number)
         {
-            return Ok(None);
+            return Ok(Some(existing.clone()));
         }
 
         let mut transactions = Vec::new();
@@ -283,10 +291,10 @@ impl NativeChainRuntime {
                 transactions.push(tx.clone());
             }
         }
-        if transactions.is_empty() {
+        if !empty_heartbeat && transactions.is_empty() {
             return Ok(None);
         }
-        let timestamp = now_secs().max(state.latest_timestamp().saturating_add(1));
+        let timestamp = now.max(state.latest_timestamp().saturating_add(1));
         let mut proposal = NativeBlockProposal {
             chain_id: state.chain_id,
             number,
@@ -465,6 +473,10 @@ impl NativeChainRuntime {
             validator: self.local_validator.clone(),
             signature: sign_vote(signing, &proposal.hash, proposal.number),
         };
+        println!(
+            "QSYS|mod=NATIVE_CHAIN|evt=VOTE|height={}|hash={}|validator={}",
+            proposal.number, proposal.hash, self.local_validator
+        );
         self.voted_heights
             .insert(proposal.number, proposal.hash.clone());
         self.votes
@@ -498,6 +510,13 @@ impl NativeChainRuntime {
         validate_vote(&vote, &proposal, &self.validators)?;
         let votes = self.votes.entry(vote.block_hash.clone()).or_default();
         votes.insert(vote.validator.clone(), vote);
+        println!(
+            "QSYS|mod=NATIVE_CHAIN|evt=VOTE_OBSERVED|height={}|hash={}|votes={}/{}",
+            proposal.number,
+            proposal.hash,
+            votes.len(),
+            self.quorum
+        );
         if votes.len() < self.quorum {
             return Ok(Vec::new());
         }
@@ -910,7 +929,7 @@ fn validate_proposal(
     {
         return Err("proposal does not extend the finalized tip".to_string());
     }
-    if proposal.transactions.is_empty() || proposal.transactions.len() > MAX_BLOCK_TRANSACTIONS {
+    if proposal.transactions.len() > MAX_BLOCK_TRANSACTIONS {
         return Err("proposal transaction count is invalid".to_string());
     }
     if proposal.timestamp <= state.latest_timestamp()
@@ -1343,6 +1362,72 @@ mod tests {
             assert_eq!(state.account(&tx.to).balance, 2);
             assert_eq!(state.account(&tx.from).nonce, 1);
         }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn empty_heartbeat_blocks_finalize_without_changing_accounts() {
+        let chain_id = 177155;
+        let validator = validator("heartbeat");
+        let validator_ids = vec![encode_public_key_base64(&validator.verifying)];
+        let mut accounts = BTreeMap::new();
+        accounts.insert(
+            "0x20463165245573078cfd3c5d67fd643fe8c7745e".to_string(),
+            NativeAccount {
+                balance: 1_000_000,
+                nonce: 0,
+            },
+        );
+        let base = NativeChainState {
+            schema: STATE_SCHEMA.to_string(),
+            chain_id,
+            validators: validator_ids.clone(),
+            quorum: 1,
+            genesis_accounts: accounts.clone(),
+            accounts: accounts.clone(),
+            blocks: vec![genesis_block(chain_id, &accounts, &validator_ids, 1)],
+            votes_cast: BTreeMap::new(),
+        };
+        let root = std::env::temp_dir().join(format!("native_chain_heartbeat_{}", now_nanos()));
+        fs::create_dir_all(&root).unwrap();
+        let state = Arc::new(RwLock::new(base));
+        let mut runtime = NativeChainRuntime::new(
+            state.clone(),
+            root.join("state.json"),
+            validator_ids,
+            1,
+            &validator.signing,
+        )
+        .await
+        .unwrap();
+
+        let proposal = runtime
+            .propose(&validator.signing)
+            .await
+            .unwrap()
+            .expect("genesis-idle chain should produce a heartbeat block");
+        assert!(proposal.transactions.is_empty());
+        let messages = runtime
+            .handle_message(
+                NativeChainMessage::new(NativeChainMessagePayload::Proposal(proposal)),
+                &validator.signing,
+            )
+            .await
+            .unwrap();
+        for message in messages {
+            runtime
+                .handle_message(message, &validator.signing)
+                .await
+                .unwrap();
+        }
+
+        let finalized = state.read().await;
+        assert_eq!(finalized.latest_number(), 1);
+        assert_eq!(finalized.accounts, accounts);
+        assert_eq!(finalized.latest_block().proposal.transactions.len(), 0);
+        finalized.validate().unwrap();
+        drop(finalized);
+        assert!(runtime.propose(&validator.signing).await.unwrap().is_none());
         fs::remove_dir_all(root).unwrap();
     }
 }

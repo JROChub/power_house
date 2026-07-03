@@ -2026,6 +2026,12 @@ pub async fn run_network(cfg: NetConfig) -> Result<(), NetworkError> {
                 if let Some(runtime) = native_runtime.as_mut() {
                     match runtime.propose(&cfg.key_material.signing).await {
                         Ok(Some(proposal)) => {
+                            println!(
+                                "QSYS|mod=NATIVE_CHAIN|evt=PROPOSE|height={}|hash={}|txs={}",
+                                proposal.number,
+                                proposal.hash,
+                                proposal.transactions.len()
+                            );
                             let message = NativeChainMessage::new(
                                 NativeChainMessagePayload::Proposal(proposal)
                             );

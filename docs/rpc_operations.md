@@ -45,6 +45,13 @@ currently fee-free, so RPC gas price and effective gas price are zero.
 `eth_getTransactionReceipt` remains `null` until the block has a valid quorum
 certificate.
 
+Idle production validators also finalize quorum-signed heartbeat blocks after
+the native chain has been idle long enough. A heartbeat block has zero
+transactions, preserves the previous account state root, and advances the
+finalized height so wallets, explorers, and public RPC monitors can observe a
+live chain even before the next user transfer. Heartbeats use the same proposer,
+vote, replay, and state-root validation path as transfer blocks.
+
 ## Genesis and recovery
 
 Fund `stake_registry.json` before the first native-chain start. After
@@ -70,9 +77,9 @@ The repository includes a three-process transaction test:
 scripts/test_native_rpc_cluster.sh
 ```
 
-It submits a signed transfer with two validators, starts a third replica after
-finality, and requires live catch-up plus identical block hash, state root,
-balances, and successful receipt.
+It starts all three validators, allows the first heartbeat block to finalize,
+submits a signed transfer, and requires every replica to agree on the transfer
+receipt block, block hash, balances, and successful receipt.
 
 ## Publication gate
 

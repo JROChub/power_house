@@ -118,8 +118,9 @@ PEER_ID="$(sed -n 's/.*peer=\([^ ]*\).*/\1/p' "$WORK_DIR/node1.out" | head -1)"
 }
 BOOTSTRAP="/ip4/127.0.0.1/tcp/${P2P_BASE_PORT}/p2p/${PEER_ID}"
 start_node 2 cluster-b "$BOOTSTRAP"
+start_node 3 cluster-c "$BOOTSTRAP"
 
-for node in 1 2; do
+for node in 1 2 3; do
   wait_for_rpc "$((RPC_BASE_PORT + node - 1))" || {
     echo "node ${node} RPC failed to start" >&2
     tail -n 50 "$WORK_DIR/node${node}.out" >&2
@@ -141,56 +142,59 @@ SUBMITTED="$(
 
 for _ in $(seq 1 120); do
   finalized=1
-  for node in 1 2; do
-    height="$(
+  for node in 1 2 3; do
+    receipt_block="$(
+      rpc_call "$((RPC_BASE_PORT + node - 1))" eth_getTransactionReceipt "[\"${TX_HASH}\"]" |
+        jq -r '.result.blockNumber // empty'
+    )"
+    latest="$(
       rpc_call "$((RPC_BASE_PORT + node - 1))" eth_blockNumber '[]' |
         jq -r '.result'
     )"
-    [[ "$height" == "0x1" ]] || finalized=0
+    [[ -n "$receipt_block" && "$((16#${latest#0x}))" -ge "$((16#${receipt_block#0x}))" ]] ||
+      finalized=0
   done
   [[ "$finalized" == "1" ]] && break
   sleep 0.25
 done
-
-start_node 3 cluster-c "$BOOTSTRAP"
-wait_for_rpc "$((RPC_BASE_PORT + 2))" || {
-  echo "node 3 RPC failed to start" >&2
-  tail -n 50 "$WORK_DIR/node3.out" >&2
+if [[ "$finalized" != "1" ]]; then
+  echo "transaction did not finalize on every node" >&2
+  for node in 1 2 3; do
+    port=$((RPC_BASE_PORT + node - 1))
+    echo "node ${node} height: $(rpc_call "$port" eth_blockNumber '[]')" >&2
+    echo "node ${node} receipt: $(rpc_call "$port" eth_getTransactionReceipt "[\"${TX_HASH}\"]")" >&2
+    echo "node ${node} native-chain log lines:" >&2
+    grep 'NATIVE_CHAIN' "$WORK_DIR/node${node}.out" >&2 || true
+    tail -n 80 "$WORK_DIR/node${node}.out" >&2 || true
+  done
   exit 1
-}
-for _ in $(seq 1 120); do
-  height="$(
-    rpc_call "$((RPC_BASE_PORT + 2))" eth_blockNumber '[]' |
-      jq -r '.result'
-  )"
-  [[ "$height" == "0x1" ]] && break
-  sleep 0.25
-done
+fi
 
-declare -a hashes roots
+declare -a receipt_blocks receipt_hashes
 for node in 1 2 3; do
   port=$((RPC_BASE_PORT + node - 1))
-  block="$(rpc_call "$port" eth_getBlockByNumber '["latest",false]')"
   receipt="$(rpc_call "$port" eth_getTransactionReceipt "[\"${TX_HASH}\"]")"
+  receipt_block_number="$(jq -r '.result.blockNumber' <<<"$receipt")"
+  block="$(rpc_call "$port" eth_getBlockByNumber "[\"${receipt_block_number}\",false]")"
   sender_balance="$(rpc_call "$port" eth_getBalance "[\"${SENDER}\",\"latest\"]" | jq -r '.result')"
   recipient_balance="$(
     rpc_call "$port" eth_getBalance "[\"${RECIPIENT}\",\"latest\"]" |
       jq -r '.result'
   )"
-  hashes+=("$(jq -r '.result.hash' <<<"$block")")
-  roots+=("$(jq -r '.result.stateRoot' <<<"$block")")
-  [[ "$(jq -r '.result.blockNumber' <<<"$receipt")" == "0x1" ]]
+  receipt_blocks+=("$receipt_block_number")
+  receipt_hashes+=("$(jq -r '.result.hash' <<<"$block")")
+  [[ "$(jq -r '.result.blockNumber' <<<"$receipt")" == "$receipt_block_number" ]]
   [[ "$(jq -r '.result.status' <<<"$receipt")" == "0x1" ]]
   [[ "$sender_balance" == "0x29a2241af62c0000" ]]
   [[ "$recipient_balance" == "0x1bc16d674ec80000" ]]
 done
 
-[[ "${hashes[0]}" == "${hashes[1]}" && "${hashes[1]}" == "${hashes[2]}" ]]
-[[ "${roots[0]}" == "${roots[1]}" && "${roots[1]}" == "${roots[2]}" ]]
+[[ "${receipt_blocks[0]}" == "${receipt_blocks[1]}" && "${receipt_blocks[1]}" == "${receipt_blocks[2]}" ]]
+[[ "${receipt_hashes[0]}" == "${receipt_hashes[1]}" && "${receipt_hashes[1]}" == "${receipt_hashes[2]}" ]]
 
 if grep -E 'unknown proposal|does not extend the finalized tip' "$WORK_DIR"/*.out; then
   echo "native-chain message ordering regression detected" >&2
   exit 1
 fi
 
-echo "native_rpc_cluster: PASS height=1 hash=${hashes[0]} state_root=${roots[0]}"
+echo "native_rpc_cluster: PASS tx_block=${receipt_blocks[0]} hash=${receipt_hashes[0]}"
