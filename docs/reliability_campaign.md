@@ -42,9 +42,10 @@ The controller samples once per minute:
 - external observer health and connection count.
 
 The public campaign state includes elapsed and remaining time, progress,
-successful and failed network samples, controller telemetry gaps,
-observer-admission incidents, uptime, RPC p50/p95/p99, drill outcomes,
-evidence event count, evidence head hash, and final report hash.
+successful and failed network samples, controller telemetry gaps, reconciled
+controller activity windows, observer-admission incidents, uptime,
+RPC p50/p95/p99, drill outcomes, evidence event count, evidence head hash, and
+final report hash.
 The dedicated page also renders the current pass criteria and whether the
 running evidence remains on track. Campaign UI is not added to the primary
 observatory.
@@ -79,7 +80,12 @@ writes a final report and SHA-256 manifest. RPC errors, hash divergence,
 network failed samples, blocked drills, or incomplete drills prevent a passing
 campaign result. Controller telemetry gaps are retained in the evidence journal
 and reported as evidence-continuity cautions, but they do not count as network
-failed samples unless the collected network sample itself failed.
+failed samples unless the collected network sample itself failed. When the
+hash-chained journal proves the controller was actively running an RPC burst,
+drill, or publish operation inside a previously reported gap window, the live
+controller may reconcile that entry as a `controller_busy_window`. Reconciliation
+does not delete evidence; it appends a reconciliation event, preserves the
+original timestamps, and removes the entry from controller telemetry-gap totals.
 Observer intake endpoint failures are reported as admission-plane incidents
 when every RPC, validator, registry, finality, and observer-health gate remains
 healthy. They stay in the hash-chained evidence journal and on the public
@@ -98,6 +104,9 @@ python3 ~/.local/lib/powerhouse/reliability_campaign.py status \
 
 python3 ~/.local/lib/powerhouse/reliability_campaign.py reclassify-controller-gaps \
   --config ~/.config/powerhouse/reliability-campaign.json
+
+python3 ~/.local/lib/powerhouse/reliability_campaign.py reconcile-controller-gaps \
+  --config ~/.config/powerhouse/reliability-campaign.json
 ```
 
 The controller resumes the same campaign after process restart only when the
@@ -106,3 +115,6 @@ campaign lock.
 The reclassification command is guarded: it only changes a completed failed
 campaign to passed when all network acceptance gates pass and the only failure
 source was legacy controller telemetry gaps.
+The reconciliation command is narrower and can be used while a campaign is
+running: it only reclassifies a silent-gap entry when an existing hash-chained
+controller activity event falls inside that same window.

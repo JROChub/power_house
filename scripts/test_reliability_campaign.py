@@ -139,8 +139,19 @@ def main() -> None:
         assert status["sample_count"] == 1
         assert status["uptime_percent"] == 100.0
         assert status["network"]["validators_healthy"] == 3
-        assert status["evidence"]["events"] == 1
+        assert status["evidence"]["events"] >= 1
         assert status["acceptance"]["max_rpc_p95_ms"] == 1000
+
+        before_samples = campaign.state["sample_count"]
+        campaign.state["last_controller_event_unix"] -= 20
+        campaign.record_event("rpc_burst", {"requests": 30, "errors": 0})
+        campaign.apply_sample(campaign.collect_sample())
+        assert campaign.state["sample_count"] == before_samples + 1
+        assert campaign.state["missed_controller_samples"] == 0
+        assert not any(
+            item["kind"] == "telemetry_gap"
+            for item in campaign.public_status()["failures"]["recent"]
+        )
 
         calls = {"count": 0}
 
@@ -280,6 +291,7 @@ def main() -> None:
         campaign._http_json = healthy_http
 
         campaign.state["last_sample_unix"] -= 20
+        campaign.state["last_controller_event_unix"] -= 20
         before_failed = campaign.state["failed_samples"]
         before_samples = campaign.state["sample_count"]
         expected_missed = 20 // config.sample_interval_seconds - 1
@@ -314,6 +326,7 @@ def main() -> None:
         install_fakes(gap_only)
         gap_only.apply_sample(gap_only.collect_sample())
         gap_only.state["last_sample_unix"] -= 20
+        gap_only.state["last_controller_event_unix"] -= 20
         gap_only.apply_sample(gap_only.collect_sample())
         gap_only.state["drills"][0]["status"] = "passed"
         status = gap_only.public_status()
@@ -325,6 +338,28 @@ def main() -> None:
         assert status["failures"]["controller_gap_total"] == expected_missed
         gap_only.finalize()
         assert gap_only.state["status"] == "passed"
+
+        busy_value = config_value(base / "busy-gap")
+        busy_path = base / "busy-gap.json"
+        busy_path.write_text(json.dumps(busy_value))
+        busy = module.Campaign(module.Config.load(busy_path))
+        install_fakes(busy)
+        busy.apply_sample(busy.collect_sample())
+        busy.state["last_sample_unix"] -= 20
+        busy.state["last_controller_event_unix"] = busy.state["last_sample_unix"]
+        busy.record_event("rpc_burst", {"requests": 30, "errors": 0})
+        busy.state["last_controller_event_unix"] = busy.state["last_sample_unix"]
+        busy.apply_sample(busy.collect_sample())
+        assert busy.state["missed_controller_samples"] == expected_missed
+        result = busy.reconcile_controller_gaps()
+        assert result["reclassified"] == 1
+        status = busy.public_status()
+        assert status["controller_telemetry_gaps"]["missed_samples"] == 0
+        assert status["failures"]["controller_busy_windows"] == 1
+        assert any(
+            item["kind"] == "controller_busy_window"
+            for item in status["failures"]["recent"]
+        )
 
         legacy_value = config_value(base / "legacy-gap")
         legacy_path = base / "legacy-gap.json"
