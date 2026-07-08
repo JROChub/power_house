@@ -72,7 +72,7 @@ PY
 copy_ops() {
   local host=$1
   ssh "${SSH_ARGS[@]}" "$host" \
-    "install -d -m 0750 /etc/powerhouse /var/backups/powerhouse /var/log/powerhouse /usr/local/lib/powerhouse"
+    "install -d -m 0750 /etc/powerhouse /var/backups/powerhouse /var/log/powerhouse && install -d -m 0755 /usr/local/lib/powerhouse"
   for script in alert.sh backup.sh healthcheck.py journal_export.sh metrics_snapshot.sh restore.sh; do
     scp "${SSH_ARGS[@]}" "$ROOT/infra/ops/$script" "$host:/usr/local/lib/powerhouse/$script"
   done
