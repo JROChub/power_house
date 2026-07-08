@@ -970,7 +970,7 @@ body.proof-verified .proof-event b {
   top: var(--top);
   right: 0;
   bottom: var(--dock);
-  z-index: 60;
+  z-index: 180;
   display: flex;
   flex-direction: column;
   width: min(390px, calc(100% - 32px));
@@ -982,22 +982,36 @@ body.proof-verified .proof-event b {
   overscroll-behavior: contain;
   scrollbar-color: rgba(62, 228, 213, 0.28) transparent;
   scrollbar-width: thin;
+  visibility: hidden;
+  pointer-events: none;
   transform: translateX(102%);
-  transition: transform 280ms cubic-bezier(0.16, 0.78, 0.22, 1);
+  transition:
+    transform 280ms cubic-bezier(0.16, 0.78, 0.22, 1),
+    visibility 0s linear 280ms;
 }
 
-.observatory-open .observatory-drawer,
-.evaluation-open .evaluation-drawer {
+body.observatory-open .observatory-drawer,
+body.evaluation-open .evaluation-drawer {
+  visibility: visible;
+  pointer-events: auto;
   transform: translateX(0);
+  transition:
+    transform 280ms cubic-bezier(0.16, 0.78, 0.22, 1),
+    visibility 0s;
 }
 
 .drawer-heading {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex: none;
   min-height: 32px;
+  padding-bottom: 8px;
   color: var(--muted);
+  background: linear-gradient(180deg, rgba(2, 8, 9, 0.99), rgba(2, 8, 9, 0.92));
 }
 
 .drawer-heading > div {
@@ -1013,6 +1027,8 @@ body.proof-verified .proof-event b {
 }
 
 .drawer-heading button {
+  position: relative;
+  z-index: 5;
   display: grid;
   place-items: center;
   width: 32px;
@@ -2107,7 +2123,7 @@ body.proof-verified .proof-event b {
   right: 0;
   bottom: var(--dock);
   left: 236px;
-  z-index: 34;
+  z-index: 24;
   display: grid;
   grid-template-rows: 42px minmax(0, 1fr);
   height: var(--explorer-closed);
@@ -2131,11 +2147,25 @@ body.luminous-mode .luminous-explorer {
 }
 
 body.luminous-mode {
-  --scene-bottom: calc(var(--dock) + var(--proof-stack) + var(--explorer-closed));
+  --scene-bottom: calc(var(--dock) + var(--proof-stack));
 }
 
 body.luminous-mode.luminous-expanded {
   --scene-bottom: calc(var(--dock) + var(--proof-stack) + var(--explorer-open));
+}
+
+body.luminous-mode:not(.luminous-expanded) .luminous-explorer {
+  height: 34px;
+  opacity: 0.88;
+  transform: translateY(0);
+}
+
+body.luminous-mode:not(.luminous-expanded) .luminous-heading {
+  min-height: 34px;
+}
+
+body.luminous-mode:not(.luminous-expanded) .luminous-workspace {
+  display: none;
 }
 
 body.luminous-expanded .luminous-explorer {
@@ -3937,6 +3967,27 @@ body[data-network="outage"] .network-ribbon-state i {
   width: var(--sfcs-tab-width);
   min-height: 232px;
   pointer-events: auto;
+}
+
+body.observatory-open .sfcs-orbit-dock,
+body.evaluation-open .sfcs-orbit-dock {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(18px);
+}
+
+body.observatory-open .sfcs-orbit-panel,
+body.evaluation-open .sfcs-orbit-panel {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.observatory-open .scene-controls,
+body.evaluation-open .scene-controls {
+  opacity: 0.16;
+  pointer-events: none;
 }
 
 .sfcs-orbit-toggle {

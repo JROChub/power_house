@@ -3246,9 +3246,12 @@ function bindInterface() {
     document.body.classList.toggle("sfcs-popout-open", open);
     el.sfcsOrbitToggle.setAttribute("aria-expanded", String(open));
   };
+  const closeInstrumentDrawers = () => {
+    document.body.classList.remove("observatory-open", "evaluation-open");
+  };
   el.observatoryToggle.addEventListener("click", () => {
-    document.body.classList.remove("evaluation-open");
     setSfcsOrbitOpen(false);
+    closeInstrumentDrawers();
     document.body.classList.add("observatory-open");
   });
   el.observatoryClose.addEventListener("click", () =>
@@ -3262,21 +3265,29 @@ function bindInterface() {
   });
   el.sfcsOrbitToggle.addEventListener("click", (event) => {
     event.stopPropagation();
-    setSfcsOrbitOpen(!document.body.classList.contains("sfcs-popout-open"));
+    const open = !document.body.classList.contains("sfcs-popout-open");
+    if (open) closeInstrumentDrawers();
+    setSfcsOrbitOpen(open);
   });
   el.canvas.addEventListener("pointerdown", () => setSfcsOrbitOpen(false));
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setSfcsOrbitOpen(false);
   });
   window.addEventListener("hashchange", () => {
-    if (window.location.hash === "#sfcs") setSfcsOrbitOpen(true);
+    if (window.location.hash === "#sfcs") {
+      closeInstrumentDrawers();
+      setSfcsOrbitOpen(true);
+    }
   });
   if (window.location.hash === "#sfcs") {
-    window.requestAnimationFrame(() => setSfcsOrbitOpen(true));
+    window.requestAnimationFrame(() => {
+      closeInstrumentDrawers();
+      setSfcsOrbitOpen(true);
+    });
   }
   el.evaluationToggle.addEventListener("click", () => {
-    document.body.classList.remove("observatory-open");
     setSfcsOrbitOpen(false);
+    closeInstrumentDrawers();
     document.body.classList.add("evaluation-open");
   });
   el.evaluationClose.addEventListener("click", () =>
@@ -3291,8 +3302,8 @@ function bindInterface() {
     showToast(`${cities[state.activeCity].name} centered`);
   });
   el.networkToggle.addEventListener("click", () => {
-    document.body.classList.remove("evaluation-open");
     setSfcsOrbitOpen(false);
+    closeInstrumentDrawers();
     document.body.classList.add("observatory-open");
     window.setTimeout(
       () => el.networkConsole.scrollIntoView({ behavior: "smooth", block: "end" }),
@@ -3328,7 +3339,7 @@ function bindInterface() {
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement;
     if (event.key === "Escape") {
-      document.body.classList.remove("observatory-open", "evaluation-open");
+      closeInstrumentDrawers();
       hideGlobeTooltip();
       return;
     }
