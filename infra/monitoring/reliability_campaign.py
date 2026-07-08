@@ -30,6 +30,14 @@ SAFE_SERVICE = re.compile(r"^[a-zA-Z0-9_.@-]+\.service$")
 SAFE_PATH = re.compile(r"^/[a-zA-Z0-9_./-]+$")
 DRILL_TYPES = {"validator_failover", "intake_recovery", "replica_recovery"}
 OBSERVER_INTAKE_ALERTS = {"PowerHouseObserverIntakeUnavailable"}
+CONTROLLER_ACTIVITY_KINDS = {
+    "rpc_burst",
+    "drill_started",
+    "drill_recovery_probe",
+    "drill_completed",
+    "drill_blocked",
+    "status_publish_attempt",
+}
 
 
 def now_iso(timestamp: float | None = None) -> str:
@@ -96,6 +104,13 @@ def controller_gap_summary(failures: list[dict]) -> dict:
         "missed_samples": missed,
         "max_gap_seconds": round(max_gap, 3),
     }
+
+
+def parse_iso(value: str) -> float | None:
+    try:
+        return datetime.fromisoformat(value).timestamp()
+    except (TypeError, ValueError):
+        return None
 
 
 def is_observer_intake_error(error: str) -> bool:
@@ -316,6 +331,11 @@ class Campaign:
                 state["phase"] = "soak"
             state.setdefault("started_event_recorded", int(state.get("evidence_sequence", 0)) > 0)
             state.setdefault("failure_log", [])
+            state.setdefault(
+                "last_controller_event_unix",
+                state.get("last_sample_unix") or state.get("updated_unix"),
+            )
+            state.setdefault("controller_busy_windows", 0)
             self._backfill_controller_gap_state(state)
             return state
         started = time.time()
@@ -339,6 +359,7 @@ class Campaign:
             "rpc_latencies_ms": [],
             "last_sample": None,
             "last_sample_unix": None,
+            "last_controller_event_unix": None,
             "baseline": None,
             "drills": [
                 {
@@ -367,6 +388,7 @@ class Campaign:
             "controller_gaps_counted_as_failed_samples": 0,
             "observer_intake_incidents": 0,
             "observer_intake_failures_counted_as_failed_samples": 0,
+            "controller_busy_windows": 0,
             "outcome_reclassified_at": None,
         }
         atomic_json(self.state_path, state)
@@ -687,6 +709,7 @@ class Campaign:
             os.fsync(handle.fileno())
         self.state["evidence_sequence"] = sequence
         self.state["evidence_head"] = event_hash
+        self.state["last_controller_event_unix"] = time.time()
         return event_hash
 
     def record_failure(self, kind: str, data: dict) -> None:
@@ -709,7 +732,9 @@ class Campaign:
 
     def apply_sample(self, sample: dict, kind: str = "sample") -> None:
         sample_time = time.time()
-        previous_time = self.state.get("last_sample_unix")
+        previous_time = self.state.get("last_controller_event_unix")
+        if previous_time is None:
+            previous_time = self.state.get("last_sample_unix")
         if previous_time is not None:
             gap = sample_time - float(previous_time)
             if gap > self.config.sample_interval_seconds * 2:
@@ -802,6 +827,7 @@ class Campaign:
             "successful_samples": successful,
             "failed_samples": network_failed_samples,
             "controller_telemetry_gaps": controller_gaps,
+            "controller_busy_windows": int(self.state.get("controller_busy_windows", 0)),
             "admission_plane": {
                 "observer_intake_incidents": observer_intake_incidents,
                 "observer_intake_counted_as_failed_samples": int(
@@ -838,6 +864,7 @@ class Campaign:
                 "total": network_failed_samples,
                 "controller_gap_total": controller_gaps["missed_samples"],
                 "observer_intake_total": observer_intake_incidents,
+                "controller_busy_windows": int(self.state.get("controller_busy_windows", 0)),
                 "recent": self.state.get("failure_log", [])[-10:],
             },
             "evidence": {
@@ -857,6 +884,15 @@ class Campaign:
     def publish(self) -> None:
         destination_dir = str(Path(self.config.publish_path).parent)
         errors = []
+        self.record_event(
+            "status_publish_attempt",
+            {
+                "targets": len(self.config.publish_targets),
+                "publish_path": self.config.publish_path,
+            },
+        )
+        atomic_json(self.state_path, self.state)
+        atomic_json(self.public_path, self.public_status(), mode=0o644)
         for target in self.config.publish_targets:
             temporary = f"/tmp/{self.state['campaign_id']}.status.json"
             upload = self._run(
@@ -1037,6 +1073,7 @@ class Campaign:
         self.state["phase"] = f"drill:{drill['kind']}"
         drill["status"] = "running"
         drill["started_at"] = now_iso()
+        self.record_event("drill_started", dict(drill))
         self.save()
         preflight = self.collect_sample()
         self.apply_sample(preflight, "drill_preflight")
@@ -1176,6 +1213,78 @@ class Campaign:
         self.publish()
         return result
 
+    def _events(self) -> list[dict]:
+        if not self.events_path.exists():
+            return []
+        events = []
+        for line in self.events_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                events.append(json.loads(line))
+        return events
+
+    def _activity_inside_gap(self, failure: dict, events: list[dict]) -> dict | None:
+        recorded = parse_iso(str(failure.get("recorded_at", "")))
+        gap_seconds = float(failure.get("gap_seconds") or 0)
+        if recorded is None or gap_seconds <= 0:
+            return None
+        window_start = recorded - gap_seconds
+        window_end = recorded
+        for event in events:
+            kind = event.get("kind")
+            if kind not in CONTROLLER_ACTIVITY_KINDS:
+                continue
+            event_time = parse_iso(str(event.get("recorded_at", "")))
+            if event_time is not None and window_start < event_time < window_end:
+                return {
+                    "kind": kind,
+                    "sequence": event.get("sequence"),
+                    "recorded_at": event.get("recorded_at"),
+                }
+        return None
+
+    def reconcile_controller_gaps(self) -> dict:
+        events = self._events()
+        reclassified = []
+        for failure in self.state.setdefault("failure_log", []):
+            if not is_controller_gap(failure):
+                continue
+            activity = self._activity_inside_gap(failure, events)
+            if activity is None:
+                continue
+            failure["kind"] = "controller_busy_window"
+            failure["reclassified_from"] = "telemetry_gap"
+            failure["controller_activity"] = activity
+            failure["reason"] = "hash-chained controller activity was recorded inside the reported window"
+            reclassified.append(failure)
+
+        if not reclassified:
+            return {"reclassified": 0}
+
+        summary = controller_gap_summary(self.state.get("failure_log", []))
+        self.state["controller_gap_count"] = summary["count"]
+        self.state["missed_controller_samples"] = summary["missed_samples"]
+        self.state["max_controller_gap_seconds"] = summary["max_gap_seconds"]
+        self.state["controller_gaps_counted_as_failed_samples"] = min(
+            int(self.state.get("controller_gaps_counted_as_failed_samples", 0)),
+            summary["missed_samples"],
+        )
+        self.state["controller_busy_windows"] = int(
+            self.state.get("controller_busy_windows", 0)
+        ) + len(reclassified)
+        self.record_event(
+            "controller_gap_reconciled",
+            {
+                "reclassified": len(reclassified),
+                "reason": "controller activity event proves the control plane was busy, not silent",
+                "remaining_controller_gaps": summary,
+            },
+        )
+        self.save()
+        return {
+            "reclassified": len(reclassified),
+            "remaining_controller_gaps": summary,
+        }
+
     def run_campaign(self) -> int:
         with self.exclusive_lock():
             if self.state["status"] in {"passed", "failed"}:
@@ -1215,7 +1324,13 @@ class Campaign:
 def parser() -> argparse.ArgumentParser:
     cli = argparse.ArgumentParser()
     sub = cli.add_subparsers(dest="command", required=True)
-    for command in ("run", "sample", "status", "reclassify-controller-gaps"):
+    for command in (
+        "run",
+        "sample",
+        "status",
+        "reclassify-controller-gaps",
+        "reconcile-controller-gaps",
+    ):
         item = sub.add_parser(command)
         item.add_argument("--config", type=Path, required=True)
     drill = sub.add_parser("drill")
@@ -1248,6 +1363,11 @@ def main() -> int:
     if args.command == "reclassify-controller-gaps":
         with campaign.exclusive_lock():
             result = campaign.reclassify_controller_gap_outcome()
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "reconcile-controller-gaps":
+        with campaign.exclusive_lock():
+            result = campaign.reconcile_controller_gaps()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     with campaign.exclusive_lock():
