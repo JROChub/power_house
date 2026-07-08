@@ -95,7 +95,13 @@ function renderDrills(drills = {}) {
 function compactReason(failure) {
   const errors = Array.isArray(failure.errors) ? failure.errors : [];
   if (failure.kind === "telemetry_gap") {
-    return `EVIDENCE GAP ${Number(failure.gap_seconds || 0).toFixed(3)}S / ${Number(failure.missed_samples) || 0} MISSED / ${errors.length} NETWORK ERRORS`;
+    return `SILENT CONTROLLER GAP ${Number(failure.gap_seconds || 0).toFixed(3)}S / ${Number(failure.missed_samples) || 0} MISSED / ${errors.length} NETWORK ERRORS`;
+  }
+  if (failure.kind === "controller_busy_window") {
+    const activity = failure.controller_activity?.kind
+      ? String(failure.controller_activity.kind).replaceAll("_", " ").toUpperCase()
+      : "HASH-CHAINED CONTROLLER ACTIVITY";
+    return `CONTROLLER ACTIVITY WINDOW / ${activity} RECORDED / ${errors.length} NETWORK ERRORS`;
   }
   if (failure.kind === "observer_intake_incident") {
     return `ADMISSION PLANE CAUTION / ${errors.join(" / ").replace(/\s+/g, " ").slice(0, 180)}`;
@@ -117,12 +123,19 @@ function isAdmissionIncident(failure) {
   return failure.kind === "observer_intake_incident";
 }
 
+function isControllerBusyWindow(failure) {
+  return failure.kind === "controller_busy_window";
+}
+
 function summarizeContinuity(failures = {}) {
   const items = failureItems(failures);
   const gaps = items.filter(isControllerGap);
   const admissionIncidents = items.filter(isAdmissionIncident);
+  const busyWindows = items.filter(isControllerBusyWindow);
   const networkFailures = items.filter(
-    (failure) => !isControllerGap(failure) && !isAdmissionIncident(failure),
+    (failure) => !isControllerGap(failure)
+      && !isAdmissionIncident(failure)
+      && !isControllerBusyWindow(failure),
   );
   const missedSamples = gaps.reduce(
     (total, failure) => total + (Number(failure.missed_samples) || 0),
@@ -135,11 +148,18 @@ function summarizeContinuity(failures = {}) {
   return {
     gaps,
     admissionIncidents,
+    busyWindows,
     networkFailures,
     missedSamples,
     observerIntakeIncidents,
+    controllerBusyWindows: Math.max(Number(failures.controller_busy_windows) || 0, busyWindows.length),
     onlyControllerGaps: gaps.length > 0 && networkFailures.length === 0,
-    onlyCautions: (gaps.length > 0 || observerIntakeIncidents > 0) && networkFailures.length === 0,
+    onlyCautions: (
+      gaps.length > 0
+      || observerIntakeIncidents > 0
+      || busyWindows.length > 0
+      || Number(failures.controller_busy_windows) > 0
+    ) && networkFailures.length === 0,
   };
 }
 
@@ -178,6 +198,8 @@ function renderFailures(failures = {}) {
       const item = document.createElement("li");
       item.className = failure.kind === "telemetry_gap"
         ? "gap"
+        : failure.kind === "controller_busy_window"
+          ? "busy"
         : failure.kind === "observer_intake_incident"
           ? "intake"
           : "failed";
@@ -222,12 +244,13 @@ function render(data) {
   const currentDrillFailures = Number(campaign.drills?.failed) || 0;
   const hasControllerGapCaution = continuity.onlyControllerGaps && continuity.missedSamples > 0;
   const hasAdmissionCaution = continuity.onlyCautions && continuity.observerIntakeIncidents > 0;
+  const hasBusyWindow = continuity.onlyCautions && continuity.controllerBusyWindows > 0;
   const strictGatesOnTrack = currentUptime != null
     && Number(currentUptime) >= uptimeRequired
     && currentErrors <= requiredErrors
     && (rpc.p95_ms == null || Number(rpc.p95_ms) <= maxLatency)
     && currentDrillFailures <= requiredDrillFailures;
-  const healthyWithContinuityCaution = (hasControllerGapCaution || hasAdmissionCaution)
+  const healthyWithContinuityCaution = (hasControllerGapCaution || hasAdmissionCaution || hasBusyWindow)
     && networkLooksHealthy(campaign, network, rpc, maxLatency, requiredErrors, requiredDrillFailures);
   const gateState = state === "passed" ? "passed" : state === "failed" ? "failed" : (strictGatesOnTrack || healthyWithContinuityCaution) ? "on-track" : "off-track";
   const acceptanceGate = document.querySelector(".acceptance-gates");
@@ -243,10 +266,13 @@ function render(data) {
     if (continuity.observerIntakeIncidents > 0) {
       cautions.push(countLabel(continuity.observerIntakeIncidents, "observer-intake incident"));
     }
+    if (continuity.controllerBusyWindows > 0) {
+      cautions.push(countLabel(continuity.controllerBusyWindows, "controller activity window"));
+    }
     fields["campaign-note-title"].textContent = state === "passed"
       ? "NETWORK PASSED / ADMISSION AND EVIDENCE CAUTION"
       : "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION";
-    fields["campaign-note-detail"].textContent = `${cautions.join(" / ")} retained in the evidence journal. Admission-plane incidents do not rewrite RPC or validator reliability, and the dedicated intake recovery drill remains a required gate.`;
+    fields["campaign-note-detail"].textContent = `${cautions.join(" / ")} retained in the evidence journal. Controller activity windows, controller gaps, and admission-plane incidents do not rewrite RPC or validator reliability; the dedicated recovery drills remain required gates.`;
   } else {
     fields["campaign-note-title"].textContent = "NETWORK ACCEPTANCE AND EVIDENCE CONTINUITY ARE EVALUATED SEPARATELY";
     fields["campaign-note-detail"].textContent = "Controller telemetry gaps and observer-admission incidents are retained in the hash-chained evidence journal. RPC errors, validator health, latency, observer registry health, and drill failures remain the network acceptance gates.";
@@ -260,7 +286,7 @@ function render(data) {
     : `${Number(campaign.uptime_percent).toFixed(5)}%`;
   fields.samples.textContent = Number(campaign.sample_count || 0).toLocaleString("en-US");
   fields["sample-detail"].textContent = healthyWithContinuityCaution
-    ? `${countLabel(currentErrors, "RPC ERROR")} / ${countLabel(continuity.missedSamples, "CONTROLLER GAP")} / ${countLabel(continuity.observerIntakeIncidents, "INTAKE CAUTION")}`
+    ? `${countLabel(currentErrors, "RPC ERROR")} / ${countLabel(continuity.missedSamples, "CONTROLLER GAP")} / ${countLabel(continuity.observerIntakeIncidents, "INTAKE CAUTION")} / ${countLabel(continuity.controllerBusyWindows, "BUSY WINDOW")}`
     : `${Number(campaign.failed_samples) || 0} FAILED / MAX STREAK ${Number(campaign.max_consecutive_failures) || 0}`;
   fields["rpc-p95"].textContent = rpc.p95_ms == null ? "-- MS" : `${Number(rpc.p95_ms).toFixed(3)} MS`;
   fields["rpc-detail"].textContent = `${Number(rpc.requests) || 0} REQUESTS / ${Number(rpc.errors) || 0} ERRORS`;

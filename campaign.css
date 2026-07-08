@@ -172,6 +172,8 @@ h1 {
 .failure-ledger li.failed strong { color: var(--down); }
 .failure-ledger li.gap i { border-color: var(--warn); background: var(--warn); }
 .failure-ledger li.gap strong { color: var(--warn); }
+.failure-ledger li.busy i { border-color: var(--teal); background: transparent; box-shadow: 0 0 12px rgba(69, 221, 210, 0.48); }
+.failure-ledger li.busy strong { color: var(--teal); }
 .failure-ledger li.intake i { border-color: var(--teal); background: var(--teal); }
 .failure-ledger li.intake strong { color: var(--teal); }
 .drill-ledger li.passed i { border-color: var(--live); background: var(--live); }
