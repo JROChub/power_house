@@ -117,6 +117,9 @@ def main() -> None:
     assert "OBSERVER_REGISTRY_URL" in deployment
     assert "validator-registry.json" in deployment
     assert "install -d -m 0755 /usr/local/lib/powerhouse" in deployment
+    rpc_deployment = (ROOT / "scripts" / "deploy_rpc_cluster.sh").read_text()
+    assert "install -d -m 0755 /usr/local/lib/powerhouse" in rpc_deployment
+    assert "0750 /etc/powerhouse /var/backups/powerhouse /var/log/powerhouse /usr/local/lib/powerhouse" not in rpc_deployment
     assert "/var/lib/powerhouse/monitoring/observer-registry.json" in deployment
     assert "printf /etc/powerhouse/observer-registry.json" not in deployment
     website = (ROOT / "publicpower" / "app.js").read_text()
