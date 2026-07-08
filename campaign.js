@@ -185,7 +185,7 @@ function renderFailures(failures = {}) {
   const continuity = summarizeContinuity(failures);
   fields["failure-summary"].textContent = continuity.onlyCautions
     ? countLabel(
-      continuity.missedSamples + continuity.observerIntakeIncidents,
+      continuity.missedSamples + continuity.observerIntakeIncidents + continuity.controllerBusyWindows,
       "CAUTION",
     )
     : `${Number(failures.total) || 0} TOTAL`;
@@ -269,10 +269,15 @@ function render(data) {
     if (continuity.controllerBusyWindows > 0) {
       cautions.push(countLabel(continuity.controllerBusyWindows, "controller activity window"));
     }
-    fields["campaign-note-title"].textContent = state === "passed"
-      ? "NETWORK PASSED / ADMISSION AND EVIDENCE CAUTION"
-      : "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION";
-    fields["campaign-note-detail"].textContent = `${cautions.join(" / ")} retained in the evidence journal. Controller activity windows, controller gaps, and admission-plane incidents do not rewrite RPC or validator reliability; the dedicated recovery drills remain required gates.`;
+    const onlyBusyWindow = hasBusyWindow && !hasControllerGapCaution && !hasAdmissionCaution;
+    fields["campaign-note-title"].textContent = onlyBusyWindow
+      ? "NETWORK ON TRACK / CONTROLLER ACTIVITY RECORDED"
+      : state === "passed"
+        ? "NETWORK PASSED / ADMISSION AND EVIDENCE CAUTION"
+        : "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION";
+    fields["campaign-note-detail"].textContent = onlyBusyWindow
+      ? `${cautions.join(" / ")} retained in the evidence journal. The hash-chained activity record shows the controller was running a scheduled probe window, not silent; RPC, validator, observer, and drill gates remain authoritative.`
+      : `${cautions.join(" / ")} retained in the evidence journal. Controller activity windows, controller gaps, and admission-plane incidents do not rewrite RPC or validator reliability; the dedicated recovery drills remain required gates.`;
   } else {
     fields["campaign-note-title"].textContent = "NETWORK ACCEPTANCE AND EVIDENCE CONTINUITY ARE EVALUATED SEPARATELY";
     fields["campaign-note-detail"].textContent = "Controller telemetry gaps and observer-admission incidents are retained in the hash-chained evidence journal. RPC errors, validator health, latency, observer registry health, and drill failures remain the network acceptance gates.";
