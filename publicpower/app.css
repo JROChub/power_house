@@ -4400,7 +4400,7 @@ body.sfcs-popout-open .scene-controls {
   }
 }
 
-/* MFENX.ORG Orbital Observatory portal */
+/* MFENX.COM Orbital Observatory portal */
 .orbital-portal {
   position: absolute;
   right: 16px;
@@ -4650,6 +4650,98 @@ body.portal-open .portal-drawer {
   gap: 8px;
 }
 
+.portal-result {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(214, 232, 225, 0.12);
+  background:
+    radial-gradient(circle at 0 0, rgba(199, 255, 91, 0.09), transparent 36%),
+    rgba(255, 255, 255, 0.024);
+}
+
+.portal-result[data-status="valid"] {
+  border-color: rgba(199, 255, 91, 0.38);
+  box-shadow: inset 0 0 0 1px rgba(199, 255, 91, 0.08);
+}
+
+.portal-result[data-status="running"] {
+  border-color: rgba(69, 221, 210, 0.35);
+}
+
+.portal-result[data-status="warning"],
+.portal-result[data-status="invalid"] {
+  border-color: rgba(255, 190, 111, 0.42);
+}
+
+.portal-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.portal-result-head span,
+.portal-result-grid dt {
+  color: var(--cyan);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.portal-result-head b {
+  color: #f2fff7;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.portal-result p {
+  margin: 0;
+  color: #9fafaa;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.portal-result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.portal-result-grid div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(214, 232, 225, 0.09);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.portal-result-grid dt,
+.portal-result-grid dd {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-result-grid dd {
+  margin-top: 4px;
+  color: var(--acid);
+  font: 10px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.portal-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-result-actions .portal-command:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
 .portal-drop-zone {
   display: flex;
   align-items: center;
@@ -4772,6 +4864,10 @@ body.portal-open .portal-drawer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .portal-result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .portal-demo-grid button,
   .portal-feature-grid a {
     min-height: 78px;
@@ -4805,12 +4901,14 @@ body.portal-open .portal-drawer {
   }
 
   .portal-drawer-head p,
-  .portal-drop-zone {
+  .portal-drop-zone,
+  .portal-result p {
     display: none;
   }
 
   .portal-demo-grid,
-  .portal-feature-grid {
+  .portal-feature-grid,
+  .portal-result-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
