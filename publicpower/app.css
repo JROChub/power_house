@@ -4367,3 +4367,339 @@ body.sfcs-popout-open .scene-controls {
     display: none;
   }
 }
+
+/* Orbital Observatory portal deck */
+.orbital-portal {
+  position: absolute;
+  top: calc(var(--top) + 76px);
+  left: calc(var(--scene-left) + 42px);
+  z-index: 23;
+  display: grid;
+  gap: 10px;
+  width: clamp(370px, 34vw, 560px);
+  max-width: calc(100vw - var(--scene-left) - 126px);
+  padding: 14px;
+  color: #dbe7e2;
+  border: 1px solid rgba(69, 221, 210, 0.24);
+  background:
+    radial-gradient(circle at 0 0, rgba(69, 221, 210, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(5, 17, 18, 0.94), rgba(1, 6, 7, 0.78));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 24px 70px rgba(0, 0, 0, 0.32),
+    0 0 52px rgba(69, 221, 210, 0.06);
+  backdrop-filter: blur(20px);
+}
+
+body.observatory-open .orbital-portal,
+body.evaluation-open .orbital-portal,
+body.sfcs-popout-open .orbital-portal {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.portal-identity {
+  display: grid;
+  gap: 6px;
+}
+
+.portal-identity span,
+.portal-drop-zone span,
+.portal-live-field dt,
+.portal-demo-grid small,
+.portal-link-row,
+.portal-command {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.portal-identity span {
+  color: var(--cyan);
+}
+
+.portal-identity h2 {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(24px, 2.35vw, 38px);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.portal-identity p {
+  max-width: 48ch;
+  margin: 0;
+  color: #a8b5b0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.portal-primary {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  gap: 7px;
+}
+
+.portal-command,
+.portal-demo-grid button,
+.portal-drop-zone {
+  border: 1px solid rgba(214, 232, 225, 0.13);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.portal-command {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  color: #c7d4cf;
+  cursor: pointer;
+}
+
+.portal-command.primary {
+  color: #071005;
+  border-color: var(--acid);
+  background: var(--acid);
+}
+
+.portal-command:hover,
+.portal-demo-grid button:hover,
+.portal-drop-zone:hover,
+.portal-drop-zone.dragging,
+.portal-drop-zone:focus-visible {
+  color: var(--paper);
+  border-color: rgba(69, 221, 210, 0.45);
+  background: rgba(69, 221, 210, 0.065);
+}
+
+.portal-command.primary:hover {
+  color: #071005;
+  background: #d7ff82;
+}
+
+.portal-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 40px;
+  padding: 0 11px;
+  color: #7d8b86;
+  cursor: pointer;
+}
+
+.portal-drop-zone b {
+  color: var(--cyan);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.portal-live-field {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid rgba(214, 232, 225, 0.12);
+}
+
+.portal-live-field div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 9px;
+  border-right: 1px solid rgba(214, 232, 225, 0.1);
+}
+
+.portal-live-field div:last-child {
+  border-right: 0;
+}
+
+.portal-live-field dt,
+.portal-live-field dd {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-live-field dt {
+  color: #52605b;
+}
+
+.portal-live-field dd {
+  color: var(--acid);
+  font-size: 9px;
+}
+
+.portal-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.portal-demo-grid button {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 9px 8px;
+  color: #aebbb6;
+  text-align: left;
+  cursor: pointer;
+}
+
+.portal-demo-grid [data-icon] {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+}
+
+.portal-demo-grid b,
+.portal-demo-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portal-demo-grid b {
+  color: #ecf5f0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  line-height: 1.05;
+}
+
+.portal-demo-grid small {
+  color: #64726d;
+  line-height: 1.2;
+}
+
+.portal-link-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.portal-link-row a {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+  color: #92a09b;
+  border: 1px solid rgba(214, 232, 225, 0.1);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.portal-link-row a:hover {
+  color: var(--paper);
+  border-color: rgba(199, 255, 69, 0.32);
+}
+
+@media (max-width: 1180px) {
+  .orbital-portal {
+    top: calc(var(--top) + 72px);
+    left: calc(var(--scene-left) + 28px);
+    width: clamp(340px, 38vw, 460px);
+  }
+
+  .portal-demo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portal-demo-grid button {
+    min-height: 62px;
+  }
+
+  .portal-link-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .orbital-portal {
+    top: calc(var(--top) + 58px);
+    right: 104px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    padding: 11px;
+  }
+
+  .portal-identity h2 {
+    font-size: 24px;
+  }
+
+  .portal-identity p,
+  .portal-link-row {
+    display: none;
+  }
+
+  .portal-live-field {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .portal-live-field div:nth-child(n+4) {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .orbital-portal {
+    top: calc(var(--top) + 8px);
+    right: 92px;
+    left: 8px;
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .portal-identity span {
+    display: none;
+  }
+
+  .portal-identity h2 {
+    font-size: 18px;
+  }
+
+  .portal-primary {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .portal-command {
+    min-height: 34px;
+    gap: 5px;
+    font-size: 7px;
+  }
+
+  .portal-command svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .portal-drop-zone,
+  .portal-demo-grid {
+    display: none;
+  }
+
+  .portal-live-field div {
+    padding: 6px;
+  }
+
+  .toast {
+    top: calc(var(--top) + 196px);
+    bottom: auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+  .orbital-portal {
+    display: none;
+  }
+}
+
+@media (min-width: 901px) and (min-height: 821px) {
+  .proof-monument {
+    bottom: clamp(14px, 2.2vh, 28px);
+  }
+}
