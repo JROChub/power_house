@@ -296,8 +296,15 @@ const el = Object.fromEntries(
     "portal-validators",
     "portal-observers",
     "portal-campaign",
+    "portal-top-toggle",
     "portal-verify-now",
     "portal-upload",
+    "portal-panel-toggle",
+    "portal-panel-close",
+    "portal-drawer",
+    "portal-input",
+    "portal-input-verify",
+    "portal-input-clear",
     "portal-drop-zone",
     "network-console-state",
     "node-sfo-state",
@@ -444,6 +451,8 @@ const state = {
   luminousBranch: null,
   luminousExpanded: false,
   observerConnections: 0,
+  portalDirectVerification: false,
+  portalVerificationStarted: false,
 };
 
 const formatterCache = new Map();
@@ -521,6 +530,13 @@ function setBootProgress(percent) {
 function finishBoot() {
   setBootProgress(100);
   window.setTimeout(() => el.bootScreen.classList.add("hidden"), 220);
+  if (state.portalDirectVerification && !state.portalVerificationStarted) {
+    state.portalVerificationStarted = true;
+    window.setTimeout(() => {
+      cancelAutoProof();
+      if (!state.running) verifyPortalInput();
+    }, 360);
+  }
 }
 
 function getFormatter(zone, kind) {
@@ -3061,6 +3077,7 @@ async function verifyLocalArtifacts(fileList) {
 }
 
 function scheduleAutoProof() {
+  if (state.portalDirectVerification) return;
   window.clearTimeout(autoProofTimer);
   autoProofTimer = window.setTimeout(() => {
     autoProofTimer = 0;
@@ -3165,6 +3182,66 @@ function updatePortalField(data) {
   el.portalCampaign.textContent = campaignStatus;
 }
 
+function setPortalOpen(open) {
+  document.body.classList.toggle("portal-open", open);
+  el.portalDrawer.setAttribute("aria-hidden", open ? "false" : "true");
+  el.portalTopToggle.setAttribute("aria-expanded", String(open));
+  el.portalPanelToggle.setAttribute("aria-expanded", String(open));
+  if (open) {
+    window.setTimeout(() => el.portalInput.focus({ preventScroll: true }), 80);
+  }
+}
+
+async function verifyPortalInput() {
+  const raw = el.portalInput.value.trim();
+  if (!raw) {
+    showToast("Paste text, a URL, or a claim before verifying.");
+    return;
+  }
+
+  selectMode("rootprint");
+  beginRun();
+  try {
+    let normalized = raw;
+    let kind = "text";
+    try {
+      const parsed = new URL(raw);
+      normalized = parsed.href;
+      kind = "url";
+    } catch {
+      kind = raw.length > 140 ? "content" : "claim";
+    }
+
+    const payload = {
+      schema: "mfenx/rootid-local-verification/v1",
+      kind,
+      value_digest: await sha256Hex(normalized),
+      value_length: new TextEncoder().encode(normalized).length,
+      verifier: "browser-local",
+      semantic_layer_affects_core: false,
+    };
+    const rootId = await domainSeparatedHash("MFENX-ROOTID-LOCAL-v1", payload);
+    const replay = await domainSeparatedHash("MFENX-ROOTID-REPLAY-v1", {
+      root_id: rootId,
+      step: "local-observation",
+    });
+
+    el.roundValue.textContent = "1 / 1";
+    el.verificationTitle.textContent = "Local RootID observation created";
+    el.verificationDetail.textContent =
+      kind === "url"
+        ? "The browser created a deterministic RootID for the URL string locally. It did not crawl or claim remote content truth."
+        : "The browser created a deterministic RootID for the pasted content locally without uploading it.";
+    el.luminousCoreState.textContent = "LOCAL";
+    el.luminousSidecarState.textContent = "OPTIONAL";
+    el.luminousPacketCount.textContent = "0 / 0";
+    el.luminousBinding.textContent = `REPLAY ${replay.slice(7, 19).toUpperCase()}`;
+    completeRun(rootId.slice(7), "ROOTID LOCAL OK");
+  } catch (error) {
+    failRun(error.message);
+  }
+}
+
 async function refreshNetworkStatus() {
   try {
     const response = await fetch("https://rpc.mfenx.com/network-status.json", {
@@ -3263,11 +3340,38 @@ function bindInterface() {
   el.verifyButton.addEventListener("click", () => {
     if (!state.running) modes[state.mode].action();
   });
+  el.portalTopToggle.addEventListener("click", () =>
+    setPortalOpen(!document.body.classList.contains("portal-open")),
+  );
   el.portalVerifyNow.addEventListener("click", () => {
-    selectMode("rootprint");
-    if (!state.running) modes.rootprint.action();
+    setPortalOpen(true);
   });
-  el.portalUpload.addEventListener("click", () => el.artifactInput.click());
+  el.portalPanelToggle.addEventListener("click", () =>
+    setPortalOpen(!document.body.classList.contains("portal-open")),
+  );
+  el.portalPanelClose.addEventListener("click", () => setPortalOpen(false));
+  el.portalInputVerify.addEventListener("click", () => {
+    if (!state.running) verifyPortalInput();
+  });
+  el.portalInputClear.addEventListener("click", () => {
+    el.portalInput.value = "";
+    el.portalInput.focus();
+  });
+  el.portalInput.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !state.running) {
+      event.preventDefault();
+      verifyPortalInput();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("portal-open")) {
+      setPortalOpen(false);
+    }
+  });
+  el.portalUpload.addEventListener("click", () => {
+    setPortalOpen(true);
+    el.artifactInput.click();
+  });
   el.portalDropZone.addEventListener("click", () => el.artifactInput.click());
   el.portalDropZone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -3453,6 +3557,20 @@ function applyUrlState() {
   if (panel === "evaluation") document.body.classList.add("evaluation-open");
 }
 
+function applyPortalUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const inlineVerification = params.get("verify");
+  const openPortal = params.get("portal") === "1" || window.location.hash === "#verify";
+
+  if (inlineVerification) {
+    state.portalDirectVerification = true;
+    el.portalInput.value = inlineVerification;
+    setPortalOpen(true);
+  } else if (openPortal) {
+    setPortalOpen(true);
+  }
+}
+
 function init() {
   mountIcons();
   setBootProgress(22);
@@ -3466,6 +3584,7 @@ function init() {
     state.mode = bootstrapInput.pendingMode;
   }
   selectMode(state.mode, false);
+  applyPortalUrlState();
   selectCity(state.activeCity, false);
   focusSelectedCity();
   setTimeOffset(state.timeOffsetHours);
