@@ -342,8 +342,24 @@
           </dl>
           <button id="sfcs-orbit-run" class="sfcs-orbit-run" type="button">
             <span data-icon="play"></span>
-            <b>RUN SFCS VERIFIER</b>
+            <b id="sfcs-orbit-run-label">RUN SFCS VERIFIER</b>
           </button>
+          <section id="sfcs-run-console" class="sfcs-run-console" aria-live="polite">
+            <div class="sfcs-run-head">
+              <span id="sfcs-widget-status">READY</span>
+              <b id="sfcs-widget-title">SFCS verifier standing by</b>
+            </div>
+            <p id="sfcs-widget-detail">Press run to execute graph shape checks, trace replay, synthesis, .pha identity, Rootprint branch, and replay fingerprint verification.</p>
+            <div class="sfcs-widget-progress" aria-hidden="true">
+              <i id="sfcs-widget-progress"></i>
+            </div>
+            <dl class="sfcs-widget-grid">
+              <div><dt>STAGE</dt><dd id="sfcs-widget-stage">WAITING</dd></div>
+              <div><dt>DIGEST</dt><dd id="sfcs-widget-digest">PENDING</dd></div>
+              <div><dt>BRANCH</dt><dd id="sfcs-widget-branch">PENDING</dd></div>
+              <div><dt>REPLAY</dt><dd id="sfcs-widget-replay">PENDING</dd></div>
+            </dl>
+          </section>
           <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md">
             <span>OPEN VM REFERENCE</span>
             <span data-icon="chevron-right"></span>
@@ -601,6 +617,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0329.js?v=20260709-sfcs-force-run1"></script>
+  <script type="module" src="app-v0330.js?v=20260709-sfcs-panel-feedback1"></script>
 </body>
 </html>
