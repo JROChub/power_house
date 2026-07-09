@@ -361,6 +361,41 @@ def main() -> None:
             for item in status["failures"]["recent"]
         )
 
+        finality_value = config_value(base / "finality-window")
+        finality_path = base / "finality-window.json"
+        finality_path.write_text(json.dumps(finality_value))
+        finality = module.Campaign(module.Config.load(finality_path))
+        install_fakes(finality)
+        before = finality.collect_sample()
+        finality.apply_sample(before)
+        skew = json.loads(json.dumps(before))
+        skew["ok"] = False
+        skew["errors"] = ["finalized state differs across validators"]
+        skew["nodes"][2]["health"]["finalized_block"] = 43
+        skew["nodes"][2]["health"]["finalized_hash"] = "0x" + "6" * 64
+        finality.apply_sample(skew)
+        after = finality.collect_sample()
+        finality.apply_sample(after)
+        status = finality.public_status()
+        assert status["sample_count"] == 3
+        assert status["failed_samples"] == 1
+        assert status["uptime_percent"] == round(2 / 3 * 100, 5)
+        result = finality.reconcile_finality_windows()
+        assert result["reclassified"] == 1
+        assert result["network_failed_samples"] == 0
+        status = finality.public_status()
+        assert status["failed_samples"] == 0
+        assert status["successful_samples"] == status["sample_count"]
+        assert status["uptime_percent"] == 100.0
+        assert status["consensus_plane"]["finality_convergence_windows"] == 1
+        assert status["consensus_plane"]["finality_convergence_counted_as_failed_samples"] == 1
+        assert status["failures"]["finality_convergence_total"] == 1
+        assert any(
+            item["kind"] == "finality_convergence_window"
+            and item["reclassified_from"] == "sample"
+            for item in status["failures"]["recent"]
+        )
+
         legacy_value = config_value(base / "legacy-gap")
         legacy_path = base / "legacy-gap.json"
         legacy_path.write_text(json.dumps(legacy_value))
@@ -453,6 +488,7 @@ def main() -> None:
     assert "reliability_campaign" in javascript
     assert "renderFailures" in javascript
     assert "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION" in javascript
+    assert "FINALITY CONVERGENCE WINDOW" in javascript
     assert "reliability_campaign" not in main_js
     assert "campaign.html" in main_html
     deploy = (ROOT / "scripts" / "deploy_monitoring_stack.sh").read_text()

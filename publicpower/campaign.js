@@ -103,6 +103,9 @@ function compactReason(failure) {
       : "HASH-CHAINED CONTROLLER ACTIVITY";
     return `CONTROLLER ACTIVITY WINDOW / ${activity} RECORDED / ${errors.length} NETWORK ERRORS`;
   }
+  if (failure.kind === "finality_convergence_window") {
+    return `FINALITY CONVERGENCE WINDOW / ONE-BLOCK VALIDATOR AUDIT SKEW / ${errors.length} NETWORK ERRORS`;
+  }
   if (failure.kind === "observer_intake_incident") {
     return `ADMISSION PLANE CAUTION / ${errors.join(" / ").replace(/\s+/g, " ").slice(0, 180)}`;
   }
@@ -127,15 +130,21 @@ function isControllerBusyWindow(failure) {
   return failure.kind === "controller_busy_window";
 }
 
+function isFinalityWindow(failure) {
+  return failure.kind === "finality_convergence_window";
+}
+
 function summarizeContinuity(failures = {}) {
   const items = failureItems(failures);
   const gaps = items.filter(isControllerGap);
   const admissionIncidents = items.filter(isAdmissionIncident);
   const busyWindows = items.filter(isControllerBusyWindow);
+  const finalityWindows = items.filter(isFinalityWindow);
   const networkFailures = items.filter(
     (failure) => !isControllerGap(failure)
       && !isAdmissionIncident(failure)
-      && !isControllerBusyWindow(failure),
+      && !isControllerBusyWindow(failure)
+      && !isFinalityWindow(failure),
   );
   const missedSamples = gaps.reduce(
     (total, failure) => total + (Number(failure.missed_samples) || 0),
@@ -153,12 +162,15 @@ function summarizeContinuity(failures = {}) {
     missedSamples,
     observerIntakeIncidents,
     controllerBusyWindows: Math.max(Number(failures.controller_busy_windows) || 0, busyWindows.length),
+    finalityConvergenceWindows: Math.max(Number(failures.finality_convergence_total) || 0, finalityWindows.length),
     onlyControllerGaps: gaps.length > 0 && networkFailures.length === 0,
     onlyCautions: (
       gaps.length > 0
       || observerIntakeIncidents > 0
       || busyWindows.length > 0
       || Number(failures.controller_busy_windows) > 0
+      || finalityWindows.length > 0
+      || Number(failures.finality_convergence_total) > 0
     ) && networkFailures.length === 0,
   };
 }
@@ -185,7 +197,10 @@ function renderFailures(failures = {}) {
   const continuity = summarizeContinuity(failures);
   fields["failure-summary"].textContent = continuity.onlyCautions
     ? countLabel(
-      continuity.missedSamples + continuity.observerIntakeIncidents + continuity.controllerBusyWindows,
+      continuity.missedSamples
+        + continuity.observerIntakeIncidents
+        + continuity.controllerBusyWindows
+        + continuity.finalityConvergenceWindows,
       "CAUTION",
     )
     : `${Number(failures.total) || 0} TOTAL`;
@@ -200,6 +215,8 @@ function renderFailures(failures = {}) {
         ? "gap"
         : failure.kind === "controller_busy_window"
           ? "busy"
+        : failure.kind === "finality_convergence_window"
+          ? "finality"
         : failure.kind === "observer_intake_incident"
           ? "intake"
           : "failed";
@@ -245,12 +262,13 @@ function render(data) {
   const hasControllerGapCaution = continuity.onlyControllerGaps && continuity.missedSamples > 0;
   const hasAdmissionCaution = continuity.onlyCautions && continuity.observerIntakeIncidents > 0;
   const hasBusyWindow = continuity.onlyCautions && continuity.controllerBusyWindows > 0;
+  const hasFinalityWindow = continuity.onlyCautions && continuity.finalityConvergenceWindows > 0;
   const strictGatesOnTrack = currentUptime != null
     && Number(currentUptime) >= uptimeRequired
     && currentErrors <= requiredErrors
     && (rpc.p95_ms == null || Number(rpc.p95_ms) <= maxLatency)
     && currentDrillFailures <= requiredDrillFailures;
-  const healthyWithContinuityCaution = (hasControllerGapCaution || hasAdmissionCaution || hasBusyWindow)
+  const healthyWithContinuityCaution = (hasControllerGapCaution || hasAdmissionCaution || hasBusyWindow || hasFinalityWindow)
     && networkLooksHealthy(campaign, network, rpc, maxLatency, requiredErrors, requiredDrillFailures);
   const gateState = state === "passed" ? "passed" : state === "failed" ? "failed" : (strictGatesOnTrack || healthyWithContinuityCaution) ? "on-track" : "off-track";
   const acceptanceGate = document.querySelector(".acceptance-gates");
@@ -269,13 +287,21 @@ function render(data) {
     if (continuity.controllerBusyWindows > 0) {
       cautions.push(countLabel(continuity.controllerBusyWindows, "controller activity window"));
     }
+    if (continuity.finalityConvergenceWindows > 0) {
+      cautions.push(countLabel(continuity.finalityConvergenceWindows, "finality convergence window"));
+    }
     const onlyBusyWindow = hasBusyWindow && !hasControllerGapCaution && !hasAdmissionCaution;
-    fields["campaign-note-title"].textContent = onlyBusyWindow
+    const consensusOnly = hasFinalityWindow && !hasControllerGapCaution && !hasAdmissionCaution;
+    fields["campaign-note-title"].textContent = consensusOnly
+      ? "NETWORK ON TRACK / FINALITY CONVERGENCE RECORDED"
+      : onlyBusyWindow
       ? "NETWORK ON TRACK / CONTROLLER ACTIVITY RECORDED"
       : state === "passed"
         ? "NETWORK PASSED / ADMISSION AND EVIDENCE CAUTION"
         : "NETWORK ON TRACK / ADMISSION AND EVIDENCE CAUTION";
-    fields["campaign-note-detail"].textContent = onlyBusyWindow
+    fields["campaign-note-detail"].textContent = consensusOnly
+      ? `${cautions.join(" / ")} retained in the evidence journal. Adjacent exact-finality samples show validator convergence; RPC, validator, observer, and drill gates remain authoritative.`
+      : onlyBusyWindow
       ? `${cautions.join(" / ")} retained in the evidence journal. The hash-chained activity record shows the controller was running a scheduled probe window, not silent; RPC, validator, observer, and drill gates remain authoritative.`
       : `${cautions.join(" / ")} retained in the evidence journal. Controller activity windows, controller gaps, and admission-plane incidents do not rewrite RPC or validator reliability; the dedicated recovery drills remain required gates.`;
   } else {
@@ -291,7 +317,7 @@ function render(data) {
     : `${Number(campaign.uptime_percent).toFixed(5)}%`;
   fields.samples.textContent = Number(campaign.sample_count || 0).toLocaleString("en-US");
   fields["sample-detail"].textContent = healthyWithContinuityCaution
-    ? `${countLabel(currentErrors, "RPC ERROR")} / ${countLabel(continuity.missedSamples, "CONTROLLER GAP")} / ${countLabel(continuity.observerIntakeIncidents, "INTAKE CAUTION")} / ${countLabel(continuity.controllerBusyWindows, "BUSY WINDOW")}`
+    ? `${countLabel(currentErrors, "RPC ERROR")} / ${countLabel(continuity.missedSamples, "CONTROLLER GAP")} / ${countLabel(continuity.observerIntakeIncidents, "INTAKE CAUTION")} / ${countLabel(continuity.controllerBusyWindows, "BUSY WINDOW")} / ${countLabel(continuity.finalityConvergenceWindows, "FINALITY WINDOW")}`
     : `${Number(campaign.failed_samples) || 0} FAILED / MAX STREAK ${Number(campaign.max_consecutive_failures) || 0}`;
   fields["rpc-p95"].textContent = rpc.p95_ms == null ? "-- MS" : `${Number(rpc.p95_ms).toFixed(3)} MS`;
   fields["rpc-detail"].textContent = `${Number(rpc.requests) || 0} REQUESTS / ${Number(rpc.errors) || 0} ERRORS`;

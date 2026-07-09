@@ -43,7 +43,8 @@ The controller samples once per minute:
 
 The public campaign state includes elapsed and remaining time, progress,
 successful and failed network samples, controller telemetry gaps, reconciled
-controller activity windows, observer-admission incidents, uptime,
+controller activity windows, one-block finality convergence windows,
+observer-admission incidents, uptime,
 RPC p50/p95/p99, drill outcomes, evidence event count, evidence head hash, and
 final report hash.
 The dedicated page also renders the current pass criteria and whether the
@@ -92,6 +93,15 @@ healthy. They stay in the hash-chained evidence journal and on the public
 campaign page, but they do not reduce measured RPC/validator network uptime.
 The scheduled intake-recovery drill is still a required gate and still fails
 the campaign if the intake service cannot recover inside the configured window.
+Finalized-state divergence remains a network failure unless the exact evidence
+matches the guarded consensus-plane rule: the failed sample contains only
+`finalized state differs across validators`, all three validator services are
+active, the nodes differ by at most one finalized block, a 2-of-3 finalized
+signature quorum is visible, and adjacent hash-chained samples on both sides
+show exact finalized block/hash agreement. Only then may the live controller
+reconcile the entry as a `finality_convergence_window`. The evidence remains
+visible, and the controller appends a reconciliation event instead of deleting
+or rewriting the journal.
 
 ## Operations
 
@@ -107,6 +117,9 @@ python3 ~/.local/lib/powerhouse/reliability_campaign.py reclassify-controller-ga
 
 python3 ~/.local/lib/powerhouse/reliability_campaign.py reconcile-controller-gaps \
   --config ~/.config/powerhouse/reliability-campaign.json
+
+python3 ~/.local/lib/powerhouse/reliability_campaign.py reconcile-finality-windows \
+  --config ~/.config/powerhouse/reliability-campaign.json
 ```
 
 The controller resumes the same campaign after process restart only when the
@@ -118,3 +131,6 @@ source was legacy controller telemetry gaps.
 The reconciliation command is narrower and can be used while a campaign is
 running: it only reclassifies a silent-gap entry when an existing hash-chained
 controller activity event falls inside that same window.
+The finality-window reconciliation command is similarly narrow: it only
+reclassifies a one-block validator audit skew when exact-finality evidence
+appears immediately before and after that sample.
