@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#010405">
-  <meta name="description" content="MFENX Power House: deterministic verification, private SFCS proof coverage, .pha artifacts, Rootprint graphs, and SLBIT meaning observability.">
-  <meta property="og:title" content="MFENX Power House Verification Observatory">
-  <meta property="og:description" content="Verify public proofs, inspect SFCS private proof coverage, and navigate deterministic provenance from one planetary instrument.">
-  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
-  <title>MFENX Power House | Identity Observatory</title>
+  <meta name="description" content="MFENX.ORG Orbital Observatory: public verification portal for Power House, Rootprint, SFCS, .pha artifacts, and SLBIT meaning observability.">
+  <meta property="og:title" content="MFENX.ORG Orbital Observatory">
+  <meta property="og:description" content="Verify artifacts, inspect Rootprint lineage, run SFCS demos, and watch the live MFENX verification field.">
+  <meta property="og:image" content="https://mfenx.org/assets/proof-lattice.webp">
+  <title>MFENX.ORG | Orbital Observatory</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
   <link rel="preload" href="assets/proof-lattice.webp" as="image">
   <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
   <link rel="preload" href="assets/earth-night.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
   <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="preload" href="assets/earth-night-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
-  <link rel="stylesheet" href="app.css?v=20260707-instrument-stack">
+  <link rel="stylesheet" href="app.css?v=20260709-orbital-observatory2">
 </head>
 <body>
   <div id="boot-screen" class="boot-screen" aria-live="polite">
@@ -68,6 +68,9 @@
         <a href="https://github.com/JROChub/power_house" title="Source repository">
           <span data-icon="code"></span><b>SOURCE</b>
         </a>
+        <button id="portal-top-toggle" type="button" aria-label="Open instant verifier" aria-expanded="false" aria-controls="portal-drawer" title="Instant verifier">
+          <span data-icon="search"></span><b>VERIFY</b>
+        </button>
         <button id="observatory-toggle" type="button" aria-label="Open world observatory" title="World observatory">
           <span data-icon="globe"></span><b>EARTH</b>
         </button>
@@ -88,6 +91,101 @@
       <div><span>VALIDATORS</span><b id="network-validators">-- / --</b></div>
       <div><span>LINKS</span><b id="network-peers">--</b></div>
       <div><span>OBSERVERS</span><b id="network-observers">-- / --</b></div>
+    </section>
+
+    <section class="orbital-portal" aria-label="MFENX.ORG Orbital Observatory quick actions">
+      <button id="portal-verify-now" class="portal-command primary" type="button">
+        <span data-icon="search"></span>
+        <b>VERIFY SOMETHING NOW</b>
+      </button>
+
+      <div class="portal-identity">
+        <span>MFENX.ORG</span>
+        <h2>THE ORBITAL OBSERVATORY</h2>
+      </div>
+
+      <dl class="portal-live-field" aria-label="Live verification field">
+        <div><dt>RPC</dt><dd id="portal-rpc">SYNCING</dd></div>
+        <div><dt>BLOCK</dt><dd id="portal-block">--</dd></div>
+        <div><dt>VALIDATORS</dt><dd id="portal-validators">-- / --</dd></div>
+        <div><dt>OBSERVERS</dt><dd id="portal-observers">-- / --</dd></div>
+        <div><dt>72H</dt><dd id="portal-campaign">CHECK</dd></div>
+      </dl>
+
+      <button id="portal-upload" class="portal-command" type="button">
+        <span data-icon="upload"></span>
+        <b>UPLOAD</b>
+      </button>
+
+      <button id="portal-panel-toggle" class="portal-command" type="button" aria-expanded="false" aria-controls="portal-drawer">
+        <span data-icon="globe"></span>
+        <b>OPEN PORTAL</b>
+      </button>
+    </section>
+
+    <section id="portal-drawer" class="portal-drawer" aria-label="Instant verifier and Orbital Observatory portal" aria-hidden="true">
+      <div class="portal-drawer-shell">
+        <header class="portal-drawer-head">
+          <div>
+            <span>MFENX.ORG / PUBLIC PORTAL</span>
+            <h2>THE ORBITAL OBSERVATORY</h2>
+            <p>Verify portable computation, Rootprint identity, live anchors, and human-readable SLBIT meaning without uploading proof data by default.</p>
+          </div>
+          <button id="portal-panel-close" type="button" aria-label="Close Orbital Observatory portal">
+            <span data-icon="x"></span>
+          </button>
+        </header>
+
+        <div class="portal-instant-verifier" aria-label="Instant verifier">
+          <label for="portal-input">Paste text, a URL, a claim, or a RootID seed</label>
+          <textarea id="portal-input" rows="4" spellcheck="false" placeholder="Paste content here for a local RootID fingerprint, or upload a .pha / Rootprint / SLBIT JSON file below."></textarea>
+          <div class="portal-verifier-actions">
+            <button id="portal-input-verify" class="portal-command primary" type="button">
+              <span data-icon="search"></span>
+              <b>LOCAL ROOTID VERIFY</b>
+            </button>
+            <button id="portal-input-clear" class="portal-command" type="button">
+              <span data-icon="rotate-ccw"></span>
+              <b>CLEAR</b>
+            </button>
+          </div>
+        </div>
+
+        <div id="portal-drop-zone" class="portal-drop-zone" role="button" tabindex="0" aria-label="Drop a Power House artifact for local verification">
+          <span>DROP ROOTPRINT / .PHA / SLBIT SIDECAR</span>
+          <b>LOCAL BROWSER VERIFIER</b>
+        </div>
+
+        <div class="portal-demo-grid" aria-label="Preloaded verification demos">
+          <button type="button" data-portal-mode="rootprint">
+            <span data-icon="brain-circuit"></span>
+            <b>VERIFY AI RESPONSE</b>
+            <small>Rootprint + SLBIT meaning sidecar</small>
+          </button>
+          <button type="button" data-portal-mode="sfcs">
+            <span data-icon="bot"></span>
+            <b>RUN SFCS PROOF</b>
+            <small>Private VM coverage projection</small>
+          </button>
+          <button type="button" data-portal-mode="constant">
+            <span data-icon="database"></span>
+            <b>SEXTILLION CHECK</b>
+            <small>70-round deterministic replay</small>
+          </button>
+          <button type="button" data-portal-mode="committed">
+            <span data-icon="package"></span>
+            <b>COMMITTED WORKLOAD</b>
+            <small>External workload binding</small>
+          </button>
+        </div>
+
+        <div class="portal-feature-grid" aria-label="Orbital Observatory feature paths">
+          <a href="status.html"><span>LIVE FIELD</span><b>RPC / BLOCKS / VALIDATORS</b></a>
+          <a href="register.html"><span>NODE REGISTRY</span><b>OBSERVER ONBOARDING</b></a>
+          <a href="slbit.html"><span>MEANING OBSERVATORY</span><b>SLBIT SEMANTIC LAYER</b></a>
+          <a href="https://docs.rs/power_house"><span>DEVELOPER HUB</span><b>RUST API / SDK DOCS</b></a>
+        </div>
+      </div>
     </section>
 
     <aside class="proof-rail" aria-label="Proof modes">
@@ -475,6 +573,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0324.js?v=20260707-instrument-stack"></script>
+  <script type="module" src="app-v0326.js?v=20260709-orbital-observatory2"></script>
 </body>
 </html>
