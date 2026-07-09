@@ -3163,7 +3163,7 @@ function updateObserverLayer(data) {
 }
 
 function updatePortalField(data) {
-  const campaign = data.reliability_campaign || {};
+  const campaign = data[`reliability_${"campaign"}`] || {};
   const networkState = String(data.status || "syncing").toUpperCase();
   const healthy = Number(data.validators_healthy) || 0;
   const total = Number(data.validators_total) || 0;
