@@ -293,10 +293,10 @@
     </main>
 
     <div class="sfcs-orbit-dock" aria-label="SFCS verification pop-out">
-      <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS private VM panel">
+      <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS private VM verifier">
         <span data-icon="brain-circuit"></span>
         <b>SFCS</b>
-        <small>PRIVATE VM</small>
+        <small>OPEN / RUN</small>
       </button>
 
       <div id="sfcs-orbit-panel" class="sfcs-orbit-panel">
@@ -316,6 +316,10 @@
             <div><dt>BYTE SEMANTICS</dt><dd>6</dd></div>
             <div><dt>MUTATIONS</dt><dd>4 / 4 REJECT</dd></div>
           </dl>
+          <button id="sfcs-orbit-run" class="sfcs-orbit-run" type="button">
+            <span data-icon="play"></span>
+            <b>RUN SFCS VERIFIER</b>
+          </button>
           <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md">
             <span>OPEN VM REFERENCE</span>
             <span data-icon="chevron-right"></span>
@@ -573,6 +577,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0326.js?v=20260709-orbital-observatory2"></script>
+  <script type="module" src="app-v0327.js?v=20260709-sfcs-widget1"></script>
 </body>
 </html>

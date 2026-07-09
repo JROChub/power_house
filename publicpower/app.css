@@ -197,7 +197,9 @@ body.proof-verified .proof-flash {
   opacity: 0;
 }
 
-body.portal-open .boot-screen {
+body.portal-open .boot-screen,
+body.proof-running .boot-screen,
+body.proof-verified .boot-screen {
   visibility: hidden;
   opacity: 0;
 }
@@ -4184,8 +4186,33 @@ body.sfcs-popout-open .scene-controls {
     rgba(2, 8, 9, 0.44);
 }
 
+.sfcs-orbit-run,
 .sfcs-orbit-dock .zk-cockpit a {
   min-height: 38px;
+}
+
+.sfcs-orbit-run {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  color: #071005;
+  border: 1px solid var(--acid);
+  background: var(--acid);
+  cursor: pointer;
+}
+
+.sfcs-orbit-run:hover,
+.sfcs-orbit-run:focus-visible {
+  color: #071005;
+  background: #d7ff82;
+  box-shadow: 0 0 28px rgba(186, 255, 53, 0.18);
+}
+
+.sfcs-orbit-run b {
+  font-size: 9px;
+  letter-spacing: 0.08em;
 }
 
 .sfcs-orbit-dock .substrate-readout {
