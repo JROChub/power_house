@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#010405">
-  <meta name="description" content="MFENX.ORG Orbital Observatory: public verification portal for Power House, Rootprint, SFCS, .pha artifacts, and SLBIT meaning observability.">
-  <meta property="og:title" content="MFENX.ORG Orbital Observatory">
+  <meta name="description" content="MFENX.COM Orbital Observatory: public verification portal for Power House, Rootprint, SFCS, .pha artifacts, and SLBIT meaning observability.">
+  <meta property="og:title" content="MFENX.COM Orbital Observatory">
   <meta property="og:description" content="Verify artifacts, inspect Rootprint lineage, run SFCS demos, and watch the live MFENX verification field.">
-  <meta property="og:image" content="https://mfenx.org/assets/proof-lattice.webp">
-  <title>MFENX.ORG | Orbital Observatory</title>
+  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
+  <title>MFENX.COM | Orbital Observatory</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
   <link rel="preload" href="assets/proof-lattice.webp" as="image">
   <link rel="preload" href="assets/earth-day.jpg" as="image" crossorigin="anonymous" media="(min-width: 761px)">
@@ -93,14 +93,14 @@
       <div><span>OBSERVERS</span><b id="network-observers">-- / --</b></div>
     </section>
 
-    <section class="orbital-portal" aria-label="MFENX.ORG Orbital Observatory quick actions">
+    <section class="orbital-portal" aria-label="MFENX.COM Orbital Observatory quick actions">
       <button id="portal-verify-now" class="portal-command primary" type="button">
         <span data-icon="search"></span>
         <b>VERIFY SOMETHING NOW</b>
       </button>
 
       <div class="portal-identity">
-        <span>MFENX.ORG</span>
+        <span>MFENX.COM</span>
         <h2>THE ORBITAL OBSERVATORY</h2>
       </div>
 
@@ -127,7 +127,7 @@
       <div class="portal-drawer-shell">
         <header class="portal-drawer-head">
           <div>
-            <span>MFENX.ORG / PUBLIC PORTAL</span>
+            <span>MFENX.COM / PUBLIC PORTAL</span>
             <h2>THE ORBITAL OBSERVATORY</h2>
             <p>Verify portable computation, Rootprint identity, live anchors, and human-readable SLBIT meaning without uploading proof data by default.</p>
           </div>
@@ -150,6 +150,30 @@
             </button>
           </div>
         </div>
+
+        <section id="portal-result" class="portal-result" aria-live="polite">
+          <div class="portal-result-head">
+            <span id="portal-result-kind">LOCAL ONLY</span>
+            <b id="portal-result-title">READY FOR LOCAL VERIFICATION</b>
+          </div>
+          <p id="portal-result-detail">The verifier runs in this browser. It creates deterministic RootID and replay fingerprints for text, URLs, claims, and RootID seeds without uploading proof data by default.</p>
+          <dl class="portal-result-grid">
+            <div><dt>ROOTID</dt><dd id="portal-rootid">WAITING</dd></div>
+            <div><dt>REPLAY</dt><dd id="portal-replay">WAITING</dd></div>
+            <div><dt>INPUT</dt><dd id="portal-input-kind">WAITING</dd></div>
+            <div><dt>BYTES</dt><dd id="portal-input-bytes">0</dd></div>
+          </dl>
+          <div class="portal-result-actions">
+            <button id="portal-copy-rootid" class="portal-command" type="button" disabled>
+              <span data-icon="copy"></span>
+              <b>COPY ROOTID</b>
+            </button>
+            <button id="portal-open-certificate" class="portal-command" type="button" disabled>
+              <span data-icon="crosshair"></span>
+              <b>VIEW CERTIFICATE</b>
+            </button>
+          </div>
+        </section>
 
         <div id="portal-drop-zone" class="portal-drop-zone" role="button" tabindex="0" aria-label="Drop a Power House artifact for local verification">
           <span>DROP ROOTPRINT / .PHA / SLBIT SIDECAR</span>
@@ -577,6 +601,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0327.js?v=20260709-sfcs-widget1"></script>
+  <script type="module" src="app-v0328.js?v=20260709-portal-rootid1"></script>
 </body>
 </html>
