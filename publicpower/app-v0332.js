@@ -291,7 +291,15 @@ const el = Object.fromEntries(
     "network-validators",
     "network-peers",
     "network-observers",
+    "portal-rpc",
+    "portal-block",
+    "portal-validators",
+    "portal-observers",
+    "portal-campaign",
     "portal-top-toggle",
+    "portal-verify-now",
+    "portal-upload",
+    "portal-panel-toggle",
     "portal-panel-close",
     "portal-drawer",
     "portal-input",
@@ -3404,6 +3412,26 @@ function updateObserverLayer(data) {
   el.observerRegistry.textContent = verified && fresh ? "SIGNED" : configured ? "VERIFY" : "OPEN";
 }
 
+function updatePortalField(data) {
+  const campaign = data[`reliability_${"campaign"}`] || {};
+  const networkState = String(data.status || "syncing").toUpperCase();
+  const healthy = Number(data.validators_healthy) || 0;
+  const total = Number(data.validators_total) || 0;
+  const observer = data.observer_peers || {};
+  const observerHealthy = Number(observer.healthy) || 0;
+  const observerTotal = Number(observer.total) || 0;
+  const failedSamples = Number(campaign.failed_samples) || 0;
+  const campaignStatus = campaign.status
+    ? `${String(campaign.status).toUpperCase()} / ${failedSamples} FAIL`
+    : "CHECK";
+
+  el.portalRpc.textContent = networkState;
+  el.portalBlock.textContent = Number(data.block_height || 0).toLocaleString("en-US");
+  el.portalValidators.textContent = `${healthy} / ${total}`;
+  el.portalObservers.textContent = `${observerHealthy} / ${observerTotal}`;
+  el.portalCampaign.textContent = campaignStatus;
+}
+
 function setPortalOpen(open) {
   if (open) {
     document.body.classList.remove("sfcs-popout-open", "observatory-open", "evaluation-open");
@@ -3412,6 +3440,7 @@ function setPortalOpen(open) {
   document.body.classList.toggle("portal-open", open);
   el.portalDrawer.setAttribute("aria-hidden", open ? "false" : "true");
   el.portalTopToggle.setAttribute("aria-expanded", String(open));
+  el.portalPanelToggle.setAttribute("aria-expanded", String(open));
   if (open) {
     window.setTimeout(() => el.portalInput.focus({ preventScroll: true }), 80);
   }
@@ -3567,12 +3596,14 @@ async function refreshNetworkStatus() {
     el.networkPeers.textContent = validatorLinks.toLocaleString("en-US");
     updateObserverLayer(data);
     updateNetworkNodeStates(healthy);
+    updatePortalField(data);
   } catch {
     document.body.dataset.network = "unknown";
     el.networkState.textContent = "FEED CHECK";
     el.networkConsoleState.textContent = "FEED CHECK";
     updateObserverLayer({});
     updateNetworkNodeStates(0);
+    updatePortalField({});
   }
 }
 
@@ -3653,6 +3684,12 @@ function bindInterface() {
   el.portalTopToggle.addEventListener("click", () =>
     setPortalOpen(!document.body.classList.contains("portal-open")),
   );
+  el.portalVerifyNow.addEventListener("click", () => {
+    setPortalOpen(true);
+  });
+  el.portalPanelToggle.addEventListener("click", () =>
+    setPortalOpen(!document.body.classList.contains("portal-open")),
+  );
   el.portalPanelClose.addEventListener("click", () => setPortalOpen(false));
   el.portalDrawer.addEventListener("click", (event) => {
     if (event.target === el.portalDrawer) setPortalOpen(false);
@@ -3686,6 +3723,10 @@ function bindInterface() {
     if (event.key === "Escape" && document.body.classList.contains("portal-open")) {
       setPortalOpen(false);
     }
+  });
+  el.portalUpload.addEventListener("click", () => {
+    setPortalOpen(true);
+    el.artifactInput.click();
   });
   el.portalDropZone.addEventListener("click", () => el.artifactInput.click());
   el.portalDropZone.addEventListener("keydown", (event) => {
