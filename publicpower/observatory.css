@@ -232,6 +232,123 @@
   height: 58px;
 }
 
+.orbital-label-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orbital-map-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 18px max-content;
+  align-items: center;
+  gap: 7px;
+  min-width: 96px;
+  padding: 5px 7px 5px 5px;
+  color: #d9e8e2;
+  border: 1px solid rgba(69, 221, 210, 0.24);
+  border-radius: 3px;
+  background: rgba(1, 8, 9, 0.82);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translate3d(-200px, -200px, 0);
+  transition: opacity 140ms ease, border-color 140ms ease;
+  backdrop-filter: blur(8px);
+}
+
+.orbital-map-label.visible {
+  opacity: 0.82;
+}
+
+.orbital-map-label.selected {
+  color: var(--paper);
+  border-color: rgba(199, 255, 69, 0.62);
+  box-shadow:
+    inset 2px 0 0 var(--acid),
+    0 10px 34px rgba(0, 0, 0, 0.34);
+  opacity: 1;
+}
+
+.orbital-map-label > i {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--cyan);
+  border-radius: 50%;
+}
+
+.orbital-map-label > i::before,
+.orbital-map-label > i::after {
+  position: absolute;
+  content: "";
+  background: currentColor;
+}
+
+.orbital-map-label > i::before {
+  top: 7px;
+  right: -4px;
+  left: -4px;
+  height: 1px;
+}
+
+.orbital-map-label > i::after {
+  top: -4px;
+  bottom: -4px;
+  left: 7px;
+  width: 1px;
+}
+
+.orbital-map-label.selected > i {
+  color: var(--acid);
+  border-color: var(--acid);
+  box-shadow: 0 0 14px rgba(199, 255, 69, 0.32);
+}
+
+.orbital-map-label > span {
+  display: grid;
+  gap: 1px;
+}
+
+.orbital-map-label b {
+  color: currentColor;
+  font: 600 9px/1 Arial, Helvetica, sans-serif;
+}
+
+.orbital-map-label small {
+  color: #70807a;
+  font-size: 7px;
+}
+
+.orbital-map-label.proof-orbit {
+  grid-template-columns: 8px max-content;
+  min-width: 112px;
+  border-color: color-mix(in srgb, var(--mode-color) 52%, transparent);
+}
+
+.orbital-map-label.proof-orbit > i {
+  width: 6px;
+  height: 6px;
+  color: var(--mode-color);
+  border: 0;
+  background: var(--mode-color);
+  box-shadow: 0 0 16px var(--mode-color);
+}
+
+.orbital-map-label.proof-orbit > i::before,
+.orbital-map-label.proof-orbit > i::after {
+  display: none;
+}
+
+.orbital-map-label.proof-orbit b {
+  color: var(--mode-color);
+}
+
 .proof-monument {
   bottom: 26px;
   left: clamp(268px, 20vw, 350px);
@@ -1075,6 +1192,16 @@ body.luminous-mode:not(.luminous-expanded) .luminous-heading {
 
   .target-reticle {
     left: 54%;
+  }
+
+  .orbital-map-label:not(.selected),
+  .orbital-map-label.proof-orbit {
+    display: none;
+  }
+
+  .orbital-map-label {
+    min-width: 84px;
+    padding: 4px 6px 4px 4px;
   }
 
   .proof-event {
