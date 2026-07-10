@@ -60,6 +60,21 @@ def main() -> int:
     html = (PUBLIC / "index.html").read_text(encoding="utf-8")
     javascript = (PUBLIC / "app.js").read_text(encoding="utf-8")
 
+    deployed_script_match = re.search(
+        r'<script\s+type="module"\s+src="([^"?]+)(?:\?[^"]*)?"', html
+    )
+    if deployed_script_match is None:
+        fail(errors, "could not locate the deployed Observatory module")
+    else:
+        deployed_script = PUBLIC / deployed_script_match.group(1)
+        if not deployed_script.is_file():
+            fail(errors, f"deployed Observatory module is missing: {deployed_script.name}")
+        elif deployed_script.read_text(encoding="utf-8") != javascript:
+            fail(errors, "deployed Observatory module differs from app.js")
+
+    if 'href="observatory.css?' not in html:
+        fail(errors, "the sovereign field stylesheet is not loaded")
+
     parser = IdParser()
     parser.feed(html)
     duplicates = sorted({value for value in parser.ids if parser.ids.count(value) > 1})

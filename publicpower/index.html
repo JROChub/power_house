@@ -16,6 +16,7 @@
   <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="preload" href="assets/earth-night-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="stylesheet" href="app.css?v=20260709-orbital-observatory2">
+  <link rel="stylesheet" href="observatory.css?v=20260710-sovereign-field1">
 </head>
 <body>
   <div id="boot-screen" class="boot-screen" aria-live="polite">
@@ -127,9 +128,9 @@
       <div class="portal-drawer-shell">
         <header class="portal-drawer-head">
           <div>
-            <span>MFENX.COM / PUBLIC PORTAL</span>
-            <h2>THE ORBITAL OBSERVATORY</h2>
-            <p>Verify portable computation, Rootprint identity, live anchors, and human-readable SLBIT meaning without uploading proof data by default.</p>
+            <span>LOCAL PROOF LAB / MFENX.COM</span>
+            <h2>VERIFY HERE. NOTHING LEAVES.</h2>
+            <p>Run published verifier paths, inspect portable artifacts, or create a deterministic RootID observation from your own input. Arbitrary-input fingerprinting records what you supplied; it does not prove that the input is true.</p>
           </div>
           <button id="portal-panel-close" type="button" aria-label="Close Orbital Observatory portal">
             <span data-icon="x"></span>
@@ -137,12 +138,12 @@
         </header>
 
         <div class="portal-instant-verifier" aria-label="Instant verifier">
-          <label for="portal-input">Paste text, a URL, a claim, or a RootID seed</label>
-          <textarea id="portal-input" rows="4" spellcheck="false" placeholder="Paste content here for a local RootID fingerprint, or upload a .pha / Rootprint / SLBIT JSON file below."></textarea>
+          <label for="portal-input">Create a local RootID observation from text, URL, claim, or identity seed</label>
+          <textarea id="portal-input" rows="4" spellcheck="false" placeholder="Paste input here to produce a deterministic local observation, or load a .pha / Rootprint / SLBIT file below for artifact verification."></textarea>
           <div class="portal-verifier-actions">
             <button id="portal-input-verify" class="portal-command primary" type="button">
               <span data-icon="search"></span>
-              <b>LOCAL ROOTID VERIFY</b>
+              <b>CREATE LOCAL ROOTID</b>
             </button>
             <button id="portal-input-clear" class="portal-command" type="button">
               <span data-icon="rotate-ccw"></span>
@@ -189,7 +190,7 @@
           <button type="button" data-portal-mode="sfcs">
             <span data-icon="bot"></span>
             <b>RUN SFCS PROOF</b>
-            <small>Private VM coverage projection</small>
+            <small>Public identity bridge + proof-family report</small>
           </button>
           <button type="button" data-portal-mode="constant">
             <span data-icon="database"></span>
@@ -292,6 +293,10 @@
       <div id="globe-tooltip" class="globe-tooltip" role="status"></div>
 
       <section class="proof-monument" aria-label="Selected proof scale">
+        <div class="monument-thesis">
+          <span>THE IMPOSSIBLE, VERIFIED LOCALLY</span>
+          <b>ZERO PROOF DATA UPLOADED</b>
+        </div>
         <span id="orbit-kicker">DETERMINISTIC IDENTITY GRAPH</span>
         <div class="monument-title">
           <h1>POWER HOUSE</h1>
@@ -307,6 +312,21 @@
           <div><span>VERIFIER PATH</span><b id="verifier-path">CORE-ONLY DAG REPLAY</b></div>
           <div><span>EXTERNAL PROOFS</span><b id="allocation-value">STRICTLY OPTIONAL</b></div>
         </div>
+        <div class="hero-actions" aria-label="Primary proof commands">
+          <button id="hero-run-button" class="hero-run-button" type="button">
+            <span data-icon="play"></span>
+            <span><small>SELECTED VERIFIER</small><b id="hero-run-label">VERIFY GRAPH</b></span>
+          </button>
+          <button id="hero-portal-button" class="hero-portal-button" type="button">
+            <span data-icon="search"></span>
+            <span><small>YOUR INPUT</small><b>OPEN LOCAL PROOF LAB</b></span>
+          </button>
+        </div>
+        <dl class="hero-trust-meter" aria-label="Verification trust boundary">
+          <div><dt>EXECUTION</dt><dd id="hero-local-state">BROWSER LOCAL</dd></div>
+          <div><dt>UPLOAD</dt><dd id="hero-upload-state">NONE</dd></div>
+          <div><dt>MEANING</dt><dd id="hero-meaning-state">SLBIT / NON-CORE</dd></div>
+        </dl>
       </section>
 
       <div class="proof-event" aria-live="polite">
@@ -326,8 +346,13 @@
       <div id="sfcs-orbit-panel" class="sfcs-orbit-panel">
         <section class="zk-cockpit" aria-label="SFCS private VM proof coverage">
           <div class="zk-cockpit-head">
-            <span>SFCS PRIVATE VM / v0.3.24</span>
-            <b>WITNESS HIDDEN / MUTATION TESTED</b>
+            <div>
+              <span>SFCS PRIVATE VM / v0.3.24</span>
+              <b>WITNESS HIDDEN / MUTATION TESTED</b>
+            </div>
+            <button id="sfcs-orbit-close" type="button" aria-label="Close SFCS private VM verifier" title="Close SFCS verifier">
+              <span data-icon="x"></span>
+            </button>
           </div>
           <div class="zk-proof-grid" aria-label="SFCS proof coverage lanes">
             <div id="sfcs-lane-bitwise" class="sfcs-proof-lane" data-state="idle">
@@ -637,6 +662,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0331.js?v=20260710-sfcs-coverage-rails1"></script>
+  <script type="module" src="app-v0332.js?v=20260710-sovereign-field1"></script>
 </body>
 </html>
