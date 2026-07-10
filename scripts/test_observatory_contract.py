@@ -120,6 +120,9 @@ def main() -> int:
     required_visual_contracts = (
         "createNetworkTopology",
         "createSelectedCityGeometry",
+        "createCloudLayer",
+        "createOrbitalLabels",
+        "updateOrbitalLabels",
         "proofParticlesMaterial",
         "refreshNetworkStatus",
         "verifyReleaseArtifacts",
