@@ -458,6 +458,7 @@
 .scene-controls {
   top: calc(var(--top) + 70px);
   right: 20px;
+  grid-template-columns: repeat(7, 36px);
   gap: 5px;
 }
 
@@ -827,6 +828,10 @@ body.luminous-mode:not(.luminous-expanded) .luminous-heading {
     width: 510px;
     max-width: calc(100vw - 620px);
     min-width: 430px;
+  }
+
+  .scene-controls {
+    grid-template-columns: repeat(5, 36px);
   }
 
   .proof-monument h1 {
