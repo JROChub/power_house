@@ -74,6 +74,10 @@ def main() -> int:
 
     if 'href="observatory.css?' not in html:
         fail(errors, "the sovereign field stylesheet is not loaded")
+    if '<link rel="canonical" href="https://mfenx.com/">' not in html:
+        fail(errors, "the canonical apex-domain link is missing")
+    if "VERIFY SOMETHING NOW" in html or 'class="orbital-portal"' in html:
+        fail(errors, "the obsolete quick-action portal strip is still present")
 
     parser = IdParser()
     parser.feed(html)
