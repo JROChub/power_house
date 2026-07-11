@@ -814,6 +814,7 @@ body.luminous-mode:not(.luminous-expanded) .luminous-heading {
   border-radius: 6px;
   background: #030b0c;
   box-shadow: 0 34px 110px rgba(0, 0, 0, 0.62);
+  backdrop-filter: none;
 }
 
 .portal-drawer-head {
@@ -877,6 +878,7 @@ body.luminous-mode:not(.luminous-expanded) .luminous-heading {
 
 .portal-feature-grid {
   grid-area: features;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .portal-feature-grid a {
@@ -1390,7 +1392,7 @@ body.luminous-mode:not(.luminous-expanded) .luminous-heading {
 
   .portal-drawer-head button {
     position: fixed;
-    top: calc(var(--top) + 10px);
+    top: 10px;
     right: 10px;
     z-index: 4;
   }
