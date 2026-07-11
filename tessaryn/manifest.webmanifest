@@ -1,0 +1,17 @@
+{
+  "name": "TESSARYN Synthetic Origin",
+  "short_name": "TESSARYN",
+  "description": "Local-first experimental World Cell construction.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#111511",
+  "theme_color": "#111511",
+  "icons": [
+    {
+      "src": "./tessaryn-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#111511">
+    <meta
+      name="description"
+      content="TESSARYN experimental synthetic Origin: a native, local-first World Cell construction."
+    >
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./tessaryn-mark.svg" type="image/svg+xml">
+    <title>TESSARYN / Synthetic Origin 01</title>
+    <script type="module" crossorigin src="./assets/index-BDtFExzu.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/icons-DDPCI9Tp.js">
+    <link rel="modulepreload" crossorigin href="./assets/three-DcRUVr7Q.js">
+    <link rel="modulepreload" crossorigin href="./assets/three-BvS9nFhU.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-mqeXQ-wH.css">
+  </head>
+  <body>
+    <div id="app" class="app-shell" data-ready="false">
+      <canvas
+        id="world-canvas"
+        aria-label="Traversable synthetic TESSARYN Origin"
+        tabindex="0"
+      ></canvas>
+
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="TESSARYN home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span><b>TESSARYN</b><small>SELF-ASSEMBLING WORLD</small></span>
+        </a>
+        <div class="origin-title">
+          <small>ACTIVE ORIGIN</small>
+          <b id="origin-name">CONDENSING</b>
+        </div>
+        <div class="top-states" aria-live="polite">
+          <span id="network-state"><i></i>LOCAL</span>
+          <span><i></i>EXPERIMENTAL</span>
+          <span id="cell-count">0 CELLS</span>
+        </div>
+        <div class="top-actions">
+          <button id="verify-button" class="icon-command" type="button" title="Verify local world">
+            <i data-lucide="shield-check"></i><span>VERIFY</span>
+          </button>
+          <button id="fullscreen-button" class="icon-button" type="button" title="Toggle fullscreen">
+            <i data-lucide="maximize-2"></i>
+          </button>
+          <a
+            class="icon-button"
+            href="https://github.com/JROChub/tessaryn"
+            title="View source"
+            aria-label="View source"
+          ><i data-lucide="code-2"></i></a>
+        </div>
+      </header>
+
+      <nav id="moment-rail" class="moment-rail" aria-label="Moments"></nav>
+
+      <section class="origin-status" aria-live="polite">
+        <small id="origin-phase">ORIGIN / STRUCTURE</small>
+        <b id="origin-status">AWAITING WORLD CELLS</b>
+        <div class="condensation-track"><i id="condensation-progress"></i></div>
+        <dl>
+          <div><dt>ANCHOR</dt><dd id="anchor-short">PENDING</dd></div>
+          <div><dt>MOMENT</dt><dd id="moment-short">--</dd></div>
+          <div><dt>STATE</dt><dd id="evidence-short">UNRESOLVED</dd></div>
+        </dl>
+      </section>
+
+      <div id="world-label" class="world-label" hidden>
+        <i></i>
+        <span><b id="world-label-title"></b><small id="world-label-state"></small></span>
+      </div>
+
+      <aside id="trace-drawer" class="trace-drawer" aria-label="Cell Trace" aria-hidden="true" inert>
+        <header>
+          <div><small id="trace-kicker">CELL TRACE</small><b id="trace-title">NO CELL SELECTED</b></div>
+          <button id="trace-close" class="icon-button" type="button" title="Close Trace">
+            <i data-lucide="x"></i>
+          </button>
+        </header>
+        <div class="trace-tabs" role="tablist">
+          <button class="active" type="button" data-trace-tab="evidence" role="tab" aria-selected="true">EVIDENCE</button>
+          <button type="button" data-trace-tab="lineage" role="tab" aria-selected="false">LINEAGE</button>
+          <button type="button" data-trace-tab="meaning" role="tab" aria-selected="false">MEANING</button>
+        </div>
+        <div id="trace-evidence" class="trace-panel active" role="tabpanel">
+          <dl class="trace-grid">
+            <div><dt>CLASS</dt><dd id="trace-class">--</dd></div>
+            <div><dt>CORE</dt><dd id="trace-core">--</dd></div>
+            <div><dt>REPLAY</dt><dd id="trace-replay">--</dd></div>
+            <div><dt>DISCLOSURE</dt><dd id="trace-disclosure">--</dd></div>
+          </dl>
+          <div class="digest-block"><small>CELL ID</small><code id="trace-cell-id">--</code></div>
+          <div class="digest-block"><small>PHA FINGERPRINT</small><code id="trace-pha">--</code></div>
+          <div class="evidence-vector" id="evidence-vector"></div>
+        </div>
+        <div id="trace-lineage" class="trace-panel" role="tabpanel">
+          <div id="lineage-path" class="lineage-path"></div>
+          <div class="digest-block"><small>ROOTPRINT BRANCH</small><code id="trace-rootprint">--</code></div>
+          <div class="digest-block"><small>ANCHOR</small><code id="trace-anchor">--</code></div>
+        </div>
+        <div id="trace-meaning" class="trace-panel" role="tabpanel">
+          <p id="trace-summary"></p>
+          <div class="meaning-boundary">
+            <i data-lucide="layers-3"></i>
+            <span><b>NON-CORE</b><small>Meaning may change without changing Cell identity.</small></span>
+          </div>
+        </div>
+      </aside>
+
+      <aside id="challenge-drawer" class="challenge-drawer" aria-label="Mutation Lab" aria-hidden="true" inert>
+        <header>
+          <div><small>LOCAL MUTATION LAB</small><b>WATCH FALSEHOOD STOP</b></div>
+          <button id="challenge-close" class="icon-button" type="button" title="Close mutation lab">
+            <i data-lucide="x"></i>
+          </button>
+        </header>
+        <div class="challenge-commands">
+          <button type="button" data-mutation="coordinate"><i data-lucide="move-3d"></i><span>COORDINATE</span></button>
+          <button type="button" data-mutation="fingerprint"><i data-lucide="fingerprint"></i><span>PHA CORE</span></button>
+          <button type="button" data-mutation="semantic"><i data-lucide="message-square-text"></i><span>MEANING</span></button>
+        </div>
+        <div id="rejection-trace" class="rejection-trace">
+          <small>CHALLENGE IDLE</small>
+          <b>SELECT A MUTATION</b>
+          <dl>
+            <div><dt>EXPECTED LAYER</dt><dd>--</dd></div>
+            <div><dt>ACTUAL LAYER</dt><dd>--</dd></div>
+            <div><dt>CORE UNCHANGED</dt><dd>--</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+      <dialog id="verification-dialog" class="verification-dialog">
+        <header>
+          <div><small>LOCAL VERIFICATION REPORT</small><b id="verify-title">VERIFYING WORLD</b></div>
+          <button id="verify-close" class="icon-button" type="button" title="Close report">
+            <i data-lucide="x"></i>
+          </button>
+        </header>
+        <div class="verification-matrix">
+          <div><span>CELL IDENTITY</span><b id="verify-cells">PENDING</b></div>
+          <div><span>PHA CORE</span><b id="verify-pha">PENDING</b></div>
+          <div><span>ROOTPRINT</span><b id="verify-rootprint">PENDING</b></div>
+          <div><span>REPLAY</span><b id="verify-replay">PENDING</b></div>
+          <div><span>MEMORY CAPSULE</span><b id="verify-memory">PENDING</b></div>
+          <div><span>PHYSICAL TRUTH</span><b>NOT CLAIMED</b></div>
+        </div>
+        <p id="verify-detail">Verification runs against local fixture bytes. No proof data is uploaded.</p>
+      </dialog>
+
+      <footer class="world-controls" aria-label="World controls">
+        <div class="control-group scale-control" role="group" aria-label="Scale">
+          <button type="button" data-scale="object" title="Object scale"><i data-lucide="scan"></i><span>OBJECT</span></button>
+          <button class="active" type="button" data-scale="room" title="Room scale"><i data-lucide="box"></i><span>ROOM</span></button>
+          <button type="button" data-scale="site" title="Site scale"><i data-lucide="landmark"></i><span>SITE</span></button>
+        </div>
+        <div class="control-group">
+          <button id="chronofold-button" type="button" title="Open Chronofold" aria-pressed="false"><i data-lucide="git-branch"></i><span>CHRONOFOLD</span></button>
+          <button id="evidence-button" class="active" type="button" title="Toggle evidence Lens" aria-pressed="true"><i data-lucide="waypoints"></i><span>EVIDENCE</span></button>
+        </div>
+        <div class="control-group control-end">
+          <button id="challenge-button" type="button" title="Open mutation lab"><i data-lucide="flask-conical"></i><span>CHALLENGE</span></button>
+          <button id="export-button" type="button" title="Export local Memory Capsule"><i data-lucide="download"></i><span>EXPORT</span></button>
+          <button id="reset-button" class="icon-button" type="button" title="Return to Origin"><i data-lucide="rotate-ccw"></i></button>
+        </div>
+      </footer>
+
+      <div id="boot-field" class="boot-field">
+        <div class="boot-glyph" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <small>TESSARYN / SYNTHETIC ORIGIN 01</small>
+        <b>THE WORLD IS CONSTRUCTED</b>
+        <span id="boot-status">READING LOCAL CELL MANIFESTS</span>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+  </body>
+</html>
