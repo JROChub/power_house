@@ -73,6 +73,11 @@ jobs:
       - name: Test default targets
         run: cargo test --all-targets --locked
 
+      - name: Origin verified-creation proof
+        run: |
+          cargo test --locked --features sfcs --test origin
+          cargo run --locked --features sfcs --example origin_live_proof
+
       - name: Test network targets
         run: cargo test --all-targets --features net --locked
 
