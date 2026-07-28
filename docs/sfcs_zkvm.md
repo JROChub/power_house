@@ -133,8 +133,9 @@ fn main() {
 ```
 
 The reproducible guest workspace is in `risc0-methods/`. CI rebuilds the
-program and byte-compares it with
-`conformance/sfcs-risc0/private-sum-v1.bin` before running proof gates.
+program and requires its RISC Zero image ID and deterministic SFCS graph
+identity to match `conformance/sfcs-risc0/private-sum-v1.bin` before running
+proof gates. The pinned container remains the canonical transport fixture.
 
 This is the broad compiler path for private general-purpose programs. The
 existing direct Rust, LLVM-style SSA, and WASM-style stack frontends remain

@@ -179,12 +179,20 @@ jobs:
           "$HOME/.risc0/bin/rzup" install cargo-risczero 3.0.6
           "$HOME/.risc0/bin/rzup" install rust
 
-      - name: Reproduce private-VM guest binary
+      - name: Reproduce private-VM guest execution identity
         run: |
           cargo build --manifest-path risc0-methods/Cargo.toml
-          cmp \
+          cargo run --quiet --locked --features sfcs-risc0 \
+            --example sfcs_risc0_program_identity -- \
             conformance/sfcs-risc0/private-sum-v1.bin \
-            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/release/power-house-sfcs-conformance-guest.bin
+            > /tmp/pinned-program-identity
+          cargo run --quiet --locked --features sfcs-risc0 \
+            --example sfcs_risc0_program_identity -- \
+            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/release/power-house-sfcs-conformance-guest.bin \
+            > /tmp/rebuilt-program-identity
+          diff --unified \
+            /tmp/pinned-program-identity \
+            /tmp/rebuilt-program-identity
 
       - name: Real whole-program private-VM proof gates
         run: |

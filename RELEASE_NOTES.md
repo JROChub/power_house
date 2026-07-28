@@ -17,8 +17,8 @@
   `verify-risc0-capsule` commands with Rootprint, Memory Capsule,
   SLBIT-compatible semantic packet, Observatory sidecar, and report output.
 - Added a pinned RISC Zero guest workspace and binary conformance fixture. CI
-  rebuilds and byte-compares the guest before generating real library and CLI
-  proofs.
+  rebuilds the guest and compares its RISC Zero image ID and deterministic
+  SFCS graph identity before generating real library and CLI proofs.
 - Corrected the security description of the older `sfcs-zk` private-VM draft:
   it provides scoped relation proofs but is not the authoritative coherent
   whole-trace proof boundary.

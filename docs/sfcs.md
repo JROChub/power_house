@@ -382,9 +382,10 @@ functions. The guest controls disclosure by choosing what to commit to its
 public journal.
 
 The checked-in `risc0-methods` workspace and binary conformance fixture make
-the integration reproducible. CI rebuilds and byte-compares the guest, creates
-a real proof, runs library and CLI verification, rejects fake and wrong-program
-receipts, exercises mutations, and verifies Rootprint/Memory Capsule replay.
+the integration reproducible. CI rebuilds the guest and compares its RISC Zero
+image ID and deterministic SFCS graph identity, creates a real proof, runs
+library and CLI verification, rejects fake and wrong-program receipts,
+exercises mutations, and verifies Rootprint/Memory Capsule replay.
 
 ## Scoped Private Proof Profiles
 
