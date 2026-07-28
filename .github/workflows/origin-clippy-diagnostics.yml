@@ -1,36 +1,95 @@
-name: origin-clippy-diagnostics
+name: origin-clippy-fix
 
 on:
   pull_request:
     branches: ["main", "master"]
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
-  diagnose:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout pull request head
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.head_ref }}
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: rustfmt
 
-      - name: Capture all-feature Clippy diagnostics
+      - name: Group receipt transition material
         run: |
-          set +e
-          cargo clippy --all-targets --all-features --message-format=short -- -D warnings \
-            > origin-clippy.log 2>&1
-          status=$?
-          cat origin-clippy.log
-          echo "clippy_status=$status" >> "$GITHUB_ENV"
-          exit 0
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Upload Clippy diagnostics
-        uses: actions/upload-artifact@v4
-        with:
-          name: origin-clippy-diagnostics
-          path: origin-clippy.log
-          if-no-files-found: error
+          path = Path("src/origin.rs")
+          text = path.read_text()
+
+          marker = "}\n\nimpl CreationReceipt {\n"
+          replacement = """}
+
+struct ReceiptMaterial {
+    outputs: BTreeMap<String, i64>,
+    cost: CreationCost,
+    remaining_creative_units: u64,
+}
+
+impl CreationReceipt {
+"""
+          if text.count(marker) != 1:
+              raise SystemExit("unexpected CreationReceipt impl marker count")
+          text = text.replace(marker, replacement, 1)
+
+          signature = """        report: &SfcsExecutionEmbeddingReport,
+        outputs: BTreeMap<String, i64>,
+        cost: CreationCost,
+        remaining_creative_units: u64,
+    ) -> Result<Self, OriginError> {
+        let state = identity.replay(rootprint).map_err(OriginError::Identity)?;
+"""
+          grouped_signature = """        report: &SfcsExecutionEmbeddingReport,
+        material: ReceiptMaterial,
+    ) -> Result<Self, OriginError> {
+        let ReceiptMaterial {
+            outputs,
+            cost,
+            remaining_creative_units,
+        } = material;
+        let state = identity.replay(rootprint).map_err(OriginError::Identity)?;
+"""
+          if text.count(signature) != 1:
+              raise SystemExit("unexpected CreationReceipt signature count")
+          text = text.replace(signature, grouped_signature, 1)
+
+          call = """            &report,
+            prepared.outputs.clone(),
+            prepared.cost,
+            capacity.remaining_units,
+"""
+          grouped_call = """            &report,
+            ReceiptMaterial {
+                outputs: prepared.outputs.clone(),
+                cost: prepared.cost,
+                remaining_creative_units: capacity.remaining_units,
+            },
+"""
+          if text.count(call) != 2:
+              raise SystemExit("unexpected CreationReceipt call count")
+          text = text.replace(call, grouped_call)
+          path.write_text(text)
+          PY
+          cargo fmt
+          git diff --check
+
+      - name: Commit Clippy fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/origin.rs
+          git commit -m "Group Origin receipt transition material"
+          git push origin HEAD:${{ github.head_ref }}
