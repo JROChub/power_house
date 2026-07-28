@@ -24,65 +24,7 @@ jobs:
 
       - name: Group receipt transition material
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("src/origin.rs")
-          text = path.read_text()
-
-          marker = "}\n\nimpl CreationReceipt {\n"
-          replacement = """}
-
-struct ReceiptMaterial {
-    outputs: BTreeMap<String, i64>,
-    cost: CreationCost,
-    remaining_creative_units: u64,
-}
-
-impl CreationReceipt {
-"""
-          if text.count(marker) != 1:
-              raise SystemExit("unexpected CreationReceipt impl marker count")
-          text = text.replace(marker, replacement, 1)
-
-          signature = """        report: &SfcsExecutionEmbeddingReport,
-        outputs: BTreeMap<String, i64>,
-        cost: CreationCost,
-        remaining_creative_units: u64,
-    ) -> Result<Self, OriginError> {
-        let state = identity.replay(rootprint).map_err(OriginError::Identity)?;
-"""
-          grouped_signature = """        report: &SfcsExecutionEmbeddingReport,
-        material: ReceiptMaterial,
-    ) -> Result<Self, OriginError> {
-        let ReceiptMaterial {
-            outputs,
-            cost,
-            remaining_creative_units,
-        } = material;
-        let state = identity.replay(rootprint).map_err(OriginError::Identity)?;
-"""
-          if text.count(signature) != 1:
-              raise SystemExit("unexpected CreationReceipt signature count")
-          text = text.replace(signature, grouped_signature, 1)
-
-          call = """            &report,
-            prepared.outputs.clone(),
-            prepared.cost,
-            capacity.remaining_units,
-"""
-          grouped_call = """            &report,
-            ReceiptMaterial {
-                outputs: prepared.outputs.clone(),
-                cost: prepared.cost,
-                remaining_creative_units: capacity.remaining_units,
-            },
-"""
-          if text.count(call) != 2:
-              raise SystemExit("unexpected CreationReceipt call count")
-          text = text.replace(call, grouped_call)
-          path.write_text(text)
-          PY
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpwYXRoID0gUGF0aCgic3JjL29yaWdpbi5ycyIpCnRleHQgPSBwYXRoLnJlYWRfdGV4dCgpCgptYXJrZXIgPSAifVxuXG5pbXBsIENyZWF0aW9uUmVjZWlwdCB7XG4iCnJlcGxhY2VtZW50ID0gIiIifQoKc3RydWN0IFJlY2VpcHRNYXRlcmlhbCB7CiAgICBvdXRwdXRzOiBCVHJlZU1hcDxTdHJpbmcsIGk2ND4sCiAgICBjb3N0OiBDcmVhdGlvbkNvc3QsCiAgICByZW1haW5pbmdfY3JlYXRpdmVfdW5pdHM6IHU2NCwKfQoKaW1wbCBDcmVhdGlvblJlY2VpcHQgewoiIiIKaWYgdGV4dC5jb3VudChtYXJrZXIpICE9IDE6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJ1bmV4cGVjdGVkIENyZWF0aW9uUmVjZWlwdCBpbXBsIG1hcmtlciBjb3VudCIpCnRleHQgPSB0ZXh0LnJlcGxhY2UobWFya2VyLCByZXBsYWNlbWVudCwgMSkKCnNpZ25hdHVyZSA9ICIiIiAgICAgICAgcmVwb3J0OiAmU2Zjc0V4ZWN1dGlvbkVtYmVkZGluZ1JlcG9ydCwKICAgICAgICBvdXRwdXRzOiBCVHJlZU1hcDxTdHJpbmcsIGk2ND4sCiAgICAgICAgY29zdDogQ3JlYXRpb25Db3N0LAogICAgICAgIHJlbWFpbmluZ19jcmVhdGl2ZV91bml0czogdTY0LAogICAgKSAtPiBSZXN1bHQ8U2VsZiwgT3JpZ2luRXJyb3I+IHsKICAgICAgICBsZXQgc3RhdGUgPSBpZGVudGl0eS5yZXBsYXkocm9vdHByaW50KS5tYXBfZXJyKE9yaWdpbkVycm9yOjpJZGVudGl0eSk/OwoiIiIKZ3JvdXBlZF9zaWduYXR1cmUgPSAiIiIgICAgICAgIHJlcG9ydDogJlNmY3NFeGVjdXRpb25FbWJlZGRpbmdSZXBvcnQsCiAgICAgICAgbWF0ZXJpYWw6IFJlY2VpcHRNYXRlcmlhbCwKICAgICkgLT4gUmVzdWx0PFNlbGYsIE9yaWdpbkVycm9yPiB7CiAgICAgICAgbGV0IFJlY2VpcHRNYXRlcmlhbCB7CiAgICAgICAgICAgIG91dHB1dHMsCiAgICAgICAgICAgIGNvc3QsCiAgICAgICAgICAgIHJlbWFpbmluZ19jcmVhdGl2ZV91bml0cywKICAgICAgICB9ID0gbWF0ZXJpYWw7CiAgICAgICAgbGV0IHN0YXRlID0gaWRlbnRpdHkucmVwbGF5KHJvb3RwcmludCkubWFwX2VycihPcmlnaW5FcnJvcjo6SWRlbnRpdHkpPzsKIiIiCmlmIHRleHQuY291bnQoc2lnbmF0dXJlKSAhPSAxOgogICAgcmFpc2UgU3lzdGVtRXhpdCgidW5leHBlY3RlZCBDcmVhdGlvblJlY2VpcHQgc2lnbmF0dXJlIGNvdW50IikKdGV4dCA9IHRleHQucmVwbGFjZShzaWduYXR1cmUsIGdyb3VwZWRfc2lnbmF0dXJlLCAxKQoKY2FsbCA9ICIiIiAgICAgICAgICAgICZyZXBvcnQsCiAgICAgICAgICAgIHByZXBhcmVkLm91dHB1dHMuY2xvbmUoKSwKICAgICAgICAgICAgcHJlcGFyZWQuY29zdCwKICAgICAgICAgICAgY2FwYWNpdHkucmVtYWluaW5nX3VuaXRzLAoiIiIKZ3JvdXBlZF9jYWxsID0gIiIiICAgICAgICAgICAgJnJlcG9ydCwKICAgICAgICAgICAgUmVjZWlwdE1hdGVyaWFsIHsKICAgICAgICAgICAgICAgIG91dHB1dHM6IHByZXBhcmVkLm91dHB1dHMuY2xvbmUoKSwKICAgICAgICAgICAgICAgIGNvc3Q6IHByZXBhcmVkLmNvc3QsCiAgICAgICAgICAgICAgICByZW1haW5pbmdfY3JlYXRpdmVfdW5pdHM6IGNhcGFjaXR5LnJlbWFpbmluZ191bml0cywKICAgICAgICAgICAgfSwKIiIiCmlmIHRleHQuY291bnQoY2FsbCkgIT0gMjoKICAgIHJhaXNlIFN5c3RlbUV4aXQoInVuZXhwZWN0ZWQgQ3JlYXRpb25SZWNlaXB0IGNhbGwgY291bnQiKQp0ZXh0ID0gdGV4dC5yZXBsYWNlKGNhbGwsIGdyb3VwZWRfY2FsbCkKcGF0aC53cml0ZV90ZXh0KHRleHQpCg==' | base64 --decode | python3
           cargo fmt
           git diff --check
 
