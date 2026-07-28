@@ -26,55 +26,101 @@ jobs:
         with:
           components: clippy,rustfmt
 
-      - name: Reconstruct and authenticate release preparation
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Reconstruct and apply audited release candidate
         shell: bash
         run: |
           set -euo pipefail
-          test -f .github/workflows/origin-release-prepare.yml
+          : > scripts/origin-release-error.log
+          exec > >(tee -a scripts/origin-release-error.log) 2>&1
           : > scripts/prepare_origin_release.py
           for part in scripts/.origin-release-part-*.b64; do
             base64 --decode "$part" >> scripts/prepare_origin_release.py
           done
           echo "c3fe43cf64f2139d4059ff4ed01fb0ba02386bdf401bc8bc9cfc3dff792a5ab0  scripts/prepare_origin_release.py" | sha256sum --check --strict
+          python3 - <<'PY'
+          from pathlib import Path
+
+          script = Path("scripts/prepare_origin_release.py")
+          lines = script.read_text(encoding="utf-8").splitlines(keepends=True)
+          matches = [
+              index
+              for index, line in enumerate(lines)
+              if line == '    ".github/workflows/ci.yml",\n'
+          ]
+          if matches != [339]:
+              raise SystemExit(f"unexpected CI patch marker indexes: {matches}")
+          index = matches[0]
+          expected = [
+              "insert_after(\n",
+              '    ".github/workflows/ci.yml",\n',
+              "    '''          node --check publicpower/app.js\\n''',\n",
+              "    '''          node --check publicpower/tessaryn/origin.js\\n''',\n",
+              ")\n",
+          ]
+          if lines[index - 1 : index + 4] != expected:
+              raise SystemExit("temporary CI patch context changed")
+          lines[index - 1] = "replace_count(\n"
+          lines[index + 2] = "    '''          node --check publicpower/app.js\\n          node --check publicpower/tessaryn/origin.js\\n''',\n"
+          lines.insert(index + 3, "    2,\n")
+          script.write_text("".join(lines), encoding="utf-8")
+          PY
+          echo "f08ecc7cb60658804d133c03999727ff6955b96805d73db18f11c157df03bf8c  scripts/prepare_origin_release.py" | sha256sum --check --strict
           python3 -m py_compile scripts/prepare_origin_release.py
           python3 scripts/prepare_origin_release.py
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Format and static consistency
+          origin = Path("src/origin.rs")
+          text = origin.read_text(encoding="utf-8")
+          replacements = {
+              "self.label.as_bytes().len()": "self.label.len()",
+              "name.as_bytes().len()": "name.len()",
+              "spec.source.as_bytes().len()": "spec.source.len()",
+              "self.dense_boundary_units % DENSE_BOUNDARY_MULTIPLIER != 0": "!self.dense_boundary_units.is_multiple_of(DENSE_BOUNDARY_MULTIPLIER)",
+          }
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"unexpected Origin lint-fix count for {old!r}: {count}")
+              text = text.replace(old, new, 1)
+          origin.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Validate metadata and browser surface
         shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee -a scripts/origin-release-error.log) 2>&1
           cargo fmt --all
           git diff --check
           python3 scripts/check_release_consistency.py
           node --check publicpower/app.js
           node --check publicpower/tessaryn/origin.js
 
-      - name: Clippy all targets and features
-        run: cargo clippy --locked --all-targets --all-features -- -D warnings
-
-      - name: Rustdoc all features
+      - name: Verify Rust release surface
+        shell: bash
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc --locked --all-features --no-deps
-
-      - name: Full all-feature test suite
-        run: cargo test --locked --all-features
-
-      - name: Origin integration proof
-        shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee -a scripts/origin-release-error.log) 2>&1
+          cargo clippy --locked --all-targets --all-features -- -D warnings
+          cargo doc --locked --all-features --no-deps
+          cargo test --locked --all-features
           cargo test --locked --features sfcs --test origin
           cargo run --locked --features sfcs --example origin_live_proof
-
-      - name: Package release crate
-        run: cargo package --locked
+          cargo package --locked --allow-dirty
 
       - name: Confirm publication credential readiness
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         shell: bash
         run: |
+          set -euo pipefail
+          exec > >(tee -a scripts/origin-release-error.log) 2>&1
           if [[ -n "${CARGO_REGISTRY_TOKEN:-}" ]]; then
             echo "crates.io repository credential: configured"
           else
@@ -85,6 +131,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee -a scripts/origin-release-error.log) 2>&1
           python3 - <<'PY'
           from pathlib import Path
 
@@ -103,8 +150,11 @@ jobs:
               encoding="utf-8",
           )
           PY
+          rm -rf .github/origin-prep
+          rm -f .github/workflows/origin-release-prep.yml
           rm -f scripts/prepare_origin_release.py
           rm -f scripts/.origin-release-part-*.b64
+          rm -f scripts/origin-release-error.log
           rm -f .github/workflows/origin-release-prepare.yml
           cargo fmt --all --check
           git diff --check
@@ -114,6 +164,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Prepare Power House v0.3.25 Origin release"
+          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Persist preparation failure without partial source edits
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s scripts/origin-release-error.log || echo "preparation failed before diagnostic capture" > scripts/origin-release-error.log
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f scripts/origin-release-error.log
+          git commit -m "Record Origin release preparation failure" || exit 0
           git push origin HEAD:${{ github.head_ref }}
   # END ORIGIN RELEASE BOOTSTRAP
 
