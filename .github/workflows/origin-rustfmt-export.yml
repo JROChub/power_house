@@ -1,0 +1,33 @@
+name: origin-rustfmt-export
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Format Origin sources
+        run: cargo fmt
+
+      - name: Upload canonical rustfmt output
+        uses: actions/upload-artifact@v4
+        with:
+          name: origin-rustfmt
+          path: |
+            src/origin.rs
+            src/lib.rs
+            examples/origin_live_proof.rs
+            tests/origin.rs
+          if-no-files-found: error
