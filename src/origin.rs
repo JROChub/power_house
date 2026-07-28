@@ -401,6 +401,12 @@ pub struct CreationReceipt {
     pub receipt_digest: String,
 }
 
+struct ReceiptMaterial {
+    outputs: BTreeMap<String, i64>,
+    cost: CreationCost,
+    remaining_creative_units: u64,
+}
+
 impl CreationReceipt {
     fn new(
         label: String,
@@ -408,10 +414,13 @@ impl CreationReceipt {
         identity: &Identity,
         rootprint: &Rootprint,
         report: &SfcsExecutionEmbeddingReport,
-        outputs: BTreeMap<String, i64>,
-        cost: CreationCost,
-        remaining_creative_units: u64,
+        material: ReceiptMaterial,
     ) -> Result<Self, OriginError> {
+        let ReceiptMaterial {
+            outputs,
+            cost,
+            remaining_creative_units,
+        } = material;
         let state = identity.replay(rootprint).map_err(OriginError::Identity)?;
         let generation = state
             .graph
@@ -547,9 +556,11 @@ impl Origin {
             &identity,
             &rootprint,
             &report,
-            prepared.outputs.clone(),
-            prepared.cost,
-            capacity.remaining_units,
+            ReceiptMaterial {
+                outputs: prepared.outputs.clone(),
+                cost: prepared.cost,
+                remaining_creative_units: capacity.remaining_units,
+            },
         )?;
         let origin = Self {
             policy,
@@ -601,9 +612,11 @@ impl Origin {
             &identity,
             &rootprint,
             &report,
-            prepared.outputs.clone(),
-            prepared.cost,
-            capacity.remaining_units,
+            ReceiptMaterial {
+                outputs: prepared.outputs.clone(),
+                cost: prepared.cost,
+                remaining_creative_units: capacity.remaining_units,
+            },
         )?;
         let candidate = Self {
             policy: self.policy.clone(),
