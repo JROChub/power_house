@@ -18,8 +18,8 @@
   SLBIT-compatible semantic packet, Observatory sidecar, and report output.
 - Added a pinned RISC Zero guest workspace and binary conformance fixture. CI
   rebuilds the guest and compares its RISC Zero image ID and deterministic
-  SFCS graph identity under a pinned host and guest toolchain before generating
-  real library and CLI proofs.
+  SFCS graph identity inside a digest-pinned RISC Zero guest-builder container
+  before generating real library and CLI proofs.
 - Corrected the security description of the older `sfcs-zk` private-VM draft:
   it provides scoped relation proofs but is not the authoritative coherent
   whole-trace proof boundary.

@@ -137,8 +137,9 @@ program and requires its RISC Zero image ID and deterministic SFCS graph
 identity to match `conformance/sfcs-risc0/private-sum-v1.bin` before running
 proof gates. The host Rust, RISC Zero compiler, and RISC Zero guest Rust
 toolchains are pinned for this gate, and the guest is rebuilt from a clean,
-locked target without restoring compilation artifacts. The pinned container
-remains the canonical transport fixture.
+locked target without restoring compilation artifacts. The build itself runs
+inside the RISC Zero guest-builder image pinned by manifest digest. The pinned
+program container remains the canonical transport fixture.
 
 This is the broad compiler path for private general-purpose programs. The
 existing direct Rust, LLVM-style SSA, and WASM-style stack frontends remain

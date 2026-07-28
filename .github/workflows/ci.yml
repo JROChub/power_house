@@ -177,17 +177,34 @@ jobs:
           "$HOME/.risc0/bin/rzup" install rust
 
       - name: Reproduce private-VM guest execution identity
+        env:
+          POWER_HOUSE_RISC0_DOCKER_BUILD: "1"
         run: |
           cargo clean --manifest-path risc0-methods/Cargo.toml
           cargo build --locked --manifest-path risc0-methods/Cargo.toml
+          rebuilt_guest="risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker/power-house-sfcs-conformance-guest.bin"
+          test -f "$rebuilt_guest"
           cargo run --quiet --locked --features sfcs-risc0 \
             --example sfcs_risc0_program_identity -- \
             conformance/sfcs-risc0/private-sum-v1.bin \
             > /tmp/pinned-program-identity
           cargo run --quiet --locked --features sfcs-risc0 \
             --example sfcs_risc0_program_identity -- \
-            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/release/power-house-sfcs-conformance-guest.bin \
+            "$rebuilt_guest" \
             > /tmp/rebuilt-program-identity
+
+      - name: Archive canonical guest rebuild
+        uses: actions/upload-artifact@v4
+        with:
+          name: sfcs-risc0-canonical-guest
+          path: |
+            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker/power-house-sfcs-conformance-guest.bin
+            /tmp/rebuilt-program-identity
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Compare private-VM guest execution identity
+        run: |
           diff --unified \
             /tmp/pinned-program-identity \
             /tmp/rebuilt-program-identity
