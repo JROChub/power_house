@@ -59,6 +59,7 @@ def main() -> int:
     errors: list[str] = []
     html = (PUBLIC / "index.html").read_text(encoding="utf-8")
     javascript = (PUBLIC / "app.js").read_text(encoding="utf-8")
+    release_css = (PUBLIC / "release-v040.css").read_text(encoding="utf-8")
 
     deployed_script_match = re.search(
         r'<script\s+type="module"\s+src="([^"?]+)(?:\?[^"]*)?"', html
@@ -146,6 +147,16 @@ def main() -> int:
     for contract in forbidden_particle_contracts:
         if contract in javascript:
             fail(errors, f"deprecated particle behavior remains: {contract}")
+
+    required_desktop_layout_contracts = (
+        "@media (min-width: 901px)",
+        "grid-template-columns: max-content minmax(0, 1fr) max-content",
+        "top: clamp(22px, 3.5vh, 40px)",
+        "grid-auto-rows: 36px",
+    )
+    for contract in required_desktop_layout_contracts:
+        if contract not in release_css:
+            fail(errors, f"missing desktop layout contract: {contract}")
 
     if errors:
         for error in errors:

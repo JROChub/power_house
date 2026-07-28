@@ -248,6 +248,52 @@ body.evaluation-open #evaluation-panel {
   right: 80px;
 }
 
+/*
+ * Desktop observatory frame. Keep the narrative inside the stage's upper
+ * boundary, let the top bar size from its actual contents, and constrain the
+ * scene toolbar to its visible controls instead of stretching its hit area
+ * across the globe.
+ */
+@media (min-width: 901px) {
+  .topbar {
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    column-gap: 12px;
+  }
+
+  .mission-clock {
+    justify-self: center;
+  }
+
+  .top-actions {
+    min-width: 0;
+  }
+
+  .proof-monument {
+    top: clamp(22px, 3.5vh, 40px);
+    bottom: auto;
+  }
+
+  .scene-controls {
+    top: calc(var(--v040-top) + 70px);
+    bottom: auto;
+    width: max-content;
+    height: 36px;
+    grid-auto-rows: 36px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1080px) {
+  .brand small,
+  .mission-clock #utc-date,
+  .mission-clock > span:last-child {
+    display: none;
+  }
+
+  .topbar {
+    column-gap: 8px;
+  }
+}
+
 @media (max-width: 1180px) {
   #orbital-canvas {
     left: 30vw;
@@ -256,7 +302,7 @@ body.evaluation-open #evaluation-panel {
 
   .proof-monument {
     left: 30px;
-    bottom: 286px;
+    bottom: auto;
     width: 48vw;
   }
 
