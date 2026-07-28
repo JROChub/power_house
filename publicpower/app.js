@@ -81,15 +81,15 @@ const modes = {
   sfcs: {
     exponent: 1,
     domainLabel: "RISC-V<sup>ZK</sup>",
-    domainCaption: "WHOLE-PROGRAM RECEIPT",
+    domainCaption: "SOVEREIGN VM RECEIPT",
     dossierDomain: "RISC0 IMAGE / JOURNAL / CLAIM",
     domain: "REAL GUEST RECEIPT",
     verifierPath: "RISC0 + DETERMINISTIC .PHA",
     allocation: "PRIVATE INPUT HIDDEN",
     dossierArtifact: "RISC0 RECEIPT + MEMORY CAPSULE",
-    kicker: "SFCS WHOLE-PROGRAM PRIVATE VM",
+    kicker: "SFCS SOVEREIGN PRIVATE VM",
     description:
-      "Bind a real whole-program RISC-V receipt to deterministic .pha, Rootprint identity, SLBIT meaning, and offline Memory Capsule verification.",
+      "Bind a real private RISC-V execution receipt to deterministic .pha, Rootprint identity, SLBIT meaning, and offline Memory Capsule verification.",
     title: "Run the deterministic SFCS identity bridge",
     detail:
       "This browser verifies the public fractal identity projection. The published Rust verifier performs authoritative RISC0 receipt verification.",
@@ -98,7 +98,7 @@ const modes = {
     downloadHref: "https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md",
     color: 0x7df4ff,
     unit: "RECEIPT",
-    ready: "WHOLE-PROGRAM PATH READY",
+    ready: "SOVEREIGN VM PATH READY",
     tooltip: "REAL RECEIPT / PRIVATE INPUT",
     action: runSfcsFractal,
   },
@@ -517,16 +517,12 @@ let subsolarMarker;
 let proofShell;
 let proofShellMaterial;
 let proofRingGroup;
-let proofParticles;
-let proofParticlesMaterial;
 let selectedCityHalo;
 let selectedCityBeam;
 let networkGroup;
 let terminatorRing;
 let terminatorOuterRing;
 let auroraGroup;
-let orbitalDust;
-let orbitalDustMaterial;
 let animationFrame;
 let audioContext;
 let latestSolar = null;
@@ -535,7 +531,6 @@ let sceneResizeFrame = 0;
 let sceneResizeObserver;
 const networkLinks = [];
 const networkCityIndexes = [0, 3, 7];
-const starLayers = [];
 const observerMeshLinks = [];
 const observerBootBeacons = [];
 const orbitalLabelEntries = [];
@@ -896,90 +891,6 @@ function focusSelectedCity() {
   state.targetRotationX = THREE.MathUtils.clamp(city.lat * DEG, -1.18, 1.18);
   state.targetRotationY = -Math.PI / 2 - city.lon * DEG;
   state.zoom = focusedViewportZoom();
-}
-
-function seededRandom() {
-  let seed = 0x504f5745;
-  return () => {
-    seed ^= seed << 13;
-    seed ^= seed >>> 17;
-    seed ^= seed << 5;
-    return (seed >>> 0) / 4_294_967_296;
-  };
-}
-
-function createStars() {
-  const random = seededRandom();
-  const mobile = window.innerWidth < 760;
-  const layers = [
-    { count: mobile ? 700 : 1600, near: 7.5, far: 18, size: 0.018, opacity: 0.68 },
-    { count: mobile ? 280 : 720, near: 18, far: 34, size: 0.032, opacity: 0.38 },
-  ];
-  layers.forEach((layer, layerIndex) => {
-    const positions = new Float32Array(layer.count * 3);
-    const colors = new Float32Array(layer.count * 3);
-    for (let index = 0; index < layer.count; index += 1) {
-      const radius = layer.near + random() * (layer.far - layer.near);
-      const theta = random() * Math.PI * 2;
-      const phi = Math.acos(2 * random() - 1);
-      positions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[index * 3 + 1] = radius * Math.cos(phi);
-      positions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
-      const brightness = 0.34 + random() * 0.66;
-      colors[index * 3] = brightness * (layerIndex ? 0.54 : 0.72);
-      colors[index * 3 + 1] = brightness * (layerIndex ? 0.8 : 0.94);
-      colors[index * 3 + 2] = brightness * (layerIndex ? 1.0 : 0.88);
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({
-      size: layer.size,
-      vertexColors: true,
-      transparent: true,
-      opacity: layer.opacity,
-      sizeAttenuation: true,
-      depthWrite: false,
-    });
-    const points = new THREE.Points(geometry, material);
-    points.userData = { baseOpacity: layer.opacity, drift: layerIndex ? -0.002 : 0.0014 };
-    starLayers.push(points);
-    scene.add(points);
-  });
-}
-
-function createOrbitalDust() {
-  const random = seededRandom();
-  const count = window.innerWidth <= 760 ? 900 : 2200;
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  for (let index = 0; index < count; index += 1) {
-    const angle = random() * Math.PI * 2;
-    const band = (random() - 0.5) * 1.25;
-    const radius = 2.1 + random() * 1.3 + Math.abs(band) * 0.38;
-    positions[index * 3] = Math.cos(angle) * radius;
-    positions[index * 3 + 1] = band;
-    positions[index * 3 + 2] = Math.sin(angle) * radius;
-    const accent = random();
-    colors[index * 3] = 0.18 + accent * 0.22;
-    colors[index * 3 + 1] = 0.72 + accent * 0.28;
-    colors[index * 3 + 2] = 0.68 + accent * 0.22;
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  orbitalDustMaterial = new THREE.PointsMaterial({
-    size: window.innerWidth <= 760 ? 0.011 : 0.008,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.18,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    sizeAttenuation: true,
-  });
-  orbitalDust = new THREE.Points(geometry, orbitalDustMaterial);
-  orbitalDust.rotation.set(0.34, 0, -0.18);
-  scene.add(orbitalDust);
 }
 
 function createTerminatorAndAurora() {
@@ -1849,31 +1760,7 @@ function createProofField() {
     proofRingGroup.add(ring);
   });
 
-  const pointCount = window.innerWidth <= 760 ? 520 : 1300;
-  const positions = new Float32Array(pointCount * 3);
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  for (let index = 0; index < pointCount; index += 1) {
-    const y = 1 - (index / (pointCount - 1)) * 2;
-    const radial = Math.sqrt(1 - y * y);
-    const angle = goldenAngle * index;
-    const shell = 1.57 + ((index * 17) % 19) * 0.007;
-    positions[index * 3] = Math.cos(angle) * radial * shell;
-    positions[index * 3 + 1] = y * shell;
-    positions[index * 3 + 2] = Math.sin(angle) * radial * shell;
-  }
-  const particleGeometry = new THREE.BufferGeometry();
-  particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  proofParticlesMaterial = new THREE.PointsMaterial({
-    color: modes[state.mode].color,
-    size: window.innerWidth <= 760 ? 0.014 : 0.011,
-    transparent: true,
-    opacity: 0.2,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    sizeAttenuation: true,
-  });
-  proofParticles = new THREE.Points(particleGeometry, proofParticlesMaterial);
-  scene.add(proofConstellation, proofShell, proofRingGroup, proofParticles);
+  scene.add(proofConstellation, proofShell, proofRingGroup);
 }
 
 function createMoon() {
@@ -1924,8 +1811,6 @@ async function initScene() {
   camera = new THREE.PerspectiveCamera(42, canvasWidth / canvasHeight, 0.1, 100);
   camera.position.set(cameraHorizontalOffset(), 0, state.zoom);
 
-  createStars();
-  createOrbitalDust();
   createOrbits();
   createProofField();
   createMoon();
@@ -2073,19 +1958,6 @@ function animate(time = 0) {
   animationFrame = requestAnimationFrame(animate);
   if (!renderer || !scene || !camera || !state.visible) return;
   const seconds = time * 0.001;
-  starLayers.forEach((layer, index) => {
-    layer.rotation.y += state.motion ? layer.userData.drift : 0;
-    layer.rotation.x += state.motion ? layer.userData.drift * 0.16 : 0;
-    layer.material.opacity =
-      layer.userData.baseOpacity + Math.sin(seconds * (0.45 + index * 0.18)) * 0.045;
-  });
-  if (orbitalDust) {
-    const observerBoost = Math.min(state.observerConnections, 9) / 9;
-    orbitalDust.rotation.y += state.motion ? 0.0009 + observerBoost * 0.0008 : 0;
-    orbitalDust.rotation.z += state.motion ? -0.00022 : 0;
-    orbitalDustMaterial.opacity =
-      0.12 + state.proofProgress * 0.36 + observerBoost * 0.18 + (state.running ? 0.1 : 0);
-  }
   if (earthGroup) {
     if (state.motion && !state.pointerDown) state.targetRotationY += 0.00024;
     earthGroup.rotation.x += (state.targetRotationX - earthGroup.rotation.x) * 0.045;
@@ -2187,10 +2059,21 @@ function animate(time = 0) {
     subsolarMarker.scale.setScalar(1 + Math.sin(seconds * 3) * 0.12);
   }
   if (proofShell && proofRingGroup) {
-    const activity = state.running ? 0.1 + state.proofProgress * 0.26 : state.lastResult ? 0.1 : 0.028;
+    const compactProofField = window.innerWidth <= 900;
+    const activity = state.running
+      ? (compactProofField ? 0.18 : 0.1) + state.proofProgress * (compactProofField ? 0.3 : 0.26)
+      : state.lastResult
+        ? compactProofField
+          ? 0.14
+          : 0.1
+        : 0.028;
     proofShellMaterial.opacity = activity + (state.running ? Math.sin(seconds * 7) * 0.025 : 0);
     proofShellMaterial.color.setHex(modes[state.mode].color);
-    proofShell.scale.setScalar(1 + state.proofProgress * 0.18);
+    proofShell.scale.setScalar(
+      compactProofField
+        ? 1.08 - state.proofProgress * 0.08
+        : 1 + state.proofProgress * 0.18,
+    );
     proofShell.rotation.y = seconds * 0.035;
     proofShell.rotation.x = seconds * -0.018;
     proofRingGroup.children.forEach((ring, index) => {
@@ -2206,14 +2089,6 @@ function animate(time = 0) {
       proofConstellationMaterial.opacity =
         0.018 + state.proofProgress * 0.045 + (state.running ? 0.018 : 0);
     }
-  }
-  if (proofParticles) {
-    proofParticles.rotation.y = seconds * -0.018;
-    proofParticles.rotation.z = seconds * 0.006;
-    proofParticlesMaterial.color.setHex(modes[state.mode].color);
-    proofParticlesMaterial.opacity =
-      0.12 + state.proofProgress * 0.52 + (state.running ? 0.08 : 0);
-    proofParticles.scale.setScalar(1 + state.proofProgress * 0.12);
   }
   if (moon) moon.rotation.y += state.motion ? 0.0015 : 0;
   camera.position.x += (cameraHorizontalOffset() - camera.position.x) * 0.06;
