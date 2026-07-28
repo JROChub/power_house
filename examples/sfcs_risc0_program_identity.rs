@@ -1,7 +1,10 @@
 //! Prints the execution identity of a RISC Zero guest binary.
 
 #[cfg(not(feature = "sfcs-risc0"))]
-compile_error!("run with --features sfcs-risc0");
+fn main() {
+    eprintln!("sfcs_risc0_program_identity requires --features sfcs-risc0");
+    std::process::exit(2);
+}
 
 #[cfg(feature = "sfcs-risc0")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {

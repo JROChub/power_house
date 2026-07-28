@@ -166,8 +166,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Pinned host Rust toolchain
+        uses: dtolnay/rust-toolchain@1.93.1
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
