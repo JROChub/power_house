@@ -1,0 +1,36 @@
+name: origin-clippy-diagnostics
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Capture all-feature Clippy diagnostics
+        run: |
+          set +e
+          cargo clippy --all-targets --all-features --message-format=short -- -D warnings \
+            > origin-clippy.log 2>&1
+          status=$?
+          cat origin-clippy.log
+          echo "clippy_status=$status" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Upload Clippy diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: origin-clippy-diagnostics
+          path: origin-clippy.log
+          if-no-files-found: error
