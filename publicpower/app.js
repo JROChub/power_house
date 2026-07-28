@@ -4212,6 +4212,7 @@ function bindInterface() {
     }
   };
   el.observatoryToggle.addEventListener("click", () => {
+    setPortalOpen(false);
     setSfcsOrbitOpen(false);
     closeInstrumentDrawers();
     document.body.classList.add("observatory-open");
@@ -4254,6 +4255,7 @@ function bindInterface() {
     });
   }
   el.evaluationToggle.addEventListener("click", () => {
+    setPortalOpen(false);
     setSfcsOrbitOpen(false);
     closeInstrumentDrawers();
     document.body.classList.add("evaluation-open");
