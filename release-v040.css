@@ -780,6 +780,28 @@ body.evaluation-open #evaluation-panel {
     --dock: 112px;
     --v040-dock: 112px;
     --explorer-closed: 28px;
+    --mobile-command-band: 62px;
+  }
+
+  body {
+    --scene-bottom: calc(
+      var(--dock) + var(--proof-stack) + var(--explorer-closed) +
+        var(--mobile-command-band)
+    );
+  }
+
+  body.luminous-mode {
+    --scene-bottom: calc(
+      var(--dock) + var(--proof-stack) + var(--explorer-closed) +
+        var(--mobile-command-band)
+    );
+  }
+
+  body.luminous-mode.luminous-expanded {
+    --scene-bottom: calc(
+      var(--dock) + var(--proof-stack) + var(--explorer-open) +
+        var(--mobile-command-band)
+    );
   }
 
   .edge-vignette {
@@ -789,9 +811,10 @@ body.evaluation-open #evaluation-panel {
 
   .proof-monument {
     right: 12px;
-    bottom: 82px;
+    bottom: -48px;
     left: 12px;
     width: auto;
+    height: 48px;
   }
 
   .proof-monument::before,
@@ -813,8 +836,8 @@ body.evaluation-open #evaluation-panel {
 
   .hero-actions button {
     min-height: 48px;
-    background: rgba(2, 10, 11, 0.92);
-    backdrop-filter: blur(14px);
+    background: #020a0b;
+    backdrop-filter: none;
   }
 
   .hero-run-button {
@@ -828,6 +851,46 @@ body.evaluation-open #evaluation-panel {
   .orbital-label-layer,
   .target-reticle,
   .proof-event {
+    display: none;
+  }
+
+  .scene-controls {
+    top: 116px;
+    right: auto;
+    bottom: auto;
+    left: 8px;
+    z-index: 46;
+    display: grid;
+    grid-template-columns: 34px;
+    grid-auto-rows: 34px;
+    align-content: start;
+    justify-content: start;
+    gap: 5px;
+    height: auto;
+  }
+
+  .scene-controls .icon-button {
+    width: 34px;
+    height: 34px;
+    color: #a8b9b3;
+    border-color: rgba(220, 239, 232, 0.2);
+    border-radius: 4px;
+    background: rgba(2, 10, 11, 0.88);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+  }
+
+  .scene-controls .icon-button:hover,
+  .scene-controls .icon-button:focus-visible,
+  .scene-controls .icon-button.active {
+    color: #010506;
+    border-color: var(--mode-color);
+    background: var(--mode-color);
+    box-shadow: 0 0 22px color-mix(in srgb, var(--mode-color) 22%, transparent);
+  }
+
+  #sound-toggle,
+  #motion-toggle {
     display: none;
   }
 
@@ -851,6 +914,24 @@ body.evaluation-open #evaluation-panel {
 
   .proof-mode {
     min-height: 48px;
+  }
+
+  .proof-mode.active {
+    color: var(--v040-paper);
+    border-color: color-mix(in srgb, var(--mode-color) 44%, transparent);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--mode-color) 24%, #02090a),
+        color-mix(in srgb, var(--mode-color) 7%, #02090a)
+      );
+    box-shadow:
+      inset 0 -2px 0 var(--mode-color),
+      0 0 22px color-mix(in srgb, var(--mode-color) 9%, transparent);
+  }
+
+  .proof-mode.active .mode-index {
+    box-shadow: 0 0 14px color-mix(in srgb, var(--mode-color) 30%, transparent);
   }
 
   .verification-dock {
@@ -894,11 +975,22 @@ body.evaluation-open #evaluation-panel {
     min-height: var(--explorer-closed);
     height: var(--explorer-closed);
   }
+
+  body.luminous-expanded .proof-monument,
+  body.portal-open .scene-controls,
+  body.sfcs-popout-open .scene-controls,
+  body.observatory-open .scene-controls,
+  body.evaluation-open .scene-controls {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 @media (orientation: portrait) and (max-width: 370px) {
   .proof-monument {
-    bottom: 80px;
+    bottom: -46px;
+    height: 46px;
   }
 
   .hero-actions button {
@@ -907,5 +999,16 @@ body.evaluation-open #evaluation-panel {
 
   .proof-mode {
     min-height: 46px;
+  }
+
+  .scene-controls {
+    top: 110px;
+    grid-template-columns: 32px;
+    grid-auto-rows: 32px;
+  }
+
+  .scene-controls .icon-button {
+    width: 32px;
+    height: 32px;
   }
 }
