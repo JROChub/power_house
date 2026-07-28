@@ -32,15 +32,52 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Reconstruct and apply audited release candidate
+        id: apply
+        shell: bash
+        run: |
+          set +e
+          {
+            echo "== staged payload =="
+            wc -c .github/origin-prep/part*
+            sha256sum .github/origin-prep/part*
+            encoded_bytes="$(cat .github/origin-prep/part* | tr -d '\r\n' | wc -c)"
+            echo "encoded bytes: ${encoded_bytes} (expected 62292)"
+            test "${encoded_bytes}" = "62292"
+            cat .github/origin-prep/part* | tr -d '\r\n' | base64 --decode | gzip --decompress > /tmp/prepare_origin_release.py
+            echo "decoded payload:"
+            wc -c /tmp/prepare_origin_release.py
+            sha256sum /tmp/prepare_origin_release.py
+            test "$(sha256sum /tmp/prepare_origin_release.py | cut -d' ' -f1)" = "e0d4e53bc079a964853318959dbae3dd9336ffdaf3d311d8b53f90704ccf7a54"
+            python3 -m py_compile /tmp/prepare_origin_release.py
+            python3 /tmp/prepare_origin_release.py
+            cargo check --features sfcs --test origin
+            cargo fmt --all
+          } > /tmp/origin-release-prep.log 2>&1
+          status=$?
+          mkdir -p .github/origin-prep
+          {
+            echo "status=${status}"
+            echo
+            tail -n 300 /tmp/origin-release-prep.log
+          } > .github/origin-prep/diagnostic.txt
+          cat .github/origin-prep/diagnostic.txt
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Persist a failed preparation diagnostic
+        if: steps.apply.outputs.status != '0'
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/origin-prep/part* | tr -d '\r\n' | base64 --decode | gzip --decompress > /tmp/prepare_origin_release.py
-          python3 /tmp/prepare_origin_release.py
-          cargo check --features sfcs --test origin
-          cargo fmt --all
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f .github/origin-prep/diagnostic.txt
+          git commit -m "[skip ci] Capture Origin release preparation failure"
+          git push origin HEAD:agent/origin-verified-creation
+          exit 1
 
       - name: Validate metadata and browser surface
+        if: steps.apply.outputs.status == '0'
         shell: bash
         run: |
           set -euo pipefail
@@ -49,6 +86,7 @@ jobs:
           node scripts/test_origin_console.mjs
 
       - name: Verify Rust release surface
+        if: steps.apply.outputs.status == '0'
         shell: bash
         env:
           RUSTDOCFLAGS: -D warnings
@@ -62,6 +100,7 @@ jobs:
           cargo package --locked
 
       - name: Commit the release candidate and remove transport files
+        if: steps.apply.outputs.status == '0'
         shell: bash
         run: |
           set -euo pipefail
