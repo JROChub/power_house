@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ["main", "master"]
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   export:
     runs-on: ubuntu-latest
@@ -11,7 +15,7 @@ jobs:
       - name: Checkout pull request head
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.head_ref }}
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -21,13 +25,22 @@ jobs:
       - name: Format Origin sources
         run: cargo fmt
 
-      - name: Upload canonical rustfmt output
-        uses: actions/upload-artifact@v4
-        with:
-          name: origin-rustfmt
-          path: |
-            src/origin.rs
-            src/lib.rs
-            examples/origin_live_proof.rs
+      - name: Commit canonical rustfmt output
+        run: |
+          if git diff --quiet -- \
+            src/origin.rs \
+            src/lib.rs \
+            examples/origin_live_proof.rs \
+            tests/origin.rs; then
+            echo "Origin sources already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/origin.rs \
+            src/lib.rs \
+            examples/origin_live_proof.rs \
             tests/origin.rs
-          if-no-files-found: error
+          git commit -m "Format Origin sources"
+          git push origin HEAD:${{ github.head_ref }}
