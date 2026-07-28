@@ -769,3 +769,143 @@ body.evaluation-open #evaluation-panel {
     min-width: 108px;
   }
 }
+
+/*
+ * Portrait world focus: reserve the center for the globe. Descriptive proof
+ * copy remains available through the proof rail and drawers instead of being
+ * painted over the world.
+ */
+@media (orientation: portrait) and (max-width: 900px) {
+  :root {
+    --dock: 112px;
+    --v040-dock: 112px;
+    --explorer-closed: 28px;
+  }
+
+  .edge-vignette {
+    background:
+      linear-gradient(180deg, rgba(1, 5, 6, 0.58), transparent 18%, transparent 78%, rgba(1, 5, 6, 0.82));
+  }
+
+  .proof-monument {
+    right: 12px;
+    bottom: 82px;
+    left: 12px;
+    width: auto;
+  }
+
+  .proof-monument::before,
+  .monument-thesis,
+  .proof-monument > span,
+  .monument-title,
+  .domain-equation,
+  .proof-monument > p,
+  .mode-metrics,
+  .hero-trust-meter {
+    display: none;
+  }
+
+  .hero-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+    margin: 0;
+  }
+
+  .hero-actions button {
+    min-height: 48px;
+    background: rgba(2, 10, 11, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  .hero-run-button {
+    box-shadow: 0 10px 30px rgba(189, 255, 59, 0.08);
+  }
+
+  .hero-portal-button {
+    border-color: rgba(220, 239, 232, 0.22);
+  }
+
+  .orbital-label-layer,
+  .target-reticle,
+  .proof-event {
+    display: none;
+  }
+
+  .stage-label {
+    top: 10px;
+  }
+
+  .stage-label span,
+  .stage-label small {
+    opacity: 0.62;
+  }
+
+  .proof-rail {
+    bottom: calc(var(--v040-dock) + var(--explorer-closed));
+    box-shadow: none;
+  }
+
+  .proof-modes {
+    padding-block: 5px;
+  }
+
+  .proof-mode {
+    min-height: 48px;
+  }
+
+  .verification-dock {
+    grid-template-rows: 70px 42px;
+    height: var(--dock);
+    box-shadow: 0 -16px 38px rgba(0, 0, 0, 0.28);
+  }
+
+  .trace-header {
+    padding-block: 8px;
+  }
+
+  .trace-header > span {
+    font-size: 7px;
+  }
+
+  .trace-header b {
+    max-height: 30px;
+    font-size: 11px;
+  }
+
+  .verification-actions {
+    padding-block: 7px;
+  }
+
+  .verify-button {
+    min-height: 44px;
+  }
+
+  .telemetry {
+    height: 42px;
+    min-height: 42px;
+  }
+
+  .status-seal {
+    width: 36px;
+    height: 36px;
+  }
+
+  .luminous-heading {
+    min-height: var(--explorer-closed);
+    height: var(--explorer-closed);
+  }
+}
+
+@media (orientation: portrait) and (max-width: 370px) {
+  .proof-monument {
+    bottom: 80px;
+  }
+
+  .hero-actions button {
+    min-height: 46px;
+  }
+
+  .proof-mode {
+    min-height: 46px;
+  }
+}
