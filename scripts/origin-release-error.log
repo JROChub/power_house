@@ -1,0 +1,2 @@
+scripts/prepare_origin_release.py: OK
+.github/workflows/ci.yml: expected one replacement, found 2: '          node --check publicpower/app.js\n'
