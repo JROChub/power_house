@@ -5,373 +5,373 @@ RELEASE GATE PASS: Power House v0.3.25
 [1m[92m    Updating[0m crates.io index
 [1m[92m Downloading[0m crates ...
 [1m[92m  Downloaded[0m aead v0.5.2
-[1m[92m  Downloaded[0m hex v0.4.3
 [1m[92m  Downloaded[0m heck v0.5.0
-[1m[92m  Downloaded[0m hex_fmt v0.3.0
-[1m[92m  Downloaded[0m httpdate v1.0.3
-[1m[92m  Downloaded[0m universal-hash v0.5.1
-[1m[92m  Downloaded[0m wait-timeout v0.2.1
-[1m[92m  Downloaded[0m inout v0.1.4
-[1m[92m  Downloaded[0m if-watch v3.2.1
-[1m[92m  Downloaded[0m version_check v0.9.5
-[1m[92m  Downloaded[0m want v0.3.1
-[1m[92m  Downloaded[0m hyper-rustls v0.24.2
-[1m[92m  Downloaded[0m libp2p-swarm-derive v0.35.1
-[1m[92m  Downloaded[0m num_cpus v1.17.0
-[1m[92m  Downloaded[0m pem v3.0.6
-[1m[92m  Downloaded[0m utf8_iter v1.0.4
-[1m[92m  Downloaded[0m keccak v0.1.6
-[1m[92m  Downloaded[0m lazy_static v1.5.0
-[1m[92m  Downloaded[0m lru v0.7.8
-[1m[92m  Downloaded[0m percent-encoding v2.3.2
-[1m[92m  Downloaded[0m netlink-packet-utils v0.5.2
-[1m[92m  Downloaded[0m nohash-hasher v0.2.0
-[1m[92m  Downloaded[0m opaque-debug v0.3.1
-[1m[92m  Downloaded[0m unsigned-varint v0.7.2
-[1m[92m  Downloaded[0m zerofrom v0.1.6
-[1m[92m  Downloaded[0m unsigned-varint v0.8.0
-[1m[92m  Downloaded[0m httparse v1.10.1
-[1m[92m  Downloaded[0m libp2p-metrics v0.17.0
-[1m[92m  Downloaded[0m once_cell v1.21.3
-[1m[92m  Downloaded[0m parking v2.2.1
-[1m[92m  Downloaded[0m libp2p-allow-block-list v0.6.0
-[1m[92m  Downloaded[0m match-lookup v0.1.1
-[1m[92m  Downloaded[0m yoke-derive v0.8.1
-[1m[92m  Downloaded[0m xmltree v0.10.3
-[1m[92m  Downloaded[0m zerofrom-derive v0.1.6
-[1m[92m  Downloaded[0m zeroize_derive v1.4.2
-[1m[92m  Downloaded[0m lru-slab v0.1.2
-[1m[92m  Downloaded[0m multibase v0.9.2
-[1m[92m  Downloaded[0m num-conv v0.1.0
-[1m[92m  Downloaded[0m http-body v1.0.1
-[1m[92m  Downloaded[0m ark-snark v0.4.0
-[1m[92m  Downloaded[0m writeable v0.6.2
-[1m[92m  Downloaded[0m idna_adapter v1.2.1
-[1m[92m  Downloaded[0m yamux v0.13.8
-[1m[92m  Downloaded[0m http-body v0.4.6
-[1m[92m  Downloaded[0m instant v0.1.13
-[1m[92m  Downloaded[0m try-lock v0.2.5
-[1m[92m  Downloaded[0m itoa v1.0.15
-[1m[92m  Downloaded[0m mime v0.3.17
-[1m[92m  Downloaded[0m asn1-rs-impl v0.2.0
-[1m[92m  Downloaded[0m netlink-proto v0.11.5
-[1m[92m  Downloaded[0m libp2p-connection-limits v0.6.0
-[1m[92m  Downloaded[0m libp2p-dns v0.44.0
-[1m[92m  Downloaded[0m num-integer v0.1.46
-[1m[92m  Downloaded[0m crunchy v0.2.4
-[1m[92m  Downloaded[0m igd-next v0.16.2
-[1m[92m  Downloaded[0m libp2p-identify v0.47.0
-[1m[92m  Downloaded[0m libp2p-noise v0.46.1
-[1m[92m  Downloaded[0m libp2p-tls v0.6.2
-[1m[92m  Downloaded[0m lock_api v0.4.14
-[1m[92m  Downloaded[0m parking_lot_core v0.8.6
-[1m[92m  Downloaded[0m ark-bn254 v0.4.0
-[1m[92m  Downloaded[0m arrayref v0.3.9
-[1m[92m  Downloaded[0m base256emoji v1.0.2
-[1m[92m  Downloaded[0m block-buffer v0.10.4
-[1m[92m  Downloaded[0m crypto-common v0.1.7
-[1m[92m  Downloaded[0m libp2p-upnp v0.5.0
-[1m[92m  Downloaded[0m multihash v0.19.5
-[1m[92m  Downloaded[0m multistream-select v0.13.0
-[1m[92m  Downloaded[0m libp2p-yamux v0.47.0
-[1m[92m  Downloaded[0m multiaddr v0.18.2
-[1m[92m  Downloaded[0m netlink-packet-core v0.7.0
-[1m[92m  Downloaded[0m pin-project-internal v1.1.10
-[1m[92m  Downloaded[0m ark-serialize-derive v0.4.2
-[1m[92m  Downloaded[0m base16ct v0.2.0
-[1m[92m  Downloaded[0m cpufeatures v0.2.17
-[1m[92m  Downloaded[0m http-body-util v0.1.3
-[1m[92m  Downloaded[0m ipnet v2.11.0
-[1m[92m  Downloaded[0m libp2p-quic v0.13.1
-[1m[92m  Downloaded[0m libp2p-tcp v0.44.1
-[1m[92m  Downloaded[0m oid-registry v0.8.1
+[1m[92m  Downloaded[0m hickory-resolver v0.25.2
+[1m[92m  Downloaded[0m hex v0.4.3
 [1m[92m  Downloaded[0m parking_lot v0.12.5
-[1m[92m  Downloaded[0m paste v1.0.15
-[1m[92m  Downloaded[0m rustls-pemfile v1.0.4
-[1m[92m  Downloaded[0m tinyvec_macros v0.1.1
-[1m[92m  Downloaded[0m tokio-macros v2.6.0
-[1m[92m  Downloaded[0m ark-ff-asm v0.4.2
-[1m[92m  Downloaded[0m ark-ff-macros v0.4.2
-[1m[92m  Downloaded[0m asn1-rs-derive v0.6.0
-[1m[92m  Downloaded[0m asynchronous-codec v0.7.0
-[1m[92m  Downloaded[0m bit-set v0.8.0
-[1m[92m  Downloaded[0m ark-ed-on-bn254 v0.4.0
-[1m[92m  Downloaded[0m curve25519-dalek-derive v0.1.1
-[1m[92m  Downloaded[0m sha2 v0.10.9
-[1m[92m  Downloaded[0m tower-service v0.3.3
-[1m[92m  Downloaded[0m hmac v0.12.1
+[1m[92m  Downloaded[0m libp2p-metrics v0.17.0
+[1m[92m  Downloaded[0m multihash v0.19.5
+[1m[92m  Downloaded[0m itoa v1.0.15
+[1m[92m  Downloaded[0m libm v0.2.15
+[1m[92m  Downloaded[0m igd-next v0.16.2
 [1m[92m  Downloaded[0m libp2p-identity v0.2.14
-[1m[92m  Downloaded[0m libp2p-mdns v0.48.0
-[1m[92m  Downloaded[0m litemap v0.8.1
-[1m[92m  Downloaded[0m netlink-sys v0.8.7
-[1m[92m  Downloaded[0m parking_lot v0.11.2
-[1m[92m  Downloaded[0m parking_lot_core v0.9.12
+[1m[92m  Downloaded[0m lock_api v0.4.14
+[1m[92m  Downloaded[0m libp2p-dns v0.44.0
+[1m[92m  Downloaded[0m idna v1.1.0
+[1m[92m  Downloaded[0m nohash-hasher v0.2.0
+[1m[92m  Downloaded[0m utf8_iter v1.0.4
+[1m[92m  Downloaded[0m netlink-packet-route v0.17.1
+[1m[92m  Downloaded[0m hkdf v0.12.4
+[1m[92m  Downloaded[0m tower-service v0.3.3
+[1m[92m  Downloaded[0m ark-ed-on-bn254 v0.4.0
+[1m[92m  Downloaded[0m tokio-macros v2.6.0
+[1m[92m  Downloaded[0m pin-project v1.1.10
 [1m[92m  Downloaded[0m spki v0.7.3
-[1m[92m  Downloaded[0m stable_deref_trait v1.2.1
-[1m[92m  Downloaded[0m static_assertions v1.1.0
+[1m[92m  Downloaded[0m tokio-rustls v0.24.1
+[1m[92m  Downloaded[0m const-str v0.4.3
+[1m[92m  Downloaded[0m linux-raw-sys v0.11.0
+[1m[92m  Downloaded[0m multibase v0.9.2
+[1m[92m  Downloaded[0m tokio-util v0.7.17
+[1m[92m  Downloaded[0m icu_collections v2.1.1
+[1m[92m  Downloaded[0m libp2p-swarm-derive v0.35.1
+[1m[92m  Downloaded[0m zerovec v0.11.5
+[1m[92m  Downloaded[0m chacha20 v0.9.1
+[1m[92m  Downloaded[0m webpki-roots v0.25.4
+[1m[92m  Downloaded[0m num_cpus v1.17.0
+[1m[92m  Downloaded[0m tracing v0.1.44
+[1m[92m  Downloaded[0m unsigned-varint v0.7.2
+[1m[92m  Downloaded[0m anyhow v1.0.100
+[1m[92m  Downloaded[0m ark-crypto-primitives v0.4.0
+[1m[92m  Downloaded[0m asn1-rs-impl v0.2.0
+[1m[92m  Downloaded[0m attohttpc v0.30.1
+[1m[92m  Downloaded[0m libp2p-noise v0.46.1
+[1m[92m  Downloaded[0m version_check v0.9.5
+[1m[92m  Downloaded[0m libp2p-kad v0.48.0
+[1m[92m  Downloaded[0m log v0.4.28
+[1m[92m  Downloaded[0m typenum v1.19.0
 [1m[92m  Downloaded[0m untrusted v0.9.0
+[1m[92m  Downloaded[0m http-body v0.4.6
+[1m[92m  Downloaded[0m lru v0.7.8
+[1m[92m  Downloaded[0m num-conv v0.1.0
+[1m[92m  Downloaded[0m asynchronous-codec v0.7.0
+[1m[92m  Downloaded[0m netlink-sys v0.8.7
+[1m[92m  Downloaded[0m oid-registry v0.8.1
 [1m[92m  Downloaded[0m url v2.5.7
-[1m[92m  Downloaded[0m web-time v1.1.0
-[1m[92m  Downloaded[0m yamux v0.12.1
-[1m[92m  Downloaded[0m yoke v0.8.1
-[1m[92m  Downloaded[0m ark-std v0.4.0
-[1m[92m  Downloaded[0m async-trait v0.1.89
-[1m[92m  Downloaded[0m atomic-waker v1.1.2
+[1m[92m  Downloaded[0m ark-relations v0.4.0
+[1m[92m  Downloaded[0m keccak v0.1.6
+[1m[92m  Downloaded[0m litemap v0.8.1
+[1m[92m  Downloaded[0m minimal-lexical v0.2.1
+[1m[92m  Downloaded[0m netlink-packet-core v0.7.0
+[1m[92m  Downloaded[0m opaque-debug v0.3.1
+[1m[92m  Downloaded[0m parking_lot_core v0.9.12
+[1m[92m  Downloaded[0m percent-encoding v2.3.2
+[1m[92m  Downloaded[0m base64 v0.22.1
+[1m[92m  Downloaded[0m ff v0.13.1
+[1m[92m  Downloaded[0m icu_locale_core v2.1.1
+[1m[92m  Downloaded[0m icu_normalizer_data v2.1.1
+[1m[92m  Downloaded[0m netlink-packet-utils v0.5.2
+[1m[92m  Downloaded[0m tracing-attributes v0.1.31
+[1m[92m  Downloaded[0m tracing-subscriber v0.2.25
+[1m[92m  Downloaded[0m uuid v1.23.4
+[1m[92m  Downloaded[0m zerovec-derive v0.11.2
+[1m[92m  Downloaded[0m ahash v0.8.12
+[1m[92m  Downloaded[0m ark-ff v0.4.2
+[1m[92m  Downloaded[0m ark-poly v0.4.2
+[1m[92m  Downloaded[0m bit-set v0.8.0
+[1m[92m  Downloaded[0m byteorder v1.5.0
+[1m[92m  Downloaded[0m num-integer v0.1.46
+[1m[92m  Downloaded[0m parking_lot v0.11.2
+[1m[92m  Downloaded[0m pem v3.0.6
+[1m[92m  Downloaded[0m rustc-hex v2.1.0
+[1m[92m  Downloaded[0m unsigned-varint v0.8.0
+[1m[92m  Downloaded[0m wait-timeout v0.2.1
+[1m[92m  Downloaded[0m xml-rs v0.8.28
+[1m[92m  Downloaded[0m yoke-derive v0.8.1
+[1m[92m  Downloaded[0m aes-gcm v0.10.3
+[1m[92m  Downloaded[0m ahash v0.7.8
+[1m[92m  Downloaded[0m ark-bn254 v0.4.0
+[1m[92m  Downloaded[0m ark-groth16 v0.4.0
+[1m[92m  Downloaded[0m ark-serialize v0.4.2
+[1m[92m  Downloaded[0m ark-serialize-derive v0.4.2
+[1m[92m  Downloaded[0m asn1-rs-derive v0.6.0
+[1m[92m  Downloaded[0m autocfg v1.5.0
 [1m[92m  Downloaded[0m base-x v0.2.11
+[1m[92m  Downloaded[0m base64 v0.21.7
+[1m[92m  Downloaded[0m match-lookup v0.1.1
+[1m[92m  Downloaded[0m try-lock v0.2.5
+[1m[92m  Downloaded[0m x25519-dalek v2.0.1
+[1m[92m  Downloaded[0m asn1-rs v0.7.2
+[1m[92m  Downloaded[0m async-trait v0.1.89
+[1m[92m  Downloaded[0m tinystr v0.8.2
+[1m[92m  Downloaded[0m web-time v1.1.0
+[1m[92m  Downloaded[0m ark-ec v0.4.2
+[1m[92m  Downloaded[0m async-channel v2.5.0
+[1m[92m  Downloaded[0m zeroize_derive v1.4.2
+[1m[92m  Downloaded[0m ark-snark v0.4.0
+[1m[92m  Downloaded[0m arrayref v0.3.9
+[1m[92m  Downloaded[0m want v0.3.1
+[1m[92m  Downloaded[0m xmltree v0.10.3
+[1m[92m  Downloaded[0m block-buffer v0.10.4
+[1m[92m  Downloaded[0m ark-ff-macros v0.4.2
+[1m[92m  Downloaded[0m base16ct v0.2.0
+[1m[92m  Downloaded[0m bs58 v0.5.1
+[1m[92m  Downloaded[0m cpufeatures v0.2.17
+[1m[92m  Downloaded[0m futures-task v0.3.31
+[1m[92m  Downloaded[0m rustc_version v0.4.1
+[1m[92m  Downloaded[0m unarray v0.1.4
+[1m[92m  Downloaded[0m yamux v0.12.1
+[1m[92m  Downloaded[0m zerofrom-derive v0.1.6
+[1m[92m  Downloaded[0m ark-ff-asm v0.4.2
+[1m[92m  Downloaded[0m cipher v0.4.4
+[1m[92m  Downloaded[0m instant v0.1.13
+[1m[92m  Downloaded[0m multistream-select v0.13.0
+[1m[92m  Downloaded[0m inout v0.1.4
+[1m[92m  Downloaded[0m mime v0.3.17
+[1m[92m  Downloaded[0m sync_wrapper v0.1.2
+[1m[92m  Downloaded[0m zerofrom v0.1.6
+[1m[92m  Downloaded[0m atomic-waker v1.1.2
+[1m[92m  Downloaded[0m bit-vec v0.8.0
+[1m[92m  Downloaded[0m idna_adapter v1.2.1
+[1m[92m  Downloaded[0m lazy_static v1.5.0
+[1m[92m  Downloaded[0m libp2p-allow-block-list v0.6.0
+[1m[92m  Downloaded[0m lru-slab v0.1.2
+[1m[92m  Downloaded[0m multiaddr v0.18.2
+[1m[92m  Downloaded[0m rlp v0.5.2
+[1m[92m  Downloaded[0m scopeguard v1.2.0
+[1m[92m  Downloaded[0m signature v2.2.0
+[1m[92m  Downloaded[0m synstructure v0.13.2
+[1m[92m  Downloaded[0m thiserror-impl v2.0.17
+[1m[92m  Downloaded[0m tracing-core v0.1.36
+[1m[92m  Downloaded[0m uint v0.10.0
+[1m[92m  Downloaded[0m unicode-ident v1.0.22
+[1m[92m  Downloaded[0m universal-hash v0.5.1
+[1m[92m  Downloaded[0m writeable v0.6.2
+[1m[92m  Downloaded[0m yamux v0.13.8
+[1m[92m  Downloaded[0m zerotrie v0.2.3
+[1m[92m  Downloaded[0m ark-std v0.4.0
+[1m[92m  Downloaded[0m base256emoji v1.0.2
+[1m[92m  Downloaded[0m base64ct v1.8.0
+[1m[92m  Downloaded[0m bitflags v1.3.2
+[1m[92m  Downloaded[0m bitflags v2.10.0
+[1m[92m  Downloaded[0m blake2 v0.10.6
 [1m[92m  Downloaded[0m cfg-if v1.0.4
 [1m[92m  Downloaded[0m cfg_aliases v0.2.1
-[1m[92m  Downloaded[0m critical-section v1.2.0
+[1m[92m  Downloaded[0m concurrent-queue v2.5.0
+[1m[92m  Downloaded[0m ctr v0.9.2
 [1m[92m  Downloaded[0m digest v0.10.7
 [1m[92m  Downloaded[0m displaydoc v0.2.5
-[1m[92m  Downloaded[0m futures-core v0.3.31
+[1m[92m  Downloaded[0m dtoa v1.0.10
+[1m[92m  Downloaded[0m futures-macro v0.3.31
+[1m[92m  Downloaded[0m futures-rustls v0.26.0
+[1m[92m  Downloaded[0m hex_fmt v0.3.0
+[1m[92m  Downloaded[0m http-body v1.0.1
+[1m[92m  Downloaded[0m http-body-util v0.1.3
+[1m[92m  Downloaded[0m httpdate v1.0.3
+[1m[92m  Downloaded[0m hyper-rustls v0.24.2
+[1m[92m  Downloaded[0m icu_properties_data v2.1.1
+[1m[92m  Downloaded[0m if-watch v3.2.1
+[1m[92m  Downloaded[0m ipnet v2.11.0
+[1m[92m  Downloaded[0m libp2p-connection-limits v0.6.0
+[1m[92m  Downloaded[0m libp2p-core v0.43.2
+[1m[92m  Downloaded[0m libp2p-identify v0.47.0
+[1m[92m  Downloaded[0m libp2p-mdns v0.48.0
+[1m[92m  Downloaded[0m libp2p-quic v0.13.1
+[1m[92m  Downloaded[0m libp2p-tcp v0.44.1
+[1m[92m  Downloaded[0m libp2p-tls v0.6.2
+[1m[92m  Downloaded[0m libp2p-upnp v0.5.0
+[1m[92m  Downloaded[0m libp2p-yamux v0.47.0
+[1m[92m  Downloaded[0m netlink-proto v0.11.5
+[1m[92m  Downloaded[0m num-bigint v0.4.6
+[1m[92m  Downloaded[0m once_cell v1.21.3
+[1m[92m  Downloaded[0m parking v2.2.1
+[1m[92m  Downloaded[0m parking_lot_core v0.8.6
+[1m[92m  Downloaded[0m paste v1.0.15
+[1m[92m  Downloaded[0m pin-project-internal v1.1.10
+[1m[92m  Downloaded[0m pkcs8 v0.10.2
+[1m[92m  Downloaded[0m poly1305 v0.8.0
+[1m[92m  Downloaded[0m potential_utf v0.1.4
+[1m[92m  Downloaded[0m powerfmt v0.2.0
+[1m[92m  Downloaded[0m rtnetlink v0.13.1
+[1m[92m  Downloaded[0m rustc-hash v2.1.1
+[1m[92m  Downloaded[0m serde_core v1.0.228
+[1m[92m  Downloaded[0m shlex v1.3.0
+[1m[92m  Downloaded[0m signal-hook-registry v1.4.7
+[1m[92m  Downloaded[0m thiserror v1.0.69
+[1m[92m  Downloaded[0m x509-parser v0.17.0
+[1m[92m  Downloaded[0m yasna v0.5.2
+[1m[92m  Downloaded[0m yoke v0.8.1
+[1m[92m  Downloaded[0m zeroize v1.8.2
+[1m[92m  Downloaded[0m aes v0.8.4
+[1m[92m  Downloaded[0m ark-r1cs-std v0.4.0
+[1m[92m  Downloaded[0m bytes v1.11.0
+[1m[92m  Downloaded[0m cc v1.2.47
+[1m[92m  Downloaded[0m chacha20poly1305 v0.10.1
+[1m[92m  Downloaded[0m const-oid v0.9.6
+[1m[92m  Downloaded[0m critical-section v1.2.0
+[1m[92m  Downloaded[0m crypto-bigint v0.5.5
+[1m[92m  Downloaded[0m der v0.7.10
+[1m[92m  Downloaded[0m derivative v2.2.0
+[1m[92m  Downloaded[0m event-listener v5.4.1
+[1m[92m  Downloaded[0m find-msvc-tools v0.1.5
+[1m[92m  Downloaded[0m futures-bounded v0.2.4
+[1m[92m  Downloaded[0m futures-executor v0.3.31
+[1m[92m  Downloaded[0m futures-io v0.3.31
+[1m[92m  Downloaded[0m futures-sink v0.3.31
+[1m[92m  Downloaded[0m getrandom v0.2.16
+[1m[92m  Downloaded[0m hmac v0.12.1
+[1m[92m  Downloaded[0m http v0.2.12
+[1m[92m  Downloaded[0m http v1.4.2
+[1m[92m  Downloaded[0m httparse v1.10.1
+[1m[92m  Downloaded[0m hyper-util v0.1.20
+[1m[92m  Downloaded[0m icu_normalizer v2.1.1
 [1m[92m  Downloaded[0m icu_properties v2.1.1
 [1m[92m  Downloaded[0m icu_provider v2.1.1
-[1m[92m  Downloaded[0m libp2p-core v0.43.2
-[1m[92m  Downloaded[0m log v0.4.28
-[1m[92m  Downloaded[0m num-traits v0.2.19
-[1m[92m  Downloaded[0m spin v0.9.8
-[1m[92m  Downloaded[0m yasna v0.5.2
-[1m[92m  Downloaded[0m zeroize v1.8.2
-[1m[92m  Downloaded[0m hickory-resolver v0.25.2
-[1m[92m  Downloaded[0m icu_normalizer_data v2.1.1
-[1m[92m  Downloaded[0m pin-project v1.1.10
-[1m[92m  Downloaded[0m tracing-attributes v0.1.31
-[1m[92m  Downloaded[0m derivative v2.2.0
-[1m[92m  Downloaded[0m errno v0.3.14
-[1m[92m  Downloaded[0m futures-executor v0.3.31
-[1m[92m  Downloaded[0m group v0.13.0
-[1m[92m  Downloaded[0m quick-error v1.2.3
-[1m[92m  Downloaded[0m quick-protobuf-codec v0.3.1
-[1m[92m  Downloaded[0m serde_core v1.0.228
-[1m[92m  Downloaded[0m time-core v0.1.6
-[1m[92m  Downloaded[0m zerovec-derive v0.11.2
-[1m[92m  Downloaded[0m ark-groth16 v0.4.0
-[1m[92m  Downloaded[0m ark-relations v0.4.0
-[1m[92m  Downloaded[0m ark-serialize v0.4.2
-[1m[92m  Downloaded[0m async-channel v2.5.0
-[1m[92m  Downloaded[0m autocfg v1.5.0
-[1m[92m  Downloaded[0m base64ct v1.8.0
-[1m[92m  Downloaded[0m bit-vec v0.8.0
-[1m[92m  Downloaded[0m bitflags v1.3.2
-[1m[92m  Downloaded[0m chacha20 v0.9.1
-[1m[92m  Downloaded[0m cipher v0.4.4
-[1m[92m  Downloaded[0m concurrent-queue v2.5.0
-[1m[92m  Downloaded[0m const-str v0.4.3
-[1m[92m  Downloaded[0m crossbeam-deque v0.8.6
-[1m[92m  Downloaded[0m ctr v0.9.2
-[1m[92m  Downloaded[0m data-encoding v2.9.0
-[1m[92m  Downloaded[0m futures-channel v0.3.31
-[1m[92m  Downloaded[0m http v0.2.12
-[1m[92m  Downloaded[0m hyper-util v0.1.20
-[1m[92m  Downloaded[0m icu_collections v2.1.1
-[1m[92m  Downloaded[0m icu_locale_core v2.1.1
-[1m[92m  Downloaded[0m icu_normalizer v2.1.1
-[1m[92m  Downloaded[0m indexmap v2.12.1
 [1m[92m  Downloaded[0m k256 v0.13.4
 [1m[92m  Downloaded[0m libp2p v0.56.0
 [1m[92m  Downloaded[0m memchr v2.7.6
-[1m[92m  Downloaded[0m minimal-lexical v0.2.1
-[1m[92m  Downloaded[0m rand_core v0.9.3
-[1m[92m  Downloaded[0m rtoolbox v0.0.3
-[1m[92m  Downloaded[0m rustc-hash v2.1.1
-[1m[92m  Downloaded[0m sct v0.7.1
-[1m[92m  Downloaded[0m tracing-core v0.1.36
-[1m[92m  Downloaded[0m unicode-ident v1.0.22
-[1m[92m  Downloaded[0m ahash v0.7.8
-[1m[92m  Downloaded[0m blake2 v0.10.6
-[1m[92m  Downloaded[0m crossbeam-utils v0.8.21
-[1m[92m  Downloaded[0m find-msvc-tools v0.1.5
-[1m[92m  Downloaded[0m http v1.4.2
-[1m[92m  Downloaded[0m itertools v0.10.5
-[1m[92m  Downloaded[0m libp2p-gossipsub v0.49.4
-[1m[92m  Downloaded[0m libp2p-kad v0.48.0
-[1m[92m  Downloaded[0m libp2p-swarm v0.47.1
 [1m[92m  Downloaded[0m mio v1.1.0
-[1m[92m  Downloaded[0m netlink-packet-route v0.17.1
-[1m[92m  Downloaded[0m num-bigint v0.4.6
-[1m[92m  Downloaded[0m rw-stream-sink v0.4.0
-[1m[92m  Downloaded[0m scopeguard v1.2.0
-[1m[92m  Downloaded[0m ahash v0.8.12
-[1m[92m  Downloaded[0m byteorder v1.5.0
-[1m[92m  Downloaded[0m hyper v1.10.1
-[1m[92m  Downloaded[0m idna v1.1.0
-[1m[92m  Downloaded[0m nom v7.1.3
-[1m[92m  Downloaded[0m poly1305 v0.8.0
-[1m[92m  Downloaded[0m powerfmt v0.2.0
-[1m[92m  Downloaded[0m ppv-lite86 v0.2.21
-[1m[92m  Downloaded[0m quick-protobuf v0.8.1
-[1m[92m  Downloaded[0m rustls-pki-types v1.13.0
-[1m[92m  Downloaded[0m ryu v1.0.20
-[1m[92m  Downloaded[0m slab v0.4.11
-[1m[92m  Downloaded[0m smallvec v1.15.1
-[1m[92m  Downloaded[0m sync_wrapper v0.1.2
-[1m[92m  Downloaded[0m synstructure v0.13.2
-[1m[92m  Downloaded[0m time-macros v0.2.24
-[1m[92m  Downloaded[0m tinystr v0.8.2
-[1m[92m  Downloaded[0m tinyvec v1.10.0
-[1m[92m  Downloaded[0m tokio-rustls v0.24.1
-[1m[92m  Downloaded[0m uuid v1.23.4
-[1m[92m  Downloaded[0m xml-rs v0.8.28
-[1m[92m  Downloaded[0m anyhow v1.0.100
-[1m[92m  Downloaded[0m ark-poly v0.4.2
-[1m[92m  Downloaded[0m bitflags v2.10.0
-[1m[92m  Downloaded[0m const-oid v0.9.6
-[1m[92m  Downloaded[0m data-encoding-macro v0.1.18
-[1m[92m  Downloaded[0m event-listener v5.4.1
-[1m[92m  Downloaded[0m fnv v1.0.7
-[1m[92m  Downloaded[0m futures-util v0.3.31
-[1m[92m  Downloaded[0m generic-array v0.14.7
-[1m[92m  Downloaded[0m h2 v0.3.27
-[1m[92m  Downloaded[0m hkdf v0.12.4
-[1m[92m  Downloaded[0m hyper v0.14.32
-[1m[92m  Downloaded[0m icu_properties_data v2.1.1
-[1m[92m  Downloaded[0m libm v0.2.15
-[1m[92m  Downloaded[0m pin-project-lite v0.2.16
-[1m[92m  Downloaded[0m pin-utils v0.1.0
-[1m[92m  Downloaded[0m pkcs8 v0.10.2
-[1m[92m  Downloaded[0m signature v2.2.0
-[1m[92m  Downloaded[0m tokio-util v0.7.17
-[1m[92m  Downloaded[0m bs58 v0.5.1
-[1m[92m  Downloaded[0m crossbeam-epoch v0.9.18
-[1m[92m  Downloaded[0m hickory-proto v0.25.2
-[1m[92m  Downloaded[0m moka v0.12.15
-[1m[92m  Downloaded[0m rand_chacha v0.3.1
-[1m[92m  Downloaded[0m rand_chacha v0.9.0
-[1m[92m  Downloaded[0m x25519-dalek v2.0.1
-[1m[92m  Downloaded[0m zerotrie v0.2.3
-[1m[92m  Downloaded[0m ark-ec v0.4.2
-[1m[92m  Downloaded[0m ark-ff v0.4.2
-[1m[92m  Downloaded[0m base64 v0.22.1
-[1m[92m  Downloaded[0m chacha20poly1305 v0.10.1
-[1m[92m  Downloaded[0m nix v0.26.4
-[1m[92m  Downloaded[0m rfc6979 v0.4.0
-[1m[92m  Downloaded[0m rlp v0.5.2
-[1m[92m  Downloaded[0m rusticata-macros v4.1.0
-[1m[92m  Downloaded[0m ark-crypto-primitives v0.4.0
-[1m[92m  Downloaded[0m asn1-rs v0.7.2
-[1m[92m  Downloaded[0m attohttpc v0.30.1
-[1m[92m  Downloaded[0m bytes v1.11.0
-[1m[92m  Downloaded[0m crossbeam-channel v0.5.15
-[1m[92m  Downloaded[0m crypto-bigint v0.5.5
-[1m[92m  Downloaded[0m data-encoding-macro-internal v0.1.16
-[1m[92m  Downloaded[0m dtoa v1.0.10
-[1m[92m  Downloaded[0m futures-timer v3.0.3
-[1m[92m  Downloaded[0m getrandom v0.2.16
-[1m[92m  Downloaded[0m hashlink v0.9.1
-[1m[92m  Downloaded[0m hashlink v0.10.0
-[1m[92m  Downloaded[0m quinn v0.11.9
-[1m[92m  Downloaded[0m rayon-core v1.13.0
-[1m[92m  Downloaded[0m regex-syntax v0.8.8
-[1m[92m  Downloaded[0m resolv-conf v0.7.6
-[1m[92m  Downloaded[0m rtnetlink v0.13.1
-[1m[92m  Downloaded[0m rustc-hex v2.1.0
-[1m[92m  Downloaded[0m rustc_version v0.4.1
-[1m[92m  Downloaded[0m rustls-webpki v0.103.8
-[1m[92m  Downloaded[0m syn v2.0.111
-[1m[92m  Downloaded[0m typenum v1.19.0
-[1m[92m  Downloaded[0m uint v0.10.0
-[1m[92m  Downloaded[0m x509-parser v0.17.0
-[1m[92m  Downloaded[0m zerovec v0.11.5
-[1m[92m  Downloaded[0m aes v0.8.4
-[1m[92m  Downloaded[0m ark-r1cs-std v0.4.0
-[1m[92m  Downloaded[0m base64 v0.21.7
-[1m[92m  Downloaded[0m cc v1.2.47
-[1m[92m  Downloaded[0m der v0.7.10
-[1m[92m  Downloaded[0m der-parser v10.0.0
-[1m[92m  Downloaded[0m deranged v0.5.5
-[1m[92m  Downloaded[0m enum-as-inner v0.6.1
-[1m[92m  Downloaded[0m equivalent v1.0.2
-[1m[92m  Downloaded[0m event-listener-strategy v0.5.4
-[1m[92m  Downloaded[0m form_urlencoded v1.2.2
-[1m[92m  Downloaded[0m hashbrown v0.16.1
-[1m[92m  Downloaded[0m quinn-proto v0.11.13
-[1m[92m  Downloaded[0m rpassword v7.4.0
-[1m[92m  Downloaded[0m rustls-webpki v0.101.7
-[1m[92m  Downloaded[0m tracing v0.1.44
-[1m[92m  Downloaded[0m tracing-subscriber v0.2.25
-[1m[92m  Downloaded[0m aes-gcm v0.10.3
-[1m[92m  Downloaded[0m aho-corasick v1.1.4
-[1m[92m  Downloaded[0m either v1.15.0
-[1m[92m  Downloaded[0m elliptic-curve v0.13.8
-[1m[92m  Downloaded[0m fastbloom v0.14.1
-[1m[92m  Downloaded[0m fastrand v2.3.0
-[1m[92m  Downloaded[0m ff v0.13.1
-[1m[92m  Downloaded[0m foldhash v0.1.5
-[1m[92m  Downloaded[0m prost v0.14.4
-[1m[92m  Downloaded[0m rand_xorshift v0.4.0
-[1m[92m  Downloaded[0m reed-solomon-erasure v6.0.0
-[1m[92m  Downloaded[0m reqwest v0.11.27
-[1m[92m  Downloaded[0m subtle v2.6.1
-[1m[92m  Downloaded[0m tagptr v0.2.0
-[1m[92m  Downloaded[0m webpki-roots v0.25.4
-[1m[92m  Downloaded[0m zerocopy v0.8.28
-[1m[92m  Downloaded[0m curve25519-dalek v4.1.3
-[1m[92m  Downloaded[0m ecdsa v0.16.9
-[1m[92m  Downloaded[0m ed25519 v2.2.3
-[1m[92m  Downloaded[0m ed25519-dalek v2.2.0
-[1m[92m  Downloaded[0m futures-io v0.3.31
-[1m[92m  Downloaded[0m rcgen v0.13.2
-[1m[92m  Downloaded[0m futures v0.3.31
-[1m[92m  Downloaded[0m futures-bounded v0.2.4
-[1m[92m  Downloaded[0m futures-task v0.3.31
+[1m[92m  Downloaded[0m num-traits v0.2.19
 [1m[92m  Downloaded[0m polyval v0.6.2
-[1m[92m  Downloaded[0m potential_utf v0.1.4
-[1m[92m  Downloaded[0m proc-macro2 v1.0.103
-[1m[92m  Downloaded[0m proptest v1.9.0
-[1m[92m  Downloaded[0m quinn-udp v0.5.14
-[1m[92m  Downloaded[0m rayon v1.11.0
-[1m[92m  Downloaded[0m regex v1.12.2
-[1m[92m  Downloaded[0m unarray v0.1.4
-[1m[92m  Downloaded[0m ghash v0.5.1
-[1m[92m  Downloaded[0m prometheus-client-derive-encode v0.4.2
-[1m[92m  Downloaded[0m prost-derive v0.14.4
-[1m[92m  Downloaded[0m tempfile v3.23.0
-[1m[92m  Downloaded[0m getrandom v0.4.3
-[1m[92m  Downloaded[0m libc v0.2.177
+[1m[92m  Downloaded[0m ppv-lite86 v0.2.21
 [1m[92m  Downloaded[0m prometheus-client v0.23.1
-[1m[92m  Downloaded[0m syn v1.0.109
-[1m[92m  Downloaded[0m futures-macro v0.3.31
-[1m[92m  Downloaded[0m futures-sink v0.3.31
-[1m[92m  Downloaded[0m hashbrown v0.12.3
-[1m[92m  Downloaded[0m hashbrown v0.13.2
-[1m[92m  Downloaded[0m hashbrown v0.14.5
-[1m[92m  Downloaded[0m hashbrown v0.15.5
-[1m[92m  Downloaded[0m portable-atomic v1.13.1
-[1m[92m  Downloaded[0m rustls v0.21.12
-[1m[92m  Downloaded[0m futures-rustls v0.26.0
-[1m[92m  Downloaded[0m regex-automata v0.4.13
-[1m[92m  Downloaded[0m h2 v0.4.15
-[1m[92m  Downloaded[0m quote v1.0.42
-[1m[92m  Downloaded[0m rand v0.8.5
-[1m[92m  Downloaded[0m rustix v1.1.2
+[1m[92m  Downloaded[0m rcgen v0.13.2
+[1m[92m  Downloaded[0m reed-solomon-erasure v6.0.0
+[1m[92m  Downloaded[0m rusticata-macros v4.1.0
+[1m[92m  Downloaded[0m sct v0.7.1
+[1m[92m  Downloaded[0m semver v1.0.27
 [1m[92m  Downloaded[0m serde_derive v1.0.228
 [1m[92m  Downloaded[0m socket2 v0.5.10
-[1m[92m  Downloaded[0m thiserror v1.0.69
-[1m[92m  Downloaded[0m tokio v1.48.0
-[1m[92m  Downloaded[0m siphasher v1.0.3
-[1m[92m  Downloaded[0m thiserror-impl v1.0.69
-[1m[92m  Downloaded[0m encoding_rs v0.8.35
-[1m[92m  Downloaded[0m socket2 v0.6.1
-[1m[92m  Downloaded[0m thiserror-impl v2.0.17
+[1m[92m  Downloaded[0m tagptr v0.2.0
 [1m[92m  Downloaded[0m thiserror v2.0.17
-[1m[92m  Downloaded[0m getrandom v0.3.4
+[1m[92m  Downloaded[0m thiserror-impl v1.0.69
 [1m[92m  Downloaded[0m time v0.3.44
-[1m[92m  Downloaded[0m rand_core v0.6.4
-[1m[92m  Downloaded[0m ring v0.17.14
-[1m[92m  Downloaded[0m rand v0.9.2
-[1m[92m  Downloaded[0m sec1 v0.7.3
-[1m[92m  Downloaded[0m rusty-fork v0.3.1
-[1m[92m  Downloaded[0m serde v1.0.228
-[1m[92m  Downloaded[0m serde_urlencoded v0.7.1
-[1m[92m  Downloaded[0m semver v1.0.27
-[1m[92m  Downloaded[0m serde_json v1.0.145
-[1m[92m  Downloaded[0m shlex v1.3.0
-[1m[92m  Downloaded[0m signal-hook-registry v1.4.7
+[1m[92m  Downloaded[0m time-core v0.1.6
+[1m[92m  Downloaded[0m time-macros v0.2.24
+[1m[92m  Downloaded[0m tinyvec v1.10.0
+[1m[92m  Downloaded[0m aho-corasick v1.1.4
+[1m[92m  Downloaded[0m crossbeam-channel v0.5.15
+[1m[92m  Downloaded[0m crossbeam-utils v0.8.21
+[1m[92m  Downloaded[0m curve25519-dalek-derive v0.1.1
+[1m[92m  Downloaded[0m data-encoding-macro v0.1.18
+[1m[92m  Downloaded[0m deranged v0.5.5
+[1m[92m  Downloaded[0m either v1.15.0
+[1m[92m  Downloaded[0m fastrand v2.3.0
+[1m[92m  Downloaded[0m foldhash v0.1.5
+[1m[92m  Downloaded[0m form_urlencoded v1.2.2
+[1m[92m  Downloaded[0m futures-core v0.3.31
+[1m[92m  Downloaded[0m h2 v0.4.15
+[1m[92m  Downloaded[0m indexmap v2.12.1
+[1m[92m  Downloaded[0m itertools v0.10.5
+[1m[92m  Downloaded[0m libp2p-gossipsub v0.49.4
+[1m[92m  Downloaded[0m libp2p-swarm v0.47.1
+[1m[92m  Downloaded[0m nom v7.1.3
+[1m[92m  Downloaded[0m pin-utils v0.1.0
+[1m[92m  Downloaded[0m portable-atomic v1.13.1
+[1m[92m  Downloaded[0m rayon-core v1.13.0
+[1m[92m  Downloaded[0m rustls v0.21.12
+[1m[92m  Downloaded[0m rustls-pemfile v1.0.4
+[1m[92m  Downloaded[0m rustls-webpki v0.101.7
+[1m[92m  Downloaded[0m smallvec v1.15.1
+[1m[92m  Downloaded[0m subtle v2.6.1
+[1m[92m  Downloaded[0m tempfile v3.23.0
+[1m[92m  Downloaded[0m zerocopy v0.8.28
+[1m[92m  Downloaded[0m curve25519-dalek v4.1.3
+[1m[92m  Downloaded[0m data-encoding v2.9.0
+[1m[92m  Downloaded[0m data-encoding-macro-internal v0.1.16
+[1m[92m  Downloaded[0m ed25519-dalek v2.2.0
+[1m[92m  Downloaded[0m errno v0.3.14
+[1m[92m  Downloaded[0m event-listener-strategy v0.5.4
+[1m[92m  Downloaded[0m fastbloom v0.14.1
+[1m[92m  Downloaded[0m fnv v1.0.7
+[1m[92m  Downloaded[0m futures v0.3.31
+[1m[92m  Downloaded[0m futures-channel v0.3.31
+[1m[92m  Downloaded[0m futures-util v0.3.31
+[1m[92m  Downloaded[0m hashbrown v0.13.2
+[1m[92m  Downloaded[0m hashbrown v0.16.1
+[1m[92m  Downloaded[0m hyper v0.14.32
+[1m[92m  Downloaded[0m hyper v1.10.1
+[1m[92m  Downloaded[0m pin-project-lite v0.2.16
+[1m[92m  Downloaded[0m proc-macro2 v1.0.103
+[1m[92m  Downloaded[0m quinn v0.11.9
 [1m[92m  Downloaded[0m rustls v0.23.35
+[1m[92m  Downloaded[0m sec1 v0.7.3
+[1m[92m  Downloaded[0m crossbeam-deque v0.8.6
+[1m[92m  Downloaded[0m crunchy v0.2.4
+[1m[92m  Downloaded[0m ed25519 v2.2.3
+[1m[92m  Downloaded[0m equivalent v1.0.2
+[1m[92m  Downloaded[0m moka v0.12.15
+[1m[92m  Downloaded[0m nix v0.26.4
+[1m[92m  Downloaded[0m prometheus-client-derive-encode v0.4.2
+[1m[92m  Downloaded[0m quick-protobuf-codec v0.3.1
+[1m[92m  Downloaded[0m quinn-udp v0.5.14
+[1m[92m  Downloaded[0m rpassword v7.4.0
+[1m[92m  Downloaded[0m ryu v1.0.20
+[1m[92m  Downloaded[0m syn v2.0.111
+[1m[92m  Downloaded[0m crossbeam-epoch v0.9.18
+[1m[92m  Downloaded[0m der-parser v10.0.0
+[1m[92m  Downloaded[0m ecdsa v0.16.9
+[1m[92m  Downloaded[0m futures-timer v3.0.3
+[1m[92m  Downloaded[0m getrandom v0.3.4
+[1m[92m  Downloaded[0m getrandom v0.4.3
+[1m[92m  Downloaded[0m group v0.13.0
+[1m[92m  Downloaded[0m hashbrown v0.15.5
+[1m[92m  Downloaded[0m quick-error v1.2.3
+[1m[92m  Downloaded[0m regex-syntax v0.8.8
+[1m[92m  Downloaded[0m rfc6979 v0.4.0
+[1m[92m  Downloaded[0m rustix v1.1.2
+[1m[92m  Downloaded[0m serde v1.0.228
+[1m[92m  Downloaded[0m syn v1.0.109
+[1m[92m  Downloaded[0m tinyvec_macros v0.1.1
+[1m[92m  Downloaded[0m crypto-common v0.1.7
+[1m[92m  Downloaded[0m generic-array v0.14.7
+[1m[92m  Downloaded[0m hashbrown v0.14.5
+[1m[92m  Downloaded[0m hickory-proto v0.25.2
+[1m[92m  Downloaded[0m prost-derive v0.14.4
+[1m[92m  Downloaded[0m reqwest v0.11.27
+[1m[92m  Downloaded[0m rusty-fork v0.3.1
+[1m[92m  Downloaded[0m siphasher v1.0.3
+[1m[92m  Downloaded[0m proptest v1.9.0
+[1m[92m  Downloaded[0m quick-protobuf v0.8.1
+[1m[92m  Downloaded[0m quinn-proto v0.11.13
+[1m[92m  Downloaded[0m rtoolbox v0.0.3
+[1m[92m  Downloaded[0m rand v0.8.5
+[1m[92m  Downloaded[0m rustls-webpki v0.103.8
 [1m[92m  Downloaded[0m snow v0.9.6
-[1m[92m  Downloaded[0m linux-raw-sys v0.11.0
-[1m[92m  Downloaded[0m sha3 v0.10.8
+[1m[92m  Downloaded[0m enum-as-inner v0.6.1
+[1m[92m  Downloaded[0m h2 v0.3.27
+[1m[92m  Downloaded[0m libc v0.2.177
+[1m[92m  Downloaded[0m quote v1.0.42
+[1m[92m  Downloaded[0m rand_chacha v0.9.0
+[1m[92m  Downloaded[0m rand_core v0.6.4
+[1m[92m  Downloaded[0m ghash v0.5.1
+[1m[92m  Downloaded[0m hashbrown v0.12.3
+[1m[92m  Downloaded[0m hashlink v0.9.1
+[1m[92m  Downloaded[0m rand v0.9.2
+[1m[92m  Downloaded[0m rustls-pki-types v1.13.0
+[1m[92m  Downloaded[0m rw-stream-sink v0.4.0
+[1m[92m  Downloaded[0m serde_urlencoded v0.7.1
+[1m[92m  Downloaded[0m stable_deref_trait v1.2.1
+[1m[92m  Downloaded[0m prost v0.14.4
+[1m[92m  Downloaded[0m rand_chacha v0.3.1
+[1m[92m  Downloaded[0m resolv-conf v0.7.6
+[1m[92m  Downloaded[0m sha2 v0.10.9
+[1m[92m  Downloaded[0m socket2 v0.6.1
+[1m[92m  Downloaded[0m elliptic-curve v0.13.8
+[1m[92m  Downloaded[0m hashlink v0.10.0
+[1m[92m  Downloaded[0m rand_xorshift v0.4.0
+[1m[92m  Downloaded[0m serde_json v1.0.145
+[1m[92m  Downloaded[0m rand_core v0.9.3
+[1m[92m  Downloaded[0m static_assertions v1.1.0
+[1m[92m  Downloaded[0m slab v0.4.11
 [1m[92m  Downloaded[0m slbit v3.1.0
+[1m[92m  Downloaded[0m tokio v1.48.0
+[1m[92m  Downloaded[0m spin v0.9.8
+[1m[92m  Downloaded[0m regex v1.12.2
+[1m[92m  Downloaded[0m ring v0.17.14
+[1m[92m  Downloaded[0m regex-automata v0.4.13
+[1m[92m  Downloaded[0m rayon v1.11.0
+[1m[92m  Downloaded[0m sha3 v0.10.8
+[1m[92m  Downloaded[0m encoding_rs v0.8.35
 [1m[92m   Compiling[0m proc-macro2 v1.0.103
 [1m[92m   Compiling[0m unicode-ident v1.0.22
 [1m[92m   Compiling[0m quote v1.0.42
@@ -386,152 +386,152 @@ RELEASE GATE PASS: Power House v0.3.25
 [1m[92m    Checking[0m once_cell v1.21.3
 [1m[92m   Compiling[0m zerocopy v0.8.28
 [1m[92m    Checking[0m memchr v2.7.6
-[1m[92m   Compiling[0m syn v2.0.111
 [1m[92m   Compiling[0m syn v1.0.109
+[1m[92m   Compiling[0m syn v2.0.111
 [1m[92m    Checking[0m futures-core v0.3.31
-[1m[92m    Checking[0m getrandom v0.2.16
 [1m[92m    Checking[0m bytes v1.11.0
+[1m[92m    Checking[0m getrandom v0.2.16
 [1m[92m    Checking[0m rand_core v0.6.4
 [1m[92m    Checking[0m futures-sink v0.3.31
 [1m[92m    Checking[0m futures-channel v0.3.31
 [1m[92m    Checking[0m slab v0.4.11
-[1m[92m    Checking[0m pin-utils v0.1.0
 [1m[92m    Checking[0m futures-io v0.3.31
+[1m[92m    Checking[0m pin-utils v0.1.0
 [1m[92m    Checking[0m futures-task v0.3.31
 [1m[92m    Checking[0m stable_deref_trait v1.2.1
 [1m[92m    Checking[0m tracing-core v0.1.36
 [1m[92m    Checking[0m ppv-lite86 v0.2.21
+[1m[92m    Checking[0m smallvec v1.15.1
 [1m[92m    Checking[0m either v1.15.0
 [1m[92m    Checking[0m rand_chacha v0.3.1
-[1m[92m    Checking[0m smallvec v1.15.1
-[1m[92m    Checking[0m rand v0.8.5
-[1m[92m   Compiling[0m anyhow v1.0.100
 [1m[92m   Compiling[0m autocfg v1.5.0
+[1m[92m    Checking[0m rand v0.8.5
 [1m[92m   Compiling[0m crossbeam-utils v0.8.21
-[1m[92m    Checking[0m log v0.4.28
+[1m[92m   Compiling[0m anyhow v1.0.100
 [1m[92m   Compiling[0m semver v1.0.27
+[1m[92m    Checking[0m log v0.4.28
 [1m[92m   Compiling[0m rustc_version v0.4.1
 [1m[92m    Checking[0m num_cpus v1.17.0
 [1m[92m    Checking[0m byteorder v1.5.0
 [1m[92m    Checking[0m litemap v0.8.1
 [1m[92m    Checking[0m writeable v0.6.2
+[1m[92m    Checking[0m cpufeatures v0.2.17
 [1m[92m   Compiling[0m paste v1.0.15
 [1m[92m    Checking[0m fnv v1.0.7
-[1m[92m    Checking[0m cpufeatures v0.2.17
-[1m[92m    Checking[0m signal-hook-registry v1.4.7
 [1m[92m    Checking[0m socket2 v0.6.1
-[1m[92m   Compiling[0m synstructure v0.13.2
 [1m[92m    Checking[0m mio v1.1.0
+[1m[92m    Checking[0m signal-hook-registry v1.4.7
 [1m[92m   Compiling[0m icu_normalizer_data v2.1.1
 [1m[92m   Compiling[0m serde_core v1.0.228
+[1m[92m   Compiling[0m synstructure v0.13.2
 [1m[92m   Compiling[0m icu_properties_data v2.1.1
 [1m[92m   Compiling[0m thiserror v2.0.17
 [1m[92m   Compiling[0m curve25519-dalek v4.1.3
 [1m[92m   Compiling[0m num-traits v0.2.19
-[1m[92m    Checking[0m scopeguard v1.2.0
 [1m[92m   Compiling[0m serde v1.0.228
+[1m[92m    Checking[0m scopeguard v1.2.0
+[1m[92m    Checking[0m lock_api v0.4.14
+[1m[92m    Checking[0m percent-encoding v2.3.2
 [1m[92m   Compiling[0m zeroize_derive v1.4.2
 [1m[92m   Compiling[0m futures-macro v0.3.31
 [1m[92m   Compiling[0m zerofrom-derive v0.1.6
 [1m[92m    Checking[0m zeroize v1.8.2
 [1m[92m    Checking[0m futures-util v0.3.31
-[1m[92m    Checking[0m crypto-common v0.1.7
-[1m[92m    Checking[0m block-buffer v0.10.4
-[1m[92m    Checking[0m digest v0.10.7
-[1m[92m    Checking[0m zerofrom v0.1.6
 [1m[92m   Compiling[0m yoke-derive v0.8.1
-[1m[92m   Compiling[0m zerovec-derive v0.11.2
+[1m[92m    Checking[0m block-buffer v0.10.4
+[1m[92m    Checking[0m crypto-common v0.1.7
+[1m[92m    Checking[0m digest v0.10.7
 [1m[92m   Compiling[0m tracing-attributes v0.1.31
+[1m[92m    Checking[0m zerofrom v0.1.6
+[1m[92m   Compiling[0m zerovec-derive v0.11.2
 [1m[92m    Checking[0m yoke v0.8.1
 [1m[92m   Compiling[0m displaydoc v0.2.5
 [1m[92m    Checking[0m zerovec v0.11.5
 [1m[92m    Checking[0m tracing v0.1.44
-[1m[92m   Compiling[0m tokio-macros v2.6.0
-[1m[92m    Checking[0m potential_utf v0.1.4
-[1m[92m    Checking[0m tinystr v0.8.2
 [1m[92m    Checking[0m zerotrie v0.2.3
+[1m[92m   Compiling[0m tokio-macros v2.6.0
+[1m[92m    Checking[0m signature v2.2.0
+[1m[92m    Checking[0m hmac v0.12.1
+[1m[92m    Checking[0m sha2 v0.10.9
+[1m[92m    Checking[0m tinystr v0.8.2
 [1m[92m    Checking[0m icu_locale_core v2.1.1
+[1m[92m    Checking[0m potential_utf v0.1.4
 [1m[92m    Checking[0m futures-executor v0.3.31
 [1m[92m    Checking[0m icu_collections v2.1.1
-[1m[92m    Checking[0m futures v0.3.31
 [1m[92m    Checking[0m tokio v1.48.0
-[1m[92m    Checking[0m sha2 v0.10.9
-[1m[92m    Checking[0m hmac v0.12.1
-[1m[92m    Checking[0m signature v2.2.0
+[1m[92m    Checking[0m futures v0.3.31
 [1m[92m   Compiling[0m thiserror-impl v2.0.17
-[1m[92m   Compiling[0m serde_derive v1.0.228
-[1m[92m    Checking[0m icu_provider v2.1.1
-[1m[92m    Checking[0m icu_properties v2.1.1
-[1m[92m    Checking[0m icu_normalizer v2.1.1
-[1m[92m   Compiling[0m curve25519-dalek-derive v0.1.1
 [1m[92m   Compiling[0m pin-project-internal v1.1.10
-[1m[92m    Checking[0m lock_api v0.4.14
+[1m[92m    Checking[0m icu_provider v2.1.1
+[1m[92m    Checking[0m icu_normalizer v2.1.1
+[1m[92m    Checking[0m icu_properties v2.1.1
+[1m[92m   Compiling[0m serde_derive v1.0.228
+[1m[92m   Compiling[0m curve25519-dalek-derive v0.1.1
 [1m[92m    Checking[0m static_assertions v1.1.0
-[1m[92m    Checking[0m percent-encoding v2.3.2
 [1m[92m   Compiling[0m parking_lot_core v0.9.12
-[1m[92m    Checking[0m pin-project v1.1.10
-[1m[92m    Checking[0m form_urlencoded v1.2.2
 [1m[92m   Compiling[0m itertools v0.10.5
 [1m[92m    Checking[0m idna_adapter v1.2.1
+[1m[92m    Checking[0m pin-project v1.1.10
+[1m[92m    Checking[0m form_urlencoded v1.2.2
 [1m[92m    Checking[0m crossbeam-epoch v0.9.18
 [1m[92m   Compiling[0m data-encoding v2.9.0
-[1m[92m   Compiling[0m shlex v1.3.0
 [1m[92m    Checking[0m unsigned-varint v0.8.0
-[1m[92m   Compiling[0m find-msvc-tools v0.1.5
 [1m[92m   Compiling[0m rayon-core v1.13.0
+[1m[92m   Compiling[0m find-msvc-tools v0.1.5
+[1m[92m   Compiling[0m shlex v1.3.0
 [1m[92m    Checking[0m utf8_iter v1.0.4
 [1m[92m   Compiling[0m cc v1.2.47
 [1m[92m    Checking[0m idna v1.1.0
 [1m[92m   Compiling[0m prost-derive v0.14.4
-[1m[92m    Checking[0m crossbeam-deque v0.8.6
 [1m[92m   Compiling[0m data-encoding-macro-internal v0.1.16
+[1m[92m    Checking[0m crossbeam-deque v0.8.6
 [1m[92m    Checking[0m ed25519 v2.2.3
 [1m[92m   Compiling[0m match-lookup v0.1.1
 [1m[92m   Compiling[0m ahash v0.8.12
-[1m[92m   Compiling[0m thiserror v1.0.69
 [1m[92m    Checking[0m const-str v0.4.3
-[1m[92m    Checking[0m data-encoding-macro v0.1.18
+[1m[92m   Compiling[0m thiserror v1.0.69
 [1m[92m    Checking[0m base256emoji v1.0.2
-[1m[92m    Checking[0m ed25519-dalek v2.2.0
 [1m[92m   Compiling[0m ring v0.17.14
 [1m[92m    Checking[0m parking_lot v0.12.5
-[1m[92m    Checking[0m prost v0.14.4
+[1m[92m    Checking[0m data-encoding-macro v0.1.18
+[1m[92m    Checking[0m ed25519-dalek v2.2.0
 [1m[92m    Checking[0m url v2.5.7
+[1m[92m    Checking[0m prost v0.14.4
 [1m[92m    Checking[0m multihash v0.19.5
 [1m[92m    Checking[0m hkdf v0.12.4
 [1m[92m   Compiling[0m thiserror-impl v1.0.69
-[1m[92m    Checking[0m base-x v0.2.11
 [1m[92m    Checking[0m bs58 v0.5.1
-[1m[92m    Checking[0m libp2p-identity v0.2.14
+[1m[92m    Checking[0m base-x v0.2.11
 [1m[92m    Checking[0m multibase v0.9.2
-[1m[92m   Compiling[0m num-integer v0.1.46
+[1m[92m    Checking[0m libp2p-identity v0.2.14
 [1m[92m    Checking[0m rayon v1.11.0
+[1m[92m   Compiling[0m num-integer v0.1.46
 [1m[92m    Checking[0m quick-protobuf v0.8.1
-[1m[92m    Checking[0m web-time v1.1.0
-[1m[92m   Compiling[0m getrandom v0.3.4
-[1m[92m    Checking[0m arrayref v0.3.9
 [1m[92m    Checking[0m unsigned-varint v0.7.2
+[1m[92m   Compiling[0m getrandom v0.3.4
+[1m[92m    Checking[0m web-time v1.1.0
+[1m[92m    Checking[0m arrayref v0.3.9
 [1m[92m    Checking[0m futures-timer v3.0.3
-[1m[92m    Checking[0m multistream-select v0.13.0
 [1m[92m    Checking[0m multiaddr v0.18.2
+[1m[92m    Checking[0m multistream-select v0.13.0
 [1m[92m    Checking[0m num-bigint v0.4.6
 [1m[92m    Checking[0m ark-std v0.4.0
 [1m[92m    Checking[0m rw-stream-sink v0.4.0
 [1m[92m   Compiling[0m ark-serialize-derive v0.4.2
 [1m[92m    Checking[0m libp2p-core v0.43.2
 [1m[92m    Checking[0m ark-serialize v0.4.2
-[1m[92m   Compiling[0m derivative v2.2.0
-[1m[92m   Compiling[0m ark-ff-macros v0.4.2
 [1m[92m   Compiling[0m ark-ff-asm v0.4.2
+[1m[92m   Compiling[0m ark-ff-macros v0.4.2
+[1m[92m   Compiling[0m derivative v2.2.0
 [1m[92m    Checking[0m untrusted v0.9.0
 [1m[92m    Checking[0m foldhash v0.1.5
 [1m[92m    Checking[0m hashbrown v0.15.5
-[1m[92m    Checking[0m ark-ff v0.4.2
-[1m[92m    Checking[0m itoa v1.0.15
 [1m[92m   Compiling[0m heck v0.5.0
-[1m[92m    Checking[0m netlink-packet-utils v0.5.2
-[1m[92m    Checking[0m hashlink v0.10.0
+[1m[92m    Checking[0m itoa v1.0.15
 [1m[92m   Compiling[0m libp2p-swarm-derive v0.35.1
+[1m[92m    Checking[0m netlink-packet-utils v0.5.2
+[1m[92m    Checking[0m ark-ff v0.4.2
+[1m[92m    Checking[0m hashlink v0.10.0
 [1m[92m    Checking[0m rand_core v0.9.3
 [1m[92m    Checking[0m hashbrown v0.13.2
 [1m[92m    Checking[0m libp2p-swarm v0.47.1
@@ -545,41 +545,41 @@ RELEASE GATE PASS: Power House v0.3.25
 [1m[92m    Checking[0m netlink-sys v0.8.7
 [1m[92m    Checking[0m concurrent-queue v2.5.0
 [1m[92m   Compiling[0m ahash v0.7.8
-[1m[92m   Compiling[0m httparse v1.10.1
-[1m[92m    Checking[0m regex-syntax v0.8.8
-[1m[92m    Checking[0m hashbrown v0.16.1
 [1m[92m    Checking[0m equivalent v1.0.2
-[1m[92m   Compiling[0m crunchy v0.2.4
-[1m[92m    Checking[0m parking v2.2.1
+[1m[92m   Compiling[0m httparse v1.10.1
+[1m[92m    Checking[0m hashbrown v0.16.1
 [1m[92m   Compiling[0m rustls v0.21.12
-[1m[92m    Checking[0m event-listener v5.4.1
+[1m[92m    Checking[0m regex-syntax v0.8.8
+[1m[92m    Checking[0m parking v2.2.1
+[1m[92m   Compiling[0m crunchy v0.2.4
 [1m[92m    Checking[0m indexmap v2.12.1
-[1m[92m    Checking[0m ark-poly v0.4.2
-[1m[92m    Checking[0m ark-relations v0.4.0
+[1m[92m    Checking[0m event-listener v5.4.1
 [1m[92m    Checking[0m netlink-proto v0.11.5
 [1m[92m    Checking[0m spki v0.7.3
 [1m[92m    Checking[0m rand v0.9.2
-[1m[92m    Checking[0m netlink-packet-route v0.17.1
-[1m[92m    Checking[0m ark-ec v0.4.2
 [1m[92m    Checking[0m nix v0.26.4
+[1m[92m    Checking[0m netlink-packet-route v0.17.1
 [1m[92m    Checking[0m quick-protobuf-codec v0.3.1
-[1m[92m    Checking[0m tokio-util v0.7.17
 [1m[92m    Checking[0m sct v0.7.1
 [1m[92m    Checking[0m rustls-webpki v0.101.7
+[1m[92m    Checking[0m tokio-util v0.7.17
 [1m[92m   Compiling[0m snow v0.9.6
 [1m[92m    Checking[0m ff v0.13.1
 [1m[92m    Checking[0m aho-corasick v1.1.4
-[1m[92m   Compiling[0m parking_lot_core v0.8.6
 [1m[92m    Checking[0m try-lock v0.2.5
+[1m[92m    Checking[0m ark-poly v0.4.2
+[1m[92m    Checking[0m ark-relations v0.4.0
 [1m[92m    Checking[0m nohash-hasher v0.2.0
-[1m[92m    Checking[0m base16ct v0.2.0
+[1m[92m   Compiling[0m parking_lot_core v0.8.6
 [1m[92m    Checking[0m ipnet v2.11.0
+[1m[92m    Checking[0m base16ct v0.2.0
+[1m[92m    Checking[0m rtnetlink v0.13.1
 [1m[92m    Checking[0m sec1 v0.7.3
+[1m[92m    Checking[0m regex-automata v0.4.13
+[1m[92m    Checking[0m ark-ec v0.4.2
 [1m[92m    Checking[0m want v0.3.1
 [1m[92m    Checking[0m h2 v0.3.27
 [1m[92m    Checking[0m group v0.13.0
-[1m[92m    Checking[0m rtnetlink v0.13.1
-[1m[92m    Checking[0m regex-automata v0.4.13
 [1m[92m    Checking[0m ark-r1cs-std v0.4.0
 [1m[92m    Checking[0m pkcs8 v0.10.2
 [1m[92m    Checking[0m event-listener-strategy v0.5.4
@@ -589,71 +589,71 @@ RELEASE GATE PASS: Power House v0.3.25
 [1m[92m    Checking[0m crypto-bigint v0.5.5
 [1m[92m    Checking[0m socket2 v0.5.10
 [1m[92m    Checking[0m instant v0.1.13
-[1m[92m    Checking[0m httpdate v1.0.3
 [1m[92m    Checking[0m hex v0.4.3
+[1m[92m    Checking[0m httpdate v1.0.3
 [1m[92m   Compiling[0m rustix v1.1.2
-[1m[92m   Compiling[0m libm v0.2.15
 [1m[92m    Checking[0m ryu v1.0.20
 [1m[92m    Checking[0m tower-service v0.3.3
 [1m[92m   Compiling[0m serde_json v1.0.145
+[1m[92m   Compiling[0m libm v0.2.15
 [1m[92m    Checking[0m hyper v0.14.32
-[1m[92m    Checking[0m uint v0.10.0
 [1m[92m    Checking[0m elliptic-curve v0.13.8
+[1m[92m    Checking[0m uint v0.10.0
 [1m[92m    Checking[0m hashlink v0.9.1
-[1m[92m    Checking[0m regex v1.12.2
 [1m[92m    Checking[0m async-channel v2.5.0
 [1m[92m    Checking[0m hashbrown v0.12.3
 [1m[92m    Checking[0m tokio-rustls v0.24.1
+[1m[92m    Checking[0m regex v1.12.2
 [1m[92m    Checking[0m if-watch v3.2.1
-[1m[92m    Checking[0m yamux v0.13.8
 [1m[92m    Checking[0m yamux v0.12.1
+[1m[92m    Checking[0m yamux v0.13.8
 [1m[92m    Checking[0m ark-snark v0.4.0
 [1m[92m    Checking[0m x25519-dalek v2.0.1
 [1m[92m    Checking[0m rfc6979 v0.4.0
 [1m[92m    Checking[0m blake2 v0.10.6
-[1m[92m    Checking[0m base64 v0.21.7
 [1m[92m    Checking[0m bitflags v2.10.0
-[1m[92m    Checking[0m linux-raw-sys v0.11.0
-[1m[92m    Checking[0m hex_fmt v0.3.0
-[1m[92m   Compiling[0m reed-solomon-erasure v6.0.0
+[1m[92m    Checking[0m base64 v0.21.7
 [1m[92m    Checking[0m base64 v0.22.1
-[1m[92m    Checking[0m rustls-pemfile v1.0.4
+[1m[92m    Checking[0m linux-raw-sys v0.11.0
+[1m[92m   Compiling[0m reed-solomon-erasure v6.0.0
+[1m[92m    Checking[0m hex_fmt v0.3.0
 [1m[92m    Checking[0m libp2p-gossipsub v0.49.4
+[1m[92m    Checking[0m rustls-pemfile v1.0.4
+[1m[92m    Checking[0m hyper-rustls v0.24.2
 [1m[92m    Checking[0m ecdsa v0.16.9
 [1m[92m    Checking[0m libp2p-noise v0.46.1
 [1m[92m    Checking[0m libp2p-yamux v0.47.0
-[1m[92m    Checking[0m hyper-rustls v0.24.2
-[1m[92m    Checking[0m lru v0.7.8
 [1m[92m    Checking[0m libp2p-tcp v0.44.1
+[1m[92m    Checking[0m lru v0.7.8
 [1m[92m    Checking[0m parking_lot v0.11.2
 [1m[92m    Checking[0m libp2p-kad v0.48.0
 [1m[92m    Checking[0m serde_urlencoded v0.7.1
 [1m[92m    Checking[0m libp2p-identify v0.47.0
 [1m[92m    Checking[0m ark-bn254 v0.4.0
-[1m[92m    Checking[0m libp2p-connection-limits v0.6.0
 [1m[92m    Checking[0m libp2p-allow-block-list v0.6.0
+[1m[92m    Checking[0m libp2p-connection-limits v0.6.0
 [1m[92m    Checking[0m rtoolbox v0.0.3
 [1m[92m    Checking[0m encoding_rs v0.8.35
-[1m[92m    Checking[0m keccak v0.1.6
-[1m[92m    Checking[0m mime v0.3.17
-[1m[92m    Checking[0m sync_wrapper v0.1.2
+[1m[92m    Checking[0m rustc-hex v2.1.0
 [1m[92m    Checking[0m spin v0.9.8
 [1m[92m    Checking[0m webpki-roots v0.25.4
+[1m[92m    Checking[0m keccak v0.1.6
+[1m[92m    Checking[0m sync_wrapper v0.1.2
+[1m[92m    Checking[0m mime v0.3.17
 [1m[92m    Checking[0m fastrand v2.3.0
-[1m[92m    Checking[0m rustc-hex v2.1.0
-[1m[92m    Checking[0m ark-crypto-primitives v0.4.0
-[1m[92m    Checking[0m rlp v0.5.2
-[1m[92m    Checking[0m tempfile v3.23.0
-[1m[92m    Checking[0m ark-ed-on-bn254 v0.4.0
 [1m[92m    Checking[0m sha3 v0.10.8
-[1m[92m    Checking[0m rpassword v7.4.0
+[1m[92m    Checking[0m tempfile v3.23.0
+[1m[92m    Checking[0m rlp v0.5.2
 [1m[92m    Checking[0m libp2p v0.56.0
+[1m[92m    Checking[0m rpassword v7.4.0
 [1m[92m    Checking[0m k256 v0.13.4
-[1m[92m    Checking[0m reqwest v0.11.27
 [1m[92m    Checking[0m wait-timeout v0.2.1
-[1m[92m    Checking[0m quick-error v1.2.3
+[1m[92m    Checking[0m reqwest v0.11.27
 [1m[92m    Checking[0m bit-vec v0.8.0
+[1m[92m    Checking[0m quick-error v1.2.3
 [1m[92m    Checking[0m rusty-fork v0.3.1
+[1m[92m    Checking[0m ark-crypto-primitives v0.4.0
+[1m[92m    Checking[0m ark-ed-on-bn254 v0.4.0
 [1m[92m    Checking[0m bit-set v0.8.0
 [1m[92m    Checking[0m rand_xorshift v0.4.0
 [1m[92m    Checking[0m unarray v0.1.4
@@ -661,42 +661,686 @@ RELEASE GATE PASS: Power House v0.3.25
 [1m[92m    Checking[0m proptest v1.9.0
 [1m[92m    Checking[0m ark-groth16 v0.4.0
 [1m[92m    Checking[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
-[1m[91merror[0m[1m: needless call to `as_bytes`[0m
-   [1m[94m--> [0msrc/origin.rs:105:12
-    [1m[94m|[0m
-[1m[94m105[0m [1m[94m|[0m         if self.label.as_bytes().len() > MAX_ORIGIN_LABEL_BYTES {
-    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mhelp: `len()` can be called directly on strings: `self.label.len()`[0m
-    [1m[94m|[0m
-    [1m[94m= [0m[1mhelp[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_as_bytes
-    [1m[94m= [0m[1mnote[0m: `-D clippy::needless-as-bytes` implied by `-D warnings`
-    [1m[94m= [0m[1mhelp[0m: to override `-D warnings` add `#[allow(clippy::needless_as_bytes)]`
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 53.13s
+[1m[92m    Checking[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
+[1m[92m Documenting[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 6.60s
+[1m[92m   Generated[0m /home/runner/work/power_house/power_house/target/doc/power_house/index.html and 1 other file
+[1m[92m   Compiling[0m cfg-if v1.0.4
+[1m[92m   Compiling[0m libc v0.2.177
+[1m[92m   Compiling[0m zeroize v1.8.2
+[1m[92m   Compiling[0m pin-project-lite v0.2.16
+[1m[92m   Compiling[0m typenum v1.19.0
+[1m[92m   Compiling[0m subtle v2.6.1
+[1m[92m   Compiling[0m const-oid v0.9.6
+[1m[92m   Compiling[0m once_cell v1.21.3
+[1m[92m   Compiling[0m zerocopy v0.8.28
+[1m[92m   Compiling[0m memchr v2.7.6
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m   Compiling[0m futures-core v0.3.31
+[1m[92m   Compiling[0m crypto-common v0.1.7
+[1m[92m   Compiling[0m block-buffer v0.10.4
+[1m[92m   Compiling[0m digest v0.10.7
+[1m[92m   Compiling[0m bytes v1.11.0
+[1m[92m   Compiling[0m getrandom v0.2.16
+[1m[92m   Compiling[0m futures-sink v0.3.31
+[1m[92m   Compiling[0m futures-channel v0.3.31
+[1m[92m   Compiling[0m rand_core v0.6.4
+[1m[92m   Compiling[0m slab v0.4.11
+[1m[92m   Compiling[0m pin-utils v0.1.0
+[1m[92m   Compiling[0m futures-io v0.3.31
+[1m[92m   Compiling[0m futures-task v0.3.31
+[1m[92m   Compiling[0m ppv-lite86 v0.2.21
+[1m[92m   Compiling[0m futures-util v0.3.31
+[1m[92m   Compiling[0m zerofrom v0.1.6
+[1m[92m   Compiling[0m stable_deref_trait v1.2.1
+[1m[92m   Compiling[0m tracing-core v0.1.36
+[1m[92m   Compiling[0m yoke v0.8.1
+[1m[92m   Compiling[0m smallvec v1.15.1
+[1m[92m   Compiling[0m rand_chacha v0.3.1
+[1m[92m   Compiling[0m either v1.15.0
+[1m[92m   Compiling[0m rand v0.8.5
+[1m[92m   Compiling[0m tracing v0.1.44
+[1m[92m   Compiling[0m zerovec v0.11.5
+[1m[92m   Compiling[0m crossbeam-utils v0.8.21
+[1m[92m   Compiling[0m log v0.4.28
+[1m[92m   Compiling[0m anyhow v1.0.100
+[1m[92m   Compiling[0m num_cpus v1.17.0
+[1m[92m   Compiling[0m byteorder v1.5.0
+[1m[92m   Compiling[0m tinystr v0.8.2
+[1m[92m   Compiling[0m writeable v0.6.2
+[1m[92m   Compiling[0m fnv v1.0.7
+[1m[92m   Compiling[0m litemap v0.8.1
+[1m[92m   Compiling[0m cpufeatures v0.2.17
+[1m[92m   Compiling[0m potential_utf v0.1.4
+[1m[92m   Compiling[0m zerotrie v0.2.3
+[1m[92m   Compiling[0m icu_locale_core v2.1.1
+[1m[92m   Compiling[0m socket2 v0.6.1
+[1m[92m   Compiling[0m mio v1.1.0
+[1m[92m   Compiling[0m signal-hook-registry v1.4.7
+[1m[92m   Compiling[0m tokio v1.48.0
+[1m[92m   Compiling[0m futures-executor v0.3.31
+[1m[92m   Compiling[0m icu_provider v2.1.1
+[1m[92m   Compiling[0m futures v0.3.31
+[1m[92m   Compiling[0m icu_collections v2.1.1
+[1m[92m   Compiling[0m icu_properties_data v2.1.1
+[1m[92m   Compiling[0m serde_core v1.0.228
+[1m[92m   Compiling[0m icu_normalizer_data v2.1.1
+[1m[92m   Compiling[0m sha2 v0.10.9
+[1m[92m   Compiling[0m signature v2.2.0
+[1m[92m   Compiling[0m hmac v0.12.1
+[1m[92m   Compiling[0m scopeguard v1.2.0
+[1m[92m   Compiling[0m lock_api v0.4.14
+[1m[92m   Compiling[0m thiserror v2.0.17
+[1m[92m   Compiling[0m icu_normalizer v2.1.1
+[1m[92m   Compiling[0m icu_properties v2.1.1
+[1m[92m   Compiling[0m static_assertions v1.1.0
+[1m[92m   Compiling[0m percent-encoding v2.3.2
+[1m[92m   Compiling[0m form_urlencoded v1.2.2
+[1m[92m   Compiling[0m curve25519-dalek v4.1.3
+[1m[92m   Compiling[0m idna_adapter v1.2.1
+[1m[92m   Compiling[0m pin-project v1.1.10
+[1m[92m   Compiling[0m num-traits v0.2.19
+[1m[92m   Compiling[0m serde v1.0.228
+[1m[92m   Compiling[0m crossbeam-epoch v0.9.18
+[1m[92m   Compiling[0m utf8_iter v1.0.4
+[1m[92m   Compiling[0m unsigned-varint v0.8.0
+[1m[92m   Compiling[0m idna v1.1.0
+[1m[92m   Compiling[0m crossbeam-deque v0.8.6
+[1m[92m   Compiling[0m prost-derive v0.14.4
+[1m[92m   Compiling[0m parking_lot_core v0.9.12
+[1m[92m   Compiling[0m ed25519 v2.2.3
+[1m[92m   Compiling[0m data-encoding v2.9.0
+[1m[92m   Compiling[0m const-str v0.4.3
+[1m[92m   Compiling[0m base256emoji v1.0.2
+[1m[92m   Compiling[0m data-encoding-macro v0.1.18
+[1m[92m   Compiling[0m ed25519-dalek v2.2.0
+[1m[92m   Compiling[0m parking_lot v0.12.5
+[1m[92m   Compiling[0m prost v0.14.4
+[1m[92m   Compiling[0m url v2.5.7
+[1m[92m   Compiling[0m rayon-core v1.13.0
+[1m[92m   Compiling[0m multihash v0.19.5
+[1m[92m   Compiling[0m hkdf v0.12.4
+[1m[92m   Compiling[0m bs58 v0.5.1
+[1m[92m   Compiling[0m base-x v0.2.11
+[1m[92m   Compiling[0m libp2p-identity v0.2.14
+[1m[92m   Compiling[0m rayon v1.11.0
+[1m[92m   Compiling[0m multibase v0.9.2
+[1m[92m   Compiling[0m thiserror v1.0.69
+[1m[92m   Compiling[0m ahash v0.8.12
+[1m[92m   Compiling[0m num-integer v0.1.46
+[1m[92m   Compiling[0m quick-protobuf v0.8.1
+[1m[92m   Compiling[0m web-time v1.1.0
+[1m[92m   Compiling[0m futures-timer v3.0.3
+[1m[92m   Compiling[0m unsigned-varint v0.7.2
+[1m[92m   Compiling[0m arrayref v0.3.9
+[1m[92m   Compiling[0m multistream-select v0.13.0
+[1m[92m   Compiling[0m multiaddr v0.18.2
+[1m[92m   Compiling[0m num-bigint v0.4.6
+[1m[92m   Compiling[0m rw-stream-sink v0.4.0
+[1m[92m   Compiling[0m getrandom v0.3.4
+[1m[92m   Compiling[0m libp2p-core v0.43.2
+[1m[92m   Compiling[0m itertools v0.10.5
+[1m[92m   Compiling[0m ark-std v0.4.0
+[1m[92m   Compiling[0m ark-serialize v0.4.2
+[1m[92m   Compiling[0m untrusted v0.9.0
+[1m[92m   Compiling[0m foldhash v0.1.5
+[1m[92m   Compiling[0m ring v0.17.14
+[1m[92m   Compiling[0m hashbrown v0.15.5
+[1m[92m   Compiling[0m itoa v1.0.15
+[1m[92m   Compiling[0m rand_core v0.9.3
+[1m[92m   Compiling[0m hashbrown v0.13.2
+[1m[92m   Compiling[0m ark-ff v0.4.2
+[1m[92m   Compiling[0m hashlink v0.10.0
+[1m[92m   Compiling[0m netlink-packet-utils v0.5.2
+[1m[92m   Compiling[0m libp2p-swarm v0.47.1
+[1m[92m   Compiling[0m netlink-packet-core v0.7.0
+[1m[92m   Compiling[0m asynchronous-codec v0.7.0
+[1m[92m   Compiling[0m tracing-subscriber v0.2.25
+[1m[92m   Compiling[0m der v0.7.10
+[1m[92m   Compiling[0m bitflags v1.3.2
+[1m[92m   Compiling[0m rand_chacha v0.9.0
+[1m[92m   Compiling[0m http v0.2.12
+[1m[92m   Compiling[0m netlink-sys v0.8.7
+[1m[92m   Compiling[0m concurrent-queue v2.5.0
+[1m[92m   Compiling[0m regex-syntax v0.8.8
+[1m[92m   Compiling[0m parking v2.2.1
+[1m[92m   Compiling[0m hashbrown v0.16.1
+[1m[92m   Compiling[0m equivalent v1.0.2
+[1m[92m   Compiling[0m event-listener v5.4.1
+[1m[92m   Compiling[0m indexmap v2.12.1
+[1m[92m   Compiling[0m netlink-proto v0.11.5
+[1m[92m   Compiling[0m spki v0.7.3
+[1m[92m   Compiling[0m rand v0.9.2
+[1m[92m   Compiling[0m netlink-packet-route v0.17.1
+[1m[92m   Compiling[0m ark-poly v0.4.2
+[1m[92m   Compiling[0m ark-relations v0.4.0
+[1m[92m   Compiling[0m nix v0.26.4
+[1m[92m   Compiling[0m ark-ec v0.4.2
+[1m[92m   Compiling[0m sct v0.7.1
+[1m[92m   Compiling[0m rustls-webpki v0.101.7
+[1m[92m   Compiling[0m quick-protobuf-codec v0.3.1
+[1m[92m   Compiling[0m tokio-util v0.7.17
+[1m[92m   Compiling[0m ff v0.13.1
+[1m[92m   Compiling[0m aho-corasick v1.1.4
+[1m[92m   Compiling[0m nohash-hasher v0.2.0
+[1m[92m   Compiling[0m base16ct v0.2.0
+[1m[92m   Compiling[0m ipnet v2.11.0
+[1m[92m   Compiling[0m try-lock v0.2.5
+[1m[92m   Compiling[0m want v0.3.1
+[1m[92m   Compiling[0m sec1 v0.7.3
+[1m[92m   Compiling[0m group v0.13.0
+[1m[92m   Compiling[0m ark-r1cs-std v0.4.0
+[1m[92m   Compiling[0m h2 v0.3.27
+[1m[92m   Compiling[0m rustls v0.21.12
+[1m[92m   Compiling[0m regex-automata v0.4.13
+[1m[92m   Compiling[0m rtnetlink v0.13.1
+[1m[92m   Compiling[0m pkcs8 v0.10.2
+[1m[92m   Compiling[0m ahash v0.7.8
+[1m[92m   Compiling[0m httparse v1.10.1
+[1m[92m   Compiling[0m event-listener-strategy v0.5.4
+[1m[92m   Compiling[0m crunchy v0.2.4
+[1m[92m   Compiling[0m http-body v0.4.6
+[1m[92m   Compiling[0m futures-bounded v0.2.4
+[1m[92m   Compiling[0m hashbrown v0.14.5
+[1m[92m   Compiling[0m crypto-bigint v0.5.5
+[1m[92m   Compiling[0m socket2 v0.5.10
+[1m[92m   Compiling[0m instant v0.1.13
+[1m[92m   Compiling[0m tower-service v0.3.3
+[1m[92m   Compiling[0m hex v0.4.3
+[1m[92m   Compiling[0m ryu v1.0.20
+[1m[92m   Compiling[0m httpdate v1.0.3
+[1m[92m   Compiling[0m uint v0.10.0
+[1m[92m   Compiling[0m hyper v0.14.32
+[1m[92m   Compiling[0m elliptic-curve v0.13.8
+[1m[92m   Compiling[0m parking_lot_core v0.8.6
+[1m[92m   Compiling[0m hashlink v0.9.1
+[1m[92m   Compiling[0m async-channel v2.5.0
+[1m[92m   Compiling[0m hashbrown v0.12.3
+[1m[92m   Compiling[0m if-watch v3.2.1
+[1m[92m   Compiling[0m regex v1.12.2
+[1m[92m   Compiling[0m tokio-rustls v0.24.1
+[1m[92m   Compiling[0m snow v0.9.6
+[1m[92m   Compiling[0m yamux v0.12.1
+[1m[92m   Compiling[0m yamux v0.13.8
+[1m[92m   Compiling[0m ark-snark v0.4.0
+[1m[92m   Compiling[0m x25519-dalek v2.0.1
+[1m[92m   Compiling[0m rfc6979 v0.4.0
+[1m[92m   Compiling[0m blake2 v0.10.6
+[1m[92m   Compiling[0m linux-raw-sys v0.11.0
+[1m[92m   Compiling[0m hex_fmt v0.3.0
+[1m[92m   Compiling[0m base64 v0.22.1
+[1m[92m   Compiling[0m base64 v0.21.7
+[1m[92m   Compiling[0m bitflags v2.10.0
+[1m[92m   Compiling[0m rustls-pemfile v1.0.4
+[1m[92m   Compiling[0m libp2p-gossipsub v0.49.4
+[1m[92m   Compiling[0m rustix v1.1.2
+[1m[92m   Compiling[0m ark-crypto-primitives v0.4.0
+[1m[92m   Compiling[0m hyper-rustls v0.24.2
+[1m[92m   Compiling[0m libp2p-yamux v0.47.0
+[1m[92m   Compiling[0m ecdsa v0.16.9
+[1m[92m   Compiling[0m libp2p-noise v0.46.1
+[1m[92m   Compiling[0m lru v0.7.8
+[1m[92m   Compiling[0m libp2p-tcp v0.44.1
+[1m[92m   Compiling[0m parking_lot v0.11.2
+[1m[92m   Compiling[0m libm v0.2.15
+[1m[92m   Compiling[0m serde_json v1.0.145
+[1m[92m   Compiling[0m libp2p-kad v0.48.0
+[1m[92m   Compiling[0m serde_urlencoded v0.7.1
+[1m[92m   Compiling[0m libp2p-identify v0.47.0
+[1m[92m   Compiling[0m ark-bn254 v0.4.0
+[1m[92m   Compiling[0m libp2p-allow-block-list v0.6.0
+[1m[92m   Compiling[0m libp2p-connection-limits v0.6.0
+[1m[92m   Compiling[0m rtoolbox v0.0.3
+[1m[92m   Compiling[0m encoding_rs v0.8.35
+[1m[92m   Compiling[0m fastrand v2.3.0
+[1m[92m   Compiling[0m webpki-roots v0.25.4
+[1m[92m   Compiling[0m keccak v0.1.6
+[1m[92m   Compiling[0m rustc-hex v2.1.0
+[1m[92m   Compiling[0m sync_wrapper v0.1.2
+[1m[92m   Compiling[0m spin v0.9.8
+[1m[92m   Compiling[0m mime v0.3.17
+[1m[92m   Compiling[0m reed-solomon-erasure v6.0.0
+[1m[92m   Compiling[0m rlp v0.5.2
+[1m[92m   Compiling[0m reqwest v0.11.27
+[1m[92m   Compiling[0m sha3 v0.10.8
+[1m[92m   Compiling[0m tempfile v3.23.0
+[1m[92m   Compiling[0m libp2p v0.56.0
+[1m[92m   Compiling[0m rpassword v7.4.0
+[1m[92m   Compiling[0m ark-ed-on-bn254 v0.4.0
+[1m[92m   Compiling[0m ark-groth16 v0.4.0
+[1m[92m   Compiling[0m k256 v0.13.4
+[1m[92m   Compiling[0m wait-timeout v0.2.1
+[1m[92m   Compiling[0m quick-error v1.2.3
+[1m[92m   Compiling[0m bit-vec v0.8.0
+[1m[92m   Compiling[0m rusty-fork v0.3.1
+[1m[92m   Compiling[0m bit-set v0.8.0
+[1m[92m   Compiling[0m rand_xorshift v0.4.0
+[1m[92m   Compiling[0m unarray v0.1.4
+[1m[92m   Compiling[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
+[1m[92m   Compiling[0m proptest v1.9.0
+[1m[92m   Compiling[0m slbit v3.1.0
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 1m 17s
+[1m[92m     Running[0m unittests src/lib.rs (target/debug/deps/power_house-cea49f45bb570257)
 
-[1m[91merror[0m[1m: needless call to `as_bytes`[0m
-   [1m[94m--> [0msrc/origin.rs:126:16
-    [1m[94m|[0m
-[1m[94m126[0m [1m[94m|[0m             if name.as_bytes().len() > MAX_ORIGIN_INPUT_NAME_BYTES {
-    [1m[94m|[0m                [1m[91m^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mhelp: `len()` can be called directly on strings: `name.len()`[0m
-    [1m[94m|[0m
-    [1m[94m= [0m[1mhelp[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_as_bytes
+running 93 tests
+test commands::migration_apply_claims::tests::reject_non_native_claims ... ok
+test commands::migration_claims::tests::erc20_mode_emits_hex_accounts ... ok
+test commands::migration_verify_state::tests::verify_state_passes_complete_native ... ok
+test commands::migration_verify_state::tests::verify_state_rejects_unknown_ids ... ok
+test commands::migration_claims::tests::native_claims_are_deterministic ... ok
+test data::tests::test_parse_and_verify ... ok
+test data::tests::test_verify_rejects_tampering ... ok
+test commands::stake_snapshot::tests::snapshot_root_is_deterministic_for_registry_key_order ... ok
+test data::tests::test_write_record_format ... ok
+test field::tests::rejects_composites_and_carmichael_numbers ... ok
+test field::tests::supports_arithmetic_near_the_u64_limit ... ok
+test identity::tests::invalid_or_mutated_bindings_are_rejected ... ok
+test io::tests::test_write_text_series ... ok
+test julian::tests::test_anchor_reconciliation_fails_on_mismatch ... ok
+test julian::tests::test_anchor_reconciliation_ok ... ok
+test julian::tests::test_ledger_accepts_general_proof ... ok
+test julian::tests::test_ledger_accepts_streaming_proof ... ok
+test julian::tests::test_ledger_ensures_genesis ... ok
+test julian::tests::test_ledger_rejects_tampered_chain ... ok
+test julian::tests::test_ledger_writes_logs ... ok
+test julian::tests::test_reconcile_rejects_duplicate_keys ... ok
+test julian::tests::test_reconcile_with_quorum ... ok
+test julian::tests::test_reconcile_with_quorum_failure ... ok
+test merkle::tests::merkle_roundtrip ... ok
+test merkle::tests::proof_serialization ... ok
+test multilinear::tests::test_arbitrary_evaluation ... ok
+test multilinear::tests::test_boolean_evaluation_ordering ... ok
+test identity::tests::create_fork_merge_verify_and_replay_are_deterministic ... ok
+test commands::migration_burn_executor::tests::execute_native_burn_intents_is_idempotent ... ok
+test commands::migration_apply_claims::tests::apply_native_claims_is_idempotent ... ok
+test net::policy::tests::allow_all_accepts_everything ... ok
+test net::policy::tests::allowlist_file_accepts_only_listed_keys ... ok
+test net::rpc::tests::address_normalization_is_available_to_rpc ... ok
+test net::rpc::tests::block_tags_are_strict ... ok
+test net::rpc::tests::native_call_rejects_calldata ... ok
+test net::stake_registry::tests::save_replaces_registry_without_leaving_temp_files ... ok
+test net::swarm::tests::connected_peer_metric_never_underflows ... ok
+test net::swarm::tests::identical_logs_yield_identical_anchors ... ok
+test net::swarm::tests::metrics_bind_live_node_identity ... ok
+test net::swarm::tests::payload_cache_eviction_tracks_metric ... ok
+test net::swarm::tests::payload_cache_rejects_duplicates ... ok
+test net::native_chain::tests::empty_heartbeat_blocks_finalize_without_changing_accounts ... ok
+test net::swarm::tests::tampered_log_is_rejected ... ok
+test net::swarm::tests::token_mode_native_identifiers_are_detected ... ok
+test net::validator_registry::tests::expiration_and_endpoint_constraints_are_enforced ... ok
+test net::validator_registry::tests::identity_and_signed_fields_reject_mutation ... ok
+test net::validator_registry::tests::observer_identity_and_signed_fields_reject_mutation ... ok
+test net::rpc::tests::raw_transaction_reaches_finalized_receipt_over_http ... ok
+test net::validator_registry::tests::observer_registry_requires_unique_signed_identities ... ok
+test net::validator_registry::tests::signed_observer_registration_verifies_without_validator_admission ... ok
+test net::native_chain::tests::replicas_apply_identical_quorum_finalized_block ... ok
+test observatory::tests::semantic_mutation_fails_sidecar_integrity_only ... ok
+test observatory::tests::sidecar_is_bound_but_non_core ... ok
+test observatory::tests::unknown_branch_is_rejected ... ok
+test net::validator_registry::tests::signed_registration_binds_public_key_peer_id_and_address ... ok
+test net::validator_registry::tests::registry_requires_admission_and_unique_identities ... ok
+test provenance::pha::tests::absent_attachments_are_not_serialized ... ok
+test provenance::pha::tests::attachment_mutation_does_not_change_core_validity ... ok
+test provenance::pha::tests::core_fingerprint_is_identical_with_or_without_attachments ... ok
+test provenance::pha::tests::core_mutation_invalidates_core_verification ... ok
+test provenance::pha::tests::explicit_external_verifier_is_separate_from_core_verification ... ok
+test provenance::pha::tests::identity_root_is_additive_and_does_not_change_v1_fingerprint ... ok
+test provenance::pha::tests::non_integer_numbers_are_rejected_from_canonical_content ... ok
+test provenance::rootprint::tests::attachment_presence_does_not_change_branch_id ... ok
+test provenance::rootprint::tests::branching_and_merging_are_core_only ... ok
+test provenance::rootprint::tests::core_mutation_breaks_graph_verification ... ok
+test provenance::rootprint::tests::cycles_are_rejected_and_replay_canonicalizes_sequence ... ok
+test origin::tests::receipt_rejects_rehashed_capacity_rebinding ... ok
+test sparse_sumcheck::tests::committed_certificate_rejects_external_workload_tampering ... ok
+test provenance::rootprint::tests::replay_and_whole_graph_merge_are_deterministic ... ok
+test origin::tests::receipt_rejects_rehashed_inconsistent_cost ... ok
+test sparse_sumcheck::tests::committed_polynomial_and_certificate_roundtrip ... ok
+test sparse_sumcheck::tests::sparse_claim_matches_dense_enumeration ... ok
+test sparse_sumcheck::tests::untrusted_lengths_are_rejected_before_allocation ... ok
+test sumcheck::tests::test_chained_sum_proof_detects_tampering ... ok
+test sumcheck::tests::test_chained_sum_proof_roundtrip ... ok
+test sumcheck::tests::test_cheating_prover_fails ... ok
+test sumcheck::tests::test_constant_sumcheck_rejects_tampering ... ok
+test sparse_sumcheck::tests::sparse_certificate_roundtrip_and_tamper_rejection ... ok
+test sumcheck::tests::test_demo_true_sum ... ok
+test sumcheck::tests::test_general_sumcheck_highdimensional ... ok
+test sumcheck::tests::test_general_sumcheck_prove_verify ... ok
+test sumcheck::tests::test_general_sumcheck_rejects_tampering ... ok
+test sumcheck::tests::test_general_sumproof_stats ... ok
+test sumcheck::tests::test_constant_sumcheck_verifies_sextillion_domain ... ok
+test sumcheck::tests::test_prove_and_verify ... ok
+test sumcheck::tests::test_general_sumproof_trace_matches ... ok
+test sumcheck::tests::test_seeded_affine_sumcheck_matches_dense_prover ... ok
+test sumcheck::tests::test_seeded_affine_sumcheck_rejects_wrong_seed_and_tampering ... ok
+test sumcheck::tests::test_streaming_matches_standard ... ok
+test sparse_sumcheck::tests::sparse_certificate_handles_large_dimension_without_hypercube ... ok
+test net::swarm::tests::rejected_fee_does_not_persist_blob_artifacts ... ok
+test sumcheck::tests::test_seeded_affine_sumcheck_verifies_astronomical_domain ... ok
 
-[1m[91merror[0m[1m: needless call to `as_bytes`[0m
-   [1m[94m--> [0msrc/origin.rs:211:17
-    [1m[94m|[0m
-[1m[94m211[0m [1m[94m|[0m                 spec.source.as_bytes().len(),
-    [1m[94m|[0m                 [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mhelp: `len()` can be called directly on strings: `spec.source.len()`[0m
-    [1m[94m|[0m
-    [1m[94m= [0m[1mhelp[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_as_bytes
+test result: ok. 93 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s
 
-[1m[91merror[0m[1m: manual implementation of `.is_multiple_of()`[0m
-   [1m[94m--> [0msrc/origin.rs:311:12
-    [1m[94m|[0m
-[1m[94m311[0m [1m[94m|[0m         if self.dense_boundary_units % DENSE_BOUNDARY_MULTIPLIER != 0 {
-    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mhelp: replace with: `!self.dense_boundary_units.is_multiple_of(DENSE_BOUNDARY_MULTIPLIER)`[0m
-    [1m[94m|[0m
-    [1m[94m= [0m[1mhelp[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#manual_is_multiple_of
-    [1m[94m= [0m[1mnote[0m: `-D clippy::manual-is-multiple-of` implied by `-D warnings`
-    [1m[94m= [0m[1mhelp[0m: to override `-D warnings` add `#[allow(clippy::manual_is_multiple_of)]`
+[1m[92m     Running[0m unittests src/bin/julian.rs (target/debug/deps/julian-00f533a0febef144)
 
-[1m[91merror[0m: could not compile `power_house` (lib) due to 4 previous errors
-[1m[33mwarning[0m: build failed, waiting for other jobs to finish...
-[1m[91merror[0m: could not compile `power_house` (lib test) due to 4 previous errors
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m tests/identity_cli.rs (target/debug/deps/identity_cli-d37af1fdf8e74581)
+
+running 1 test
+test cli_runs_complete_offline_identity_workflow ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+[1m[92m     Running[0m tests/memory_capsule.rs (target/debug/deps/memory_capsule-27119be0ee0e6881)
+
+running 3 tests
+test strict_parser_rejects_duplicate_keys_and_float_numbers ... ok
+test semantic_mutation_rejects_without_changing_core_truth ... ok
+test memory_capsule_verifies_replays_and_challenges ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+[1m[92m     Running[0m tests/memory_cli.rs (target/debug/deps/memory_cli-089f7f2fad1e3ea1)
+
+running 1 test
+test cli_creates_verifies_replays_challenges_and_exports_memory_capsule ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+[1m[92m     Running[0m tests/observatory_cli.rs (target/debug/deps/observatory_cli-b177036caf86b60d)
+
+running 1 test
+test cli_verifies_rootprint_before_optional_semantic_sidecar ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m tests/observatory_protocol.rs (target/debug/deps/observatory_protocol-89f189974691ee36)
+
+running 2 tests
+test semantic_mutation_rejects_sidecar_without_affecting_graph ... ok
+test slbit_sidecar_never_changes_power_house_identity ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m tests/origin.rs (target/debug/deps/origin-81bf059344f93ab4)
+
+running 8 tests
+test core_mutation_is_rejected_by_the_underlying_verifier ... ok
+test failed_derivation_leaves_identity_lineage_and_capacity_unchanged ... ok
+test exact_capacity_budget_prevents_any_further_creation ... ok
+test policy_aware_estimate_applies_all_limits_without_issuing_authority ... ok
+test policy_rejects_oversized_source_before_execution ... ok
+test labels_are_canonical_and_receipts_bind_capacity_accounting ... ok
+test derivation_is_atomic_and_consumes_capacity ... ok
+test manifestation_is_verified_and_deterministic ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+[1m[92m     Running[0m tests/provenance_protocol.rs (target/debug/deps/provenance_protocol-2d075a2212541193)
+
+running 4 tests
+test epa_mutation_preserves_graph_validity_but_fails_explicit_integrity ... ok
+test branching_is_identical_with_and_without_external_attachments ... ok
+test fork_merge_and_equivalence_never_require_external_attachments ... ok
+test conformance_vectors_reject_core_mutations_and_isolate_epa_mutations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m tests/rootprint_cli.rs (target/debug/deps/rootprint_cli-52738b35ea160af1)
+
+running 1 test
+test cli_runs_core_rootprint_workflow_and_separate_attachment_command ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+[1m[92m     Running[0m tests/sfcs.rs (target/debug/deps/sfcs-462c97f55b6d356e)
+
+running 20 tests
+test cycle_rejects ... ok
+test duplicate_outputs_and_duplicate_inputs_reject ... ok
+test draft_evaluator_is_deterministic_for_arithmetic_subset ... ok
+test core_valid_embedding_mutations_are_rejected_by_sfcs_verifier ... ok
+test fractal_mutation_changes_pha_identity ... ok
+test execution_trace_is_deterministic_and_input_sensitive ... ok
+test execution_embedding_rejects_stale_region_public_inputs ... ok
+test sfcs_graph_commits_into_pha_and_rootprint_without_new_core_rules ... ok
+test source_frontend_rejects_ambiguous_or_corrupt_source ... ok
+test execution_pha_embedding_replays_trace_and_synthesis_plan ... ok
+test source_frontend_rejects_invalid_dense_execution ... ok
+test strict_parser_rejects_duplicate_keys_and_float_numbers ... ok
+test structure_discovery_is_deterministic_and_separates_dense_nodes ... ok
+test structure_regions_are_connected_replayable_subfractals ... ok
+test strict_parser_roundtrip_matches_canonical_graph ... ok
+test textual_program_maps_directly_to_fractal_graph ... ok
+test synthesis_plan_records_fast_path_and_dense_boundaries ... ok
+test textual_program_supports_control_ops_and_committed_metadata ... ok
+test source_frontend_lowers_expressions_directly_to_fractal_nodes ... ok
+test source_frontend_executes_dense_integer_and_memory_ops ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+[1m[92m     Running[0m tests/sfcs_cli.rs (target/debug/deps/sfcs_cli-7084c22842dcc2c0)
+
+running 9 tests
+test cli_compiles_llvm_ir_subset_to_sfcs_graph ... ok
+test cli_compiles_wasm_stack_subset_to_sfcs_graph ... ok
+test cli_compiles_public_rust_subset_to_sfcs_graph ... ok
+test cli_proves_and_verifies_sfcs_vm_constraints ... ok
+test cli_parses_executes_and_verifies_sfcs_source ... ok
+test cli_proves_and_verifies_sfcs_zk_private_add ... ok
+test cli_runs_and_verifies_sfcs_vm_program ... ok
+test cli_runs_rust_private_add_end_to_end ... ok
+test cli_proves_and_verifies_sfcs_zk_private_vm ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.79s
+
+[1m[92m     Running[0m tests/sfcs_compiler.rs (target/debug/deps/sfcs_compiler-adf8b2e4b66e6e80)
+
+running 3 tests
+test compiler_rejects_unsupported_rust_subset ... ok
+test compiler_emits_deterministic_private_add_profile ... ok
+test compiler_output_proves_and_hides_private_inputs ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+[1m[92m     Running[0m tests/sfcs_public_compiler.rs (target/debug/deps/sfcs_public_compiler-7fa4e6445ac24d45)
+
+running 8 tests
+test llvm_ir_compiler_rejects_unsupported_ir ... ok
+test public_rust_compiler_rejects_unsupported_source ... ok
+test public_rust_compiler_lowers_multi_parameter_expression_to_sfcs ... ok
+test wasm_stack_compiler_lowers_select ... ok
+test public_rust_compiler_lowers_if_expression ... ok
+test wasm_stack_compiler_rejects_invalid_stack_programs ... ok
+test llvm_ir_compiler_lowers_ssa_to_sfcs ... ok
+test wasm_stack_compiler_lowers_stack_ops_to_sfcs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+[1m[92m     Running[0m tests/sfcs_vm.rs (target/debug/deps/sfcs_vm-d303a34744148569)
+
+running 4 tests
+test rv32i_vm_rejects_invalid_execution ... ok
+test rv32i_vm_embedding_rejects_trace_and_public_output_mutations ... ok
+test rv32i_vm_executes_control_memory_and_embeds_into_power_house_identity ... ok
+test rv32i_vm_trace_is_reproducible_and_input_sensitive ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+
+[1m[92m     Running[0m tests/sfcs_vm_constraints.rs (target/debug/deps/sfcs_vm_constraints-ebaedca5812d34d3)
+
+running 2 tests
+test vm_constraint_embedding_rejects_transition_and_public_input_mutations ... ok
+test vm_constraint_proof_covers_transitions_memory_and_ranges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+[1m[92m     Running[0m tests/sfcs_zk.rs (target/debug/deps/sfcs_zk-d3ca22e4350d27e6)
+
+running 7 tests
+test private_add_profile_rejects_overflow_and_wrong_program ... ok
+test private_add_embedding_rejects_mutations ... ok
+test private_add_proof_verifies_and_embeds_without_revealing_private_inputs ... ok
+test private_vm_embedding_rejects_mutations has been running for over 60 seconds
+test private_vm_linear_relations_cover_sub_subi_and_scale has been running for over 60 seconds
+test private_vm_proof_verifies_embeds_and_hides_witness_inputs has been running for over 60 seconds
+test private_vm_proves_bitwise_comparison_order_branches_and_partial_memory has been running for over 60 seconds
+test private_vm_embedding_rejects_mutations ... ok
+test private_vm_proof_verifies_embeds_and_hides_witness_inputs ... ok
+test private_vm_linear_relations_cover_sub_subi_and_scale ... ok
+test private_vm_proves_bitwise_comparison_order_branches_and_partial_memory ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 223.71s
+
+[1m[92m     Running[0m tests/sparse_protocol.rs (target/debug/deps/sparse_protocol-964d2ebe6532a421)
+
+running 6 tests
+test committed_conformance_vectors_match_manifest ... ok
+test oversized_polynomial_degree_is_rejected_before_allocation ... ok
+test every_single_byte_committed_mutation_is_rejected ... ok
+test sparse_decoders_never_panic_on_arbitrary_bytes ... ok
+test committed_sparse_matches_dense_enumeration ... ok
+test every_single_byte_seeded_mutation_is_rejected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.09s
+
+[1m[92m   Doc-tests[0m power_house
+
+running 5 tests
+test src/consensus.rs - consensus::consensus (line 23) ... ok
+test src/lib.rs - (line 57) ... ok
+test src/lib.rs - (line 37) ... ok
+test src/provenance/mod.rs - provenance::prove_with_rootprint (line 18) ... ok
+test src/lib.rs - (line 77) ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 24.69s
+
+[1m[92m   Compiling[0m libc v0.2.177
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m   Compiling[0m syn v2.0.111
+[1m[92m   Compiling[0m subtle v2.6.1
+[1m[92m   Compiling[0m either v1.15.0
+[1m[92m   Compiling[0m rayon v1.11.0
+[1m[92m   Compiling[0m block-buffer v0.10.4
+[1m[92m   Compiling[0m crypto-common v0.1.7
+[1m[92m   Compiling[0m digest v0.10.7
+[1m[92m   Compiling[0m itertools v0.10.5
+[1m[92m   Compiling[0m getrandom v0.2.16
+[1m[92m   Compiling[0m rand_core v0.6.4
+[1m[92m   Compiling[0m rand_chacha v0.3.1
+[1m[92m   Compiling[0m rand v0.8.5
+[1m[92m   Compiling[0m getrandom v0.3.4
+[1m[92m   Compiling[0m sha2 v0.10.9
+[1m[92m   Compiling[0m rand_core v0.9.3
+[1m[92m   Compiling[0m ark-std v0.4.0
+[1m[92m   Compiling[0m blake2 v0.10.6
+[1m[92m   Compiling[0m ark-serialize v0.4.2
+[1m[92m   Compiling[0m memchr v2.7.6
+[1m[92m   Compiling[0m sha3 v0.10.8
+[1m[92m   Compiling[0m tempfile v3.23.0
+[1m[92m   Compiling[0m serde_json v1.0.145
+[1m[92m   Compiling[0m wait-timeout v0.2.1
+[1m[92m   Compiling[0m rand_chacha v0.9.0
+[1m[92m   Compiling[0m rusty-fork v0.3.1
+[1m[92m   Compiling[0m rand_xorshift v0.4.0
+[1m[92m   Compiling[0m rand v0.9.2
+[1m[92m   Compiling[0m proptest v1.9.0
+[1m[92m   Compiling[0m zeroize_derive v1.4.2
+[1m[92m   Compiling[0m tracing-attributes v0.1.31
+[1m[92m   Compiling[0m serde_derive v1.0.228
+[1m[92m   Compiling[0m zeroize v1.8.2
+[1m[92m   Compiling[0m ark-ff v0.4.2
+[1m[92m   Compiling[0m tracing v0.1.44
+[1m[92m   Compiling[0m serde v1.0.228
+[1m[92m   Compiling[0m ark-poly v0.4.2
+[1m[92m   Compiling[0m ark-relations v0.4.0
+[1m[92m   Compiling[0m ark-snark v0.4.0
+[1m[92m   Compiling[0m ark-ec v0.4.2
+[1m[92m   Compiling[0m ark-r1cs-std v0.4.0
+[1m[92m   Compiling[0m ark-bn254 v0.4.0
+[1m[92m   Compiling[0m ark-crypto-primitives v0.4.0
+[1m[92m   Compiling[0m ark-ed-on-bn254 v0.4.0
+[1m[92m   Compiling[0m ark-groth16 v0.4.0
+[1m[92m   Compiling[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 23.77s
+[1m[92m     Running[0m tests/origin.rs (target/debug/deps/origin-501f80fd2336139e)
+
+running 8 tests
+test core_mutation_is_rejected_by_the_underlying_verifier ... ok
+test failed_derivation_leaves_identity_lineage_and_capacity_unchanged ... ok
+test exact_capacity_budget_prevents_any_further_creation ... ok
+test policy_aware_estimate_applies_all_limits_without_issuing_authority ... ok
+test policy_rejects_oversized_source_before_execution ... ok
+test labels_are_canonical_and_receipts_bind_capacity_accounting ... ok
+test derivation_is_atomic_and_consumes_capacity ... ok
+test manifestation_is_verified_and_deterministic ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+[1m[92m   Compiling[0m power_house v0.3.25 (/home/runner/work/power_house/power_house)
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.34s
+[1m[92m     Running[0m `target/debug/examples/origin_live_proof`
+PREPARED nodes=7 trace_steps=7 cost=21 outputs={"reserve": 33, "stable": 1}
+ORIGIN VERIFIED
+rootprint_id=sha256:3b377d066264564b4ce3792dcd972b776b5d1190f91d416094df27cda06b74cd
+phx_fingerprint=sha256:a2c588f575fadce9a3425cfc752c359b4885b36aad863fcf33bb1a7c2b855643
+receipt_digest=sha256:980ddf9022c40132f217fef0fea69f0f193bd14928e6fed1404df7840e3aeea0
+capacity=491/512
+DERIVATION VERIFIED generation=1
+outputs={"reserve": 88, "stable": 1}
+capacity_remaining=466
+MUTATION REJECTED
+FAILED CREATION ROLLED BACK
+LIVE PROOF COMPLETE
+[1m[91merror[0m: 46 files in the working directory contain changes that were not yet committed into git:
+
+Cargo.lock
+Cargo.toml
+JULIAN_PROTOCOL.md
+README.md
+RELEASE_NOTES.md
+configs/network.json
+docs/README.md
+docs/committed_workload.md
+docs/hyperscale_proof.md
+docs/identity.md
+docs/incident_response.md
+docs/load_testing.md
+docs/memory_capsule.md
+docs/memory_cli.md
+docs/memory_conformance.md
+docs/network_roadmap.md
+docs/node_operator.md
+docs/ops.md
+docs/orbital_observatory.md
+docs/origin.md
+docs/pha_spec.md
+docs/prior_art_review.md
+docs/production_rpc_deployment.md
+docs/provenance_security.md
+docs/research_protocol.md
+docs/rootprint.md
+docs/rpc_operations.md
+docs/sdk.md
+docs/security_model.md
+docs/sextillion_proof.md
+docs/sfcs.md
+docs/sfcs_zkvm.md
+docs/slbit.md
+docs/soundness_and_scope.md
+docs/sparse_record.md
+docs/testnet_mainnet.md
+docs/truth_boundary.md
+docs/validator_registry.md
+docs/verification_guide.md
+scripts/check_release_consistency.py
+sdk/python/README.md
+sdk/python/power_house/__init__.py
+sdk/python/pyproject.toml
+src/origin.rs
+src/origin_tests.rs
+tests/origin.rs
+
+to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
