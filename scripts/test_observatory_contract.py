@@ -125,7 +125,8 @@ def main() -> int:
         "createCloudLayer",
         "createOrbitalLabels",
         "updateOrbitalLabels",
-        "proofParticlesMaterial",
+        "proofShellMaterial",
+        "proofRingGroup",
         "refreshNetworkStatus",
         "verifyReleaseArtifacts",
         "verifyObservatorySidecar",
@@ -134,6 +135,17 @@ def main() -> int:
     for contract in required_visual_contracts:
         if contract not in javascript:
             fail(errors, f"missing Observatory behavior: {contract}")
+
+    forbidden_particle_contracts = (
+        "THREE.Points",
+        "THREE.PointsMaterial",
+        "proofParticles",
+        "orbitalDust",
+        "starLayers",
+    )
+    for contract in forbidden_particle_contracts:
+        if contract in javascript:
+            fail(errors, f"deprecated particle behavior remains: {contract}")
 
     if errors:
         for error in errors:
