@@ -35,7 +35,7 @@ jobs:
           for part in scripts/.origin-release-part-*.b64; do
             base64 --decode "$part" >> scripts/prepare_origin_release.py
           done
-          echo "16fdf607a7b4bd25d2db5f0804bf256228d33a557e824fa250b466bb77f4e7bd  scripts/prepare_origin_release.py" | sha256sum --check --strict
+          echo "c3fe43cf64f2139d4059ff4ed01fb0ba02386bdf401bc8bc9cfc3dff792a5ab0  scripts/prepare_origin_release.py" | sha256sum --check --strict
           python3 -m py_compile scripts/prepare_origin_release.py
           python3 scripts/prepare_origin_release.py
 
