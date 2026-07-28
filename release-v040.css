@@ -434,3 +434,338 @@ body.evaluation-open #evaluation-panel {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Touch command deck: one visual hierarchy for navigation, modes, and actions. */
+@media (max-width: 900px) {
+  :root {
+    --v040-dock: 146px;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-inline: 10px;
+    border-bottom-color: rgba(220, 239, 232, 0.16);
+  }
+
+  .brand {
+    min-width: 0;
+    gap: 9px;
+  }
+
+  .brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand strong {
+    font-size: 17px;
+  }
+
+  .top-actions {
+    gap: 5px;
+  }
+
+  .top-actions a,
+  .top-actions button,
+  .top-actions .evaluation-toggle {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    border-color: rgba(220, 239, 232, 0.14);
+    background: rgba(4, 13, 14, 0.78);
+  }
+
+  .top-actions #portal-top-toggle {
+    border-color: var(--v040-acid);
+    background: var(--v040-acid);
+  }
+
+  .proof-monument {
+    right: 13px;
+    bottom: 205px;
+    left: 13px;
+    width: auto;
+  }
+
+  .monument-thesis {
+    max-width: calc(100% - 84px);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .proof-monument h1 {
+    max-width: 7ch;
+    font-size: clamp(40px, 12vw, 48px);
+    line-height: 0.91;
+  }
+
+  .domain-equation {
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 7px;
+  }
+
+  .domain-equation small {
+    font-size: 7px;
+  }
+
+  .domain-equation strong {
+    font-size: 30px;
+  }
+
+  .hero-actions {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .hero-actions button {
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 8px;
+    min-width: 0;
+    min-height: 50px;
+    padding: 0 11px;
+    border-radius: 4px;
+  }
+
+  .hero-actions svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .hero-actions button > span:last-child {
+    min-width: 0;
+  }
+
+  .hero-actions b {
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hero-actions small {
+    display: block;
+    margin-bottom: 3px;
+    overflow: hidden;
+    color: currentColor;
+    font-size: 6px;
+    opacity: 0.58;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hero-trust-meter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 8px;
+    border-top: 1px solid rgba(220, 239, 232, 0.13);
+  }
+
+  .hero-trust-meter div {
+    min-width: 0;
+    padding: 7px 8px 0;
+    border-right: 1px solid rgba(220, 239, 232, 0.11);
+  }
+
+  .hero-trust-meter div:first-child {
+    padding-left: 0;
+  }
+
+  .hero-trust-meter div:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .hero-trust-meter dt {
+    margin-bottom: 3px;
+    font-size: 6px;
+  }
+
+  .hero-trust-meter dd {
+    overflow: hidden;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .proof-rail {
+    bottom: calc(var(--v040-dock) + 34px);
+    padding: 0;
+    border-top: 1px solid rgba(69, 221, 210, 0.18);
+    border-bottom: 1px solid rgba(220, 239, 232, 0.1);
+    background: rgba(1, 7, 8, 0.96);
+    box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.3);
+  }
+
+  .proof-modes {
+    display: flex;
+    gap: 0;
+    padding: 6px 12px;
+    overflow-x: auto;
+    scroll-padding-inline: 12px;
+    scroll-snap-type: x proximity;
+    background: transparent;
+  }
+
+  .proof-mode {
+    position: relative;
+    flex: 0 0 116px;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 116px;
+    min-height: 54px;
+    padding: 8px 31px 8px 10px;
+    border: 0;
+    border-right: 1px solid rgba(220, 239, 232, 0.1);
+    border-radius: 0;
+    color: #9cada7;
+    background: transparent;
+    box-shadow: none;
+    scroll-snap-align: start;
+  }
+
+  .proof-mode:first-child {
+    border-left: 1px solid rgba(220, 239, 232, 0.1);
+  }
+
+  .proof-mode::after {
+    position: absolute;
+    right: 10px;
+    bottom: 4px;
+    left: 10px;
+    height: 2px;
+    content: "";
+    background: transparent;
+    transform: scaleX(0.25);
+    transition:
+      background-color 160ms ease,
+      transform 180ms ease;
+  }
+
+  .proof-mode .mode-index {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    color: #72817d;
+    border: 1px solid rgba(220, 239, 232, 0.13);
+    border-radius: 50%;
+    font-size: 7px;
+  }
+
+  .proof-mode .mode-copy {
+    align-self: center;
+    min-width: 0;
+  }
+
+  .proof-mode .mode-copy b {
+    color: inherit;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .proof-mode .mode-copy small,
+  .proof-mode i {
+    display: none;
+  }
+
+  .proof-mode.active {
+    color: var(--v040-paper);
+    background: linear-gradient(180deg, rgba(69, 221, 210, 0.1), transparent);
+    box-shadow: none;
+  }
+
+  .proof-mode.active::after {
+    background: var(--mode-color);
+    transform: scaleX(1);
+  }
+
+  .proof-mode.active .mode-index {
+    color: #010506;
+    border-color: var(--mode-color);
+    background: var(--mode-color);
+  }
+
+  .sfcs-orbit-dock {
+    top: 65px;
+    right: 8px;
+    width: auto;
+  }
+
+  .sfcs-orbit-toggle {
+    grid-template-columns: 18px auto;
+    grid-template-rows: 1fr;
+    gap: 7px;
+    width: auto;
+    min-width: 72px;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 4px;
+    background: rgba(3, 12, 13, 0.9);
+  }
+
+  .sfcs-orbit-toggle [data-icon] {
+    width: 17px;
+    height: 17px;
+  }
+
+  .sfcs-orbit-toggle b {
+    font-size: 9px;
+    writing-mode: initial;
+  }
+
+  .sfcs-orbit-toggle small {
+    display: none;
+  }
+
+  .verification-dock {
+    border-top-color: rgba(69, 221, 210, 0.2);
+    box-shadow: 0 -22px 58px rgba(0, 0, 0, 0.34);
+  }
+
+  .trace-header {
+    padding-inline: 12px;
+  }
+
+  .trace-header b {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .verify-button {
+    min-width: 102px;
+    border-radius: 4px;
+  }
+
+  .telemetry > div {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 370px) {
+  .proof-monument {
+    bottom: 202px;
+  }
+
+  .proof-monument h1 {
+    font-size: 38px;
+  }
+
+  .hero-actions button {
+    padding-inline: 8px;
+  }
+
+  .hero-actions small {
+    display: none;
+  }
+
+  .proof-mode {
+    flex-basis: 108px;
+    min-width: 108px;
+  }
+}
