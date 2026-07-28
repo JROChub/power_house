@@ -169,9 +169,6 @@ jobs:
       - name: Pinned host Rust toolchain
         uses: dtolnay/rust-toolchain@1.93.1
 
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-
       - name: Install pinned RISC Zero toolchain
         run: |
           curl -L https://risczero.com/install | bash
@@ -181,7 +178,8 @@ jobs:
 
       - name: Reproduce private-VM guest execution identity
         run: |
-          cargo build --manifest-path risc0-methods/Cargo.toml
+          cargo clean --manifest-path risc0-methods/Cargo.toml
+          cargo build --locked --manifest-path risc0-methods/Cargo.toml
           cargo run --quiet --locked --features sfcs-risc0 \
             --example sfcs_risc0_program_identity -- \
             conformance/sfcs-risc0/private-sum-v1.bin \
