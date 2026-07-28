@@ -1,2 +1,3 @@
 scripts/prepare_origin_release.py: OK
-could not patch temporary duplicate CI marker
+scripts/prepare_origin_release.py: OK
+Prepared Power House v0.3.25 Origin release
