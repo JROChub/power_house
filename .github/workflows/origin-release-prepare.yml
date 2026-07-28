@@ -47,21 +47,28 @@ jobs:
           from pathlib import Path
 
           script = Path("scripts/prepare_origin_release.py")
-          text = script.read_text(encoding="utf-8")
-          old = '''insert_after(
-              ".github/workflows/ci.yml",
-              \'\'\'          node --check publicpower/app.js\n\'\'\',
-              \'\'\'          node --check publicpower/tessaryn/origin.js\n\'\'\',
-          )'''
-          new = '''replace_count(
-              ".github/workflows/ci.yml",
-              \'\'\'          node --check publicpower/app.js\n\'\'\',
-              \'\'\'          node --check publicpower/app.js\n          node --check publicpower/tessaryn/origin.js\n\'\'\',
-              2,
-          )'''
-          if text.count(old) != 1:
-              raise SystemExit("could not patch temporary duplicate CI marker")
-          script.write_text(text.replace(old, new, 1), encoding="utf-8")
+          lines = script.read_text(encoding="utf-8").splitlines(keepends=True)
+          matches = [
+              index
+              for index, line in enumerate(lines)
+              if line == '    ".github/workflows/ci.yml",\n'
+          ]
+          if matches != [339]:
+              raise SystemExit(f"unexpected CI patch marker indexes: {matches}")
+          index = matches[0]
+          expected = [
+              "insert_after(\n",
+              '    ".github/workflows/ci.yml",\n',
+              "    '''          node --check publicpower/app.js\\n''',\n",
+              "    '''          node --check publicpower/tessaryn/origin.js\\n''',\n",
+              ")\n",
+          ]
+          if lines[index - 1 : index + 4] != expected:
+              raise SystemExit("temporary CI patch context changed")
+          lines[index - 1] = "replace_count(\n"
+          lines[index + 2] = "    '''          node --check publicpower/app.js\\n          node --check publicpower/tessaryn/origin.js\\n''',\n"
+          lines.insert(index + 3, "    2,\n")
+          script.write_text("".join(lines), encoding="utf-8")
           PY
           echo "f08ecc7cb60658804d133c03999727ff6955b96805d73db18f11c157df03bf8c  scripts/prepare_origin_release.py" | sha256sum --check --strict
           python3 -m py_compile scripts/prepare_origin_release.py
