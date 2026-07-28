@@ -13,9 +13,7 @@
 
 use crate::identity::{Identity, IdentityError};
 use crate::provenance::{PhaArtifact, Rootprint, RootprintId};
-use crate::sfcs::{
-    verify_execution_embedding, SfcsError, SfcsExecutionEmbeddingReport, SfcsGraph,
-};
+use crate::sfcs::{verify_execution_embedding, SfcsError, SfcsExecutionEmbeddingReport, SfcsGraph};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -142,11 +140,7 @@ impl OriginPolicy {
     ) -> Result<(), OriginError> {
         for (resource, actual, limit) in [
             ("nodes", report.node_count, self.max_nodes),
-            (
-                "trace_steps",
-                report.trace_steps,
-                self.max_trace_steps,
-            ),
+            ("trace_steps", report.trace_steps, self.max_trace_steps),
             (
                 "synthesis_operations",
                 report.synthesis_operations,
@@ -545,11 +539,8 @@ impl Origin {
                 "identity binding changed the verified SFCS report".to_string(),
             ));
         }
-        let capacity = CreativeCapacity::issue(
-            &identity,
-            policy.creative_units,
-            prepared.cost.total_units,
-        )?;
+        let capacity =
+            CreativeCapacity::issue(&identity, policy.creative_units, prepared.cost.total_units)?;
         let receipt = CreationReceipt::new(
             spec.label,
             None,
@@ -655,7 +646,10 @@ impl Origin {
             .ok_or_else(|| OriginError::Invariant("execution inputs are missing".to_string()))?;
         let inputs = serde_json::from_value::<BTreeMap<String, i64>>(inputs.clone())
             .map_err(OriginError::Serialization)?;
-        let trace = self.graph.execution_trace(&inputs).map_err(OriginError::Sfcs)?;
+        let trace = self
+            .graph
+            .execution_trace(&inputs)
+            .map_err(OriginError::Sfcs)?;
         if trace.outputs != self.outputs || trace.output_digest != self.report.output_digest {
             return Err(OriginError::Invariant(
                 "stored Origin outputs do not match deterministic replay".to_string(),
@@ -691,8 +685,7 @@ impl Origin {
             || self.receipt.graph_digest != self.report.graph_digest
             || self.receipt.trace_digest != self.report.trace_digest
             || self.receipt.synthesis_digest != self.report.synthesis_digest
-            || self.receipt.embedding_invariant_digest
-                != self.report.embedding_invariant_digest
+            || self.receipt.embedding_invariant_digest != self.report.embedding_invariant_digest
             || self.receipt.output_digest != self.report.output_digest
             || self.receipt.lineage_fingerprint != state.graph.state_fingerprint
             || self.receipt.outputs != self.outputs
@@ -820,9 +813,13 @@ pub enum OriginError {
 impl fmt::Display for OriginError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidSpec(message) => write!(formatter, "invalid Origin specification: {message}"),
+            Self::InvalidSpec(message) => {
+                write!(formatter, "invalid Origin specification: {message}")
+            }
             Self::Sfcs(error) => write!(formatter, "Origin SFCS verification failed: {error}"),
-            Self::Identity(error) => write!(formatter, "Origin identity verification failed: {error}"),
+            Self::Identity(error) => {
+                write!(formatter, "Origin identity verification failed: {error}")
+            }
             Self::PolicyLimitExceeded {
                 resource,
                 actual,
@@ -838,7 +835,9 @@ impl fmt::Display for OriginError {
                 formatter,
                 "creative capacity exhausted: required {required}, remaining {remaining}"
             ),
-            Self::ArithmeticOverflow => formatter.write_str("Origin resource arithmetic overflowed"),
+            Self::ArithmeticOverflow => {
+                formatter.write_str("Origin resource arithmetic overflowed")
+            }
             Self::Serialization(error) => {
                 write!(formatter, "Origin serialization failed: {error}")
             }

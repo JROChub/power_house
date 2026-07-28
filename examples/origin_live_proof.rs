@@ -38,7 +38,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     origin.verify()?;
     println!("ORIGIN VERIFIED");
     println!("rootprint_id={}", origin.identity().rootprint_id());
-    println!("phx_fingerprint={}", origin.identity().pha().phx_fingerprint);
+    println!(
+        "phx_fingerprint={}",
+        origin.identity().pha().phx_fingerprint
+    );
     println!("receipt_digest={}", origin.receipt().receipt_digest);
     println!(
         "capacity={}/{}",
