@@ -43,6 +43,27 @@ jobs:
             base64 --decode "$part" >> scripts/prepare_origin_release.py
           done
           echo "c3fe43cf64f2139d4059ff4ed01fb0ba02386bdf401bc8bc9cfc3dff792a5ab0  scripts/prepare_origin_release.py" | sha256sum --check --strict
+          python3 - <<'PY'
+          from pathlib import Path
+
+          script = Path("scripts/prepare_origin_release.py")
+          text = script.read_text(encoding="utf-8")
+          old = '''insert_after(
+              ".github/workflows/ci.yml",
+              \'\'\'          node --check publicpower/app.js\n\'\'\',
+              \'\'\'          node --check publicpower/tessaryn/origin.js\n\'\'\',
+          )'''
+          new = '''replace_count(
+              ".github/workflows/ci.yml",
+              \'\'\'          node --check publicpower/app.js\n\'\'\',
+              \'\'\'          node --check publicpower/app.js\n          node --check publicpower/tessaryn/origin.js\n\'\'\',
+              2,
+          )'''
+          if text.count(old) != 1:
+              raise SystemExit("could not patch temporary duplicate CI marker")
+          script.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+          echo "f08ecc7cb60658804d133c03999727ff6955b96805d73db18f11c157df03bf8c  scripts/prepare_origin_release.py" | sha256sum --check --strict
           python3 -m py_compile scripts/prepare_origin_release.py
           python3 scripts/prepare_origin_release.py
 
