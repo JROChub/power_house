@@ -1,6 +1,7 @@
 /logs/
 /blobs/
 /target/
+/risc0-methods/target/
 /keys/
 *.identity
 /boot*.anchor

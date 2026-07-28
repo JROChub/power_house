@@ -1,6 +1,6 @@
 # Soundness And Scope
 
-Status: active scope statement for Power House v0.3.24.
+Status: active scope statement for Power House v0.4.0.
 
 Power House reports must distinguish deterministic verification from broader
 claims about the world.

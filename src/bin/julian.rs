@@ -43,6 +43,8 @@ use power_house::{
     ChallengeSuite, EntryAnchor, Field, GeneralSumProof, LedgerAnchor, MemoryCapsule,
     MemoryCapsuleBuilder, MemoryError, MemoryVerificationPolicy, ObservatorySidecar, ProofStats,
 };
+#[cfg(feature = "sfcs-risc0")]
+use power_house::{verify_sfcs_risc0_private_vm_embedding, SfcsRisc0PrivateVmProof};
 #[cfg(feature = "sfcs")]
 use std::collections::BTreeMap;
 #[cfg(feature = "net")]
@@ -256,6 +258,19 @@ fn print_sfcs_help() {
             "       [--semantic-output <packet.json>] [--capsule-output <proof.phm>] [--label <name>]"
         );
         println!("  verify-zk-pha <artifact.pha>");
+    }
+    #[cfg(feature = "sfcs-risc0")]
+    {
+        println!("  risc0-prove <program.bin> --input <private-input.bin> \\");
+        println!(
+            "       --artifact-output <proof.pha> --rootprint-output <proof.rootprint.json> \\"
+        );
+        println!("       --capsule-output <proof.phm> [--semantic-output <packet.json>] \\");
+        println!(
+            "       [--sidecar-output <proof.observatory.json>] [--report <report.json>] [--label <name>]"
+        );
+        println!("  verify-risc0-pha <artifact.pha>");
+        println!("  verify-risc0-capsule <capsule.phm>");
     }
     println!();
     println!("SFCS commands are offline and do not alter Rootprint or .pha identity rules.");
@@ -669,6 +684,12 @@ fn handle_sfcs(sub: &str, tail: Vec<String>) {
         "zk-private-vm" => cmd_sfcs_zk_private_vm(tail),
         #[cfg(feature = "sfcs-zk")]
         "verify-zk-pha" => cmd_sfcs_verify_zk_pha(tail),
+        #[cfg(feature = "sfcs-risc0")]
+        "risc0-prove" => cmd_sfcs_risc0_prove(tail),
+        #[cfg(feature = "sfcs-risc0")]
+        "verify-risc0-pha" => cmd_sfcs_verify_risc0_pha(tail),
+        #[cfg(feature = "sfcs-risc0")]
+        "verify-risc0-capsule" => cmd_sfcs_verify_risc0_capsule(tail),
         _ => fatal(&format!("unknown sfcs subcommand: {sub}")),
     }
 }
@@ -2363,6 +2384,241 @@ fn cmd_sfcs_verify_zk_pha(args: Vec<String>) {
             ),
         },
     }
+}
+
+#[cfg(feature = "sfcs-risc0")]
+fn cmd_sfcs_risc0_prove(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    let mut program_path = None;
+    let mut input_path = None;
+    let mut artifact_output = None;
+    let mut rootprint_output = None;
+    let mut capsule_output = None;
+    let mut semantic_output = None;
+    let mut sidecar_output = None;
+    let mut report_output = None;
+    let mut label = "sfcs-risc0-private-vm".to_string();
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--input" => input_path = Some(PathBuf::from(take_option(&mut iter, "--input"))),
+            "--artifact-output" => {
+                artifact_output = Some(PathBuf::from(take_option(&mut iter, "--artifact-output")))
+            }
+            "--rootprint-output" => {
+                rootprint_output = Some(PathBuf::from(take_option(&mut iter, "--rootprint-output")))
+            }
+            "--capsule-output" => {
+                capsule_output = Some(PathBuf::from(take_option(&mut iter, "--capsule-output")))
+            }
+            "--semantic-output" => {
+                semantic_output = Some(PathBuf::from(take_option(&mut iter, "--semantic-output")))
+            }
+            "--sidecar-output" => {
+                sidecar_output = Some(PathBuf::from(take_option(&mut iter, "--sidecar-output")))
+            }
+            "--report" => report_output = Some(PathBuf::from(take_option(&mut iter, "--report"))),
+            "--label" => label = take_option(&mut iter, "--label"),
+            value if !value.starts_with("--") && program_path.is_none() => {
+                program_path = Some(PathBuf::from(value))
+            }
+            other => fatal(&format!("unknown argument: {other}")),
+        }
+    }
+    let program_path =
+        program_path.unwrap_or_else(|| fatal("sfcs risc0-prove requires <program.bin>"));
+    let input_path = input_path.unwrap_or_else(|| fatal("--input is required"));
+    let artifact_output = artifact_output.unwrap_or_else(|| fatal("--artifact-output is required"));
+    let rootprint_output =
+        rootprint_output.unwrap_or_else(|| fatal("--rootprint-output is required"));
+    let capsule_output = capsule_output.unwrap_or_else(|| fatal("--capsule-output is required"));
+
+    let program = fs::read(&program_path).unwrap_or_else(|error| {
+        fatal(&format!(
+            "failed to read {}: {error}",
+            program_path.display()
+        ))
+    });
+    let private_input = fs::read(&input_path).unwrap_or_else(|error| {
+        fatal(&format!("failed to read {}: {error}", input_path.display()))
+    });
+    let proof = SfcsRisc0PrivateVmProof::prove(&program, &private_input)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 proving failed: {error}")));
+    proof
+        .verify(&program)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 verification failed: {error}")));
+    let artifact = proof
+        .to_pha_artifact(&label, &program)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 .pha creation failed: {error}")));
+    let verified = verify_sfcs_risc0_private_vm_embedding(&artifact)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 .pha replay failed: {error}")));
+    let rootprint = Rootprint::new(&label, artifact.clone())
+        .unwrap_or_else(|error| fatal(&format!("Rootprint creation failed: {error}")));
+    let replay = rootprint
+        .replay()
+        .unwrap_or_else(|error| fatal(&format!("Rootprint replay failed: {error}")));
+    let branch = rootprint.root_branch.clone();
+    let digest_suffix = verified
+        .statement
+        .receipt_claim_digest
+        .chars()
+        .rev()
+        .take(16)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect::<String>();
+    let mut semantic_packet = serde_json::json!({
+        "schema": "slbit/viz-packet/v3",
+        "packet_id": format!("slp_sfcs_risc0_{digest_suffix}"),
+        "packet_digest": "",
+        "claim": {
+            "claim_id": format!("claim_sfcs_risc0_{digest_suffix}"),
+            "label": label,
+            "domain": "sfcs-risc0-private-vm",
+            "status": "verified",
+            "bound_core": {
+                "capsule_id": format!("phm_{label}"),
+                "branch_id": branch,
+                "replay_fingerprint": replay.state_fingerprint,
+                "profile": power_house::SFCS_RISC0_PRIVATE_VM_PROTOCOL_V1
+            },
+            "public_statement": verified.statement
+        },
+        "transcript": {"rounds": []},
+        "semantic_dag": {"nodes": [], "edges": []},
+        "views": {"timeline": [], "claim_cards": [], "graphs": [], "diffs": []},
+        "explanation_constraints": {
+            "allowed_sources": ["public_statement"],
+            "forbid_unbound_claims": true,
+            "mark_generated_text_non_authoritative": true
+        }
+    });
+    let packet_digest = power_house::memory::semantic_packet_digest(&semantic_packet)
+        .unwrap_or_else(|error| fatal(&format!("semantic packet digest failed: {error}")));
+    semantic_packet["packet_digest"] = serde_json::json!(packet_digest);
+    let sidecar = ObservatorySidecar::new(
+        &rootprint,
+        BTreeMap::from([(branch.clone(), semantic_packet.clone())]),
+    )
+    .unwrap_or_else(|error| fatal(&format!("Observatory sidecar creation failed: {error}")));
+    sidecar.verify(&rootprint).unwrap_or_else(|error| {
+        fatal(&format!("Observatory sidecar verification failed: {error}"))
+    });
+
+    let capsule = MemoryCapsuleBuilder::new(&label)
+        .producer("mfenx", env!("CARGO_PKG_VERSION"))
+        .slbit_version("3.1.0")
+        .with_pha(artifact.clone())
+        .with_rootprint(rootprint.clone())
+        .with_replay_required()
+        .with_semantic_packet(
+            "slbit/viz-packet/v3",
+            semantic_packet["packet_id"]
+                .as_str()
+                .unwrap_or("slp_sfcs_risc0"),
+            branch,
+            replay.state_fingerprint,
+            "verified_public_statement",
+            semantic_packet.clone(),
+        )
+        .unwrap_or_else(|error| fatal(&format!("semantic packet binding failed: {error}")))
+        .with_sidecar(sidecar.clone())
+        .build()
+        .unwrap_or_else(|error| fatal(&format!("Memory Capsule creation failed: {error}")));
+    power_house::verify_sfcs_risc0_private_vm_capsule(&capsule, MemoryVerificationPolicy::strict())
+        .unwrap_or_else(|error| {
+            fatal(&format!(
+                "Memory Capsule receipt verification failed: {error}"
+            ))
+        });
+
+    write_json(&artifact_output, &artifact);
+    write_json(&rootprint_output, &rootprint);
+    capsule
+        .write_canonical(&capsule_output)
+        .unwrap_or_else(|error| fatal(&format!("failed to write Memory Capsule: {error}")));
+    if let Some(path) = semantic_output {
+        write_json(&path, &semantic_packet);
+    }
+    if let Some(path) = sidecar_output {
+        write_json(&path, &sidecar);
+    }
+    let report = serde_json::json!({
+        "schema": "power-house/sfcs-risc0-private-vm-cli-report/v1",
+        "profile": power_house::SFCS_RISC0_PRIVATE_VM_PROTOCOL_V1,
+        "statement": verified.statement,
+        "receipt_digest": verified.receipt_digest,
+        "proof_digest": verified.proof_digest,
+        "phx_fingerprint": artifact.phx_fingerprint,
+        "rootprint_id": rootprint.root_branch,
+        "capsule_digest": capsule.header.capsule_digest,
+        "private_input_embedded": false,
+        "development_receipts_accepted": false
+    });
+    if let Some(path) = report_output {
+        write_json(&path, &report);
+    }
+    println!("SFCS RISC0 PRIVATE VM VERIFIED");
+    println!("image_id: {}", proof.statement.image_id);
+    println!("program_digest: {}", proof.statement.program_digest);
+    println!("graph_digest: {}", proof.statement.graph_digest);
+    println!("journal_digest: {}", proof.statement.journal_digest);
+    println!(
+        "receipt_claim_digest: {}",
+        proof.statement.receipt_claim_digest
+    );
+    println!("phx_fingerprint: {}", artifact.phx_fingerprint);
+    println!("rootprint_id: {}", rootprint.root_branch);
+    println!("private_input_embedded: false");
+}
+
+#[cfg(feature = "sfcs-risc0")]
+fn cmd_sfcs_verify_risc0_pha(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-risc0-pha requires <artifact.pha>");
+    }
+    let artifact = read_pha(Path::new(&args[0]));
+    let proof = verify_sfcs_risc0_private_vm_embedding(&artifact)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 .pha verification failed: {error}")));
+    println!("SFCS RISC0 PRIVATE VM PHA VALID");
+    println!("image_id: {}", proof.statement.image_id);
+    println!("program_digest: {}", proof.statement.program_digest);
+    println!("journal_digest: {}", proof.statement.journal_digest);
+    println!(
+        "receipt_claim_digest: {}",
+        proof.statement.receipt_claim_digest
+    );
+}
+
+#[cfg(feature = "sfcs-risc0")]
+fn cmd_sfcs_verify_risc0_capsule(args: Vec<String>) {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_sfcs_help();
+        return;
+    }
+    if args.len() != 1 {
+        fatal("sfcs verify-risc0-capsule requires <capsule.phm>");
+    }
+    let policy = MemoryVerificationPolicy::strict();
+    let capsule = read_memory_capsule(Path::new(&args[0]), &policy);
+    let proof = power_house::verify_sfcs_risc0_private_vm_capsule(&capsule, policy)
+        .unwrap_or_else(|error| fatal(&format!("SFCS RISC0 capsule verification failed: {error}")));
+    println!("SFCS RISC0 PRIVATE VM CAPSULE VALID");
+    println!("image_id: {}", proof.statement.image_id);
+    println!("program_digest: {}", proof.statement.program_digest);
+    println!("journal_digest: {}", proof.statement.journal_digest);
+    println!(
+        "receipt_claim_digest: {}",
+        proof.statement.receipt_claim_digest
+    );
 }
 
 fn cmd_rootprint_init(args: Vec<String>) {

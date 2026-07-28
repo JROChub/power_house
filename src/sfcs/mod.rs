@@ -7,6 +7,8 @@
 
 pub mod compiler;
 pub mod constraints;
+#[cfg(feature = "sfcs-risc0")]
+pub mod risc0;
 pub mod vm;
 #[cfg(feature = "sfcs-zk")]
 pub mod zk;

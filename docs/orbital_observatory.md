@@ -1,6 +1,6 @@
 # MFENX Orbital Observatory
 
-Release surface: Power House v0.3.24.
+Release surface: Power House v0.4.0.
 
 `mfenx.com` presents Power House as an interactive planetary proof
 observatory. It combines live celestial telemetry, world time, published proof
@@ -43,17 +43,22 @@ time offset, or drawer directly:
 
 ## Verification modes
 
-The five instrument modes are:
+The six instrument modes are:
 
 1. Browser-native `.pha` and Rootprint core verification, including
    deterministic fingerprint, branch ID, ordering, reachability, and canonical
    replay checks. The same mode separately verifies and renders the published
    `slbit` semantic sidecar.
-2. A 70-round constant-polynomial equation replay over field
+2. An SFCS v0.4.0 deterministic browser identity bridge that verifies graph,
+   execution trace, synthesis, `.pha`, branch ID, and replay binding. The
+   interface explicitly distinguishes this public browser path from
+   authoritative whole-program RISC Zero receipt verification performed by
+   the published Rust verifier.
+3. A 70-round constant-polynomial equation replay over field
    `1,000,000,007`.
-3. A 4,096-round seeded-affine structural replay.
-4. SHA-256 verification of the published `PHSPv1` million-round artifact.
-5. SHA-256 verification of both the `PHSMv1` workload and `PHCPv1`
+4. A 4,096-round seeded-affine structural replay.
+5. SHA-256 verification of the published `PHSPv1` million-round artifact.
+6. SHA-256 verification of both the `PHSMv1` workload and `PHCPv1`
    certificate.
 
 Proof progress is reflected in both the verification dock and the active
@@ -90,6 +95,23 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in the
   proof verification.
 - CI validates every control-to-DOM binding and recomputes the size and
   SHA-256 digest of all five bundled public artifacts.
+- Release validation renders the live Three.js canvas in desktop and mobile
+  Chromium viewports, checks nonblank pixels, executes the SFCS bridge, creates
+  a local RootID, and confirms every instrument close control remains inside
+  the viewport.
+
+## v0.4.0 Composition
+
+The main field now reserves the right side of the viewport for the globe and
+its state-driven orbital geometry. The proof statement and actions occupy a
+separate left-side field rather than covering the planet. Proof modes form a
+compact reproducible-path array above the verification dock, and the SFCS
+instrument opens as one mutually exclusive drawer.
+
+On mobile, proof modes become a stable horizontal selector above the semantic
+and verification docks. Opening SFCS, the world observatory, technical
+evaluation, or local proof lab removes the underlying hero controls from the
+interaction plane and keeps the active close control inside the viewport.
 
 ## Deployment
 

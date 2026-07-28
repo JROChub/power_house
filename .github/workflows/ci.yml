@@ -76,6 +76,9 @@ jobs:
       - name: Test network targets
         run: cargo test --all-targets --features net --locked
 
+      - name: Test SFCS and legacy scoped privacy profiles
+        run: cargo test --all-targets --features sfcs,sfcs-zk --locked
+
       - name: CLI contract tests
         run: bash scripts/test_cli.sh
 
@@ -156,3 +159,35 @@ jobs:
           python3 scripts/soundness_budget.py \
             --field 18446744073709551557 \
             --repetitions 3
+
+  sfcs-risc0:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install pinned RISC Zero toolchain
+        run: |
+          curl -L https://risczero.com/install | bash
+          echo "$HOME/.risc0/bin" >> "$GITHUB_PATH"
+          "$HOME/.risc0/bin/rzup" install cargo-risczero 3.0.6
+          "$HOME/.risc0/bin/rzup" install rust
+
+      - name: Reproduce private-VM guest binary
+        run: |
+          cargo build --manifest-path risc0-methods/Cargo.toml
+          cmp \
+            conformance/sfcs-risc0/private-sum-v1.bin \
+            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/release/power-house-sfcs-conformance-guest.bin
+
+      - name: Real whole-program private-VM proof gates
+        run: |
+          cargo test --locked --features sfcs-risc0 \
+            --test sfcs_risc0 \
+            --test sfcs_risc0_cli

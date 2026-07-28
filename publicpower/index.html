@@ -18,7 +18,8 @@
   <link rel="preload" href="assets/earth-day-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="preload" href="assets/earth-night-mobile.jpg" as="image" crossorigin="anonymous" media="(max-width: 760px)">
   <link rel="stylesheet" href="app.css?v=20260709-orbital-observatory2">
-  <link rel="stylesheet" href="observatory.css?v=20260711-tessaryn-origin1">
+  <link rel="stylesheet" href="observatory.css?v=20260728-v040">
+  <link rel="stylesheet" href="release-v040.css?v=20260728-v040">
 </head>
 <body>
   <div id="boot-screen" class="boot-screen" aria-live="polite">
@@ -195,7 +196,7 @@
     <aside class="proof-rail" aria-label="Proof modes">
       <div class="rail-heading">
         <span>VERIFICATION ARRAY</span>
-        <b>06 PUBLIC PATHS</b>
+        <b>06 REPRODUCIBLE PATHS</b>
       </div>
 
       <div id="proof-modes" class="proof-modes">
@@ -206,7 +207,7 @@
         </button>
         <button class="proof-mode" data-mode="sfcs" type="button" aria-pressed="false">
           <span class="mode-index">02</span>
-          <span class="mode-copy"><b>SFCS-ZK</b><small>BITWISE / ORDER / BYTE MEMORY</small></span>
+          <span class="mode-copy"><b>SFCS PRIVATE</b><small>WHOLE PROGRAM / REAL RECEIPT</small></span>
           <i></i>
         </button>
         <button class="proof-mode" data-mode="constant" type="button" aria-pressed="false">
@@ -237,7 +238,7 @@
       </button>
 
       <div class="rail-status" aria-label="Release state">
-        <div><span>RELEASE</span><b>v0.3.24</b></div>
+        <div><span>RELEASE</span><b>v0.4.0</b></div>
         <div><span>CORE</span><b>DETERMINISTIC</b></div>
       </div>
 
@@ -251,8 +252,8 @@
           <b>MEANING OBSERVATORY</b>
         </a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/sfcs.md" title="Open the SFCS implementation reference">
-          <span>SFCS-ZK REFERENCE</span>
-          <b>BITWISE / COMPARISON / BYTE MEMORY</b>
+          <span>SFCS v0.4.0</span>
+          <b>ORIGIN + WHOLE-PROGRAM PRIVATE VM</b>
         </a>
         <a href="campaign.html" title="Open the 72-hour reliability campaign">
           <span>72H RELIABILITY</span>
@@ -274,8 +275,8 @@
 
       <section class="proof-monument" aria-label="Selected proof scale">
         <div class="monument-thesis">
-          <span>THE IMPOSSIBLE, VERIFIED LOCALLY</span>
-          <b>ZERO PROOF DATA UPLOADED</b>
+          <span>VERIFICATION IS THE CREATION BOUNDARY</span>
+          <b>LOCAL-FIRST / PORTABLE / REPLAYABLE</b>
         </div>
         <span id="orbit-kicker">DETERMINISTIC IDENTITY GRAPH</span>
         <div class="monument-title">
@@ -317,64 +318,64 @@
     </main>
 
     <div class="sfcs-orbit-dock" aria-label="SFCS verification pop-out">
-      <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS private VM verifier">
+      <button id="sfcs-orbit-toggle" class="sfcs-orbit-toggle" type="button" aria-expanded="false" aria-controls="sfcs-orbit-panel" title="Open SFCS whole-program proof instrument">
         <span data-icon="brain-circuit"></span>
         <b>SFCS</b>
         <small>OPEN / RUN</small>
       </button>
 
       <div id="sfcs-orbit-panel" class="sfcs-orbit-panel">
-        <section class="zk-cockpit" aria-label="SFCS private VM proof coverage">
+        <section class="zk-cockpit" aria-label="SFCS whole-program private VM">
           <div class="zk-cockpit-head">
             <div>
-              <span>SFCS PRIVATE VM / v0.3.24</span>
-              <b>WITNESS HIDDEN / MUTATION TESTED</b>
+              <span>SFCS WHOLE-PROGRAM PRIVATE VM / v0.4.0</span>
+              <b>REAL RECEIPT / DETERMINISTIC IDENTITY</b>
             </div>
-            <button id="sfcs-orbit-close" type="button" aria-label="Close SFCS private VM verifier" title="Close SFCS verifier">
+            <button id="sfcs-orbit-close" type="button" aria-label="Close SFCS whole-program proof instrument" title="Close SFCS instrument">
               <span data-icon="x"></span>
             </button>
           </div>
-          <div class="zk-proof-grid" aria-label="SFCS proof coverage lanes">
+          <div class="zk-proof-grid" aria-label="SFCS verification stages">
             <div id="sfcs-lane-bitwise" class="sfcs-proof-lane" data-state="idle">
-              <span>BITWISE</span>
-              <b>AND OR XOR</b>
+              <span>PROGRAM</span>
+              <b>RISC-V IMAGE</b>
               <em id="sfcs-lane-bitwise-status">STANDBY</em>
               <i aria-hidden="true"></i>
             </div>
             <div id="sfcs-lane-compare" class="sfcs-proof-lane" data-state="idle">
-              <span>COMPARE</span>
-              <b>SLT SLTU</b>
+              <span>RECEIPT</span>
+              <b>RISC0 / NO DEV MODE</b>
               <em id="sfcs-lane-compare-status">STANDBY</em>
               <i aria-hidden="true"></i>
             </div>
             <div id="sfcs-lane-branch" class="sfcs-proof-lane" data-state="idle">
-              <span>BRANCH</span>
-              <b>BEQ BNE BLT BGE</b>
+              <span>IDENTITY</span>
+              <b>.PHA + ROOTPRINT</b>
               <em id="sfcs-lane-branch-status">STANDBY</em>
               <i aria-hidden="true"></i>
             </div>
             <div id="sfcs-lane-memory" class="sfcs-proof-lane" data-state="idle">
-              <span>MEMORY</span>
-              <b>SB SH LB LH</b>
+              <span>CAPSULE</span>
+              <b>OFFLINE REVERIFY</b>
               <em id="sfcs-lane-memory-status">STANDBY</em>
               <i aria-hidden="true"></i>
             </div>
           </div>
           <dl>
-            <div><dt>RANGE PROOFS</dt><dd id="sfcs-range-proof-count">88</dd></div>
-            <div><dt>BYTE SEMANTICS</dt><dd id="sfcs-byte-semantics-count">6</dd></div>
-            <div><dt>MUTATIONS</dt><dd id="sfcs-mutation-count">4 / 4 REJECT</dd></div>
+            <div><dt>PROOF BACKEND</dt><dd id="sfcs-range-proof-count">RISC0 3.0.6</dd></div>
+            <div><dt>RELEASE GATES</dt><dd id="sfcs-byte-semantics-count">REAL GUEST</dd></div>
+            <div><dt>DEV RECEIPTS</dt><dd id="sfcs-mutation-count">REJECTED</dd></div>
           </dl>
           <button id="sfcs-orbit-run" class="sfcs-orbit-run" type="button">
             <span data-icon="play"></span>
-            <b id="sfcs-orbit-run-label">RUN SFCS VERIFIER</b>
+            <b id="sfcs-orbit-run-label">RUN IDENTITY BRIDGE</b>
           </button>
           <section id="sfcs-run-console" class="sfcs-run-console" aria-live="polite">
             <div class="sfcs-run-head">
               <span id="sfcs-widget-status">READY</span>
-              <b id="sfcs-widget-title">SFCS verifier standing by</b>
+              <b id="sfcs-widget-title">SFCS identity bridge standing by</b>
             </div>
-            <p id="sfcs-widget-detail">Press run to execute graph shape checks, trace replay, synthesis, .pha identity, Rootprint branch, and replay fingerprint verification.</p>
+            <p id="sfcs-widget-detail">This browser executes the deterministic SFCS graph, trace, synthesis, .pha, and Rootprint bridge. Whole-program receipt verification runs through the published Rust verifier.</p>
             <div class="sfcs-widget-progress" aria-hidden="true">
               <i id="sfcs-widget-progress"></i>
             </div>
@@ -553,7 +554,7 @@
         <a href="https://github.com/JROChub/power_house/blob/main/docs/verification_guide.md">REPRODUCE</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/identity.md">IDENTITY API</a>
         <a href="https://github.com/JROChub/power_house/blob/main/docs/security_model.md">SECURITY MODEL</a>
-        <a href="https://crates.io/crates/power_house">CRATE v0.3.24</a>
+        <a href="https://crates.io/crates/power_house">CRATE v0.4.0</a>
       </div>
     </aside>
 
@@ -633,7 +634,7 @@
         <div><span>CLAIM</span><b id="claim-value">WAITING</b></div>
         <div><span>DIGEST</span><b id="digest-value">PENDING</b></div>
         <div><span>MODE</span><b id="mode-value">ROOTPRINT</b></div>
-        <div><span>RELEASE</span><b>v0.3.24</b></div>
+        <div><span>RELEASE</span><b>v0.4.0</b></div>
       </div>
     </section>
 
@@ -642,6 +643,6 @@
 
   <noscript>This instrument requires JavaScript for the globe and verifier.</noscript>
   <script src="bootstrap.js"></script>
-  <script type="module" src="app-v0334.js?v=20260710-orbital-map1"></script>
+  <script type="module" src="app.js?v=20260728-v040"></script>
 </body>
 </html>
