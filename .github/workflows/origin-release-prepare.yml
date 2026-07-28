@@ -74,6 +74,24 @@ jobs:
           echo "f08ecc7cb60658804d133c03999727ff6955b96805d73db18f11c157df03bf8c  scripts/prepare_origin_release.py" | sha256sum --check --strict
           python3 -m py_compile scripts/prepare_origin_release.py
           python3 scripts/prepare_origin_release.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          origin = Path("src/origin.rs")
+          text = origin.read_text(encoding="utf-8")
+          replacements = {
+              "self.label.as_bytes().len()": "self.label.len()",
+              "name.as_bytes().len()": "name.len()",
+              "spec.source.as_bytes().len()": "spec.source.len()",
+              "self.dense_boundary_units % DENSE_BOUNDARY_MULTIPLIER != 0": "!self.dense_boundary_units.is_multiple_of(DENSE_BOUNDARY_MULTIPLIER)",
+          }
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"unexpected Origin lint-fix count for {old!r}: {count}")
+              text = text.replace(old, new, 1)
+          origin.write_text(text, encoding="utf-8")
+          PY
 
       - name: Validate metadata and browser surface
         shell: bash
