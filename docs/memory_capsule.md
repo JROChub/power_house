@@ -1,6 +1,6 @@
 # Memory Capsule v1
 
-Status: active format guide for Power House v0.3.24.
+Status: active format guide for Power House v0.4.0.
 
 Memory Capsules are portable proof-memory objects. A `.phm` file packages a
 Power House `.pha` artifact, Rootprint lineage, replay expectations, optional

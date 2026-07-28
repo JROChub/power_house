@@ -114,6 +114,8 @@ pub mod memory;
 mod merkle;
 mod multilinear;
 pub mod observatory;
+#[cfg(feature = "sfcs")]
+pub mod origin;
 mod prng;
 pub mod provenance;
 pub mod rollup;
@@ -157,6 +159,11 @@ pub use merkle::{
 };
 pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
+#[cfg(feature = "sfcs")]
+pub use origin::{
+    CreationCost, CreationEstimate, CreationReceipt, CreativeCapacity, Origin, OriginError,
+    OriginPolicy, OriginSpec, ORIGIN_RECEIPT_SCHEMA_V1,
+};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs")]
 pub use sfcs::compiler::{
@@ -169,6 +176,11 @@ pub use sfcs::compiler::{compile_private_add_source, SfcsCompiledPrivateAdd};
 pub use sfcs::constraints::{
     verify_vm_constraint_embedding, SfcsVmConstraintError, SfcsVmConstraintProof,
     SfcsVmMemoryConstraintEvent, SfcsVmTransitionCommitment, SFCS_VM_CONSTRAINT_PROTOCOL_V1_DRAFT,
+};
+#[cfg(feature = "sfcs-risc0")]
+pub use sfcs::risc0::{
+    verify_sfcs_risc0_private_vm_capsule, verify_sfcs_risc0_private_vm_embedding, SfcsRisc0Error,
+    SfcsRisc0PrivateVmProof, SfcsRisc0PrivateVmStatement, SFCS_RISC0_PRIVATE_VM_PROTOCOL_V1,
 };
 #[cfg(feature = "sfcs")]
 pub use sfcs::vm::{
@@ -260,7 +272,11 @@ pub fn verify_sfcs_zk_private_add_embedding(
     sfcs::zk::verify_private_add_embedding(artifact)
 }
 
-/// Verify that a `.pha` artifact contains the SFCS ZK private VM proof profile.
+/// Verify the scoped SFCS ZK private VM relation profile.
+///
+/// This compatibility profile does not prove one coherent hidden execution.
+/// Use `verify_sfcs_risc0_private_vm_embedding` with the `sfcs-risc0` feature
+/// for the authoritative whole-program private VM boundary.
 #[cfg(feature = "sfcs-zk")]
 pub fn verify_sfcs_zk_private_vm_embedding(
     artifact: &provenance::pha::PhaArtifact,

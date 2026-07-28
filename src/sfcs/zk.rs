@@ -3,9 +3,11 @@
 //! This module contains opt-in private proof profiles for SFCS VM execution.
 //!
 //! The narrow private-add profile proves a two-instruction no-overflow add
-//! relation. The general private-VM profile commits arbitrary supported RV32I
-//! private inputs, trace digests, execution-fractal digests, and constraint
-//! coverage without embedding the raw witness in `.pha`.
+//! relation. The scoped private-VM draft commits supported RV32I private
+//! inputs, trace digests, execution-fractal digests, and relation coverage
+//! without embedding the raw witness in `.pha`. Its individual relation
+//! proofs are not a coherent whole-trace proof; use `sfcs-risc0` for that
+//! security boundary.
 
 use super::{
     constraints::{SfcsVmConstraintError, SfcsVmConstraintProof},
@@ -25,7 +27,7 @@ use std::fmt;
 
 /// Draft `.pha` protocol for the first SFCS ZK VM profile.
 pub const SFCS_ZK_PRIVATE_ADD_PROTOCOL_V1_DRAFT: &str = "power-house/sfcs-zk-private-add/v1-draft";
-/// Draft `.pha` protocol for the general private SFCS VM proof profile.
+/// Draft `.pha` protocol for the scoped private SFCS VM relation profile.
 pub const SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT: &str = "power-house/sfcs-zk-private-vm/v1-draft";
 
 const ZK_POINT_DOMAIN: &[u8] = b"power-house:sfcs-zk:v1-draft:pedersen-bases\0";
@@ -92,7 +94,7 @@ pub struct SfcsZkPrivateAddProof {
     pub proof_digest: String,
 }
 
-/// Statement proven by the general private VM profile.
+/// Public statement carried by the scoped private VM relation profile.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmStatement {
     /// Profile schema.
@@ -133,7 +135,7 @@ pub struct SfcsZkPrivateVmStatement {
     pub commitments: BTreeMap<String, String>,
 }
 
-/// Private witness used by the general private VM profile.
+/// Private witness used by the scoped private VM relation profile.
 ///
 /// The witness carries the private initial VM inputs and a prover-side
 /// blinding seed. It is never embedded into `.pha`.
@@ -368,7 +370,7 @@ pub struct SfcsZkPrivateVmBranchProof {
     pub condition: Option<SfcsZkPrivateVmSelectiveProof>,
 }
 
-/// Non-interactive private VM proof.
+/// Non-interactive scoped private VM relation proof.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsZkPrivateVmProof {
     /// Statement.
@@ -777,7 +779,7 @@ impl SfcsZkPrivateVmProof {
         Ok(proof)
     }
 
-    /// Verifies the private VM proof without private inputs or trace data.
+    /// Verifies the scoped relation proofs without private inputs or trace data.
     pub fn verify(&self, program: &SfcsVmProgram) -> Result<(), SfcsZkError> {
         program.verify()?;
         if self.statement.schema != SFCS_ZK_PRIVATE_VM_PROTOCOL_V1_DRAFT {
@@ -1726,7 +1728,7 @@ pub fn verify_private_add_embedding(
     Ok(embedding.proof)
 }
 
-/// Verifies a `.pha` artifact carrying the general private VM proof profile.
+/// Verifies a `.pha` artifact carrying the scoped private VM relation profile.
 pub fn verify_private_vm_embedding(
     artifact: &PhaArtifact,
 ) -> Result<SfcsZkPrivateVmProof, SfcsZkError> {

@@ -1,5 +1,47 @@
 # Release Notes
 
+## v0.4.0 - 2026-07-28
+
+### Whole-Program Private SFCS
+- Added the opt-in `sfcs-risc0` backend for real whole-program private RISC-V
+  execution proofs using RISC Zero 3.0.6 with development mode disabled.
+- Added deterministic binding for the exact image ID, complete program binary,
+  SFCS program graph, public journal, and successful receipt claim.
+- Kept randomized proof transport outside `.pha` `phx_fingerprint` while
+  requiring and cryptographically verifying its integrity-bound external
+  attachment in the protocol-specific verifier.
+- Added protocol-specific `.pha` and Memory Capsule verification, including
+  fake-receipt, wrong-program, missing-attachment, statement-mutation, and
+  receipt-mutation rejection.
+- Added the `julian sfcs risc0-prove`, `verify-risc0-pha`, and
+  `verify-risc0-capsule` commands with Rootprint, Memory Capsule,
+  SLBIT-compatible semantic packet, Observatory sidecar, and report output.
+- Added a pinned RISC Zero guest workspace and binary conformance fixture. CI
+  rebuilds the guest and compares its RISC Zero image ID and deterministic
+  SFCS graph identity inside a digest-pinned RISC Zero guest-builder container
+  before generating real library and CLI proofs.
+- Corrected the security description of the older `sfcs-zk` private-VM draft:
+  it provides scoped relation proofs but is not the authoritative coherent
+  whole-trace proof boundary.
+
+### Transactional Verified Origin
+- Added `Origin::manifest`, `Origin::derive`, and `Origin::verify` behind the
+  `sfcs` feature.
+- Made construction and derivation prepare-verify-commit transitions: graph,
+  execution, synthesis, `.pha`, Rootprint, receipt, and creative-capacity
+  invariants all pass before a candidate becomes observable.
+- Added deterministic identity-bound creative-capacity accounting, complete
+  rollback on failed derivation, mutation rejection, and a live executable
+  demonstration.
+
+### Security And Release Operations
+- Retired the legacy deterministic Groth16 rollup envelope. ZK rollup
+  settlement now fails closed until a pinned independent verifier key and
+  proof boundary are implemented; optimistic settlement is unchanged.
+- Added all-target SFCS tests to CI and a dedicated RISC Zero proof job.
+- Updated active documentation, SDK metadata, containers, network metadata,
+  release labels, and the Orbital Observatory for v0.4.0.
+
 ## v0.3.24 - 2026-07-01
 
 ### SFCS Public Documentation Correction

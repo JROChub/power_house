@@ -1,6 +1,6 @@
 # Sovereign Fractal Computation Substrate
 
-Status: active SFCS implementation reference for Power House v0.3.24.
+Status: active SFCS implementation reference for Power House v0.4.0.
 
 SFCS is the path for making the Rootprint-fractal graph the native
 representation, execution environment, and proof substrate for Power House
@@ -103,12 +103,18 @@ covers a reproducible executable SFCS workflow:
 - LLVM-style SSA compiler schema: `power-house/sfcs-llvm-ir/v1-draft`
 - WASM stack compiler schema: `power-house/sfcs-wasm-stack/v1-draft`
 - ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
-- ZK private-VM protocol: `power-house/sfcs-zk-private-vm/v1-draft`
+- scoped ZK private-VM protocol:
+  `power-house/sfcs-zk-private-vm/v1-draft`
+- whole-program private VM protocol:
+  `power-house/sfcs-risc0-private-vm/v1`
+- transactional verified creation API: `Origin`
 - CLI:
   `julian sfcs source|rust-public|llvm-ir|wasm-stack|eval|inspect|verify-pha|vm-run|verify-vm-pha|vm-constraints|verify-vm-constraints-pha`
   when built with `--features sfcs`;
   `rust-private-add|zk-private-add|zk-private-vm|verify-zk-pha` when built with
-  `--features sfcs-zk`
+  `--features sfcs-zk`;
+  `risc0-prove|verify-risc0-pha|verify-risc0-capsule` when built with
+  `--features sfcs-risc0`
 
 The feature is opt-in. Enabling it adds versioned SFCS types for computational
 fractal nodes, deterministic graph digestion, strict duplicate-key JSON
@@ -127,9 +133,10 @@ becomes the graph itself, not as an external circuit artifact.
 ## SFCS VM Foundation
 
 The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
-It anchors the provenance-first zkVM roadmap with replayable execution,
-public VM constraint proofs, private proof profiles behind `sfcs-zk`, and
-Memory Capsule packaging that preserves `.pha` and Rootprint identity rules.
+It anchors the provenance-first VM surface with replayable execution, public
+VM constraint proofs, a whole-program private proof backend behind
+`sfcs-risc0`, scoped compatibility profiles behind `sfcs-zk`, and Memory
+Capsule packaging that preserves `.pha` and Rootprint identity rules.
 The Rust/LLVM/WASM compiler family is documented as deterministic
 source-to-fractal interfaces with concrete lowering, proof-memory packaging,
 and conformance coverage for the admitted language surfaces.
@@ -249,9 +256,9 @@ transition_checks: ...
 memory_consistency_checks: ...
 ```
 
-The `sfcs-zk` private profiles use the same transition, memory, range,
-bitwise, comparison, branch, and proof-memory boundaries with hidden witness
-data and explicit public outputs.
+The public constraint profile is transparent deterministic replay, not a
+zero-knowledge proof. For hidden whole-program execution, use the
+`sfcs-risc0` backend described below.
 
 ## Broader Compiler Frontends
 
@@ -332,7 +339,55 @@ Every documented path keeps `.pha` and Rootprint as the core identity
 authorities and uses SFCS-specific verification for the additional computation
 and proof bindings.
 
-## Private Proof Profiles
+## Whole-Program Private VM
+
+The `sfcs-risc0` feature is the authoritative private whole-program backend:
+
+```text
+power-house/sfcs-risc0-private-vm/v1
+```
+
+It accepts a RISC Zero `R0BF` program binary and private input, generates and
+verifies a non-development RISC Zero receipt, binds the exact image ID,
+complete program digest, deterministic SFCS program graph, public journal,
+and successful claim digest into a deterministic `.pha` statement, and
+packages the complete program and receipt as one mandatory external proof
+attachment.
+
+Receipt transport bytes are intentionally outside `phx_fingerprint`; receipt
+randomization therefore cannot rewrite program identity. The
+protocol-specific verifier requires that attachment, checks its transport
+digest, rejects fake development receipts, reconstructs every deterministic
+binding, and runs cryptographic receipt verification. The capsule verifier
+first verifies ordinary Memory Capsule and Rootprint replay, then applies the
+same protocol-specific receipt checks.
+
+```bash
+julian sfcs risc0-prove guest.bin \
+  --input private-input.bin \
+  --artifact-output execution.pha \
+  --rootprint-output execution.rootprint.json \
+  --capsule-output execution.phm \
+  --semantic-output execution.slbit.json \
+  --sidecar-output execution.observatory.json \
+  --report execution.report.json
+
+julian sfcs verify-risc0-pha execution.pha
+julian sfcs verify-risc0-capsule execution.phm
+```
+
+RISC Zero supplies the Rust-to-RISC-V guest compiler path for this backend.
+Guest-compatible Rust may use arithmetic, memory, branches, loops, and
+functions. The guest controls disclosure by choosing what to commit to its
+public journal.
+
+The checked-in `risc0-methods` workspace and binary conformance fixture make
+the integration reproducible. CI rebuilds the guest and compares its RISC Zero
+image ID and deterministic SFCS graph identity, creates a real proof, runs
+library and CLI verification, rejects fake and wrong-program receipts,
+exercises mutations, and verifies Rootprint/Memory Capsule replay.
+
+## Scoped Private Proof Profiles
 
 The `sfcs-zk` feature adds privacy-preserving proof profiles:
 
@@ -361,9 +416,9 @@ blindings. The proof publishes:
 The verifier learns the public output and commitments, but the private input
 values and blindings are not embedded into the proof artifact.
 
-## General Private VM Commitment Profile
+## Scoped Private VM Commitment Profile
 
-The `sfcs-zk` feature also includes a general private VM commitment profile:
+The `sfcs-zk` feature also includes a scoped private VM commitment profile:
 
 ```text
 power-house/sfcs-zk-private-vm/v1-draft
@@ -431,11 +486,12 @@ Witness file shape:
 }
 ```
 
-This profile closes the raw-witness leakage gap for arbitrary supported VM
-executions and gives `.pha`/Rootprint a private execution object to carry.
-The remaining cryptographic hardening step is to move the full VM transition
-relation itself inside the zero-knowledge verifier, rather than relying on
-committed private execution digests plus prover-side deterministic replay.
+This draft keeps the raw witness and trace out of `.pha`, but it does not
+cryptographically link every individual relation proof, global trace digest,
+final state, and public output into one coherent hidden execution. It is
+retained for compatibility and relation-level experimentation. It is not the
+whole-program arbitrary private VM security boundary. Use `sfcs-risc0` when
+the complete execution relation must be proven.
 
 The same feature also includes the first constrained source-to-proof pipeline:
 
@@ -520,10 +576,32 @@ proof_digest: sha256:...
 public_output: x3=12
 ```
 
-This is a real privacy profile for the supported RV32I private-VM surface. The
-same verification boundary is used by the private VM profile for committed
-linear transitions, range proofs, bitwise proofs, comparison proofs, branch
-proofs, memory/register binding proofs, and byte-level memory semantics.
+The private-add relation is admitted for its exact documented shape. The
+larger draft profile exposes relation-level proof coverage but must not be
+described as proof of a coherent whole trace.
+
+## Transactional Origin
+
+The `sfcs` feature exports `Origin`, a safe transactional API for deterministic
+verified creation:
+
+```rust
+let mut origin = Origin::manifest(spec, policy)?;
+let receipt = origin.derive(next_spec)?;
+origin.verify()?;
+```
+
+Manifestation prepares an SFCS graph, executes it, synthesizes structure,
+constructs and independently replays the `.pha` embedding, binds Rootprint
+identity, accounts identity-bound creative capacity, emits a digest-bound
+receipt, and verifies the complete candidate before returning it. Derivation
+works against a candidate clone and assigns it only after every invariant
+passes, so a failed derivation leaves the prior Origin unchanged.
+
+Creative capacity is deterministic software authority and accounting. It is
+not electricity, currency, durable database isolation, or cross-process
+authorization. Origin is a public deterministic execution boundary and does
+not substitute for `sfcs-risc0` zero-knowledge proof.
 
 ## Corrected Architecture
 

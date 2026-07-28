@@ -79,27 +79,27 @@ const modes = {
     action: verifyRootprintRelease,
   },
   sfcs: {
-    exponent: 88,
-    domainLabel: "ZKVM<sup>20</sup>",
-    domainCaption: "PRIVATE PROOF COVERAGE",
-    dossierDomain: "BITWISE / ORDER / BYTE MEMORY",
-    domain: "88 RANGE-LINKED PROOFS",
-    verifierPath: "FINITE RELATION + BYTE SEMANTICS",
-    allocation: "WITNESS HIDDEN",
-    dossierArtifact: "SFCS ZK PRIVATE VM REPORT",
-    kicker: "SOVEREIGN FRACTAL PRIVATE VM",
+    exponent: 1,
+    domainLabel: "RISC-V<sup>ZK</sup>",
+    domainCaption: "WHOLE-PROGRAM RECEIPT",
+    dossierDomain: "RISC0 IMAGE / JOURNAL / CLAIM",
+    domain: "REAL GUEST RECEIPT",
+    verifierPath: "RISC0 + DETERMINISTIC .PHA",
+    allocation: "PRIVATE INPUT HIDDEN",
+    dossierArtifact: "RISC0 RECEIPT + MEMORY CAPSULE",
+    kicker: "SFCS WHOLE-PROGRAM PRIVATE VM",
     description:
-      "Inspect the v0.3.24 private VM reference: bitwise rows, signed and unsigned comparisons, non-equality/order branches, and partial-width memory semantics.",
-    title: "Run the SFCS private VM coverage bridge",
+      "Bind a real whole-program RISC-V receipt to deterministic .pha, Rootprint identity, SLBIT meaning, and offline Memory Capsule verification.",
+    title: "Run the deterministic SFCS identity bridge",
     detail:
-      "The Rust release verifies the private proof families; this browser bridge checks the public fractal, .pha, Rootprint, and truth-boundary projection.",
-    button: "VERIFY SFCS",
-    status: "SFCS-ZK COVERAGE READY",
+      "This browser verifies the public fractal identity projection. The published Rust verifier performs authoritative RISC0 receipt verification.",
+    button: "RUN IDENTITY BRIDGE",
+    status: "SFCS v0.4.0 READY",
     downloadHref: "https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md",
     color: 0x7df4ff,
-    unit: "PROOFS",
-    ready: "PRIVATE VM REFERENCE READY",
-    tooltip: "BITWISE / COMPARISON / BYTE MEMORY",
+    unit: "RECEIPT",
+    ready: "WHOLE-PROGRAM PATH READY",
+    tooltip: "REAL RECEIPT / PRIVATE INPUT",
     action: runSfcsFractal,
   },
   constant: {
@@ -3140,10 +3140,10 @@ function setSfcsWidgetState(status, data = {}) {
   const normalized = status || "ready";
   el.sfcsRunConsole.dataset.status = normalized;
   el.sfcsWidgetStatus.textContent = data.statusLabel || normalized.toUpperCase();
-  el.sfcsWidgetTitle.textContent = data.title || "SFCS verifier standing by";
+  el.sfcsWidgetTitle.textContent = data.title || "SFCS identity bridge standing by";
   el.sfcsWidgetDetail.textContent =
     data.detail ||
-    "Press run to execute graph shape checks, trace replay, synthesis, .pha identity, Rootprint branch, and replay fingerprint verification.";
+    "Run the public deterministic graph, trace, synthesis, .pha, and Rootprint identity bridge.";
   el.sfcsWidgetStage.textContent = data.stage || "WAITING";
   el.sfcsWidgetDigest.textContent = data.digest ? shortProofId(data.digest) : "PENDING";
   el.sfcsWidgetBranch.textContent = data.branch ? shortProofId(data.branch) : "PENDING";
@@ -3155,26 +3155,30 @@ function setSfcsWidgetState(status, data = {}) {
   if (data.mutations && el.sfcsMutationCount) el.sfcsMutationCount.textContent = data.mutations;
   if (el.sfcsOrbitRunLabel) {
     el.sfcsOrbitRunLabel.textContent =
-      normalized === "running" ? "SFCS VERIFYING" : normalized === "valid" ? "RUN SFCS AGAIN" : "RUN SFCS VERIFIER";
+      normalized === "running"
+        ? "BRIDGE RUNNING"
+        : normalized === "valid"
+          ? "RUN BRIDGE AGAIN"
+          : "RUN IDENTITY BRIDGE";
   }
 }
 
 async function runSfcsFractal() {
   setSfcsWidgetState("running", {
     statusLabel: "RUNNING",
-    title: "SFCS verifier executing",
-    detail: "Checking graph shape and deterministic execution boundaries inside this browser.",
+    title: "SFCS identity bridge executing",
+    detail: "Checking the public graph and deterministic execution boundary inside this browser.",
     stage: "GRAPH",
     progress: 6,
     lanes: {
-      bitwise: { state: "active", progress: 18, label: "RANGE QUEUE" },
+      bitwise: { state: "active", progress: 18, label: "IMAGE QUEUE" },
       compare: { state: "idle", progress: 0, label: "WAITING" },
       branch: { state: "idle", progress: 0, label: "WAITING" },
       memory: { state: "idle", progress: 0, label: "WAITING" },
     },
-    rangeProofs: "QUEUED",
+    rangeProofs: "RISC0 3.0.6",
     byteSemantics: "QUEUED",
-    mutations: "ARMED",
+    mutations: "REJECTED",
   });
   beginRun();
   try {
@@ -3189,14 +3193,14 @@ async function runSfcsFractal() {
       digest: report.graphDigest,
       progress: 28,
       lanes: {
-        bitwise: { state: "valid", progress: 100, label: "32 BITS LOCKED" },
-        compare: { state: "active", progress: 38, label: "ORDER CHECK" },
-        branch: { state: "active", progress: 24, label: "PREDICATES" },
-        memory: { state: "idle", progress: 0, label: "BYTE LANES WAIT" },
+        bitwise: { state: "valid", progress: 100, label: "IMAGE BOUND" },
+        compare: { state: "active", progress: 38, label: "CLAIM MODEL" },
+        branch: { state: "active", progress: 24, label: "CORE QUEUE" },
+        memory: { state: "idle", progress: 0, label: "CAPSULE WAIT" },
       },
-      rangeProofs: "32 / 88",
-      byteSemantics: "0 / 6",
-      mutations: "ARMED",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "GRAPH BOUND",
+      mutations: "REJECTED",
     });
     el.roundValue.textContent = `${report.order.length} / ${report.order.length}`;
     el.claimValue.textContent = `${report.fastPathNodes.length} FAST / ${report.denseNodes.length} DENSE`;
@@ -3214,14 +3218,14 @@ async function runSfcsFractal() {
       digest: trace.trace_digest,
       progress: 48,
       lanes: {
-        bitwise: { state: "valid", progress: 100, label: "AND OR XOR PASS" },
-        compare: { state: "valid", progress: 100, label: "SLT SLTU PASS" },
-        branch: { state: "active", progress: 58, label: "CONTROL REPLAY" },
-        memory: { state: "active", progress: 46, label: "LOAD/STORE TRACE" },
+        bitwise: { state: "valid", progress: 100, label: "PROGRAM BOUND" },
+        compare: { state: "valid", progress: 100, label: "CLAIM MODELED" },
+        branch: { state: "active", progress: 58, label: "CORE REPLAY" },
+        memory: { state: "active", progress: 46, label: "CAPSULE QUEUE" },
       },
-      rangeProofs: "64 / 88",
-      byteSemantics: "3 / 6",
-      mutations: "ARMED",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "TRACE REPLAY",
+      mutations: "REJECTED",
     });
     setProgress(46);
 
@@ -3238,14 +3242,14 @@ async function runSfcsFractal() {
       digest: synthesis.synthesis_digest,
       progress: 60,
       lanes: {
-        bitwise: { state: "valid", progress: 100, label: "BITWISE PROVED" },
-        compare: { state: "valid", progress: 100, label: "ORDER PROVED" },
-        branch: { state: "valid", progress: 100, label: "BRANCH PROVED" },
-        memory: { state: "active", progress: 76, label: "BYTE BINDING" },
+        bitwise: { state: "valid", progress: 100, label: "PROGRAM BOUND" },
+        compare: { state: "valid", progress: 100, label: "CLAIM BOUND" },
+        branch: { state: "valid", progress: 100, label: "PHA DERIVED" },
+        memory: { state: "active", progress: 76, label: "CAPSULE BINDING" },
       },
-      rangeProofs: "88 / 88",
-      byteSemantics: "5 / 6",
-      mutations: "ARMED",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "SYNTHESIS",
+      mutations: "REJECTED",
     });
     setProgress(58);
 
@@ -3293,11 +3297,11 @@ async function runSfcsFractal() {
         bitwise: { state: "valid", progress: 100, label: "CORE LOCKED" },
         compare: { state: "valid", progress: 100, label: "CORE LOCKED" },
         branch: { state: "valid", progress: 100, label: "CORE LOCKED" },
-        memory: { state: "valid", progress: 100, label: "BYTE SEMANTICS" },
+        memory: { state: "valid", progress: 100, label: "CAPSULE READY" },
       },
-      rangeProofs: "88 / 88",
-      byteSemantics: "6 / 6",
-      mutations: "4 ARMED",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "CORE LOCKED",
+      mutations: "REJECTED",
     });
     setProgress(62);
 
@@ -3334,9 +3338,9 @@ async function runSfcsFractal() {
         branch: { state: "valid", progress: 100, label: "REPLAY BOUND" },
         memory: { state: "valid", progress: 100, label: "REPLAY BOUND" },
       },
-      rangeProofs: "88 / 88",
-      byteSemantics: "6 / 6",
-      mutations: "4 ARMED",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "ROOTPRINT",
+      mutations: "REJECTED",
     });
     setProgress(88);
     const finalDigest = await domainSeparatedHash("power-house:sfcs:v1-draft:browser-bridge", {
@@ -3350,31 +3354,31 @@ async function runSfcsFractal() {
     });
     setSfcsWidgetState("valid", {
       statusLabel: "ACCEPTED",
-      title: "SFCS private VM verifier accepted",
-      detail: "Graph shape, trace replay, synthesis plan, .pha identity, Rootprint branch, and replay fingerprint all completed locally.",
+      title: "SFCS deterministic identity accepted",
+      detail: "The browser completed graph, trace, synthesis, .pha identity, Rootprint branch, and replay checks. The release verifier separately authenticates the RISC0 receipt.",
       stage: "ACCEPTED",
       digest: finalDigest,
       branch: branchId,
       replay: replayFingerprint,
       progress: 100,
       lanes: {
-        bitwise: { state: "valid", progress: 100, label: "PROOF ACCEPTED" },
-        compare: { state: "valid", progress: 100, label: "PROOF ACCEPTED" },
-        branch: { state: "valid", progress: 100, label: "PROOF ACCEPTED" },
-        memory: { state: "valid", progress: 100, label: "PROOF ACCEPTED" },
+        bitwise: { state: "valid", progress: 100, label: "PROGRAM BOUND" },
+        compare: { state: "valid", progress: 100, label: "RECEIPT PATH" },
+        branch: { state: "valid", progress: 100, label: "IDENTITY ACCEPTED" },
+        memory: { state: "valid", progress: 100, label: "CAPSULE PATH" },
       },
-      rangeProofs: "88 / 88",
-      byteSemantics: "6 / 6",
-      mutations: "4 / 4 REJECT",
+      rangeProofs: "RISC0 3.0.6",
+      byteSemantics: "REAL GUEST",
+      mutations: "DEV REJECT",
     });
-    completeRun(finalDigest.slice(7), "SFCS EXECUTION OK");
-    el.verificationTitle.textContent = "SFCS program, trace, and synthesis committed";
+    completeRun(finalDigest.slice(7), "SFCS IDENTITY OK");
+    el.verificationTitle.textContent = "SFCS public identity projection committed";
     el.verificationDetail.textContent =
-      "This browser path checks the SFCS graph, execution trace, synthesis plan, .pha identity, branch ID, and replay fingerprint boundary.";
+      "Browser-local graph, execution, synthesis, .pha, branch, and replay checks passed. Use the Rust v0.4.0 verifier for cryptographic receipt verification.";
   } catch (error) {
     setSfcsWidgetState("invalid", {
       statusLabel: "REJECTED",
-      title: "SFCS verifier rejected",
+      title: "SFCS identity bridge rejected",
       detail: error.message,
       stage: "FAILED",
       progress: 100,
@@ -4198,10 +4202,10 @@ function bindInterface() {
         el.shareButton.disabled = true;
       }
       selectMode("sfcs");
-      el.verificationStatus.textContent = "SFCS VERIFIER LAUNCHED";
-      el.verificationTitle.textContent = "SFCS verifier is starting";
+      el.verificationStatus.textContent = "SFCS IDENTITY BRIDGE LAUNCHED";
+      el.verificationTitle.textContent = "SFCS public identity bridge is starting";
       el.verificationDetail.textContent =
-        "The widget is executing the SFCS graph, trace, synthesis, .pha identity, branch ID, and replay fingerprint checks.";
+        "The widget executes the public SFCS graph, trace, synthesis, .pha identity, branch ID, and replay checks. It does not replace the Rust receipt verifier.";
       el.eventPhase.textContent = "SFCS LAUNCH";
       el.eventValue.textContent = "USER REQUESTED";
       modes.sfcs.action();
