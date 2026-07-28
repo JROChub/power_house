@@ -3,10 +3,13 @@
 //! Deterministic verification, portable proof provenance, and optional quorum
 //! networking.
 //!
-//! Power House combines seven interoperable layers:
+//! Power House combines interoperable layers:
 //!
 //! - [`identity`] provides immutable computational identities over `.pha` and
 //!   Rootprint.
+//! - [`origin`] collapses SFCS construction, execution, verification, identity,
+//!   provenance, and resource issuance into one atomic creation transition when
+//!   the `sfcs` feature is enabled.
 //! - [`memory`] packages core artifacts, Rootprint lineage, replay state,
 //!   semantic bindings, witnesses, and challenge vectors into portable
 //!   proof-memory capsules.
@@ -92,6 +95,7 @@
 //!   APIs.
 //! - `memory`: portable proof-memory capsules without network access.
 //! - `memory-net`: memory workflows that may compose with network features.
+//! - `sfcs`: deterministic computational fractals and verified Origin creation.
 //! - `net`: networking, migration commands, data availability, governance,
 //!   staking, and native JSON-RPC.
 //!
@@ -114,6 +118,8 @@ pub mod memory;
 mod merkle;
 mod multilinear;
 pub mod observatory;
+#[cfg(feature = "sfcs")]
+pub mod origin;
 mod prng;
 pub mod provenance;
 pub mod rollup;
@@ -157,6 +163,11 @@ pub use merkle::{
 };
 pub use multilinear::MultilinearPolynomial;
 pub use observatory::{ObservatoryError, ObservatorySidecar};
+#[cfg(feature = "sfcs")]
+pub use origin::{
+    CreationCost, CreationEstimate, CreationReceipt, CreativeCapacity, Origin, OriginError,
+    OriginPolicy, OriginSpec, ORIGIN_RECEIPT_SCHEMA_V1_DRAFT,
+};
 pub use prng::SimplePrng;
 #[cfg(feature = "sfcs")]
 pub use sfcs::compiler::{
