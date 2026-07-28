@@ -116,7 +116,7 @@ jobs:
           cargo test --locked --all-features
           cargo test --locked --features sfcs --test origin
           cargo run --locked --features sfcs --example origin_live_proof
-          cargo package --locked
+          cargo package --locked --allow-dirty
 
       - name: Confirm publication credential readiness
         env:
