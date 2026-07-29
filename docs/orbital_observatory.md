@@ -52,7 +52,7 @@ The six instrument modes are:
 2. An SFCS v0.4.0 deterministic browser identity bridge that verifies graph,
    execution trace, synthesis, `.pha`, branch ID, and replay binding. The
    interface explicitly distinguishes this public browser path from
-   authoritative whole-program RISC Zero receipt verification performed by
+   authoritative general private RISC Zero receipt verification performed by
    the published Rust verifier.
 3. A 70-round constant-polynomial equation replay over field
    `1,000,000,007`.

@@ -176,41 +176,64 @@ jobs:
           "$HOME/.risc0/bin/rzup" install cargo-risczero 3.0.6
           "$HOME/.risc0/bin/rzup" install rust
 
-      - name: Reproduce private-VM guest execution identity
+      - name: Reproduce private-VM guest execution identities
         env:
           POWER_HOUSE_RISC0_DOCKER_BUILD: "1"
         run: |
           cargo clean --manifest-path risc0-methods/Cargo.toml
           cargo build --locked --manifest-path risc0-methods/Cargo.toml
-          rebuilt_guest="risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker/power-house-sfcs-conformance-guest.bin"
-          test -f "$rebuilt_guest"
+          guest_dir="risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker"
+          rebuilt_sum_guest="$guest_dir/power-house-sfcs-conformance-guest.bin"
+          rebuilt_general_guest="$guest_dir/power-house-sfcs-general-guest.bin"
+          test -f "$rebuilt_sum_guest"
+          test -f "$rebuilt_general_guest"
+          cmp \
+            conformance/sfcs-risc0/private-sum-v1.bin \
+            "$rebuilt_sum_guest"
+          cmp \
+            conformance/sfcs-risc0/private-general-v1.bin \
+            "$rebuilt_general_guest"
           cargo run --quiet --locked --features sfcs-risc0 \
             --example sfcs_risc0_program_identity -- \
             conformance/sfcs-risc0/private-sum-v1.bin \
-            > /tmp/pinned-program-identity
+            > /tmp/pinned-sum-program-identity
           cargo run --quiet --locked --features sfcs-risc0 \
             --example sfcs_risc0_program_identity -- \
-            "$rebuilt_guest" \
-            > /tmp/rebuilt-program-identity
+            "$rebuilt_sum_guest" \
+            > /tmp/rebuilt-sum-program-identity
+          cargo run --quiet --locked --features sfcs-risc0 \
+            --example sfcs_risc0_program_identity -- \
+            conformance/sfcs-risc0/private-general-v1.bin \
+            > /tmp/pinned-general-program-identity
+          cargo run --quiet --locked --features sfcs-risc0 \
+            --example sfcs_risc0_program_identity -- \
+            "$rebuilt_general_guest" \
+            > /tmp/rebuilt-general-program-identity
 
-      - name: Archive canonical guest rebuild
+      - name: Archive canonical guest rebuilds
         uses: actions/upload-artifact@v4
         with:
-          name: sfcs-risc0-canonical-guest
+          name: sfcs-risc0-canonical-guests
           path: |
             risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker/power-house-sfcs-conformance-guest.bin
-            /tmp/rebuilt-program-identity
+            risc0-methods/target/riscv-guest/power-house-risc0-methods/power-house-sfcs-conformance-guest/riscv32im-risc0-zkvm-elf/docker/power-house-sfcs-general-guest.bin
+            /tmp/rebuilt-sum-program-identity
+            /tmp/rebuilt-general-program-identity
           if-no-files-found: error
           retention-days: 7
 
-      - name: Compare private-VM guest execution identity
+      - name: Compare private-VM guest execution identities
         run: |
           diff --unified \
-            /tmp/pinned-program-identity \
-            /tmp/rebuilt-program-identity
+            /tmp/pinned-sum-program-identity \
+            /tmp/rebuilt-sum-program-identity
+          diff --unified \
+            /tmp/pinned-general-program-identity \
+            /tmp/rebuilt-general-program-identity
 
-      - name: Real whole-program private-VM proof gates
+      - name: Real general private-VM proof gates
         run: |
           cargo test --locked --features sfcs-risc0 \
             --test sfcs_risc0 \
+            --test sfcs_risc0_general \
             --test sfcs_risc0_cli

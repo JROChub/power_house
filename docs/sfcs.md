@@ -105,7 +105,7 @@ covers a reproducible executable SFCS workflow:
 - ZK private-add protocol: `power-house/sfcs-zk-private-add/v1-draft`
 - scoped ZK private-VM protocol:
   `power-house/sfcs-zk-private-vm/v1-draft`
-- whole-program private VM protocol:
+- general private VM protocol:
   `power-house/sfcs-risc0-private-vm/v1`
 - transactional verified creation API: `Origin`
 - CLI:
@@ -134,7 +134,7 @@ becomes the graph itself, not as an external circuit artifact.
 
 The VM foundation adds a deterministic RV32I interpreter under `sfcs::vm`.
 It anchors the provenance-first VM surface with replayable execution, public
-VM constraint proofs, a whole-program private proof backend behind
+VM constraint proofs, a general private proof backend behind
 `sfcs-risc0`, scoped compatibility profiles behind `sfcs-zk`, and Memory
 Capsule packaging that preserves `.pha` and Rootprint identity rules.
 The Rust/LLVM/WASM compiler family is documented as deterministic
@@ -257,7 +257,7 @@ memory_consistency_checks: ...
 ```
 
 The public constraint profile is transparent deterministic replay, not a
-zero-knowledge proof. For hidden whole-program execution, use the
+zero-knowledge proof. For hidden general execution, use the
 `sfcs-risc0` backend described below.
 
 ## Broader Compiler Frontends
@@ -339,9 +339,9 @@ Every documented path keeps `.pha` and Rootprint as the core identity
 authorities and uses SFCS-specific verification for the additional computation
 and proof bindings.
 
-## Whole-Program Private VM
+## General Private VM
 
-The `sfcs-risc0` feature is the authoritative private whole-program backend:
+The `sfcs-risc0` feature is the authoritative general private backend:
 
 ```text
 power-house/sfcs-risc0-private-vm/v1
@@ -381,11 +381,16 @@ Guest-compatible Rust may use arithmetic, memory, branches, loops, and
 functions. The guest controls disclosure by choosing what to commit to its
 public journal.
 
-The checked-in `risc0-methods` workspace and binary conformance fixture make
-the integration reproducible. CI rebuilds the guest and compares its RISC Zero
-image ID and deterministic SFCS graph identity, creates a real proof, runs
-library and CLI verification, rejects fake and wrong-program receipts,
-exercises mutations, and verifies Rootprint/Memory Capsule replay.
+The checked-in `risc0-methods` workspace and two binary conformance fixtures
+make the integration reproducible. CI rebuilds both guests and compares their
+RISC Zero image IDs and deterministic SFCS graph identities. The general
+fixture exercises loops, functions, dynamic memory, partial-width updates,
+signed and unsigned comparisons, non-equality/order branches, bitwise
+operations, and wrapping arithmetic. Its public journal must match an
+independent host execution and enter every declared branch class. CI also
+creates real proofs, runs library and CLI verification, rejects fake and
+wrong-program receipts, exercises mutations, and verifies Rootprint/Memory
+Capsule replay.
 
 ## Scoped Private Proof Profiles
 
@@ -490,7 +495,7 @@ This draft keeps the raw witness and trace out of `.pha`, but it does not
 cryptographically link every individual relation proof, global trace digest,
 final state, and public output into one coherent hidden execution. It is
 retained for compatibility and relation-level experimentation. It is not the
-whole-program arbitrary private VM security boundary. Use `sfcs-risc0` when
+general arbitrary private VM security boundary. Use `sfcs-risc0` when
 the complete execution relation must be proven.
 
 The same feature also includes the first constrained source-to-proof pipeline:

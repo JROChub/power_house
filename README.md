@@ -21,7 +21,7 @@ Power House path so traditional circuit compilers and zkVM workflows become
 unnecessary and unwise as the default for the workloads Power House targets.
 The current release implements that direction through deterministic
 source-to-fractal graphs, transactional verified Origin creation, RV32I VM
-replay, public transition evidence, and a real whole-program private RISC-V
+replay, public transition evidence, and a real general private RISC-V
 proof backend powered by RISC Zero. The private path binds a verified receipt
 to deterministic `.pha` and Rootprint identity, carries the receipt in a
 mandatory external attachment, packages it into a Memory Capsule, and exposes
@@ -176,7 +176,7 @@ julian sfcs llvm-ir score.ll --graph-output score-llvm.graph.json
 julian sfcs wasm-stack score.wasmstack --graph-output score-wasm.graph.json
 ```
 
-For whole-program privacy, compile ordinary guest-compatible Rust with the
+For general private execution, compile ordinary guest-compatible Rust with the
 RISC Zero toolchain and prove the resulting program binary:
 
 ```bash
@@ -234,7 +234,7 @@ vectors.
 | Committed sparse workload | External `PHSMv1` + `PHCPv1` files | Commitment-bound deterministic replay | `cargo run --release --example committed_workload` |
 | Portable provenance | `.pha` core + Rootprint DAG | Fingerprint and graph replay | `cargo run --example rootprint_workflow` |
 | SFCS executable graph | Computational fractal source, trace, and synthesis plan committed through `.pha` | Graph digest, execution trace replay, synthesis-plan replay, Rootprint-safe bridge | `cargo test --features sfcs --test sfcs --test sfcs_cli` |
-| SFCS whole-program private VM | RISC Zero image ID + public journal + deterministic SFCS statement | Real receipt verification, fake-receipt rejection, `.pha`/Rootprint identity, capsule replay | `cargo test --features sfcs-risc0 --test sfcs_risc0 --test sfcs_risc0_cli` |
+| SFCS general private VM | RISC Zero image ID + public journal + deterministic SFCS statement | Real receipt verification, independent general-workload journal comparison, fake-receipt rejection, `.pha`/Rootprint identity, capsule replay | `cargo test --features sfcs-risc0 --test sfcs_risc0 --test sfcs_risc0_general --test sfcs_risc0_cli` |
 
 Here `n` is the number of variables and `I` is the number of nonzero variable
 incidences. The proof modes operate on compact algebraic descriptions and do
@@ -346,7 +346,7 @@ The complete procedure and expected rejection behavior are documented in the
   scoped compatibility profile carrying commitments and individual proofs for
   selected RV32I relations. It does not prove one coherent hidden execution.
 - [`SfcsRisc0PrivateVmProof`](https://docs.rs/power_house/latest/power_house/struct.SfcsRisc0PrivateVmProof.html):
-  authoritative whole-program private RISC-V receipt with deterministic SFCS,
+  authoritative general private RISC-V receipt with deterministic SFCS,
   `.pha`, and Rootprint binding.
 - [`verify_sfcs_risc0_private_vm_capsule`](https://docs.rs/power_house/latest/power_house/fn.verify_sfcs_risc0_private_vm_capsule.html):
   offline Memory Capsule and cryptographic receipt verification.
@@ -439,7 +439,7 @@ Start with the [Documentation Index](docs/README.md).
 - [Identity Layer](docs/identity.md)
 - [Power House + slbit Observatory](docs/slbit.md)
 - [SFCS Architecture](docs/sfcs.md)
-- [SFCS Whole-Program Private VM](docs/sfcs_zkvm.md)
+- [SFCS General Private VM](docs/sfcs_zkvm.md)
 - [Power House Archive v1](docs/pha_spec.md)
 - [Rootprint v1](docs/rootprint.md)
 - [Provenance Security Model](docs/provenance_security.md)

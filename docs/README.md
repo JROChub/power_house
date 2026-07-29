@@ -12,8 +12,8 @@ This index is the authoritative map for Power House v0.4.0 documentation.
 | [Memory Capsule v1](memory_capsule.md) | Portable `.phm` proof memory, replay, semantic binding, and challenge vectors |
 | [Truth Boundary](truth_boundary.md) | What is core proof, what is semantic explanation, and what must not be overclaimed |
 | [Power House + slbit Observatory](slbit.md) | Independent semantic packets, non-core sidecar binding, CLI, and browser workflow |
-| [SFCS](sfcs.md) | Native fractal execution, public replay, transactional Origin, and whole-program private proof architecture |
-| [SFCS Whole-Program Private VM](sfcs_zkvm.md) | RISC Zero proof boundary, deterministic identity, CLI, capsule verification, and scoped compatibility profiles |
+| [SFCS](sfcs.md) | Native fractal execution, public replay, transactional Origin, and general private proof architecture |
+| [SFCS General Private VM](sfcs_zkvm.md) | RISC Zero proof boundary, deterministic identity, CLI, capsule verification, and scoped compatibility profiles |
 | [Power House Archive v1](pha_spec.md) | Normative `.pha` core identity and optional EPA format |
 | [Rootprint v1](rootprint.md) | Normative branching, merging, navigation, and graph verification |
 | [Provenance Security Model](provenance_security.md) | Integrity boundary, assumptions, mutation behavior, and EPA isolation |

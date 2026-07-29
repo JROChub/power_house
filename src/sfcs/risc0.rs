@@ -23,7 +23,7 @@ use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
 
-/// Stable `.pha` protocol for whole-program SFCS private-VM receipts.
+/// Stable `.pha` protocol for general SFCS private-VM receipts.
 pub const SFCS_RISC0_PRIVATE_VM_PROTOCOL_V1: &str = "power-house/sfcs-risc0-private-vm/v1";
 
 const PROOF_DOMAIN: &[u8] = b"power-house:sfcs-risc0-private-vm:v1:proof\0";
@@ -39,7 +39,7 @@ const TEXT_CHUNK_BYTES: usize = 4 * 1024;
 const MAX_TEXT_CHUNKS: usize = 8 * 1024;
 const RECEIPT_ATTACHMENT_ID: &str = "sfcs-risc0-private-vm-receipt-v1";
 
-/// Public statement authenticated by a whole-program private-VM receipt.
+/// Public statement authenticated by a general private-VM receipt.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsRisc0PrivateVmStatement {
     /// Protocol identifier.
@@ -58,7 +58,7 @@ pub struct SfcsRisc0PrivateVmStatement {
     pub receipt_claim_digest: String,
 }
 
-/// A real whole-program zero-knowledge receipt and its SFCS binding.
+/// A real general zero-knowledge VM receipt and its SFCS binding.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SfcsRisc0PrivateVmProof {
     /// Public statement.
@@ -287,7 +287,7 @@ impl SfcsRisc0PrivateVmProof {
     }
 }
 
-/// Verifies a `.pha` artifact carrying a whole-program private-VM receipt.
+/// Verifies a `.pha` artifact carrying a general private-VM receipt.
 pub fn verify_sfcs_risc0_private_vm_embedding(
     artifact: &PhaArtifact,
 ) -> Result<SfcsRisc0PrivateVmProof, SfcsRisc0Error> {
@@ -388,7 +388,7 @@ pub fn verify_sfcs_risc0_private_vm_embedding(
     Ok(embedding.proof)
 }
 
-/// Verifies a Memory Capsule and its mandatory whole-program receipt.
+/// Verifies a Memory Capsule and its mandatory general private-VM receipt.
 ///
 /// Generic capsule verification preserves Power House v1 behavior and only
 /// checks the transport integrity of core data. This protocol-specific entry
@@ -564,7 +564,7 @@ fn sha256_domain(domain: &[u8], bytes: &[u8]) -> String {
     format!("sha256:{}", hex::encode(hasher.finalize()))
 }
 
-/// Errors returned by the whole-program SFCS private-VM backend.
+/// Errors returned by the general SFCS private-VM backend.
 #[derive(Debug)]
 pub enum SfcsRisc0Error {
     /// Unsupported proof schema.
