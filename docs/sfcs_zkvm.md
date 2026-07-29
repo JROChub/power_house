@@ -1,18 +1,18 @@
-# SFCS Whole-Program Private VM
+# SFCS General Private VM
 
 Status: implemented release surface for Power House v0.4.0.
 
-Power House v0.4.0 adds an opt-in whole-program private execution backend
+Power House v0.4.0 adds an opt-in general private execution backend
 through the `sfcs-risc0` feature. It accepts a RISC Zero program binary,
 executes it with private input, verifies a real cryptographic receipt, binds
 the deterministic public statement into SFCS and `.pha`, creates Rootprint
 identity, emits an SLBIT-compatible semantic packet, and packages the receipt
 for offline Memory Capsule verification.
 
-This document distinguishes that authoritative whole-program path from the
+This document distinguishes that authoritative general private path from the
 older scoped `sfcs-zk` compatibility profiles.
 
-## Whole-Program Proof Boundary
+## General Private Proof Boundary
 
 The `sfcs-risc0` path proves the execution relation enforced by the RISC Zero
 RISC-V zkVM. A successful receipt authenticates:
@@ -26,7 +26,7 @@ RISC-V zkVM. A successful receipt authenticates:
 
 The guest decides what becomes public by committing bytes to its journal.
 Power House never treats an unverified execution trace, a coverage counter, or
-a collection of unrelated commitments as a whole-program proof.
+a collection of unrelated commitments as a general execution proof.
 
 The backend uses RISC Zero 3.0.6 with `disable-dev-mode`. It also inspects the
 receipt variant and rejects `InnerReceipt::Fake` before verification. Setting
@@ -78,7 +78,7 @@ with the deterministic `.pha` core.
 
 ## Memory Capsule And Rootprint
 
-The whole-program proof can be carried by Rootprint and a Memory Capsule
+The general private proof can be carried by Rootprint and a Memory Capsule
 without changing Rootprint v1 rules:
 
 ```rust
@@ -109,13 +109,13 @@ pretend to understand every external proof system.
 
 ## Rust To Private Proof
 
-RISC Zero supplies the compiler and guest runtime for the whole-program path.
+RISC Zero supplies the compiler and guest runtime for the general private path.
 A guest is ordinary Rust compiled to the pinned RISC-V zkVM target. It may use
 the guest-compatible Rust ecosystem and can implement arithmetic, branches,
 loops, memory, functions, and application-specific logic.
 
-The checked-in conformance guest reads two private `u32` values and publishes
-only their wrapping sum:
+The first checked-in conformance guest reads two private `u32` values and
+publishes only their wrapping sum:
 
 ```rust
 #![no_main]
@@ -132,10 +132,18 @@ fn main() {
 }
 ```
 
-The reproducible guest workspace is in `risc0-methods/`. CI rebuilds the
-program and requires its RISC Zero image ID and deterministic SFCS graph
-identity to match `conformance/sfcs-risc0/private-sum-v1.bin` before running
-proof gates. The host Rust, RISC Zero compiler, and RISC Zero guest Rust
+The second guest, `power-house-sfcs-general-guest`, exercises functions,
+64 loop iterations, dynamic word-memory addressing, byte and halfword
+updates, signed and unsigned ordering, equality and non-equality branches,
+bitwise operations, rotations, multiplication, and wrapping arithmetic. Its
+public eight-word journal is compared with an independent host implementation,
+and its vector is required to enter every declared branch class.
+
+The reproducible guest workspace is in `risc0-methods/`. CI rebuilds both
+programs and requires their RISC Zero image IDs and deterministic SFCS graph
+identities to match `conformance/sfcs-risc0/private-sum-v1.bin` and
+`conformance/sfcs-risc0/private-general-v1.bin` before running proof gates.
+The host Rust, RISC Zero compiler, and RISC Zero guest Rust
 toolchains are pinned for this gate, and the guest is rebuilt from a clean,
 locked target without restoring compilation artifacts. The build itself runs
 inside the RISC Zero guest-builder image pinned by manifest digest. The pinned
@@ -148,7 +156,7 @@ complete implementations of those languages.
 
 ## CLI Pipeline
 
-Install the whole-program backend:
+Install the general private backend:
 
 ```bash
 cargo install power_house --features sfcs-risc0
@@ -202,7 +210,7 @@ The `sfcs-zk` feature remains available for compatibility:
 
 The private-VM draft does **not** cryptographically link every individual
 relation proof, global trace digest, final state, and public output into one
-authoritative hidden execution. It must not be used as the whole-program
+authoritative hidden execution. It must not be used as the general
 arbitrary private VM security boundary. Use `sfcs-risc0` for that requirement.
 
 The public deterministic VM and constraint profiles remain useful for visible
@@ -230,10 +238,14 @@ a public deterministic SFCS replay into a zero-knowledge proof.
 
 ## Release Gates
 
-The whole-program release gate includes:
+The general private release gate includes:
 
-- reproducible guest compilation and byte comparison;
+- reproducible compilation and identity comparison for both conformance
+  guests;
 - a real receipt generated outside development mode;
+- independent journal comparison for the general control-flow and memory
+  workload;
+- execution of every declared conformance branch class;
 - fake-receipt rejection;
 - wrong-program rejection;
 - program and graph content binding;
@@ -250,6 +262,7 @@ Run the local gates with:
 PATH="$HOME/.risc0/bin:$PATH" \
   cargo test --locked --features sfcs-risc0 \
   --test sfcs_risc0 \
+  --test sfcs_risc0_general \
   --test sfcs_risc0_cli
 ```
 

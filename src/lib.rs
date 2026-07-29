@@ -276,7 +276,7 @@ pub fn verify_sfcs_zk_private_add_embedding(
 ///
 /// This compatibility profile does not prove one coherent hidden execution.
 /// Use `verify_sfcs_risc0_private_vm_embedding` with the `sfcs-risc0` feature
-/// for the authoritative whole-program private VM boundary.
+/// for the authoritative general private VM boundary.
 #[cfg(feature = "sfcs-zk")]
 pub fn verify_sfcs_zk_private_vm_embedding(
     artifact: &provenance::pha::PhaArtifact,

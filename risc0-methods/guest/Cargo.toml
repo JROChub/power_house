@@ -8,3 +8,11 @@ publish = false
 
 [dependencies]
 risc0-zkvm = { version = "3.0.6", default-features = false }
+
+[[bin]]
+name = "power-house-sfcs-conformance-guest"
+path = "src/main.rs"
+
+[[bin]]
+name = "power-house-sfcs-general-guest"
+path = "src/general.rs"

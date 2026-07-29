@@ -28,7 +28,7 @@ fn real_proof() -> SfcsRisc0PrivateVmProof {
 }
 
 #[test]
-fn real_whole_program_receipt_verifies_and_keeps_private_input_out_of_transport() {
+fn real_general_private_vm_receipt_verifies_and_keeps_private_input_out_of_transport() {
     let proof = real_proof();
     proof.verify(GUEST_PROGRAM).unwrap();
 
