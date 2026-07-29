@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-labelledby="title">
+  <title id="title">MFENX Power House</title>
+  <defs>
+    <linearGradient id="left-loop" x1="21" y1="92" x2="100" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#20e4e6"/>
+      <stop offset="0.56" stop-color="#2fb9e9"/>
+      <stop offset="1" stop-color="#426ce5"/>
+    </linearGradient>
+    <linearGradient id="right-loop" x1="92" y1="92" x2="173" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#426ce5"/>
+      <stop offset="0.52" stop-color="#6442e3"/>
+      <stop offset="1" stop-color="#9838e3"/>
+    </linearGradient>
+    <linearGradient id="world-ring" x1="68" y1="68" x2="124" y2="124" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1ee4d7"/>
+      <stop offset="0.52" stop-color="#20a8ce"/>
+      <stop offset="1" stop-color="#5c63e8"/>
+    </linearGradient>
+  </defs>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path
+      d="M96 79C83 62 72 50 56 51C35 53 21 72 22 95C23 118 38 137 59 139C76 140 89 128 98 109"
+      stroke="url(#left-loop)"
+      stroke-width="9"
+    />
+    <path
+      d="M94 82C107 62 119 49 136 50C157 52 171 71 170 95C169 118 155 137 136 139C118 140 105 127 95 108"
+      stroke="url(#right-loop)"
+      stroke-width="9"
+    />
+
+    <g stroke="url(#world-ring)" stroke-width="1.35" opacity="0.96">
+      <circle cx="96" cy="95" r="28"/>
+      <ellipse cx="96" cy="95" rx="13" ry="28"/>
+      <ellipse cx="96" cy="95" rx="28" ry="13"/>
+      <path d="M76.2 75.2L115.8 114.8M115.8 75.2L76.2 114.8"/>
+      <path d="M96 67V123M68 95H124"/>
+      <path d="M73.5 78.5C86 87 106 103 118.5 111.5"/>
+      <path d="M118.5 78.5C106 87 86 103 73.5 111.5"/>
+    </g>
+    <circle cx="96" cy="95" r="3" stroke="#9fffe9" stroke-width="1.2"/>
+  </g>
+</svg>

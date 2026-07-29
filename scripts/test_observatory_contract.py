@@ -79,8 +79,25 @@ def main() -> int:
         fail(errors, "the v0.4.0 responsive release stylesheet is not loaded")
     if '<link rel="canonical" href="https://mfenx.com/">' not in html:
         fail(errors, "the canonical apex-domain link is missing")
+    if "<title>MFENX</title>" not in html:
+        fail(errors, "the homepage title is not the concise MFENX product name")
+    if "MFENX.COM" + " | Orbital" in html:
+        fail(errors, "the obsolete Orbital browser title remains")
     if "VERIFY SOMETHING NOW" in html or 'class="orbital-portal"' in html:
         fail(errors, "the obsolete quick-action portal strip is still present")
+
+    logo_svg = PUBLIC / "assets/powerhouse-logo.svg"
+    logo_png = PUBLIC / "assets/powerhouse-logo.png"
+    if not logo_svg.is_file() or not logo_png.is_file():
+        fail(errors, "transparent SVG and PNG logo assets are both required")
+    else:
+        svg = logo_svg.read_text(encoding="utf-8")
+        if "<rect" in svg:
+            fail(errors, "the SVG logo contains a background rectangle")
+        if "powerhouse-logo.svg?v=20260729-transparent" not in html:
+            fail(errors, "the cache-versioned transparent SVG logo is not loaded")
+        if "powerhouse-logo.png?v=20260729-transparent" not in html:
+            fail(errors, "the cache-versioned transparent PNG favicon is not loaded")
 
     parser = IdParser()
     parser.feed(html)
