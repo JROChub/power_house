@@ -153,6 +153,10 @@ html.sain-remote.sain-authorized .access-gate { display: none; }
 
 .evidence-lens { border-left: 1px solid var(--line); overflow-y: auto; }
 .evidence-lens > header { height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); }.evidence-lens > header b { color: var(--amber); font-size: 8px; }
+.evidence-lens > header b { margin-left: auto; }
+.evidence-lens #closeLens { display: none; width: 30px; height: 30px; margin-left: 10px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.025); color: var(--paper); font: 20px/1 Arial, sans-serif; }
+.evidence-lens #closeLens:hover, .evidence-lens #closeLens:focus-visible { border-color: var(--cyan); color: var(--cyan); outline: none; }
+.lens-scrim { display: none; }
 .evidence-lens section { padding: 16px; border-bottom: 1px solid var(--line); }.evidence-lens h2 { margin: 0 0 12px; color: #788681; font-size: 8px; font-weight: 500; letter-spacing: .08em; }
 .validity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }.validity-grid > div { min-width: 0; padding: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.018); }.validity-grid i { display: inline-block; width: 5px; height: 5px; margin-right: 5px; background: #52605b; }.validity-grid span { color: #7f8d88; font-size: 7px; }.validity-grid b { display: block; margin-top: 7px; overflow: hidden; color: #9ca9a5; font-size: 8px; text-overflow: ellipsis; }.validity-grid .supported i, .validity-grid .verified i { background: var(--acid); box-shadow: 0 0 8px rgba(186,255,53,.6); }.validity-grid .supported b, .validity-grid .verified b { color: var(--acid); }.validity-grid .unverified i { background: var(--amber); }.validity-grid .unverified b { color: var(--amber); }
 .receipt dl { margin: 0; }.receipt dl div { padding: 9px 0; border-top: 1px solid var(--line); }.receipt dt { margin-bottom: 4px; color: #52605b; font-size: 7px; }.receipt dd { margin: 0; overflow: hidden; color: #aebbb6; font-size: 8px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
@@ -176,7 +180,9 @@ html.sain-remote.sain-authorized .access-gate { display: none; }
   .top-actions button { min-width: 100px; }.brand { min-width: auto; }
   .telemetry-ribbon { grid-template-columns: repeat(4,1fr); overflow: hidden; }.telemetry-ribbon > div:nth-child(4), .telemetry-ribbon > div:nth-child(5), .telemetry-ribbon > div:nth-child(6) { display: none; }
   .workspace { height: calc(100vh - var(--top) - var(--ribbon)); grid-template-columns: minmax(0,1fr); }
-  .identity-rail { display: none; }.evidence-lens { position: fixed; z-index: 5; right: 0; top: calc(var(--top) + var(--ribbon)); bottom: 0; width: min(326px, 88vw); transform: translateX(100%); transition: transform .25s; box-shadow: -22px 0 60px rgba(0,0,0,.55); }.evidence-lens.open { transform: none; }
+  .identity-rail { display: none; }.evidence-lens { position: fixed; z-index: 6; right: 0; top: calc(var(--top) + var(--ribbon)); bottom: 0; width: min(326px, 88vw); transform: translateX(100%); transition: transform .25s; box-shadow: -22px 0 60px rgba(0,0,0,.55); overscroll-behavior: contain; }.evidence-lens.open { transform: none; }
+  .evidence-lens #closeLens { display: grid; place-items: center; flex: 0 0 auto; }
+  .lens-scrim:not([hidden]) { display: block; position: fixed; z-index: 5; inset: calc(var(--top) + var(--ribbon)) 0 0; border: 0; background: rgba(0,0,0,.52); }
   .cognition-head { padding-inline: 18px; }.conversation { padding-inline: 16px; }.composer { margin-inline: 16px; }
 }
 @media (max-width: 540px) {
@@ -184,5 +190,6 @@ html.sain-remote.sain-authorized .access-gate { display: none; }
   .telemetry-ribbon { grid-template-columns: repeat(3,1fr); }.telemetry-ribbon > div:first-child { display: none; }
   .cognition-head h1 { font-size: 14px; }.event { grid-template-columns: 24px minmax(0,1fr); }.event::before { left: 10px; }.event-node i { margin-left: 5px; }.event-body { padding-left: 7px; }.event p { font-size: 13px; }
   .composer { padding-right: 14px; }.composer-index { display: none; }.composer-modes > span { display: none; }.composer-foot { justify-content: space-between; }
+  .evidence-lens { width: min(326px, 92vw); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }

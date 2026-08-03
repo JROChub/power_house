@@ -5,6 +5,8 @@ const conversation = $("#conversation");
 const composer = $("#composer");
 const question = $("#question");
 const send = $("#send");
+const evidenceLens = $("#evidenceLens");
+const lensScrim = $("#lensScrim");
 const remoteConfig = window.SAIN_REMOTE_CONFIG;
 const apiBase = remoteConfig?.apiBase?.replace(/\/$/, "") || "";
 let accessToken = remoteConfig ? sessionStorage.getItem("sainAccessToken") || "" : "";
@@ -189,7 +191,13 @@ function setValidity(validity = {}) {
   });
 }
 
-function inspect(report, article) {
+function setLensOpen(open) {
+  evidenceLens.classList.toggle("open", open);
+  lensScrim.hidden = !open;
+  if (open && matchMedia("(max-width: 880px)").matches) $("#closeLens").focus({ preventScroll: true });
+}
+
+function inspect(report, article, reveal = true) {
   document.querySelectorAll(".sain-event.selected").forEach((node) => node.classList.remove("selected"));
   article?.classList.add("selected");
   activeReport = report;
@@ -205,7 +213,7 @@ function inspect(report, article) {
   text("receiptLatency", report.cortex?.elapsed_ms != null ? `${report.cortex.elapsed_ms} ms` : "—");
   text("scopeText", validity.scope_statement || "Execution and provenance are bound; external factual truth remains independently challengeable.");
   $("#copyReceipt").disabled = false;
-  $(".evidence-lens").classList.add("open");
+  if (reveal) setLensOpen(true);
 }
 
 async function transmit() {
@@ -241,7 +249,7 @@ async function transmit() {
     article.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") inspect(report, article);
     });
-    inspect(report, article);
+    inspect(report, article, !matchMedia("(max-width: 880px)").matches);
     toast(`Response sealed in ${((performance.now() - started) / 1000).toFixed(1)} seconds`);
     refreshStatus();
   } catch (error) {
@@ -276,7 +284,12 @@ $("#historyBottom").addEventListener("click", () => conversation.scrollTo({ top:
 $("#newSession").addEventListener("click", () => {
   conversation.querySelectorAll(".event:not(.system-event)").forEach((node) => node.remove());
   eventNumber = 1; activeReport = null; setValidity(); text("eventCount", "01"); text("lensState", "STANDBY");
-  $("#copyReceipt").disabled = true; $(".evidence-lens").classList.remove("open"); question.focus(); toast("New local field opened");
+  $("#copyReceipt").disabled = true; setLensOpen(false); question.focus(); toast("New local field opened");
+});
+$("#closeLens").addEventListener("click", () => setLensOpen(false));
+lensScrim.addEventListener("click", () => setLensOpen(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && evidenceLens.classList.contains("open")) setLensOpen(false);
 });
 $("#copyReceipt").addEventListener("click", async () => {
   if (!activeReport) return;

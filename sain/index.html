@@ -108,8 +108,12 @@
         </form>
       </section>
 
-      <aside class="evidence-lens">
-        <header><span>EVIDENCE LENS</span><b id="lensState">STANDBY</b></header>
+      <button id="lensScrim" class="lens-scrim" type="button" aria-label="Close evidence lens" hidden></button>
+      <aside id="evidenceLens" class="evidence-lens" aria-label="Evidence lens">
+        <header>
+          <span>EVIDENCE LENS</span><b id="lensState">STANDBY</b>
+          <button id="closeLens" type="button" aria-label="Close evidence lens"><span aria-hidden="true">×</span></button>
+        </header>
         <section class="validity">
           <h2>FOUR-DIMENSION VALIDITY</h2>
           <div class="validity-grid">
