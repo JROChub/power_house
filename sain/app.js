@@ -15,6 +15,12 @@ let activeReport = null;
 let thinkingTimer = null;
 let webResearchEnabled = false;
 
+function setCortexPhase(phase, busy = false) {
+  text("cortexPhase", phase);
+  $(".cortex-status")?.classList.toggle("busy", busy);
+  text("composerSignal", `${webResearchEnabled ? "RESEARCH CORTEX" : "DIRECT CORTEX"} / ${busy ? "PROCESSING" : "READY"}`);
+}
+
 function endpoint(path) { return `${apiBase}${path}`; }
 
 async function apiJSON(path, options = {}) {
@@ -160,12 +166,27 @@ function addThinking() {
     "Preparing a provenance-bound response…",
     "Binding memory, epistemic claim, and proof event…",
   ];
+  setCortexPhase(phases[0].toUpperCase(), true);
   let phase = 0;
   thinkingTimer = setInterval(() => {
     phase = Math.min(phase + 1, phases.length - 1);
     message.textContent = phases[phase];
+    setCortexPhase(phases[phase].toUpperCase(), true);
   }, 6500);
   return article;
+}
+
+function addResponseActions(article, report, spoken) {
+  const actions = element("div", "response-actions");
+  const inspectButton = element("button", "inspect-action", "OPEN EVIDENCE LENS");
+  const copyButton = element("button", "", "COPY RESPONSE");
+  const continueButton = element("button", "", "CONTINUE FROM HERE");
+  [inspectButton, copyButton, continueButton].forEach((button) => { button.type = "button"; });
+  inspectButton.addEventListener("click", () => inspect(report, article));
+  copyButton.addEventListener("click", async () => { await navigator.clipboard.writeText(spoken || ""); toast("Response copied"); });
+  continueButton.addEventListener("click", () => { question.value = "Continue the analysis above. Go deeper, test the weakest assumptions, and preserve precise evidence boundaries."; question.dispatchEvent(new Event("input")); question.focus(); });
+  actions.append(inspectButton, copyButton, continueButton);
+  $(".event-body", article).append(actions);
 }
 
 function addWebSources(article, sources = []) {
@@ -185,9 +206,10 @@ function addWebSources(article, sources = []) {
 function renderResearchAudit(external = null) {
   const audit = $("#researchAudit");
   const metricsNode = $("#researchMetrics");
+  const sourcesNode = $("#sourceConstellation");
   const claimsNode = $("#claimFindings");
   const tribunalNode = $("#tribunalFindings");
-  metricsNode.replaceChildren(); claimsNode.replaceChildren(); tribunalNode.replaceChildren();
+  metricsNode.replaceChildren(); sourcesNode.replaceChildren(); claimsNode.replaceChildren(); tribunalNode.replaceChildren();
   if (!external || external.schema !== 2) { audit.hidden = true; return; }
   audit.hidden = false;
   const metrics = external.research_metrics || {};
@@ -195,6 +217,12 @@ function renderResearchAudit(external = null) {
     const cell = element("div");
     cell.append(element("span", "", name.replaceAll("_", " ").toUpperCase()), element("b", "", String(metrics[name] ?? 0)));
     metricsNode.append(cell);
+  });
+  (external.sources || []).forEach((source, index) => {
+    const card = element("a"); card.href = source.url; card.target = "_blank"; card.rel = "noopener noreferrer";
+    const origin = (() => { try { return new URL(source.url).hostname.replace(/^www\./, ""); } catch { return "unknown origin"; } })();
+    card.append(element("span", "", `${String(index + 1).padStart(2, "0")} / ${String(source.retrieval_engine || "retrieved").toUpperCase()}`), element("b", "", source.title || origin), element("small", "", `${origin} · ${source.media_type || "document"}`));
+    sourcesNode.append(card);
   });
   (external.claims || []).slice(0, 8).forEach((claim) => {
     const item = element("div", `claim-${claim.status || "insufficient"}`);
@@ -225,6 +253,16 @@ function setLensOpen(open) {
   if (open && matchMedia("(max-width: 880px)").matches) $("#closeLens").focus({ preventScroll: true });
 }
 
+function setVerdict(report) {
+  const external = report.cortex?.external_evidence;
+  const adjudicator = (external?.tribunal || []).find((finding) => finding.role === "adjudicator");
+  const disposition = String(adjudicator?.disposition || (report.cortex?.inference_audit?.accepted ? "accept" : "reject")).toLowerCase();
+  const verdict = $("#lensVerdict"); verdict.classList.remove("supported", "qualified", "rejected");
+  verdict.classList.add(disposition === "accept" ? "supported" : disposition === "reject" ? "rejected" : "qualified");
+  text("verdictState", disposition === "accept" ? "EVIDENCE SUPPORTED" : disposition === "reject" ? "RESPONSE QUARANTINED" : "QUALIFIED / CONTESTABLE");
+  text("verdictSummary", (adjudicator?.reasons || [report.epistemic_claim?.validity?.scope_statement || "Execution verified; factual scope remains challengeable."]).join(" · "));
+}
+
 function inspect(report, article, reveal = true) {
   document.querySelectorAll(".sain-event.selected").forEach((node) => node.classList.remove("selected"));
   article?.classList.add("selected");
@@ -240,6 +278,7 @@ function inspect(report, article, reveal = true) {
   text("receiptExecution", report.cortex?.execution || "LOCAL / PROVIDER FREE");
   text("receiptLatency", report.cortex?.elapsed_ms != null ? `${report.cortex.elapsed_ms} ms` : "—");
   text("scopeText", validity.scope_statement || "Execution and provenance are bound; external factual truth remains independently challengeable.");
+  setVerdict(report);
   renderResearchAudit(report.cortex?.external_evidence);
   $("#copyReceipt").disabled = false;
   if (reveal) setLensOpen(true);
@@ -271,20 +310,16 @@ async function transmit() {
       : "Sain quarantined the generated answer because it conflicted with verified state. Inspect the evidence lens for details.";
     const article = addEvent("sain", "PROOF-CARRYING RESPONSE", spoken || "No response text returned.", labels);
     addWebSources(article, report.cortex?.external_evidence?.sources);
-    article.tabIndex = 0;
-    article.setAttribute("role", "button");
-    article.setAttribute("aria-label", "Inspect evidence for this Sain response");
-    article.addEventListener("click", () => inspect(report, article));
-    article.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") inspect(report, article);
-    });
+    addResponseActions(article, report, spoken);
     inspect(report, article, !matchMedia("(max-width: 880px)").matches);
+    setCortexPhase("RESPONSE SEALED / READY", false);
     toast(`Response sealed in ${((performance.now() - started) / 1000).toFixed(1)} seconds`);
     refreshStatus();
   } catch (error) {
     thinking.remove();
     clearInterval(thinkingTimer);
     addEvent("error", "CORTEX INTERRUPTED", error.message, ["NO RESPONSE COMMITTED"]);
+    setCortexPhase("INTERRUPTED / READY TO RETRY", false);
     toast(error.message);
   } finally {
     send.disabled = false;
@@ -299,6 +334,7 @@ question.addEventListener("keydown", (event) => {
 question.addEventListener("input", () => {
   question.style.height = "auto";
   question.style.height = `${Math.min(question.scrollHeight, 150)}px`;
+  text("characterCount", `${question.value.length.toLocaleString()} / 16,384`);
 });
 $("#focusComposer").addEventListener("click", () => question.focus());
 $("#webMode").addEventListener("click", () => {
@@ -306,13 +342,18 @@ $("#webMode").addEventListener("click", () => {
   $("#webMode").setAttribute("aria-pressed", String(webResearchEnabled));
   question.placeholder = webResearchEnabled ? "Ask Sain to research the live web…" : "Hello Sain…";
   toast(webResearchEnabled ? "Web research enabled for new questions" : "Web research disabled");
+  setCortexPhase("READY FOR TRANSMISSION", false);
   question.focus();
 });
+document.querySelectorAll("[data-prompt]").forEach((button) => { button.addEventListener("click", () => { webResearchEnabled = button.dataset.mode === "research"; $("#webMode").setAttribute("aria-pressed", String(webResearchEnabled)); question.value = button.dataset.prompt || ""; question.dispatchEvent(new Event("input")); setCortexPhase("MISSION LOADED / AWAITING SUBJECT", false); question.focus(); composer.scrollIntoView({ block: "end", behavior: "smooth" }); }); });
 $("#historyTop").addEventListener("click", () => conversation.scrollTo({ top: 0, behavior: "smooth" }));
 $("#historyBottom").addEventListener("click", () => conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" }));
+$("#jumpLatest").addEventListener("click", () => conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" }));
+conversation.addEventListener("scroll", () => { const awayFromLatest = conversation.scrollHeight - conversation.scrollTop - conversation.clientHeight > 180; $("#jumpLatest").hidden = !awayFromLatest; }, { passive: true });
 $("#newSession").addEventListener("click", () => {
   conversation.querySelectorAll(".event:not(.system-event)").forEach((node) => node.remove());
   eventNumber = 1; activeReport = null; setValidity(); text("eventCount", "01"); text("lensState", "STANDBY");
+  text("verdictState", "NO EVENT SELECTED"); text("verdictSummary", "Select a response to expose its verification boundary.");
   $("#copyReceipt").disabled = true; setLensOpen(false); question.focus(); toast("New local field opened");
 });
 $("#closeLens").addEventListener("click", () => setLensOpen(false));
@@ -320,6 +361,10 @@ lensScrim.addEventListener("click", () => setLensOpen(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && evidenceLens.classList.contains("open")) setLensOpen(false);
 });
+document.querySelectorAll("[data-lens-target]").forEach((button) => { button.addEventListener("click", () => document.getElementById(button.dataset.lensTarget)?.scrollIntoView({ behavior: "smooth", block: "start" })); });
+$("#mobileConversation").addEventListener("click", () => { setLensOpen(false); conversation.scrollIntoView({ block: "start" }); document.querySelectorAll(".mobile-dock button").forEach((button) => button.classList.remove("active")); $("#mobileConversation").classList.add("active"); });
+$("#mobileCompose").addEventListener("click", () => { setLensOpen(false); question.focus(); });
+$("#mobileEvidence").addEventListener("click", () => { if (!activeReport) { toast("Ask Sain a question to create an evidence receipt"); return; } setLensOpen(true); document.querySelectorAll(".mobile-dock button").forEach((button) => button.classList.remove("active")); $("#mobileEvidence").classList.add("active"); });
 $("#copyReceipt").addEventListener("click", async () => {
   if (!activeReport) return;
   const receipt = JSON.stringify({

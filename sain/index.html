@@ -76,6 +76,10 @@
       <section class="cognition" aria-label="Conversation with Sain">
         <header class="cognition-head">
           <div><span>COGNITIVE FIELD / <b id="eventCount">00</b></span><h1>CONVERSATION AS EVIDENCE</h1></div>
+          <div class="cortex-status" aria-live="polite">
+            <i id="cortexPulse"></i>
+            <span><small>ACTIVE PROCESS</small><b id="cortexPhase">READY FOR TRANSMISSION</b></span>
+          </div>
           <div class="history-tools" aria-label="Conversation history controls">
             <span>HISTORY</span>
             <button id="historyTop" type="button" title="Go to first message" aria-label="Go to first message">↑</button>
@@ -88,11 +92,19 @@
             <div class="event-body">
               <div class="event-meta"><span>FIELD ORIGIN</span><time>NOW</time></div>
               <h2>Sain can hear you now.</h2>
-              <p>This is the current native organism speaking through its provider-free local cortex. Ask a question below. The answer and its evidence remain visibly connected.</p>
+              <p>This is the current native organism speaking through its provider-free local cortex. Launch a rigorous operation or ask anything below. Every accepted answer remains connected to its evidence.</p>
+              <div class="launch-grid" aria-label="Research launch commands">
+                <button type="button" data-mode="research" data-prompt="Research this question across independent sources, identify contradictions, and return only claims supported by precise citations: "><span>01 / RESEARCH</span><b>Deep evidence synthesis</b><small>Multi-engine retrieval + tribunal</small></button>
+                <button type="button" data-mode="research" data-prompt="Audit the following claim. Find the strongest supporting and contradicting evidence, assess source independence and temporal validity: "><span>02 / AUDIT</span><b>Challenge a claim</b><small>Contradiction + provenance analysis</small></button>
+                <button type="button" data-mode="local" data-prompt="Develop a falsifiable hypothesis and a safe preregistered experiment for: "><span>03 / SCIENCE</span><b>Design an experiment</b><small>Hypothesis → test → evidence</small></button>
+                <button type="button" data-mode="local" data-prompt="Analyze this problem from first principles, expose assumptions, compare alternatives, and recommend the strongest path: "><span>04 / REASON</span><b>First-principles analysis</b><small>Causal and counterfactual reasoning</small></button>
+              </div>
               <div class="proof-strip"><span>LOCAL CORTEX</span><span>PROVENANCE BOUND</span><span>CHALLENGEABLE</span></div>
             </div>
           </article>
         </div>
+
+        <button id="jumpLatest" class="jump-latest" type="button" hidden><span>NEW ACTIVITY</span> ↓</button>
 
         <form id="composer" class="composer">
           <div class="composer-index">INPUT<br><b id="inputIndex">01</b></div>
@@ -105,6 +117,7 @@
             </div>
             <button id="send" type="submit"><span>TRANSMIT</span><i>↗</i></button>
           </div>
+          <div class="composer-signal"><i></i><span id="composerSignal">DIRECT CORTEX / READY</span><b id="characterCount">0 / 16,384</b></div>
         </form>
       </section>
 
@@ -114,7 +127,17 @@
           <span>EVIDENCE LENS</span><b id="lensState">STANDBY</b>
           <button id="closeLens" type="button" aria-label="Close evidence lens"><span aria-hidden="true">×</span></button>
         </header>
-        <section class="validity">
+        <nav class="lens-nav" aria-label="Evidence sections">
+          <button type="button" data-lens-target="validityPanel">VALIDITY</button>
+          <button type="button" data-lens-target="receiptPanel">RECEIPT</button>
+          <button type="button" data-lens-target="researchAudit">RESEARCH</button>
+        </nav>
+        <section id="lensVerdict" class="lens-verdict">
+          <span>ADJUDICATED STATUS</span>
+          <b id="verdictState">NO EVENT SELECTED</b>
+          <p id="verdictSummary">Select a response to expose its verification boundary.</p>
+        </section>
+        <section id="validityPanel" class="validity">
           <h2>FOUR-DIMENSION VALIDITY</h2>
           <div class="validity-grid">
             <div data-validity="computational"><i></i><span>COMPUTATIONAL</span><b>WAITING</b></div>
@@ -123,7 +146,7 @@
             <div data-validity="normative"><i></i><span>NORMATIVE</span><b>WAITING</b></div>
           </div>
         </section>
-        <section class="receipt">
+        <section id="receiptPanel" class="receipt">
           <h2>SELECTED EVENT RECEIPT</h2>
           <dl>
             <div><dt>EVENT</dt><dd id="receiptEvent">No event selected</dd></div>
@@ -137,6 +160,8 @@
         <section id="researchAudit" class="research-audit" hidden>
           <h2>RESEARCH CORTEX V2</h2>
           <div id="researchMetrics" class="research-metrics"></div>
+          <h2>SOURCE CONSTELLATION</h2>
+          <div id="sourceConstellation" class="source-constellation"></div>
           <h2>CLAIM GRAPH</h2>
           <div id="claimFindings" class="claim-findings"></div>
           <h2>FIVE-ROLE TRIBUNAL</h2>
@@ -150,6 +175,11 @@
       </aside>
     </main>
   </div>
+  <nav class="mobile-dock" aria-label="Sain mobile controls">
+    <button id="mobileConversation" class="active" type="button"><i></i><span>FIELD</span></button>
+    <button id="mobileCompose" type="button"><i></i><span>TRANSMIT</span></button>
+    <button id="mobileEvidence" type="button"><i></i><span>EVIDENCE</span></button>
+  </nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./app.js" defer></script>
 </body>
