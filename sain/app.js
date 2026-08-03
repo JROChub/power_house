@@ -176,10 +176,30 @@ function addWebSources(article, sources = []) {
     link.href = source.url;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.append(element("b", "", `[${index + 1}]`), element("span", "", source.title || source.url), element("small", "", short(source.content_sha256, 8)));
+    link.append(element("b", "", source.source_id ? short(source.source_id, 12) : `[${index + 1}]`), element("span", "", source.title || source.url), element("small", "", short(source.content_sha256, 8)));
     list.append(link);
   });
   $(".event-body", article).append(list);
+}
+
+function renderResearchAudit(external = null) {
+  const audit = $("#researchAudit");
+  const metricsNode = $("#researchMetrics");
+  const tribunalNode = $("#tribunalFindings");
+  metricsNode.replaceChildren(); tribunalNode.replaceChildren();
+  if (!external || external.schema !== 2) { audit.hidden = true; return; }
+  audit.hidden = false;
+  const metrics = external.research_metrics || {};
+  ["sources", "independent_origins", "passages", "claims", "contradictions", "world_changes"].forEach((name) => {
+    const cell = element("div");
+    cell.append(element("span", "", name.replaceAll("_", " ").toUpperCase()), element("b", "", String(metrics[name] ?? 0)));
+    metricsNode.append(cell);
+  });
+  (external.tribunal || []).forEach((finding) => {
+    const item = element("div", `tribunal-${finding.disposition || "qualify"}`);
+    item.append(element("b", "", String(finding.role || "role").toUpperCase()), element("span", "", String(finding.disposition || "unknown").toUpperCase()), element("p", "", (finding.reasons || []).join(" · ")));
+    tribunalNode.append(item);
+  });
 }
 
 function setValidity(validity = {}) {
@@ -212,6 +232,7 @@ function inspect(report, article, reveal = true) {
   text("receiptExecution", report.cortex?.execution || "LOCAL / PROVIDER FREE");
   text("receiptLatency", report.cortex?.elapsed_ms != null ? `${report.cortex.elapsed_ms} ms` : "—");
   text("scopeText", validity.scope_statement || "Execution and provenance are bound; external factual truth remains independently challengeable.");
+  renderResearchAudit(report.cortex?.external_evidence);
   $("#copyReceipt").disabled = false;
   if (reveal) setLensOpen(true);
 }
@@ -300,6 +321,7 @@ $("#copyReceipt").addEventListener("click", async () => {
     lineage_digest: activeReport.lineage_digest,
     generation: activeReport.generation,
     validity: activeReport.epistemic_claim?.validity,
+    external_evidence: activeReport.cortex?.external_evidence,
   }, null, 2);
   await navigator.clipboard.writeText(receipt);
   toast("Proof receipt copied");
