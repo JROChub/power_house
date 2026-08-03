@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#010405">
+  <meta name="description" content="Sain Cognitive Observatory — local proof-carrying conversation.">
+  <title>SAIN / Cognitive Observatory</title>
+  <script src="./config.js"></script>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <section id="accessGate" class="access-gate" hidden aria-labelledby="accessTitle">
+    <form id="accessForm" class="access-panel">
+      <span class="access-kicker">MFENX / RESTRICTED COGNITIVE FIELD</span>
+      <div class="access-mark" aria-hidden="true"><i></i></div>
+      <h1 id="accessTitle">SAIN</h1>
+      <p>This observatory is private. Enter its dedicated access key to establish a sealed session.</p>
+      <label for="accessPassword">ACCESS KEY</label>
+      <input id="accessPassword" type="password" autocomplete="current-password" required>
+      <button id="accessSubmit" type="submit">ESTABLISH SESSION <span>↗</span></button>
+      <output id="accessError" aria-live="polite"></output>
+    </form>
+  </section>
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="scan-grid" aria-hidden="true"></div>
+  <div class="edge-vignette" aria-hidden="true"></div>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Sain home">
+        <span class="sain-mark" aria-hidden="true"><i></i><b></b></span>
+        <span><strong>SAIN</strong><small>MFENX / VERIFIABLE INTELLIGENCE FIELD</small></span>
+      </a>
+      <div class="mission-state">
+        <i id="signalDot"></i><span id="connectionLabel">ESTABLISHING FIELD</span>
+        <b id="missionClock">00:00:00</b><span>LOCAL</span>
+      </div>
+      <div class="top-actions">
+        <button id="newSession" type="button">NEW FIELD</button>
+        <button id="focusComposer" class="primary" type="button">SPEAK TO SAIN</button>
+      </div>
+    </header>
+
+    <section class="telemetry-ribbon" aria-label="Sain live telemetry">
+      <div><span>IDENTITY</span><b id="identityShort">SYNCING</b></div>
+      <div><span>GENERATION</span><b id="generation">—</b></div>
+      <div><span>INTEGRITY</span><b id="integrity">—</b></div>
+      <div><span>MEMORIES</span><b id="memoryCount">—</b></div>
+      <div><span>CAUSAL MODELS</span><b id="causalCount">—</b></div>
+      <div><span>CORTEX</span><b>QWEN3 / LOCAL</b></div>
+      <div><span>PROVIDER</span><b>NONE</b></div>
+    </section>
+
+    <main class="workspace">
+      <aside class="identity-rail">
+        <div class="rail-label">LIVING IDENTITY</div>
+        <div class="orbital-identity">
+          <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+          <div class="identity-core"><span>S</span></div>
+        </div>
+        <dl class="identity-data">
+          <div><dt>STATE</dt><dd class="acid">VERIFIED LOCAL</dd></div>
+          <div><dt>ENERGY</dt><dd id="energy">—</dd></div>
+          <div><dt>STRESS</dt><dd id="stress">—</dd></div>
+          <div><dt>CAPABILITIES</dt><dd id="capabilities">—</dd></div>
+          <div><dt>GENOMES</dt><dd id="genomes">—</dd></div>
+        </dl>
+        <div class="goal-card">
+          <span>CURRENT ENDOGENOUS GOAL</span>
+          <p id="currentGoal">Reading native state…</p>
+        </div>
+        <div class="local-seal"><i></i><span>NOTHING LEAVES<br><b>LOCAL MACHINE</b></span></div>
+      </aside>
+
+      <section class="cognition" aria-label="Conversation with Sain">
+        <header class="cognition-head">
+          <div><span>COGNITIVE FIELD / <b id="eventCount">00</b></span><h1>CONVERSATION AS EVIDENCE</h1></div>
+          <div class="history-tools" aria-label="Conversation history controls">
+            <span>HISTORY</span>
+            <button id="historyTop" type="button" title="Go to first message" aria-label="Go to first message">↑</button>
+            <button id="historyBottom" type="button" title="Go to latest message" aria-label="Go to latest message">↓</button>
+          </div>
+        </header>
+        <div id="conversation" class="conversation" aria-live="polite">
+          <article class="event system-event">
+            <div class="event-node"><i></i></div>
+            <div class="event-body">
+              <div class="event-meta"><span>FIELD ORIGIN</span><time>NOW</time></div>
+              <h2>Sain can hear you now.</h2>
+              <p>This is the current native organism speaking through its provider-free local cortex. Ask a question below. The answer and its evidence remain visibly connected.</p>
+              <div class="proof-strip"><span>LOCAL CORTEX</span><span>PROVENANCE BOUND</span><span>CHALLENGEABLE</span></div>
+            </div>
+          </article>
+        </div>
+
+        <form id="composer" class="composer">
+          <div class="composer-index">INPUT<br><b id="inputIndex">01</b></div>
+          <label for="question">Transmit a question into the verified cognitive field</label>
+          <textarea id="question" rows="2" maxlength="16384" placeholder="Hello Sain…" autofocus></textarea>
+          <div class="composer-foot">
+            <div class="composer-modes">
+              <button id="webMode" type="button" aria-pressed="false"><i></i>WEB RESEARCH</button>
+              <span><kbd>ENTER</kbd> TRANSMIT · <kbd>SHIFT</kbd>+<kbd>ENTER</kbd> NEW LINE</span>
+            </div>
+            <button id="send" type="submit"><span>TRANSMIT</span><i>↗</i></button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="evidence-lens">
+        <header><span>EVIDENCE LENS</span><b id="lensState">STANDBY</b></header>
+        <section class="validity">
+          <h2>FOUR-DIMENSION VALIDITY</h2>
+          <div class="validity-grid">
+            <div data-validity="computational"><i></i><span>COMPUTATIONAL</span><b>WAITING</b></div>
+            <div data-validity="provenance"><i></i><span>PROVENANCE</span><b>WAITING</b></div>
+            <div data-validity="epistemic"><i></i><span>EPISTEMIC</span><b>WAITING</b></div>
+            <div data-validity="normative"><i></i><span>NORMATIVE</span><b>WAITING</b></div>
+          </div>
+        </section>
+        <section class="receipt">
+          <h2>SELECTED EVENT RECEIPT</h2>
+          <dl>
+            <div><dt>EVENT</dt><dd id="receiptEvent">No event selected</dd></div>
+            <div><dt>PROOF</dt><dd id="receiptProof">—</dd></div>
+            <div><dt>LINEAGE</dt><dd id="receiptLineage">—</dd></div>
+            <div><dt>MODEL</dt><dd id="receiptModel">Qwen3 1.7B Q8</dd></div>
+            <div><dt>EXECUTION</dt><dd id="receiptExecution">LOCAL / PROVIDER FREE</dd></div>
+            <div><dt>LATENCY</dt><dd id="receiptLatency">—</dd></div>
+          </dl>
+        </section>
+        <section class="scope">
+          <h2>EPISTEMIC SCOPE</h2>
+          <p id="scopeText">Select a Sain response to inspect what its proof does—and does not—establish.</p>
+        </section>
+        <button id="copyReceipt" class="copy-receipt" type="button" disabled>COPY PROOF RECEIPT</button>
+      </aside>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>
