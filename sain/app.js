@@ -185,8 +185,9 @@ function addWebSources(article, sources = []) {
 function renderResearchAudit(external = null) {
   const audit = $("#researchAudit");
   const metricsNode = $("#researchMetrics");
+  const claimsNode = $("#claimFindings");
   const tribunalNode = $("#tribunalFindings");
-  metricsNode.replaceChildren(); tribunalNode.replaceChildren();
+  metricsNode.replaceChildren(); claimsNode.replaceChildren(); tribunalNode.replaceChildren();
   if (!external || external.schema !== 2) { audit.hidden = true; return; }
   audit.hidden = false;
   const metrics = external.research_metrics || {};
@@ -194,6 +195,13 @@ function renderResearchAudit(external = null) {
     const cell = element("div");
     cell.append(element("span", "", name.replaceAll("_", " ").toUpperCase()), element("b", "", String(metrics[name] ?? 0)));
     metricsNode.append(cell);
+  });
+  (external.claims || []).slice(0, 8).forEach((claim) => {
+    const item = element("div", `claim-${claim.status || "insufficient"}`);
+    item.append(element("b", "", String(claim.status || "unknown").toUpperCase()), element("span", "", short(claim.claim_id, 14)), element("p", "", claim.text || "Untitled claim"));
+    const citations = [...(claim.support_passage_ids || []), ...(claim.refute_passage_ids || [])];
+    if (citations.length) item.append(element("small", "", citations.map((id) => `[${id}]`).join(" ")));
+    claimsNode.append(item);
   });
   (external.tribunal || []).forEach((finding) => {
     const item = element("div", `tribunal-${finding.disposition || "qualify"}`);
