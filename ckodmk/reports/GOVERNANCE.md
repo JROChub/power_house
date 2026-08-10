@@ -103,11 +103,22 @@ sign the same transition statement. Emergency revocation requires an owner
 statement identifying the affected key, earliest suspect time, artifact
 digests, replacement key, and required consumer action.
 
-The private repository's current GitHub plan does not provide protected-branch
-or private artifact-attestation enforcement. That infrastructure limitation is
-a production blocker, not something CI can truthfully claim around. An upgrade
-or an independently administered signing/release system is required before G2
-or C5 can receive production-level credit.
+Repository-level immutable releases were enabled on 2026-08-10. GitHub applies
+that setting only to releases published after enablement: after publication,
+their tag and attached assets cannot be moved, replaced, or deleted while the
+release exists, and GitHub creates a release attestation. Release publication
+therefore uses a draft, uploads and independently verifies every asset, and
+publishes only after the asset set is complete. This control does not make an
+artifact semantically correct and does not retroactively protect older
+releases.
+
+The private repository's current GitHub plan still does not provide
+protected-branch or private workflow artifact-attestation enforcement. The
+immutable-release attestation is a transport/provenance control, not the
+out-of-band owner-root authorization described above. Those remaining
+infrastructure limitations cannot be truthfully claimed around; an upgrade or
+an independently administered signing/release system is required before G2 or
+C5 can receive full production-level credit.
 
 ## Dependency, license, and data governance
 

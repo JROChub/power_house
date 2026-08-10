@@ -33,11 +33,16 @@ referenced release-gate run, and `SHA256SUMS` through channels the evaluator
 controls. GitHub Actions artifacts expire and are a CI cross-check, not the
 primary long-term distribution location.
 
-The private GitHub Release and tag remain repository-owner mutable and unsigned
-in v0.2. They provide a named frozen snapshot and API-reported content digests,
-not cryptographic authorization or transparency-log immutability. Any tag,
-release-asset, checksum, CI-commit, or archive-manifest disagreement blocks the
-evaluation.
+Repository-level immutable releases were enabled on 2026-08-10 and apply only
+to subsequently published releases. For such a release, run `gh release verify
+TAG --repo OWNER/REPOSITORY` and `gh release verify-asset TAG LOCAL-ASSET --repo
+OWNER/REPOSITORY`, substituting the private coordinates supplied through the
+evaluator's access channel; either failure blocks evaluation. Older releases remain
+historically repository-owner mutable. GitHub release attestation and
+immutability protect the release transport, but the v0.2 archive remains
+unsigned by an MFENX owner root and does not establish semantic correctness or
+separate MFENX authorization. Any tag, release-asset, checksum, CI-commit, or
+archive-manifest disagreement blocks the evaluation.
 
 Verify the ZIP before extraction:
 
