@@ -67,7 +67,7 @@ compensate for a failed or missing gate.
 | H3 — checker independence | A qualified external audit finds no shared implementation authority between producer and checker and validates semantic agreement with the specification. | `PENDING` |
 | H4 — soundness defects | No unresolved critical or high-severity false-accept defect exists in the frozen release; all historical reproduced failures have regression evidence. | `PASS — INTERNAL SNAPSHOT`: final exact, Gate, adjudicator, and independent-checker reviews found no open critical/high defect; this is not a qualified external audit. |
 | H5 — blinded hostile campaign | A non-author controls at least 1,000 preregistered semantics-changing mutations; CKODMK returns zero false `PASS` decisions in the declared supported class and reports an exact confidence bound. | `PENDING` |
-| H6 — real deployment | The frozen protocol covers at least six real trained models, two architecture families, two independent transformation toolchains, and two named physical target profiles. | `PENDING` |
+| H6 — real deployment | The frozen protocol covers at least six real trained models, two architecture families, two independent transformation toolchains, and two named physical target profiles. | `PENDING — TOOLCHAIN PORTION INTERNALLY EXECUTED`: ONNX Runtime and ONNXScript candidates now cover six models/two families; a second named physical target and external reproduction remain absent. |
 | H7 — matched baselines | CKODMK is compared at matched evaluation cost with hash-only provenance, ordinary differential testing, and the strongest applicable existing validator. | `PENDING` |
 | H8 — external reproduction | A qualified third party reproduces conformance verdicts and aggregate real-device results from the published package without private guidance. | `PENDING` |
 | H9 — reproducible disclosure | Public or auditor-accessible artifacts include raw data, failures, exclusions, scripts, dependency locks, licenses, SBOM, and digests sufficient to repeat the evaluation. | `PENDING` |
@@ -182,7 +182,8 @@ mistaken for a qualification evaluation:
 | Real-model lab summary | `sha256:fab6200e0e75c19d81d9c5f7aaa9f7bf193af12fd689647f11214f0e722c0303` |
 | Internal protocol | `sha256:77f3dd5096db758cc1b31666dcc1f904048b0ca5da9699a9958a7bbcdb6d56fc` |
 | Rust Gate adjudicator | `sha256:58c0cd14fc5d5e96f0a4f1e98ff3a225362de34e5c5a261b7c795bac3ec14447` |
-| Real-model scope | 3 retained MLPs plus 3 browser RBF models, 2 families, 1 dataset, browser execution in Chromium and WebKit, ONNX Runtime and CKODMK browser candidate generation, 1 physical CPU; second transformation-toolchain and second-device evidence remain absent |
+| Real-model scope | 3 retained MLPs plus 3 browser RBF models, 2 families, 1 dataset, browser execution in Chromium and WebKit, ONNX Runtime and ONNXScript external candidate generation, CKODMK browser generation, 1 physical CPU; second-device evidence remains absent |
+| Second-toolchain lab | ONNXScript 0.7.1, 9 Gemm fusions, 6/6 Gate/Rust/Polygraphy passes, 3 NumPy-profile passes and 3 explicit unsupported RBF results; manifest `sha256:e8ddce2d7a9a3a0b5a0dbe8afa31f6cac8eed914698ced1cca4b4ba7a257d978`; internal E2 only |
 | Exact suites | Python 18/18; Rust exact checker 2/2 |
 | Gate suites | Python Gate 15/15; Rust adjudicator 18/18 |
 | Independent ONNX checker | NumPy implementation 38/38; no Gate, ONNX Runtime, or Polygraphy execution code; external audit absent |
