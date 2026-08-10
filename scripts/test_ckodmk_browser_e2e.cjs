@@ -103,15 +103,16 @@ function assertPassingResult(result, label) {
     await page.setOfflineMode(true);
     await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
     await page.click("#load-demo");
-    await page.waitForFunction(
-      () =>
-        document.querySelector("#gate-decision").textContent === "READY" &&
-        document.querySelector("#gate-status").textContent.startsWith("Real trained-model demo loaded") &&
-        ["gate-source", "gate-candidate", "gate-dataset", "gate-contract"].every((id) => document.getElementById(id).files.length === 1),
-      { timeout: 30000 }
-    );
-    const controlsEnabled = await page.evaluate(() => !document.querySelector("#load-demo").disabled && !document.querySelector("#run-gate").disabled);
-    if (!controlsEnabled) throw new Error("retained model controls stayed disabled after loading");
+    await page.waitForSelector("#load-demo:not([disabled])", { timeout: 30000 });
+    const loaded = await page.evaluate(() => ({
+      decision: document.querySelector("#gate-decision").textContent,
+      status: document.querySelector("#gate-status").textContent,
+      controlsEnabled: !document.querySelector("#load-demo").disabled && !document.querySelector("#run-gate").disabled,
+      fileCounts: ["gate-source", "gate-candidate", "gate-dataset", "gate-contract"].map((id) => document.getElementById(id).files.length)
+    }));
+    if (loaded.decision !== "READY" || !loaded.status.startsWith("Real trained-model demo loaded") || !loaded.controlsEnabled || loaded.fileCounts.some((count) => count !== 1)) {
+      throw new Error(`retained model did not finish loading: ${JSON.stringify(loaded)}`);
+    }
     const offlineResult = await runGate(page);
     assertPassingResult(offlineResult, "offline phone");
     if (errors.length) throw new Error(`browser console errors: ${JSON.stringify(errors)}`);

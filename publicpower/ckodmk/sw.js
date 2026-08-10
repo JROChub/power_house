@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-4";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-5";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
@@ -31,6 +31,9 @@ async function cacheCoreAsset(cache, path) {
   const body = await response.arrayBuffer();
   if (body.byteLength < 1 || body.byteLength > MAX_CORE_ASSET_BYTES) throw new Error(`offline asset size rejected: ${path}`);
   const headers = new Headers(response.headers);
+  headers.delete("content-encoding");
+  headers.delete("content-range");
+  headers.delete("transfer-encoding");
   headers.set("content-length", String(body.byteLength));
   await cache.put(request, new Response(body, { status: response.status, statusText: response.statusText, headers }));
 }
