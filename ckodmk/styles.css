@@ -180,7 +180,7 @@ footer p { font: 10px/1.5 monospace; }
   .evidence-lab { grid-template-columns: 1fr; }
   .candidate-list { grid-template-columns: 1fr 1fr; border-right: 0; border-bottom: 1px solid var(--line); }
   .file-grid { grid-template-columns: 1fr; }
-  .mobile-start { position: sticky; top: 72px; z-index: 20; align-items: stretch; flex-direction: column; margin: -35px 0 14px; padding: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+  .mobile-start { align-items: stretch; flex-direction: column; margin: -35px 0 14px; padding: 16px; }
   .mobile-start button { width: 100%; min-width: 0; min-height: 56px; }
   .hero-actions, .hero-actions .button { width: 100%; }
   .hero-actions .button { min-height: 48px; text-align: center; }
