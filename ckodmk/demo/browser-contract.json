@@ -1,7 +1,7 @@
 {
   "candidate": {
     "format": "onnx",
-    "sha256": "sha256:528a4414a6212f234cc8781539f32f148a21188407e9e59dad6ae4a9b7c92531"
+    "sha256": "sha256:d3f98ad864f5aaa270834ec788dc33f5408c6d4164c56c249f1427376ab2e782"
   },
   "claims": [
     {

@@ -8,13 +8,13 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CKODMK">
-  <meta name="description" content="CKODMK compares source and candidate ONNX models against a declared dataset and contract.">
-  <meta property="og:title" content="CKODMK ONNX verification">
-  <meta property="og:description" content="Browser and command line verification for ONNX model candidates.">
+  <meta name="description" content="CKODMK builds and checks supported ONNX model candidates in the browser.">
+  <meta property="og:title" content="CKODMK ONNX model tool">
+  <meta property="og:description" content="Browser candidate generation and verification for supported ONNX models.">
   <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
   <meta property="og:url" content="https://mfenx.com/ckodmk/">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
-  <title>CKODMK ONNX verification</title>
+  <title>CKODMK ONNX model tool</title>
   <link rel="canonical" href="https://mfenx.com/ckodmk/">
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
@@ -22,7 +22,8 @@
   <link rel="stylesheet" href="styles.css?v=20260810d">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810d" defer></script>
-  <script src="browser-gate.js?v=20260810d" defer></script>
+  <script src="browser-optimizer.js?v=20260810e" defer></script>
+  <script src="browser-gate.js?v=20260810e" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -44,8 +45,8 @@
       <div class="hero-grid" aria-hidden="true"></div>
       <div class="hero-copy">
         <p class="eyebrow"><i></i> CKODMK 0.2</p>
-        <h1 id="hero-title">ONNX MODEL<br><span>VERIFICATION</span></h1>
-        <p class="lede">CKODMK compares a source ONNX model with a candidate model using a declared dataset and contract. The result is <b>PASS</b>, <b>BLOCK</b>, or <b>INCONCLUSIVE</b>.</p>
+        <h1 id="hero-title">ONNX MODEL<br><span>BUILD AND CHECK</span></h1>
+        <p class="lede">CKODMK can build an INT8 candidate from a supported source model, compare both models using declared data and claims, and export the candidate and report.</p>
         <div class="hero-actions">
           <a class="button primary" href="#browser-gate">OPEN CKODMK</a>
           <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
@@ -56,9 +57,9 @@
       <aside class="decision-console" aria-label="CKODMK browser application summary">
         <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
         <div class="app-preview">
-          <span>01</span><p>Choose the included trained example or your own supported files.</p>
-          <span>02</span><p>Run the complete declared data set on this device.</p>
-          <span>03</span><p>Review every claim and save or share the report.</p>
+          <span>01</span><p>Choose the trained example or a supported two layer ONNX MLP.</p>
+          <span>02</span><p>Build a deterministic dynamic INT8 candidate on this device.</p>
+          <span>03</span><p>Check the declared data, then save the candidate and report.</p>
         </div>
         <div class="console-status"><i></i><span>UNSUPPORTED CLAIMS DO NOT PASS</span></div>
       </aside>
@@ -73,18 +74,18 @@
 
     <section id="browser-gate" class="section browser-gate">
       <div class="section-head">
-        <p class="eyebrow">BROWSER VERIFICATION</p>
+        <p class="eyebrow">BROWSER APPLICATION</p>
         <h2>Run CKODMK on this device.</h2>
-        <p>Start the trained example with one tap or select your own supported files. CKODMK hashes and executes the files locally. It does not upload them.</p>
+        <p>Build and check the trained example with one tap or select your own supported source. CKODMK performs candidate generation, hashing, execution, and claim checks locally. It does not upload the files.</p>
       </div>
       <div class="mobile-start" aria-label="Quick start">
-        <div><strong>QUICK START</strong><span>Runs the retained trained model locally on this phone, tablet, or computer.</span></div>
-        <button id="run-demo" class="primary" type="button">RUN TRAINED EXAMPLE</button>
+        <div><strong>QUICK START</strong><span>Builds an INT8 candidate from the trained source, checks every declared row, then enables both downloads.</span></div>
+        <button id="run-demo" class="primary" type="button">BUILD AND VERIFY EXAMPLE</button>
       </div>
       <div class="gate-shell">
         <form id="gate-form" novalidate>
-          <h3 class="form-title">VERIFY YOUR FILES</h3>
-          <p class="form-help">Select all four files, enter the separately supplied contract digest, then run the check.</p>
+          <h3 class="form-title">BUILD OR VERIFY YOUR FILES</h3>
+          <p class="form-help">For candidate generation, select a supported source and choose BUILD INT8 CANDIDATE. For verification, provide all four files and the separately supplied contract digest.</p>
           <div class="file-grid">
             <label><span>01 / SOURCE ONNX</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
             <label><span>02 / CANDIDATE ONNX</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
@@ -93,9 +94,13 @@
           </div>
           <label class="digest-input"><span>EXPECTED CONTRACT SHA-256 / INDEPENDENTLY PROVIDED DIGEST</span><input id="gate-contract-digest" type="text" spellcheck="false" autocomplete="off" placeholder="sha256:64 lowercase hexadecimal characters" required></label>
           <div class="gate-actions">
-            <button id="load-demo" type="button">LOAD RETAINED MODEL</button>
+            <button id="load-demo" type="button">LOAD EXAMPLE INPUTS</button>
+            <button id="build-candidate" type="button">BUILD INT8 CANDIDATE</button>
+            <button id="create-contract" type="button">CREATE TEST CONTRACT</button>
             <button id="run-gate" class="primary" type="submit">RUN LOCAL GATE</button>
             <button id="cancel-gate" type="button" disabled>CANCEL</button>
+            <button id="download-candidate" type="button" disabled>DOWNLOAD CANDIDATE</button>
+            <button id="download-contract" type="button" disabled>DOWNLOAD CONTRACT</button>
             <button id="download-report" type="button" disabled>DOWNLOAD REPORT</button>
             <button id="share-report" type="button" disabled>SHARE REPORT</button>
           </div>
@@ -109,6 +114,7 @@
             <div><dt>Decision changes</dt><dd id="gate-changes">Not run</dd></div>
             <div><dt>Accuracy delta</dt><dd id="gate-accuracy">Not run</dd></div>
             <div><dt>Maximum L∞</dt><dd id="gate-linf">Not run</dd></div>
+            <div><dt>Model bytes</dt><dd id="gate-size">Not built</dd></div>
           </dl>
           <ol id="gate-claims" aria-label="Claim results"></ol>
           <small>Execution scope: ONNX Runtime Web 1.27.0 / WASM / batch one. This page does not evaluate native runtime, device, latency, power, thermal, or universal equivalence claims.</small>

@@ -1,7 +1,7 @@
 {
-  "name": "CKODMK ONNX Verification",
+  "name": "CKODMK ONNX Model Tool",
   "short_name": "CKODMK",
-  "description": "Compare source and candidate ONNX models against a declared dataset and contract.",
+  "description": "Build and check supported ONNX model candidates on this device.",
   "id": "/ckodmk/",
   "start_url": "./",
   "scope": "./",
