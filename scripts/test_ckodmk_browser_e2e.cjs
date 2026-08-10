@@ -27,6 +27,7 @@ async function runGate(page) {
     changes: document.querySelector("#gate-changes").textContent,
     accuracy: document.querySelector("#gate-accuracy").textContent,
     linf: document.querySelector("#gate-linf").textContent,
+    status: document.querySelector("#gate-status").textContent,
     claims: [...document.querySelectorAll("#gate-claims li b")].map((node) => node.textContent),
     width: document.documentElement.scrollWidth,
     viewport: document.documentElement.clientWidth
@@ -102,7 +103,15 @@ function assertPassingResult(result, label) {
     await page.setOfflineMode(true);
     await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
     await page.click("#load-demo");
-    await page.waitForFunction(() => document.querySelector("#gate-decision").textContent === "READY", { timeout: 30000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("#gate-decision").textContent === "READY" &&
+        document.querySelector("#gate-status").textContent.startsWith("Real trained-model demo loaded") &&
+        ["gate-source", "gate-candidate", "gate-dataset", "gate-contract"].every((id) => document.getElementById(id).files.length === 1),
+      { timeout: 30000 }
+    );
+    const controlsEnabled = await page.evaluate(() => !document.querySelector("#load-demo").disabled && !document.querySelector("#run-gate").disabled);
+    if (!controlsEnabled) throw new Error("retained model controls stayed disabled after loading");
     const offlineResult = await runGate(page);
     assertPassingResult(offlineResult, "offline phone");
     if (errors.length) throw new Error(`browser console errors: ${JSON.stringify(errors)}`);
