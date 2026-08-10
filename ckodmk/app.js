@@ -87,7 +87,7 @@ if ("serviceWorker" in navigator) {
         new Promise((_, reject) => window.setTimeout(() => reject(new Error("offline installation timed out")), 30000))
       ]);
       document.documentElement.dataset.offlineReady = "true";
-      setInstallStatus("CKODMK is ready for home screen installation and offline use of the retained example.");
+      setInstallStatus("CKODMK is ready for home screen installation and offline use of all six included trained models.");
     } catch {
       document.documentElement.dataset.offlineReady = "false";
       setInstallStatus("Offline installation is unavailable. Browser verification still works while connected.");

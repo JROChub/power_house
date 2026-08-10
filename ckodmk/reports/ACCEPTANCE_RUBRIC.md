@@ -182,7 +182,7 @@ mistaken for a qualification evaluation:
 | Real-model lab summary | `sha256:fab6200e0e75c19d81d9c5f7aaa9f7bf193af12fd689647f11214f0e722c0303` |
 | Internal protocol | `sha256:77f3dd5096db758cc1b31666dcc1f904048b0ca5da9699a9958a7bbcdb6d56fc` |
 | Rust Gate adjudicator | `sha256:58c0cd14fc5d5e96f0a4f1e98ff3a225362de34e5c5a261b7c795bac3ec14447` |
-| Real-model scope | 3 retained MLPs plus 3 browser RBF models, 2 families, 1 dataset, ONNX Runtime and CKODMK browser candidate generation, 1 physical CPU; second transformation-toolchain and second-device evidence remain absent |
+| Real-model scope | 3 retained MLPs plus 3 browser RBF models, 2 families, 1 dataset, browser execution in Chromium and WebKit, ONNX Runtime and CKODMK browser candidate generation, 1 physical CPU; second transformation-toolchain and second-device evidence remain absent |
 | Exact suites | Python 18/18; Rust exact checker 2/2 |
 | Gate suites | Python Gate 15/15; Rust adjudicator 18/18 |
 | Independent ONNX checker | NumPy implementation 38/38; no Gate, ONNX Runtime, or Polygraphy execution code; external audit absent |
