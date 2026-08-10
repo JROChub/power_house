@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050807">
+  <meta name="description" content="CKODMK compares source and candidate ONNX models against a declared dataset and contract.">
+  <meta property="og:title" content="CKODMK ONNX verification">
+  <meta property="og:description" content="Browser and command line verification for ONNX model candidates.">
+  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
+  <meta property="og:url" content="https://mfenx.com/ckodmk/">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+  <title>CKODMK ONNX verification</title>
+  <link rel="canonical" href="https://mfenx.com/ckodmk/">
+  <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
+  <link rel="stylesheet" href="styles.css?v=20260810">
+  <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
+  <script src="app.js?v=20260810" defer></script>
+  <script src="browser-gate.js?v=20260810" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="/" aria-label="MFENX home">
+      <img src="assets/powerhouse-logo.svg" alt="">
+      <span><strong>MFENX</strong><small>CKODMK</small></span>
+    </a>
+    <nav aria-label="CKODMK navigation">
+      <a href="#evidence">Evidence</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#install">Install</a>
+      <a href="#limits">Coverage</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="eyebrow"><i></i> CKODMK 0.2</p>
+        <h1 id="hero-title">ONNX MODEL<br><span>VERIFICATION</span></h1>
+        <p class="lede">CKODMK compares a source ONNX model with a candidate model using a declared dataset and contract. The result is <b>PASS</b>, <b>BLOCK</b>, or <b>INCONCLUSIVE</b>.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#browser-gate">BROWSER VERIFICATION</a>
+          <a class="button" href="#install">COMMAND LINE INSTALL</a>
+        </div>
+        <p class="boundary">The report states the evaluated dataset, runtime, claims, results, and unsupported claims.</p>
+      </div>
+      <aside class="decision-console" aria-label="Example CKODMK decision">
+        <div class="console-top"><span>EXAMPLE REPORT</span><b>ARTIFACT BINDINGS INCLUDED</b></div>
+        <pre><code><span>$</span> ckodmk verify-onnx \
+  --source approved.onnx \
+  --candidate candidate.onnx \
+  --dataset evaluation.npz \
+  --contract release-contract.json \
+  --contract-sha256 sha256:…
+
+<em>DECISION</em>       PASS
+<em>SCOPE</em>          COMPLETE FINITE SET
+<em>ARTIFACTS</em>      DIGEST BOUND
+<em>UNIVERSAL CLAIM</em> NOT ESTABLISHED</code></pre>
+        <div class="console-status"><i></i><span>UNSUPPORTED CLAIMS DO NOT PASS</span></div>
+      </aside>
+    </section>
+
+    <section class="proof-strip" aria-label="Current evidence summary">
+      <div><strong>3</strong><span>TRAINED MODELS</span><small>UCI Optdigits MLPs</small></div>
+      <div><strong>1,797</strong><span>ROWS PER PAIR</span><small>Complete official test split</small></div>
+      <div><strong>0 / 120</strong><span>FALSE PASS</span><small>Selected internal fault corpus</small></div>
+      <div><strong>3</strong><span>CHECKING PATHS</span><small>Python, Rust, independent NumPy</small></div>
+    </section>
+
+    <section id="browser-gate" class="section browser-gate">
+      <div class="section-head">
+        <p class="eyebrow">BROWSER VERIFICATION</p>
+        <h2>Compare two ONNX models.</h2>
+        <p>Select a source model, candidate model, canonical NPZ dataset, and browser contract. CKODMK hashes and executes the files in this browser. The files are not uploaded. The included example uses a retained trained model.</p>
+      </div>
+      <div class="gate-shell">
+        <form id="gate-form" novalidate>
+          <div class="file-grid">
+            <label><span>01 / SOURCE ONNX</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
+            <label><span>02 / CANDIDATE ONNX</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
+            <label><span>03 / CANONICAL DATASET</span><input id="gate-dataset" type="file" accept=".npz,application/octet-stream" required><small id="dataset-name">No file selected</small></label>
+            <label><span>04 / BROWSER CONTRACT</span><input id="gate-contract" type="file" accept=".json,application/json" required><small id="contract-name">No file selected</small></label>
+          </div>
+          <label class="digest-input"><span>EXPECTED CONTRACT SHA-256 / INDEPENDENTLY PROVIDED DIGEST</span><input id="gate-contract-digest" type="text" spellcheck="false" autocomplete="off" placeholder="sha256:64 lowercase hexadecimal characters" required></label>
+          <div class="gate-actions">
+            <button id="load-demo" type="button">LOAD RETAINED MODEL</button>
+            <button id="run-gate" class="primary" type="submit">RUN LOCAL GATE</button>
+            <button id="cancel-gate" type="button" disabled>CANCEL</button>
+            <button id="download-report" type="button" disabled>DOWNLOAD REPORT</button>
+          </div>
+        </form>
+        <aside class="gate-output" aria-live="polite" aria-atomic="false">
+          <header><span>LOCAL EXECUTION</span><b id="gate-decision">READY</b></header>
+          <div class="progress" aria-label="Verification progress"><i id="gate-progress"></i></div>
+          <p id="gate-status">Load the retained model example or choose four local files.</p>
+          <dl>
+            <div><dt>Rows evaluated</dt><dd id="gate-rows">0 / 0</dd></div>
+            <div><dt>Decision changes</dt><dd id="gate-changes">Not run</dd></div>
+            <div><dt>Accuracy delta</dt><dd id="gate-accuracy">Not run</dd></div>
+            <div><dt>Maximum L∞</dt><dd id="gate-linf">Not run</dd></div>
+          </dl>
+          <ol id="gate-claims" aria-label="Claim results"></ol>
+          <small>Execution scope: ONNX Runtime Web 1.27.0 / WASM / batch one. This page does not evaluate native runtime, device, latency, power, thermal, or universal equivalence claims.</small>
+        </aside>
+      </div>
+    </section>
+
+    <section id="evidence" class="section evidence">
+      <div class="section-head">
+        <p class="eyebrow">RETAINED TEST RESULTS</p>
+        <h2>Results from the named test machine.</h2>
+        <p>Six source and candidate pairs were evaluated on all 1,797 rows of the test file. Select a candidate to view its recorded measurements.</p>
+      </div>
+      <div class="evidence-lab">
+        <div class="candidate-list" role="list" aria-label="Retained model candidates">
+          <button type="button" data-candidate="w16-int8" class="active"><b>WIDTH 16</b><span>DYNAMIC INT8</span></button>
+          <button type="button" data-candidate="w32-int8"><b>WIDTH 32</b><span>DYNAMIC INT8</span></button>
+          <button type="button" data-candidate="w64-int8"><b>WIDTH 64</b><span>DYNAMIC INT8</span></button>
+          <button type="button" data-candidate="w16-graph"><b>WIDTH 16</b><span>ORT GRAPH</span></button>
+          <button type="button" data-candidate="w32-graph"><b>WIDTH 32</b><span>ORT GRAPH</span></button>
+          <button type="button" data-candidate="w64-graph"><b>WIDTH 64</b><span>ORT GRAPH</span></button>
+        </div>
+        <article class="candidate-result" aria-live="polite">
+          <header><span id="result-model">WIDTH 16 / DYNAMIC INT8</span><b id="result-decision">PASS</b></header>
+          <dl>
+            <div><dt>Accuracy</dt><dd id="result-accuracy">95.882026% → 95.882026%</dd></div>
+            <div><dt>Decision changes</dt><dd id="result-changes">0 / 1,797</dd></div>
+            <div><dt>Bytes</dt><dd id="result-bytes">5,253 → 3,106</dd></div>
+            <div><dt>Size ratio</dt><dd id="result-ratio">1.691243× smaller</dd></div>
+            <div><dt>Sample p95</dt><dd id="result-latency">0.032763 → 0.043051 ms</dd></div>
+            <div><dt>Max finite set L∞</dt><dd id="result-linf">0.202297449</dd></div>
+          </dl>
+          <p id="result-note">Smaller, but slower on the recorded private test host. The required accuracy and absolute latency claims passed.</p>
+          <a href="reports/REAL_MODEL_RESULTS.md">View retained results</a>
+        </article>
+      </div>
+      <p class="machine">RECORDED ENVIRONMENT: private test host / ONNX Runtime CPU 1.28.0 / one thread</p>
+    </section>
+
+    <section id="architecture" class="section architecture">
+      <div class="section-head">
+        <p class="eyebrow">VERIFICATION COMPONENTS</p>
+        <h2>Candidate generation and checking are separate.</h2>
+      </div>
+      <div class="pipeline" aria-label="CKODMK assurance pipeline">
+        <article><span>01</span><h3>CANDIDATE MODEL</h3><p>The candidate may come from ONNX Runtime, TensorRT, Olive, another compiler, or a manual transformation.</p></article>
+        <i aria-hidden="true">→</i>
+        <article><span>02</span><h3>PYTHON GATE</h3><p>Snapshots bytes, enforces batch one Float32 semantics, executes every declared row, and retains raw output bits and paired timings.</p></article>
+        <i aria-hidden="true">→</i>
+        <article><span>03</span><h3>RUST ADJUDICATOR</h3><p>Separately parses evidence, reads bound labels, rehashes artifacts, and recomputes metrics, claims, and the release verdict.</p></article>
+        <i aria-hidden="true">→</i>
+        <article><span>04</span><h3>NUMPY SHADOW CHECK</h3><p>A distinct strict ONNX evaluator uses neither Gate nor ONNX Runtime. Unsupported device and latency claims remain inconclusive.</p></article>
+      </div>
+    </section>
+
+    <section class="section campaign">
+      <div class="campaign-copy">
+        <p class="eyebrow">INTERNAL FAULT INJECTION TEST</p>
+        <h2>Recorded campaign result.</h2>
+        <p>One committed run evaluated 120 selected target faults, 9 valid controls, and one separate evidence fabrication case. There were zero false <code>PASS</code> decisions. The exact 95% two sided upper bound is 3.027%.</p>
+        <a class="text-link" href="reports/BLIND_CAMPAIGN_V3_RESULTS.md">View fault injection report</a>
+      </div>
+      <div class="campaign-grid">
+        <div><strong>100</strong><span>BLOCK</span></div>
+        <div><strong>20</strong><span>INCONCLUSIVE</span></div>
+        <div><strong>0</strong><span>FALSE PASS</span></div>
+        <div><strong>9 / 9</strong><span>CONTROL PASS</span></div>
+      </div>
+    </section>
+
+    <section id="install" class="section install">
+      <div>
+        <p class="eyebrow">COMMAND LINE TOOL</p>
+        <h2>Install CKODMK 0.2.0.</h2>
+        <p>The wheel provides the Python command line interface. The source repository is private.</p>
+      </div>
+      <div class="install-box">
+        <button type="button" id="copy-install" data-copy="python -m pip install https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl" aria-label="Copy install command">COPY</button>
+        <code>python -m pip install https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl</code>
+        <small>This installs the reproducibly built, SHA-256-published wheel directly from MFENX. The source repository is private.</small>
+      </div>
+      <div class="install-box">
+        <button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256" aria-label="Copy checksum command">COPY</button>
+        <code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256</code>
+        <small>Verify the wheel against the published checksum before installation.</small>
+      </div>
+    </section>
+
+    <section id="limits" class="section limits">
+      <div class="section-head"><p class="eyebrow">CURRENT COVERAGE</p><h2>Claims not evaluated by this release.</h2></div>
+      <ul>
+        <li>No universal “same intelligence” claim.</li>
+        <li>No claim of fastest model, fastest optimizer, or best phone performance.</li>
+        <li>No behavior guarantee outside the declared finite dataset unless a supported exact proof covers it.</li>
+        <li>No external audit, customer deployment, second device, transformer, accelerator, power, or thermal result yet.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>MFENX / CKODMK</strong><small>MODEL DEPLOYMENT ASSURANCE</small></span></a>
+    <p>CKODMK 0.2.0 · Evidence date 2026-08-10</p>
+    <nav><a href="#browser-gate">Browser verification</a><a href="reports/THREAT_MODEL.md">Threat model</a><a href="reports/ACCEPTANCE_RUBRIC.md">Acceptance rubric</a></nav>
+  </footer>
+</body>
+</html>

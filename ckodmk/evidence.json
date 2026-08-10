@@ -1,0 +1,27 @@
+{
+  "schema": "mfenx/ckodmk-web-evidence/v1",
+  "evidence_cutoff": "2026-08-10",
+  "lab_manifest_sha256": "sha256:e0abf8731a4bd9b5ae54fa09734c822e2bfaa94d9263119950c84ce988b0e250",
+  "campaign_report_sha256": "sha256:41fae9b583100a267047968e3ff237d4584647aa92dc519d61ef07cee3f3ce2d",
+  "campaign": {
+    "target_faults": 120,
+    "block": 100,
+    "inconclusive": 20,
+    "false_pass": 0,
+    "valid_controls": 9,
+    "valid_control_pass": 9,
+    "false_pass_two_sided_95_upper": "0.030272972577420065"
+  },
+  "demo": {
+    "source_sha256": "sha256:cd224b0e300d36721ecf961be584b979620779cefa8c5082fe22d838c24a0d47",
+    "candidate_sha256": "sha256:528a4414a6212f234cc8781539f32f148a21188407e9e59dad6ae4a9b7c92531",
+    "dataset_sha256": "sha256:b281019a68b5f20f7900774fffa870f51e3a7df263407d1b73a030358710874d",
+    "contract_sha256": "sha256:f03b6dc284ecd140ea9d7a95c88711079eb585482eb3993173527ceab4a18cf5",
+    "samples": 1797,
+    "input_elements": 115008,
+    "decision_changes": 0,
+    "accuracy_delta_numerator": 0,
+    "accuracy_delta_denominator": 1797,
+    "maximum_linf_native_retained": "0.20229744911193848"
+  }
+}
