@@ -25,10 +25,21 @@ internal evidence even if this checklist was followed.
 
 ## Frozen package
 
-Download the `ckodmk-0.2.0-<commit>` artifact from the selected private GitHub
-Actions release-gate run. Independently record the run URL, commit, artifact
-digest supplied by GitHub, and the contents of `SHA256SUMS`. Verify the ZIP
-before extraction:
+Download `CKODMK-0.2.0-research-evidence.zip`, `SHA256SUMS`, and the wheel from
+the evaluator-selected versioned private GitHub Release. Do not use a mutable
+branch archive or an unversioned website download. Record the release URL,
+annotated tag object, tag's peeled source commit, release asset API digests,
+referenced release-gate run, and `SHA256SUMS` through channels the evaluator
+controls. GitHub Actions artifacts expire and are a CI cross-check, not the
+primary long-term distribution location.
+
+The private GitHub Release and tag remain repository-owner mutable and unsigned
+in v0.2. They provide a named frozen snapshot and API-reported content digests,
+not cryptographic authorization or transparency-log immutability. Any tag,
+release-asset, checksum, CI-commit, or archive-manifest disagreement blocks the
+evaluation.
+
+Verify the ZIP before extraction:
 
 ```bash
 python scripts/verify_release_archive.py \
@@ -103,6 +114,8 @@ SOURCE_DATE_EPOCH=1786320000 .venv-audit/bin/python \
 SOURCE_DATE_EPOCH=1786320000 .venv-audit/bin/python \
   scripts/build_release_archive.py --output /tmp/ckodmk-b.zip
 cmp /tmp/ckodmk-a.zip /tmp/ckodmk-b.zip
+cmp /path/to/downloaded/CKODMK-0.2.0-research-evidence.zip \
+  /tmp/ckodmk-a.zip
 ```
 
 The retained real-model lab is bound to its original device profile and cannot
