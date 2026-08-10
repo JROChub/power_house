@@ -23,8 +23,10 @@
   "result": {
     "candidate_bytes": 7738,
     "candidate_correct": 1734,
+    "cross_host_exact_metrics_asserted": false,
     "decision_changes": 3,
     "max_linf": 0.03775544464588165,
+    "measurement_boundary": "onnxruntime-cpu-builder-observation",
     "samples": 1797,
     "source_bytes": 24365,
     "source_correct": 1735
