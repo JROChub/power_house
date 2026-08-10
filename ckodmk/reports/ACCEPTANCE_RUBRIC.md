@@ -69,8 +69,8 @@ compensate for a failed or missing gate.
 | H5 — blinded hostile campaign | A non-author controls at least 1,000 preregistered semantics-changing mutations; CKODMK returns zero false `PASS` decisions in the declared supported class and reports an exact confidence bound. | `PENDING` |
 | H6 — real deployment | The frozen protocol covers at least six real trained models, two architecture families, two independent transformation toolchains, and two named physical target profiles. | `PENDING — TOOLCHAIN PORTION INTERNALLY EXECUTED`: ONNX Runtime and ONNXScript candidates now cover six models/two families; a second named physical target and external reproduction remain absent. |
 | H7 — matched baselines | CKODMK is compared at matched evaluation cost with hash-only provenance, ordinary differential testing, and the strongest applicable existing validator. | `PENDING` |
-| H8 — external reproduction | A qualified third party reproduces conformance verdicts and aggregate real-device results from the published package without private guidance. | `PENDING` |
-| H9 — reproducible disclosure | Public or auditor-accessible artifacts include raw data, failures, exclusions, scripts, dependency locks, licenses, SBOM, and digests sufficient to repeat the evaluation. | `PENDING` |
+| H8 — external reproduction | A qualified third party reproduces conformance verdicts and aggregate real-device results from the published package without private guidance. | `PENDING — HANDOFF READY`: a complete evaluator checklist and strict phone-report consumer now exist; no third party has executed or signed a result. |
+| H9 — reproducible disclosure | Public or auditor-accessible artifacts include raw data, failures, exclusions, scripts, dependency locks, licenses, SBOM, and digests sufficient to repeat the evaluation. | `PENDING — PRIVATE PACKAGE COMPLETE INTERNALLY`: the deterministic archive now requires both labs, both Python locks, all SBOMs, raw campaign evidence, and the evaluator handoff; external access and reproduction remain unconfirmed. |
 | H10 — consequential use | At least two qualified external teams use CKODMK to govern a real release decision and document integration cost, false alarms, interpretation, and retention intent. | `PENDING` |
 
 `PENDING` is not failure. It means no qualifying evidence has yet been entered.
@@ -184,6 +184,8 @@ mistaken for a qualification evaluation:
 | Rust Gate adjudicator | `sha256:58c0cd14fc5d5e96f0a4f1e98ff3a225362de34e5c5a261b7c795bac3ec14447` |
 | Real-model scope | 3 retained MLPs plus 3 browser RBF models, 2 families, 1 dataset, browser execution in Chromium and WebKit, ONNX Runtime and ONNXScript external candidate generation, CKODMK browser generation, 1 physical CPU; second-device evidence remains absent |
 | Second-toolchain lab | ONNXScript 0.7.1, 9 Gemm fusions, 6/6 Gate/Rust/Polygraphy passes, 3 NumPy-profile passes and 3 explicit unsupported RBF results; manifest `sha256:e8ddce2d7a9a3a0b5a0dbe8afa31f6cac8eed914698ced1cca4b4ba7a257d978`; internal E2 only |
+| External evaluator handoff | Deterministic private archive requires both retained labs, both locks, all SBOMs and raw evidence; `AUDITOR_HANDOFF.md` defines clean execution, non-author mutation control, denominator retention, and signed return package |
+| Browser physical-target return path | Phone-study v2 adds an opt-in evaluator-entered target record, a random session nonce, and a strict consumer that recomputes all schedules and summaries; entered target and timing authenticity remain unattested |
 | Exact suites | Python 18/18; Rust exact checker 2/2 |
 | Gate suites | Python Gate 15/15; Rust adjudicator 18/18 |
 | Independent ONNX checker | NumPy implementation 38/38; no Gate, ONNX Runtime, or Polygraphy execution code; external audit absent |

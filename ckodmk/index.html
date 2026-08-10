@@ -24,7 +24,7 @@
   <script src="app.js?v=20260810e" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
   <script src="browser-gate.js?v=20260810h" defer></script>
-  <script src="phone-study.js?v=20260810b" defer></script>
+  <script src="phone-study.js?v=20260810c" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -127,7 +127,17 @@
           <p class="eyebrow">LOCAL PHONE TIMING</p>
           <h3>Measure the verified pair in this browser.</h3>
           <p>After verification, run 12 warmup pairs and 60 alternating measured pairs. Each observation averages 128 repeated inferences to exceed the browser clock resolution. The result stays on this device until you download or share it.</p>
-          <p class="privacy-note">The report does not collect the processor model, operating system, hostname, filesystem path, user agent, IP address, or account identity.</p>
+          <p class="privacy-note">No device or account information is detected automatically. Optional target values entered below are never uploaded and enter the local report only with explicit consent.</p>
+          <fieldset class="target-declaration">
+            <legend>Optional evaluator entered target record</legend>
+            <label><input id="include-target-declaration" type="checkbox"> Include the following values in my local report</label>
+            <label>Retail device model<input id="target-model" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter retail model"></label>
+            <label>Operating system and version<input id="target-os" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter operating system and version"></label>
+            <label>Browser and version<input id="target-browser" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter browser and version"></label>
+            <label>Evaluator relationship<select id="evaluator-relationship"><option value="independent-external">Independent external evaluator</option><option value="mfenx-author">MFENX author</option><option value="other">Other</option></select></label>
+            <small>Nothing is detected or uploaded. These self declared values are included only if you check the box. They are not device attestation.</small>
+          </fieldset>
+          <p class="method-links"><a href="reports/BROWSER_PHONE_STUDY_V2.md">Timing method</a> <a href="downloads/verify_phone_study.py">Report verifier</a> <a href="reports/AUDITOR_HANDOFF.md">External evaluator checklist</a></p>
         </div>
         <div class="phone-study-results">
           <header><span>PAIRED TIMING</span><b id="phone-study-state">LOCKED</b></header>

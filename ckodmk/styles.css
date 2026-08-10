@@ -115,6 +115,13 @@ h2 { margin: 12px 0 18px; font-size: clamp(38px,5vw,72px); line-height: .95; let
 .phone-study h3 { margin: 12px 0; font: 700 18px/1.3 monospace; }
 .phone-study p { color: var(--muted); line-height: 1.6; }
 .phone-study .privacy-note { color: #8ea097; font: 10px/1.6 monospace; }
+.target-declaration { display: grid; gap: 10px; margin: 18px 0 0; padding: 16px; border: 1px solid var(--line); }
+.target-declaration legend { padding: 0 6px; color: var(--mint); font: 700 10px/1.4 monospace; letter-spacing: .06em; text-transform: uppercase; }
+.target-declaration label { display: grid; gap: 6px; color: var(--muted); font: 10px/1.4 monospace; }
+.target-declaration label:first-of-type { display: flex; align-items: center; gap: 9px; }
+.target-declaration input[type="text"], .target-declaration select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 0; color: var(--ink); background: var(--bg); font: 12px/1.4 monospace; }
+.target-declaration input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--mint); }
+.target-declaration small { color: #8ea097; font: 10px/1.5 monospace; }
 .phone-study-results { padding: 20px; border: 1px solid var(--line); }
 .phone-study-results header { display: flex; justify-content: space-between; color: var(--muted); font: 700 10px/1 monospace; letter-spacing: .08em; }
 .phone-study-results header b { color: var(--mint); }
