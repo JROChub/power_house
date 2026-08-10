@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-9";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-10";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
@@ -9,7 +9,7 @@ const CORE = Object.freeze([
   "./styles.css?v=20260810f",
   "./app.js?v=20260810d",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810f",
+  "./browser-gate.js?v=20260810g",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
   "./assets/icon-192.png",
@@ -18,10 +18,26 @@ const CORE = Object.freeze([
   "./demo/candidate-int8.onnx",
   "./demo/optdigits-official-test.npz",
   "./demo/browser-contract.json",
+  "./demo/mlp-w32/source.onnx",
+  "./demo/mlp-w32/candidate-int8.onnx",
+  "./demo/mlp-w32/browser-contract.json",
+  "./demo/mlp-w32/training-record.json",
+  "./demo/mlp-w64/source.onnx",
+  "./demo/mlp-w64/candidate-int8.onnx",
+  "./demo/mlp-w64/browser-contract.json",
+  "./demo/mlp-w64/training-record.json",
   "./demo/rbf/source.onnx",
   "./demo/rbf/candidate-int8.onnx",
   "./demo/rbf/browser-contract.json",
   "./demo/rbf/training-record.json",
+  "./demo/rbf-c40/source.onnx",
+  "./demo/rbf-c40/candidate-int8.onnx",
+  "./demo/rbf-c40/browser-contract.json",
+  "./demo/rbf-c40/training-record.json",
+  "./demo/rbf-c160/source.onnx",
+  "./demo/rbf-c160/candidate-int8.onnx",
+  "./demo/rbf-c160/browser-contract.json",
+  "./demo/rbf-c160/training-record.json",
   "./vendor/ort/ort.wasm.min.js",
   "./vendor/ort/ort-wasm-simd-threaded.mjs",
   "./vendor/ort/ort-wasm-simd-threaded.wasm"

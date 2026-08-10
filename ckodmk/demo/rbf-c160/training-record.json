@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "candidate_sha256": "sha256:df73e1cfa1b62d7fa025508e7738ef2caeb0a1de4ca3ebb9255d7ddc75eba952",
-    "contract_sha256": "sha256:46a9e1c548198e5401afaee38f2c95bb4a6853d654fffeb62738d94cd3433f0e",
-    "source_sha256": "sha256:69433005e4d7b27e4b047ded25036f8864ba60ed547a59d56139f375eeec4bce"
+    "candidate_sha256": "sha256:7ca3e627e4cdc90c77744019f3a7d338a881f373faffc2c30af3098de53e1563",
+    "contract_sha256": "sha256:562334137aa920289fe2d3082be3be2fd3de35b9094bb60a2d2e8fd3f9b55420",
+    "source_sha256": "sha256:c4d3bb73dc6ff6c1a401423a15de1a1dd0abd3a7fbff3eb78d42b89e75ee6046"
   },
   "dataset": {
     "archive_sha256": "sha256:0d7b054fea010270e9b3f06411c654c5e59547732ad626381980baffe0a23fb0",
@@ -14,50 +14,50 @@
   "model": {
     "center_fit_samples": 3054,
     "center_iterations": 12,
-    "centers": 80,
+    "centers": 160,
     "family": "radial-basis-function-network",
-    "profile": "c80",
+    "profile": "c160",
     "ridge": "0.001",
-    "seed": 2180,
+    "seed": 3160,
     "selected_gamma": "0.25"
   },
   "result": {
-    "candidate_bytes": 7738,
-    "candidate_correct": 1734,
+    "candidate_bytes": 13660,
+    "candidate_correct": 1741,
     "cross_host_exact_metrics_asserted": false,
-    "decision_changes": 3,
-    "max_linf": 0.03775544464588165,
+    "decision_changes": 6,
+    "max_linf": 0.07342107594013214,
     "measurement_boundary": "onnxruntime-cpu-builder-observation",
     "samples": 1797,
-    "source_bytes": 24365,
-    "source_correct": 1735
+    "source_bytes": 48047,
+    "source_correct": 1743
   },
   "schema": "mfenx/ckodmk-browser-rbf-training/v1",
   "selection": {
     "official_test_used": false,
     "training_validation_trials": [
       {
-        "correct": 756,
+        "correct": 761,
         "gamma": "0.25",
         "samples": 769
       },
       {
-        "correct": 753,
+        "correct": 755,
         "gamma": "0.5",
         "samples": 769
       },
       {
-        "correct": 747,
+        "correct": 752,
         "gamma": "1",
         "samples": 769
       },
       {
-        "correct": 729,
+        "correct": 735,
         "gamma": "2",
         "samples": 769
       },
       {
-        "correct": 629,
+        "correct": 641,
         "gamma": "4",
         "samples": 769
       }

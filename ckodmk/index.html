@@ -23,7 +23,7 @@
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810d" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810f" defer></script>
+  <script src="browser-gate.js?v=20260810g" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -66,7 +66,7 @@
     </section>
 
     <section class="proof-strip" aria-label="Current evidence summary">
-      <div><strong>4</strong><span>TRAINED MODELS</span><small>Three MLPs and one radial basis model</small></div>
+      <div><strong>6</strong><span>TRAINED MODELS</span><small>Three MLPs and three radial basis models</small></div>
       <div><strong>1,797</strong><span>ROWS PER PAIR</span><small>Complete official test split</small></div>
       <div><strong>0 / 120</strong><span>FALSE PASS</span><small>Selected internal fault corpus</small></div>
       <div><strong>3</strong><span>CHECKING PATHS</span><small>Python, Rust, independent NumPy</small></div>
@@ -79,8 +79,8 @@
         <p>Build and check the trained example with one tap or select your own supported source. CKODMK performs candidate generation, hashing, execution, and claim checks locally. It does not upload the files.</p>
       </div>
       <div class="mobile-start" aria-label="Quick start">
-        <div><strong>QUICK START</strong><span>Choose a trained model family. CKODMK builds its INT8 candidate here, checks every declared row, then enables both downloads.</span></div>
-        <label class="demo-choice"><span>MODEL FAMILY</span><select id="demo-model" aria-label="Example model family"><option value="mlp">Two layer MLP</option><option value="rbf">Radial basis network</option></select></label>
+        <div><strong>QUICK START</strong><span>Choose one of six trained models. CKODMK builds its INT8 candidate here, checks every declared row, then enables the candidate and report downloads.</span></div>
+        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
         <button id="run-demo" class="primary" type="button">BUILD AND VERIFY EXAMPLE</button>
       </div>
       <div class="gate-shell">

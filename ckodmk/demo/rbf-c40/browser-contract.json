@@ -1,0 +1,72 @@
+{
+  "candidate": {
+    "format": "onnx",
+    "sha256": "sha256:e854f79facd3b6009954f2268a90537db6087183d17235c9a6ef01839e6904e6"
+  },
+  "claims": [
+    {
+      "boundary": "artifact",
+      "criticality": "required",
+      "evidence_required": "digest",
+      "id": "artifact-binding",
+      "parameters": {},
+      "relation": "artifact_identity"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "advisory",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "test-split-decisions",
+      "parameters": {},
+      "relation": "decision_invariant"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "required",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "test-split-accuracy",
+      "parameters": {
+        "metric": "accuracy",
+        "minimum": "-0.01"
+      },
+      "relation": "finite_set_accuracy_delta"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "advisory",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "test-split-logits",
+      "parameters": {
+        "maximum": "0.3",
+        "metric": "linf"
+      },
+      "relation": "bounded_deviation"
+    }
+  ],
+  "contract_id": "optdigits-rbf-c40-s1140/int8/browser-wasm-v1",
+  "dataset": {
+    "batch_size": 1,
+    "format": "numpy-npz-stored-canonical-v1",
+    "input_dtype": "float32",
+    "input_key": "inputs",
+    "input_layout": "NC",
+    "label_key": "labels",
+    "sample_shape": [
+      64
+    ],
+    "samples": 1797,
+    "sha256": "sha256:b281019a68b5f20f7900774fffa870f51e3a7df263407d1b73a030358710874d"
+  },
+  "output": {
+    "class_count": 10,
+    "decision_rule": "argmax-first",
+    "dtype": "float32",
+    "semantic_role": "classification-logits"
+  },
+  "policy_profile": "ckodmk/browser-wasm-f32-batch1-classification/v1",
+  "schema": "mfenx/ckodmk-browser-contract/v1",
+  "source": {
+    "format": "onnx",
+    "sha256": "sha256:5b5b60ffedd217200c55f23fd3f013f9737c531389c14bec1dd6c7f1f8e273b8"
+  }
+}

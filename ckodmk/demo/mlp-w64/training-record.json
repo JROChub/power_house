@@ -1,0 +1,34 @@
+{
+  "algorithm": "minibatch Adam",
+  "batch_size": 128,
+  "epochs": 120,
+  "evidence_scope": "producer-declared recipe and training observations; CKODMK does not replay training or establish that this recipe generated the source weights",
+  "hidden_width": 64,
+  "l2": "9.999999747378752e-05",
+  "learning_rate": "0.003000000026077032",
+  "producer_reported_train_accuracy": 0.999738425320429,
+  "producer_reported_training_history": [
+    {
+      "epoch": 1,
+      "training_accuracy": 0.8710436829714884
+    },
+    {
+      "epoch": 30,
+      "training_accuracy": 0.9916296102537274
+    },
+    {
+      "epoch": 60,
+      "training_accuracy": 0.9971226785247188
+    },
+    {
+      "epoch": 90,
+      "training_accuracy": 0.999738425320429
+    },
+    {
+      "epoch": 120,
+      "training_accuracy": 0.999738425320429
+    }
+  ],
+  "seed": 3907,
+  "source_test_accuracy": 0.9616026711185309
+}
