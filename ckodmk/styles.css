@@ -216,6 +216,7 @@ footer p { font: 10px/1.5 monospace; }
   .limits ul { grid-template-columns: 1fr; }
   .limits li:nth-child(odd), .limits li:nth-child(even) { padding: 24px 0; border-right: 0; }
   footer { align-items: flex-start; flex-direction: column; }
+  footer nav { width: 100%; flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -291,5 +291,5 @@
 
   global.CKODMKPhoneStudy = Object.freeze({ PhoneStudyError, percentile, validateTargetDeclarationFields });
   if (typeof module !== "undefined" && module.exports) module.exports = global.CKODMKPhoneStudy;
-  if (global.document) global.addEventListener("DOMContentLoaded", bind);
+  if (global.document) bind();
 })(typeof window !== "undefined" ? window : globalThis);

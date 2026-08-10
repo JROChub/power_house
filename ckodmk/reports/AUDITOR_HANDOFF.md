@@ -157,3 +157,21 @@ Return one immutable package containing:
 MFENX records an external gate as complete only after checking this return
 package against `ACCEPTANCE_RUBRIC.md`. Silence, access to the repository, a
 green internal CI run, or an unsigned summary is not external reproduction.
+
+The evaluator also completes the strict v1 return record described in
+`specs/external-evaluation-return-v1.md`, signs its exact bytes with an
+independently trusted OpenSSH key, and supplies the detached signature. MFENX
+verifies it with a signer identity and report digest obtained separately:
+
+```bash
+python scripts/verify_external_evaluation.py \
+  external-evaluation.json \
+  --sha256 sha256:<digest-obtained-separately> \
+  --signature external-evaluation.json.sig \
+  --allowed-signers /secure/ckodmk-evaluators.allowed_signers \
+  --evaluator evaluator@example.org
+```
+
+This authenticates the evaluator's assertion and recomputes the profile's
+minimum arithmetic conditions. It does not rerun or approve the referenced raw
+evidence; MFENX must still inspect that immutable return package.
