@@ -19,10 +19,10 @@
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260810b">
+  <link rel="stylesheet" href="styles.css?v=20260810c">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
-  <script src="app.js?v=20260810b" defer></script>
-  <script src="browser-gate.js?v=20260810b" defer></script>
+  <script src="app.js?v=20260810c" defer></script>
+  <script src="browser-gate.js?v=20260810c" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -47,25 +47,19 @@
         <h1 id="hero-title">ONNX MODEL<br><span>VERIFICATION</span></h1>
         <p class="lede">CKODMK compares a source ONNX model with a candidate model using a declared dataset and contract. The result is <b>PASS</b>, <b>BLOCK</b>, or <b>INCONCLUSIVE</b>.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#browser-gate">BROWSER VERIFICATION</a>
+          <a class="button primary" href="#browser-gate">OPEN CKODMK</a>
           <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
         </div>
-        <p id="install-status" class="boundary">The browser application runs on this device. Installation enables home screen access and offline use of the retained example.</p>
+        <p id="install-status" class="boundary">CKODMK runs in this browser. Installation enables home screen access and offline use of the retained example.</p>
         <p class="boundary">The report states the evaluated dataset, runtime, claims, results, and unsupported claims.</p>
       </div>
-      <aside class="decision-console" aria-label="Example CKODMK decision">
-        <div class="console-top"><span>EXAMPLE REPORT</span><b>ARTIFACT BINDINGS INCLUDED</b></div>
-        <pre><code><span>$</span> ckodmk verify-onnx \
-  --source approved.onnx \
-  --candidate candidate.onnx \
-  --dataset evaluation.npz \
-  --contract release-contract.json \
-  --contract-sha256 sha256:…
-
-<em>DECISION</em>       PASS
-<em>SCOPE</em>          COMPLETE FINITE SET
-<em>ARTIFACTS</em>      DIGEST BOUND
-<em>UNIVERSAL CLAIM</em> NOT ESTABLISHED</code></pre>
+      <aside class="decision-console" aria-label="CKODMK browser application summary">
+        <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
+        <div class="app-preview">
+          <span>01</span><p>Choose the included trained example or your own supported files.</p>
+          <span>02</span><p>Run the complete declared data set on this device.</p>
+          <span>03</span><p>Review every claim and save or share the report.</p>
+        </div>
         <div class="console-status"><i></i><span>UNSUPPORTED CLAIMS DO NOT PASS</span></div>
       </aside>
     </section>
@@ -80,11 +74,17 @@
     <section id="browser-gate" class="section browser-gate">
       <div class="section-head">
         <p class="eyebrow">BROWSER VERIFICATION</p>
-        <h2>Compare two ONNX models.</h2>
-        <p>Select a source model, candidate model, canonical NPZ dataset, and browser contract. CKODMK hashes and executes the files in this browser. The files are not uploaded. The included example uses a retained trained model.</p>
+        <h2>Run CKODMK on this device.</h2>
+        <p>Start the trained example with one tap or select your own supported files. CKODMK hashes and executes the files locally. It does not upload them.</p>
+      </div>
+      <div class="mobile-start" aria-label="Quick start">
+        <div><strong>QUICK START</strong><span>Runs the retained trained model locally on this phone, tablet, or computer.</span></div>
+        <button id="run-demo" class="primary" type="button">RUN TRAINED EXAMPLE</button>
       </div>
       <div class="gate-shell">
         <form id="gate-form" novalidate>
+          <h3 class="form-title">VERIFY YOUR FILES</h3>
+          <p class="form-help">Select all four files, enter the separately supplied contract digest, then run the check.</p>
           <div class="file-grid">
             <label><span>01 / SOURCE ONNX</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
             <label><span>02 / CANDIDATE ONNX</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
@@ -97,6 +97,7 @@
             <button id="run-gate" class="primary" type="submit">RUN LOCAL GATE</button>
             <button id="cancel-gate" type="button" disabled>CANCEL</button>
             <button id="download-report" type="button" disabled>DOWNLOAD REPORT</button>
+            <button id="share-report" type="button" disabled>SHARE REPORT</button>
           </div>
         </form>
         <aside class="gate-output" aria-live="polite" aria-atomic="false">
