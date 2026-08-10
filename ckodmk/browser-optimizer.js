@@ -140,15 +140,29 @@
     const rawItems = items.filter((item) => item.number === 9);
     if (rawItems.length !== 1 || rawItems[0].wire !== 2) throw new OptimizerError("tensor must use one raw_data field");
     const elements = dims.reduce((total, value) => total * value, 1);
-    if (!Number.isSafeInteger(elements) || elements > 16000000 || dataType !== 1 || rawItems[0].payload.length !== elements * 4) throw new OptimizerError("tensor is not bounded Float32 raw data");
+    if (!Number.isSafeInteger(elements) || elements > 16000000) throw new OptimizerError("tensor element count exceeds the supported profile");
     const view = new DataView(rawItems[0].payload.buffer, rawItems[0].payload.byteOffset, rawItems[0].payload.byteLength);
-    const data = new Float32Array(elements);
-    for (let index = 0; index < elements; index += 1) {
-      const value = view.getFloat32(index * 4, true);
-      if (!Number.isFinite(value)) throw new OptimizerError("tensor contains a nonfinite coefficient");
-      data[index] = value;
+    if (dataType === 1) {
+      if (rawItems[0].payload.length !== elements * 4) throw new OptimizerError("Float32 tensor raw data has the wrong length");
+      const data = new Float32Array(elements);
+      for (let index = 0; index < elements; index += 1) {
+        const value = view.getFloat32(index * 4, true);
+        if (!Number.isFinite(value)) throw new OptimizerError("tensor contains a nonfinite coefficient");
+        data[index] = value;
+      }
+      return { name, dims, dataType, data };
     }
-    return { name, dims, data };
+    if (dataType === 7 && elements <= 16) {
+      if (rawItems[0].payload.length !== elements * 8) throw new OptimizerError("Int64 tensor raw data has the wrong length");
+      const data = [];
+      for (let index = 0; index < elements; index += 1) {
+        const value = view.getBigInt64(index * 8, true);
+        if (value < BigInt(Number.MIN_SAFE_INTEGER) || value > BigInt(Number.MAX_SAFE_INTEGER)) throw new OptimizerError("Int64 tensor exceeds the safe integer range");
+        data.push(Number(value));
+      }
+      return { name, dims, dataType, data };
+    }
+    throw new OptimizerError("source tensor is outside the supported Float32 or bounded Int64 profile");
   }
 
   function parseNode(message) {
@@ -164,7 +178,7 @@
     return { opType, inputs, output: outputs[0] };
   }
 
-  function validateTopology(nodes, tensors) {
+  function validateMlpTopology(nodes, tensors) {
     const operations = ["MatMul", "Add", "Relu", "MatMul", "Add"];
     if (nodes.length !== operations.length || nodes.some((node, index) => node.opType !== operations[index])) throw new OptimizerError("source graph is not the supported two layer MLP profile");
     const [mm1, add1, relu, mm2, add2] = nodes;
@@ -175,7 +189,42 @@
     const [w1, b1, w2, b2] = names.map((name) => tensors.get(name));
     if (w1.dims.length !== 2 || b1.dims.length !== 1 || w2.dims.length !== 2 || b2.dims.length !== 1 || w1.dims[1] !== b1.dims[0] || w2.dims[0] !== b1.dims[0] || w2.dims[1] !== b2.dims[0]) throw new OptimizerError("source MLP tensor shapes do not agree");
     if (w1.dims[0] > 4096 || w1.dims[1] > 4096 || w2.dims[1] > 4096) throw new OptimizerError("source MLP dimensions exceed the browser optimizer limits");
-    return { mm1, add1, relu, mm2, add2, w1, b1, w2, b2 };
+    if ([w1, b1, w2, b2].some((tensor) => tensor.dataType !== 1)) throw new OptimizerError("source MLP coefficients must be Float32");
+    return { kind: "two-layer-mlp-per-channel-dynamic-int8/v1", mm1, add1, relu, mm2, add2, w1, b1, w2, b2 };
+  }
+
+  function validateRbfTopology(nodes, tensors) {
+    const operations = ["Unsqueeze", "Sub", "Mul", "ReduceSum", "Squeeze", "Mul", "Exp", "MatMul", "Add"];
+    if (nodes.length !== operations.length || nodes.some((node, index) => node.opType !== operations[index])) throw new OptimizerError("source graph is not a supported RBF or two layer MLP profile");
+    const [unsqueeze, subtract, square, reduce, squeeze, gammaMul, exponential, matmul, add] = nodes;
+    const arities = [2, 2, 2, 2, 2, 2, 1, 2, 2];
+    if (nodes.some((node, index) => node.inputs.length !== arities[index])) throw new OptimizerError("source RBF graph arity is outside the supported profile");
+    if (
+      subtract.inputs[0] !== unsqueeze.output || square.inputs[0] !== subtract.output || square.inputs[1] !== subtract.output ||
+      reduce.inputs[0] !== square.output || squeeze.inputs[0] !== reduce.output || gammaMul.inputs[0] !== squeeze.output ||
+      exponential.inputs[0] !== gammaMul.output || matmul.inputs[0] !== exponential.output || add.inputs[0] !== matmul.output
+    ) throw new OptimizerError("source RBF graph connections are outside the supported profile");
+    const names = [unsqueeze.inputs[1], subtract.inputs[1], reduce.inputs[1], squeeze.inputs[1], gammaMul.inputs[1], matmul.inputs[1], add.inputs[1]];
+    const referenced = new Set(names);
+    if (referenced.size !== 6 || tensors.size !== 6 || [...referenced].some((name) => !tensors.has(name))) throw new OptimizerError("source RBF graph must contain exactly six referenced initializers");
+    const axisOne = tensors.get(unsqueeze.inputs[1]);
+    const centers = tensors.get(subtract.inputs[1]);
+    const axisTwo = tensors.get(reduce.inputs[1]);
+    const squeezeAxis = tensors.get(squeeze.inputs[1]);
+    const gamma = tensors.get(gammaMul.inputs[1]);
+    const weight = tensors.get(matmul.inputs[1]);
+    const bias = tensors.get(add.inputs[1]);
+    if (axisTwo !== squeezeAxis || axisOne.dataType !== 7 || axisTwo.dataType !== 7 || axisOne.dims.length !== 1 || axisTwo.dims.length !== 1 || axisOne.data.length !== 1 || axisTwo.data.length !== 1 || axisOne.data[0] !== 1 || axisTwo.data[0] !== 2) throw new OptimizerError("source RBF axes are outside the supported profile");
+    if ([centers, gamma, weight, bias].some((tensor) => tensor.dataType !== 1)) throw new OptimizerError("source RBF coefficients must be Float32");
+    if (centers.dims.length !== 2 || weight.dims.length !== 2 || bias.dims.length !== 1 || gamma.dims.length !== 1 || gamma.dims[0] !== 1 || centers.dims[0] !== weight.dims[0] || weight.dims[1] !== bias.dims[0]) throw new OptimizerError("source RBF tensor shapes do not agree");
+    if (centers.dims[0] < 2 || centers.dims[0] > 4096 || centers.dims[1] < 2 || centers.dims[1] > 4096 || weight.dims[1] < 2 || weight.dims[1] > 4096 || !(gamma.data[0] < 0)) throw new OptimizerError("source RBF dimensions or gamma are outside the supported profile");
+    if (centers.data.some((value) => value < 0 || value > 1)) throw new OptimizerError("source RBF centers must be normalized to [0,1]");
+    return { kind: "normalized-rbf-per-channel-dynamic-int8/v1", unsqueeze, subtract, square, reduce, squeeze, gammaMul, exponential, matmul, add, axisOne, axisTwo, centers, gamma, weight, bias };
+  }
+
+  function validateTopology(nodes, tensors) {
+    if (nodes.length === 5 && nodes[0]?.opType === "MatMul") return validateMlpTopology(nodes, tensors);
+    return validateRbfTopology(nodes, tensors);
   }
 
   function roundEven(value) {
@@ -206,10 +255,37 @@
     return { scales, values };
   }
 
+  function quantizeNormalizedColumns(tensor) {
+    const [rows, columns] = tensor.dims;
+    const scales = new Float32Array(columns);
+    const zeros = new Int8Array(columns);
+    const values = new Int8Array(tensor.data.length);
+    for (let column = 0; column < columns; column += 1) {
+      let maximum = 0;
+      for (let row = 0; row < rows; row += 1) maximum = Math.max(maximum, tensor.data[row * columns + column]);
+      const scale = Math.fround((maximum || 1) / 255);
+      if (!(scale > 0) || !Number.isFinite(scale)) throw new OptimizerError(`center ${tensor.name} has an invalid quantization scale`);
+      scales[column] = scale;
+      zeros[column] = -128;
+      for (let row = 0; row < rows; row += 1) {
+        const index = row * columns + column;
+        values[index] = Math.max(-128, Math.min(127, roundEven(Math.fround(tensor.data[index] / scale)) - 128));
+      }
+    }
+    return { scales, zeros, values };
+  }
+
   function rawFloat32(values) {
     const output = new Uint8Array(values.length * 4);
     const view = new DataView(output.buffer);
     for (let index = 0; index < values.length; index += 1) view.setFloat32(index * 4, values[index], true);
+    return output;
+  }
+
+  function rawInt64(values) {
+    const output = new Uint8Array(values.length * 8);
+    const view = new DataView(output.buffer);
+    for (let index = 0; index < values.length; index += 1) view.setBigInt64(index * 8, BigInt(values[index]), true);
     return output;
   }
 
@@ -244,44 +320,88 @@
     const graphInputs = graphFields.filter((item) => item.number === 11);
     const graphOutputs = graphFields.filter((item) => item.number === 12);
     if (graphInputs.length !== 1 || graphOutputs.length !== 1 || graphInputs[0].wire !== 2 || graphOutputs[0].wire !== 2) throw new OptimizerError("source graph must expose exactly one input and one output");
-    if (oneText(fields(graphInputs[0].payload), 1, "graph input name") !== profile.mm1.inputs[0] || oneText(fields(graphOutputs[0].payload), 1, "graph output name") !== profile.add2.output) throw new OptimizerError("source graph interface does not match its MLP path");
-    const q1 = quantizeColumns(profile.w1);
-    const q2 = quantizeColumns(profile.w2);
-    const n1 = profile.w1.name;
-    const n2 = profile.w2.name;
-    const q1Name = `${n1}_ckodmk_int8`;
-    const q2Name = `${n2}_ckodmk_int8`;
-    const s1Name = `${n1}_ckodmk_scale`;
-    const s2Name = `${n2}_ckodmk_scale`;
-    const z1Name = `${n1}_ckodmk_zero`;
-    const z2Name = `${n2}_ckodmk_zero`;
-    const inputName = profile.mm1.inputs[0];
-    const hiddenName = profile.relu.output;
-    const generatedNodes = [
-      nodeMessage("DynamicQuantizeLinear", [inputName], [`${inputName}_ckodmk_q`, `${inputName}_ckodmk_scale`, `${inputName}_ckodmk_zero`]),
-      nodeMessage("Mul", [`${inputName}_ckodmk_scale`, s1Name], [`${inputName}_${n1}_ckodmk_scale_mul`]),
-      nodeMessage("MatMulInteger", [`${inputName}_ckodmk_q`, q1Name, `${inputName}_ckodmk_zero`, z1Name], [`${profile.mm1.output}_ckodmk_integer`]),
-      nodeMessage("Cast", [`${profile.mm1.output}_ckodmk_integer`], [`${profile.mm1.output}_ckodmk_float`], [castToFloatAttribute()]),
-      nodeMessage("Mul", [`${profile.mm1.output}_ckodmk_float`, `${inputName}_${n1}_ckodmk_scale_mul`], [profile.mm1.output]),
-      nodeMessage("Add", [profile.mm1.output, profile.b1.name], [profile.add1.output]),
-      nodeMessage("Relu", [profile.add1.output], [hiddenName]),
-      nodeMessage("DynamicQuantizeLinear", [hiddenName], [`${hiddenName}_ckodmk_q`, `${hiddenName}_ckodmk_scale`, `${hiddenName}_ckodmk_zero`]),
-      nodeMessage("Mul", [`${hiddenName}_ckodmk_scale`, s2Name], [`${hiddenName}_${n2}_ckodmk_scale_mul`]),
-      nodeMessage("MatMulInteger", [`${hiddenName}_ckodmk_q`, q2Name, `${hiddenName}_ckodmk_zero`, z2Name], [`${profile.mm2.output}_ckodmk_integer`]),
-      nodeMessage("Cast", [`${profile.mm2.output}_ckodmk_integer`], [`${profile.mm2.output}_ckodmk_float`], [castToFloatAttribute()]),
-      nodeMessage("Mul", [`${profile.mm2.output}_ckodmk_float`, `${hiddenName}_${n2}_ckodmk_scale_mul`], [profile.mm2.output]),
-      nodeMessage("Add", [profile.mm2.output, profile.b2.name], [profile.add2.output])
-    ];
-    const generatedTensors = [
-      tensorMessage(profile.b1.name, 1, profile.b1.dims, rawFloat32(profile.b1.data)),
-      tensorMessage(profile.b2.name, 1, profile.b2.dims, rawFloat32(profile.b2.data)),
-      tensorMessage(s1Name, 1, [q1.scales.length], rawFloat32(q1.scales)),
-      tensorMessage(z1Name, 3, [q1.scales.length], new Uint8Array(q1.scales.length)),
-      tensorMessage(q1Name, 3, profile.w1.dims, new Uint8Array(q1.values.buffer)),
-      tensorMessage(s2Name, 1, [q2.scales.length], rawFloat32(q2.scales)),
-      tensorMessage(z2Name, 3, [q2.scales.length], new Uint8Array(q2.scales.length)),
-      tensorMessage(q2Name, 3, profile.w2.dims, new Uint8Array(q2.values.buffer))
-    ];
+    const graphInput = oneText(fields(graphInputs[0].payload), 1, "graph input name");
+    const graphOutput = oneText(fields(graphOutputs[0].payload), 1, "graph output name");
+    let generatedNodes;
+    let generatedTensors;
+    if (profile.kind === "two-layer-mlp-per-channel-dynamic-int8/v1") {
+      if (graphInput !== profile.mm1.inputs[0] || graphOutput !== profile.add2.output) throw new OptimizerError("source graph interface does not match its MLP path");
+      const q1 = quantizeColumns(profile.w1);
+      const q2 = quantizeColumns(profile.w2);
+      const n1 = profile.w1.name;
+      const n2 = profile.w2.name;
+      const q1Name = `${n1}_ckodmk_int8`;
+      const q2Name = `${n2}_ckodmk_int8`;
+      const s1Name = `${n1}_ckodmk_scale`;
+      const s2Name = `${n2}_ckodmk_scale`;
+      const z1Name = `${n1}_ckodmk_zero`;
+      const z2Name = `${n2}_ckodmk_zero`;
+      const hiddenName = profile.relu.output;
+      generatedNodes = [
+        nodeMessage("DynamicQuantizeLinear", [graphInput], [`${graphInput}_ckodmk_q`, `${graphInput}_ckodmk_scale`, `${graphInput}_ckodmk_zero`]),
+        nodeMessage("Mul", [`${graphInput}_ckodmk_scale`, s1Name], [`${graphInput}_${n1}_ckodmk_scale_mul`]),
+        nodeMessage("MatMulInteger", [`${graphInput}_ckodmk_q`, q1Name, `${graphInput}_ckodmk_zero`, z1Name], [`${profile.mm1.output}_ckodmk_integer`]),
+        nodeMessage("Cast", [`${profile.mm1.output}_ckodmk_integer`], [`${profile.mm1.output}_ckodmk_float`], [castToFloatAttribute()]),
+        nodeMessage("Mul", [`${profile.mm1.output}_ckodmk_float`, `${graphInput}_${n1}_ckodmk_scale_mul`], [profile.mm1.output]),
+        nodeMessage("Add", [profile.mm1.output, profile.b1.name], [profile.add1.output]),
+        nodeMessage("Relu", [profile.add1.output], [hiddenName]),
+        nodeMessage("DynamicQuantizeLinear", [hiddenName], [`${hiddenName}_ckodmk_q`, `${hiddenName}_ckodmk_scale`, `${hiddenName}_ckodmk_zero`]),
+        nodeMessage("Mul", [`${hiddenName}_ckodmk_scale`, s2Name], [`${hiddenName}_${n2}_ckodmk_scale_mul`]),
+        nodeMessage("MatMulInteger", [`${hiddenName}_ckodmk_q`, q2Name, `${hiddenName}_ckodmk_zero`, z2Name], [`${profile.mm2.output}_ckodmk_integer`]),
+        nodeMessage("Cast", [`${profile.mm2.output}_ckodmk_integer`], [`${profile.mm2.output}_ckodmk_float`], [castToFloatAttribute()]),
+        nodeMessage("Mul", [`${profile.mm2.output}_ckodmk_float`, `${hiddenName}_${n2}_ckodmk_scale_mul`], [profile.mm2.output]),
+        nodeMessage("Add", [profile.mm2.output, profile.b2.name], [profile.add2.output])
+      ];
+      generatedTensors = [
+        tensorMessage(profile.b1.name, 1, profile.b1.dims, rawFloat32(profile.b1.data)),
+        tensorMessage(profile.b2.name, 1, profile.b2.dims, rawFloat32(profile.b2.data)),
+        tensorMessage(s1Name, 1, [q1.scales.length], rawFloat32(q1.scales)),
+        tensorMessage(z1Name, 3, [q1.scales.length], new Uint8Array(q1.scales.length)),
+        tensorMessage(q1Name, 3, profile.w1.dims, new Uint8Array(q1.values.buffer)),
+        tensorMessage(s2Name, 1, [q2.scales.length], rawFloat32(q2.scales)),
+        tensorMessage(z2Name, 3, [q2.scales.length], new Uint8Array(q2.scales.length)),
+        tensorMessage(q2Name, 3, profile.w2.dims, new Uint8Array(q2.values.buffer))
+      ];
+    } else {
+      if (graphInput !== profile.unsqueeze.inputs[0] || graphOutput !== profile.add.output) throw new OptimizerError("source graph interface does not match its RBF path");
+      const centers = quantizeNormalizedColumns(profile.centers);
+      const head = quantizeColumns(profile.weight);
+      const centerQ = `${profile.centers.name}_ckodmk_int8`;
+      const centerScale = `${profile.centers.name}_ckodmk_scale`;
+      const centerZero = `${profile.centers.name}_ckodmk_zero`;
+      const headQ = `${profile.weight.name}_ckodmk_int8`;
+      const headScale = `${profile.weight.name}_ckodmk_scale`;
+      const headZero = `${profile.weight.name}_ckodmk_zero`;
+      const feature = profile.exponential.output;
+      generatedNodes = [
+        nodeMessage("Unsqueeze", profile.unsqueeze.inputs, [profile.unsqueeze.output]),
+        nodeMessage("DequantizeLinear", [centerQ, centerScale, centerZero], [`${profile.centers.name}_ckodmk_float`]),
+        nodeMessage("Sub", [profile.unsqueeze.output, `${profile.centers.name}_ckodmk_float`], [profile.subtract.output]),
+        nodeMessage("Mul", [profile.subtract.output, profile.subtract.output], [profile.square.output]),
+        nodeMessage("ReduceSum", profile.reduce.inputs, [profile.reduce.output]),
+        nodeMessage("Squeeze", profile.squeeze.inputs, [profile.squeeze.output]),
+        nodeMessage("Mul", [profile.squeeze.output, profile.gamma.name], [profile.gammaMul.output]),
+        nodeMessage("Exp", [profile.gammaMul.output], [feature]),
+        nodeMessage("DynamicQuantizeLinear", [feature], [`${feature}_ckodmk_q`, `${feature}_ckodmk_scale`, `${feature}_ckodmk_zero`]),
+        nodeMessage("Mul", [`${feature}_ckodmk_scale`, headScale], [`${feature}_${profile.weight.name}_ckodmk_scale_mul`]),
+        nodeMessage("MatMulInteger", [`${feature}_ckodmk_q`, headQ, `${feature}_ckodmk_zero`, headZero], [`${profile.matmul.output}_ckodmk_integer`]),
+        nodeMessage("Cast", [`${profile.matmul.output}_ckodmk_integer`], [`${profile.matmul.output}_ckodmk_float`], [castToFloatAttribute()]),
+        nodeMessage("Mul", [`${profile.matmul.output}_ckodmk_float`, `${feature}_${profile.weight.name}_ckodmk_scale_mul`], [profile.matmul.output]),
+        nodeMessage("Add", [profile.matmul.output, profile.bias.name], [profile.add.output])
+      ];
+      generatedTensors = [
+        tensorMessage(profile.axisOne.name, 7, profile.axisOne.dims, rawInt64(profile.axisOne.data)),
+        tensorMessage(profile.axisTwo.name, 7, profile.axisTwo.dims, rawInt64(profile.axisTwo.data)),
+        tensorMessage(profile.gamma.name, 1, profile.gamma.dims, rawFloat32(profile.gamma.data)),
+        tensorMessage(profile.bias.name, 1, profile.bias.dims, rawFloat32(profile.bias.data)),
+        tensorMessage(centerScale, 1, [centers.scales.length], rawFloat32(centers.scales)),
+        tensorMessage(centerZero, 3, [centers.zeros.length], new Uint8Array(centers.zeros.buffer)),
+        tensorMessage(centerQ, 3, profile.centers.dims, new Uint8Array(centers.values.buffer)),
+        tensorMessage(headScale, 1, [head.scales.length], rawFloat32(head.scales)),
+        tensorMessage(headZero, 3, [head.scales.length], new Uint8Array(head.scales.length)),
+        tensorMessage(headQ, 3, profile.weight.dims, new Uint8Array(head.values.buffer))
+      ];
+    }
     const output = [];
     let insertedNodes = false;
     let insertedTensors = false;
@@ -294,7 +414,7 @@
         output.push(item.raw);
       }
     }
-    return concat(output);
+    return { bytes: concat(output), profile: profile.kind };
   }
 
   function validateOpset(modelFields) {
@@ -312,7 +432,7 @@
     if (defaultVersion === null || defaultVersion < 11 || defaultVersion > 21) throw new OptimizerError("default ONNX opset must be between 11 and 21");
   }
 
-  function buildInt8Candidate(source) {
+  function buildCandidate(source) {
     const bytes = source instanceof Uint8Array ? source : new Uint8Array(source);
     if (bytes.length < 1 || bytes.length > MAX_MODEL_BYTES) throw new OptimizerError("source model is empty or exceeds the browser size limit");
     const modelFields = fields(bytes);
@@ -324,7 +444,7 @@
     validateOpset(modelFields);
     const graphs = modelFields.filter((item) => item.number === 7);
     if (graphs.length !== 1 || graphs[0].wire !== 2) throw new OptimizerError("model must contain exactly one graph");
-    const graph = replacementGraph(graphs[0].payload);
+    const generated = replacementGraph(graphs[0].payload);
     const output = [];
     let producerSeen = false;
     let versionSeen = false;
@@ -336,15 +456,17 @@
       } else if (item.number === 7) {
         if (!producerSeen) { output.push(textField(2, "mfenx-ckodmk-browser")); producerSeen = true; }
         if (!versionSeen) { output.push(textField(3, "0.2.0")); versionSeen = true; }
-        output.push(messageField(7, graph));
+        output.push(messageField(7, generated.bytes));
       } else {
         output.push(item.raw);
       }
     }
-    return concat(output);
+    return Object.freeze({ bytes: concat(output), profile: generated.profile });
   }
 
-  const api = Object.freeze({ OptimizerError, buildInt8Candidate });
+  function buildInt8Candidate(source) { return buildCandidate(source).bytes; }
+
+  const api = Object.freeze({ OptimizerError, buildCandidate, buildInt8Candidate });
   global.CKODMKBrowserOptimizer = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

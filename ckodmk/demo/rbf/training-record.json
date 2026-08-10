@@ -1,0 +1,63 @@
+{
+  "artifacts": {
+    "candidate_sha256": "sha256:df73e1cfa1b62d7fa025508e7738ef2caeb0a1de4ca3ebb9255d7ddc75eba952",
+    "contract_sha256": "sha256:46a9e1c548198e5401afaee38f2c95bb4a6853d654fffeb62738d94cd3433f0e",
+    "source_sha256": "sha256:69433005e4d7b27e4b047ded25036f8864ba60ed547a59d56139f375eeec4bce"
+  },
+  "dataset": {
+    "archive_sha256": "sha256:0d7b054fea010270e9b3f06411c654c5e59547732ad626381980baffe0a23fb0",
+    "doi": "10.24432/C50P49",
+    "test_samples": 1797,
+    "training_samples": 3823,
+    "validation_samples": 769
+  },
+  "model": {
+    "center_fit_samples": 3054,
+    "center_iterations": 12,
+    "centers": 80,
+    "family": "radial-basis-function-network",
+    "ridge": "0.001",
+    "seed": 2180,
+    "selected_gamma": "0.25"
+  },
+  "result": {
+    "candidate_bytes": 7738,
+    "candidate_correct": 1734,
+    "decision_changes": 3,
+    "max_linf": 0.03775544464588165,
+    "samples": 1797,
+    "source_bytes": 24365,
+    "source_correct": 1735
+  },
+  "schema": "mfenx/ckodmk-browser-rbf-training/v1",
+  "selection": {
+    "official_test_used": false,
+    "training_validation_trials": [
+      {
+        "correct": 756,
+        "gamma": "0.25",
+        "samples": 769
+      },
+      {
+        "correct": 753,
+        "gamma": "0.5",
+        "samples": 769
+      },
+      {
+        "correct": 747,
+        "gamma": "1",
+        "samples": 769
+      },
+      {
+        "correct": 729,
+        "gamma": "2",
+        "samples": 769
+      },
+      {
+        "correct": 629,
+        "gamma": "4",
+        "samples": 769
+      }
+    ]
+  }
+}

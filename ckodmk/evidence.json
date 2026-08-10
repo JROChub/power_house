@@ -26,5 +26,22 @@
     "accuracy_delta_numerator": 0,
     "accuracy_delta_denominator": 1797,
     "maximum_linf_native_retained": "0.20229744911193848"
+  },
+  "rbf_demo": {
+    "source_sha256": "sha256:69433005e4d7b27e4b047ded25036f8864ba60ed547a59d56139f375eeec4bce",
+    "candidate_sha256": "sha256:df73e1cfa1b62d7fa025508e7738ef2caeb0a1de4ca3ebb9255d7ddc75eba952",
+    "dataset_sha256": "sha256:b281019a68b5f20f7900774fffa870f51e3a7df263407d1b73a030358710874d",
+    "contract_sha256": "sha256:46a9e1c548198e5401afaee38f2c95bb4a6853d654fffeb62738d94cd3433f0e",
+    "training_record_sha256": "sha256:b0ace633f2096276a03e9552ebdc7a0af66e577ab00fc21d20def5721d08b2db",
+    "candidate_generation_profile": "normalized-rbf-per-channel-dynamic-int8/v1",
+    "source_bytes": 24365,
+    "candidate_bytes": 7738,
+    "samples": 1797,
+    "input_elements": 115008,
+    "decision_changes": 3,
+    "accuracy_delta_numerator": -1,
+    "accuracy_delta_denominator": 1797,
+    "maximum_linf_native_retained": "0.03775544464588165",
+    "official_test_used_for_model_selection": false
   }
 }

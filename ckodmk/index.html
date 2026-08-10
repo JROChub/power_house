@@ -19,11 +19,11 @@
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260810d">
+  <link rel="stylesheet" href="styles.css?v=20260810f">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810d" defer></script>
-  <script src="browser-optimizer.js?v=20260810e" defer></script>
-  <script src="browser-gate.js?v=20260810e" defer></script>
+  <script src="browser-optimizer.js?v=20260810f" defer></script>
+  <script src="browser-gate.js?v=20260810f" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -57,7 +57,7 @@
       <aside class="decision-console" aria-label="CKODMK browser application summary">
         <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
         <div class="app-preview">
-          <span>01</span><p>Choose the trained example or a supported two layer ONNX MLP.</p>
+          <span>01</span><p>Choose a trained example or a supported MLP or radial basis ONNX model.</p>
           <span>02</span><p>Build a deterministic dynamic INT8 candidate on this device.</p>
           <span>03</span><p>Check the declared data, then save the candidate and report.</p>
         </div>
@@ -66,7 +66,7 @@
     </section>
 
     <section class="proof-strip" aria-label="Current evidence summary">
-      <div><strong>3</strong><span>TRAINED MODELS</span><small>UCI Optdigits MLPs</small></div>
+      <div><strong>4</strong><span>TRAINED MODELS</span><small>Three MLPs and one radial basis model</small></div>
       <div><strong>1,797</strong><span>ROWS PER PAIR</span><small>Complete official test split</small></div>
       <div><strong>0 / 120</strong><span>FALSE PASS</span><small>Selected internal fault corpus</small></div>
       <div><strong>3</strong><span>CHECKING PATHS</span><small>Python, Rust, independent NumPy</small></div>
@@ -79,7 +79,8 @@
         <p>Build and check the trained example with one tap or select your own supported source. CKODMK performs candidate generation, hashing, execution, and claim checks locally. It does not upload the files.</p>
       </div>
       <div class="mobile-start" aria-label="Quick start">
-        <div><strong>QUICK START</strong><span>Builds an INT8 candidate from the trained source, checks every declared row, then enables both downloads.</span></div>
+        <div><strong>QUICK START</strong><span>Choose a trained model family. CKODMK builds its INT8 candidate here, checks every declared row, then enables both downloads.</span></div>
+        <label class="demo-choice"><span>MODEL FAMILY</span><select id="demo-model" aria-label="Example model family"><option value="mlp">Two layer MLP</option><option value="rbf">Radial basis network</option></select></label>
         <button id="run-demo" class="primary" type="button">BUILD AND VERIFY EXAMPLE</button>
       </div>
       <div class="gate-shell">
@@ -125,7 +126,7 @@
     <section id="evidence" class="section evidence">
       <div class="section-head">
         <p class="eyebrow">RETAINED TEST RESULTS</p>
-        <h2>Results from the named test machine.</h2>
+        <h2>Retained test results.</h2>
         <p>Six source and candidate pairs were evaluated on all 1,797 rows of the test file. Select a candidate to view its recorded measurements.</p>
       </div>
       <div class="evidence-lab">
