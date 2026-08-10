@@ -19,11 +19,12 @@
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260810f">
+  <link rel="stylesheet" href="styles.css?v=20260810g">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810e" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810g" defer></script>
+  <script src="browser-gate.js?v=20260810h" defer></script>
+  <script src="phone-study.js?v=20260810b" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -120,6 +121,30 @@
           <ol id="gate-claims" aria-label="Claim results"></ol>
           <small>Execution scope: ONNX Runtime Web 1.27.0 / WASM / batch one. This page does not evaluate native runtime, device, latency, power, thermal, or universal equivalence claims.</small>
         </aside>
+      </div>
+      <div class="phone-study" aria-live="polite">
+        <div>
+          <p class="eyebrow">LOCAL PHONE TIMING</p>
+          <h3>Measure the verified pair in this browser.</h3>
+          <p>After verification, run 12 warmup pairs and 60 alternating measured pairs. Each observation averages 128 repeated inferences to exceed the browser clock resolution. The result stays on this device until you download or share it.</p>
+          <p class="privacy-note">The report does not collect the processor model, operating system, hostname, filesystem path, user agent, IP address, or account identity.</p>
+        </div>
+        <div class="phone-study-results">
+          <header><span>PAIRED TIMING</span><b id="phone-study-state">LOCKED</b></header>
+          <p id="phone-study-status">Complete the local gate before running the timing study.</p>
+          <dl>
+            <div><dt>Source p50</dt><dd id="phone-source-p50">Not run</dd></div>
+            <div><dt>Source p95</dt><dd id="phone-source-p95">Not run</dd></div>
+            <div><dt>Candidate p50</dt><dd id="phone-candidate-p50">Not run</dd></div>
+            <div><dt>Candidate p95</dt><dd id="phone-candidate-p95">Not run</dd></div>
+          </dl>
+          <div class="gate-actions">
+            <button id="run-phone-study" class="primary" type="button" disabled>RUN LOCAL TIMING</button>
+            <button id="cancel-phone-study" type="button" disabled>CANCEL TIMING</button>
+            <button id="download-phone-study" type="button" disabled>DOWNLOAD TIMING REPORT</button>
+            <button id="share-phone-study" type="button" disabled>SHARE TIMING REPORT</button>
+          </div>
+        </div>
       </div>
     </section>
 

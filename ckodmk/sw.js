@@ -1,15 +1,16 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-11";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-13";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./styles.css?v=20260810f",
+  "./styles.css?v=20260810g",
   "./app.js?v=20260810e",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810g",
+  "./browser-gate.js?v=20260810h",
+  "./phone-study.js?v=20260810b",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
   "./assets/icon-192.png",

@@ -111,6 +111,17 @@ h2 { margin: 12px 0 18px; font-size: clamp(38px,5vw,72px); line-height: .95; let
 .gate-output li b.fail { color: var(--red); }
 .gate-output li b.not-evaluated { color: var(--gold); }
 .gate-output > small { display: block; color: #718078; font: 10px/1.5 monospace; }
+.phone-study { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 14px; padding: 28px; border: 1px solid var(--line); background: var(--panel); }
+.phone-study h3 { margin: 12px 0; font: 700 18px/1.3 monospace; }
+.phone-study p { color: var(--muted); line-height: 1.6; }
+.phone-study .privacy-note { color: #8ea097; font: 10px/1.6 monospace; }
+.phone-study-results { padding: 20px; border: 1px solid var(--line); }
+.phone-study-results header { display: flex; justify-content: space-between; color: var(--muted); font: 700 10px/1 monospace; letter-spacing: .08em; }
+.phone-study-results header b { color: var(--mint); }
+.phone-study-results dl { display: grid; grid-template-columns: 1fr 1fr; margin: 20px 0; }
+.phone-study-results dl div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.phone-study-results dt { color: var(--muted); font: 10px/1.4 monospace; }
+.phone-study-results dd { margin: 5px 0 0; font: 700 13px/1.4 monospace; }
 .evidence-lab { display: grid; grid-template-columns: minmax(220px,.36fr) minmax(0,1fr); border: 1px solid var(--line); }
 .candidate-list { display: grid; align-content: start; border-right: 1px solid var(--line); }
 .candidate-list button { display: flex; justify-content: space-between; padding: 20px; border: 0; border-bottom: 1px solid var(--line); color: var(--muted); background: transparent; text-align: left; cursor: pointer; }
@@ -168,7 +179,7 @@ footer p { font: 10px/1.5 monospace; }
   .pipeline { grid-template-columns: 1fr 1fr; gap: 12px; }
   .pipeline > i { display: none; }
   .campaign, .install { grid-template-columns: 1fr; }
-  .gate-shell { grid-template-columns: 1fr; }
+  .gate-shell, .phone-study { grid-template-columns: 1fr; }
   #gate-form { border-right: 0; border-bottom: 1px solid var(--line); }
 }
 
