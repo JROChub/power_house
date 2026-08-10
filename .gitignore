@@ -24,3 +24,4 @@ __pycache__/
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+scripts/ckodmk-browser-tests/node_modules/

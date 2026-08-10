@@ -39,3 +39,58 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
     window.setTimeout(() => { button.textContent = previous; }, 1500);
   });
 });
+
+let installPrompt = null;
+const installButton = document.getElementById("install-app");
+const installStatus = document.getElementById("install-status");
+
+function setInstallStatus(message) {
+  if (installStatus) installStatus.textContent = message;
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  if (installButton) installButton.disabled = false;
+  setInstallStatus("This browser can install CKODMK on the home screen.");
+});
+
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  if (installButton) installButton.disabled = true;
+  setInstallStatus("CKODMK is installed on this device.");
+});
+
+if (installButton) {
+  installButton.addEventListener("click", async () => {
+    if (installPrompt) {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      setInstallStatus(choice.outcome === "accepted" ? "Installation accepted." : "Installation was not completed.");
+      installPrompt = null;
+      return;
+    }
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setInstallStatus("CKODMK is already running as an installed application.");
+      return;
+    }
+    setInstallStatus("Use the browser menu and choose Add to Home Screen or Install App.");
+  });
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      await navigator.serviceWorker.register("sw.js", { scope: "./", updateViaCache: "none" });
+      await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => window.setTimeout(() => reject(new Error("offline installation timed out")), 30000))
+      ]);
+      document.documentElement.dataset.offlineReady = "true";
+      setInstallStatus("CKODMK is ready for home screen installation and offline use of the retained example.");
+    } catch {
+      document.documentElement.dataset.offlineReady = "false";
+      setInstallStatus("Offline installation is unavailable. Browser verification still works while connected.");
+    }
+  });
+}

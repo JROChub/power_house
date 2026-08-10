@@ -158,14 +158,16 @@ jobs:
 
       - name: CKODMK real-model browser gate
         run: |
-          npm install --prefix /tmp/ckodmk-browser-test --no-save puppeteer-core@24.16.0
+          npm ci --prefix scripts/ckodmk-browser-tests --ignore-scripts
           python3 -m http.server 8765 --bind 127.0.0.1 --directory publicpower \
             >/tmp/ckodmk-browser-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           chrome_path="$(command -v google-chrome || command -v chromium)"
-          NODE_PATH=/tmp/ckodmk-browser-test/node_modules \
+          "$chrome_path" --version
+          NODE_PATH=scripts/ckodmk-browser-tests/node_modules \
             CKODMK_CHROME="$chrome_path" \
+            CKODMK_WEB_ROOT=publicpower/ckodmk \
             node scripts/test_ckodmk_browser_e2e.cjs
 
       - name: Soundness budget checks

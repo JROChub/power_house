@@ -41,7 +41,8 @@ h1 span { color: transparent; -webkit-text-stroke: 1px rgba(239,248,242,.58); }
 .lede { max-width: 720px; color: #c3d0ca; font-size: clamp(17px,1.5vw,22px); line-height: 1.6; }
 .lede b { color: var(--acid); font-family: monospace; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
-.button { padding: 15px 20px; border: 1px solid var(--line); color: var(--paper); background: rgba(255,255,255,.02); font: 750 11px/1 monospace; letter-spacing: .1em; text-decoration: none; }
+.button { padding: 15px 20px; border: 1px solid var(--line); color: var(--paper); background: rgba(255,255,255,.02); font: 750 11px/1 monospace; letter-spacing: .1em; text-decoration: none; cursor: pointer; }
+.button:disabled { opacity: .55; cursor: not-allowed; }
 .button.primary { border-color: var(--mint); color: #02110d; background: var(--mint); }
 .button:hover, .button:focus-visible { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(66,226,193,.12); }
 .boundary { margin-top: 26px; color: #78877f; font: 11px/1.6 monospace; }
@@ -168,7 +169,10 @@ footer p { font: 10px/1.5 monospace; }
   .evidence-lab { grid-template-columns: 1fr; }
   .candidate-list { grid-template-columns: 1fr 1fr; border-right: 0; border-bottom: 1px solid var(--line); }
   .file-grid { grid-template-columns: 1fr; }
+  .hero-actions, .hero-actions .button { width: 100%; }
+  .hero-actions .button { min-height: 48px; text-align: center; }
   .gate-actions button.primary { margin-left: 0; }
+  .gate-actions button { flex: 1 1 calc(50% - 9px); min-height: 48px; }
   .candidate-list button { display: grid; gap: 6px; }
   .candidate-result dl { grid-template-columns: 1fr 1fr; }
   .pipeline { grid-template-columns: 1fr; }
