@@ -3,6 +3,14 @@
   "evidence_cutoff": "2026-08-10",
   "lab_manifest_sha256": "sha256:e0abf8731a4bd9b5ae54fa09734c822e2bfaa94d9263119950c84ce988b0e250",
   "campaign_report_sha256": "sha256:41fae9b583100a267047968e3ff237d4584647aa92dc519d61ef07cee3f3ce2d",
+  "generative_campaign_report_sha256": "sha256:14efaaee77b2fa885e163f6fd3d08c19b31e21b96174d16de1d2ef32ef5e9ac7",
+  "generative_campaign": {
+    "cases": 1000000,
+    "failures": 0,
+    "rust_accepted_certificates": 128,
+    "rust_rejected_certificates": 128,
+    "evidence_level": "internal-reproducible"
+  },
   "campaign": {
     "target_faults": 120,
     "block": 100,

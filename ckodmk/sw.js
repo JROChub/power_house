@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-17";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-18";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
@@ -19,6 +19,25 @@ const CORE = Object.freeze([
   "./demo/candidate-int8.onnx",
   "./demo/optdigits-official-test.npz",
   "./demo/browser-contract.json",
+  "./reports/ACCEPTANCE_RUBRIC.md",
+  "./reports/AUDITOR_HANDOFF.md",
+  "./reports/BLIND_CAMPAIGN_V3_RESULTS.md",
+  "./reports/BROWSER_PHONE_STUDY_V2.md",
+  "./reports/EXTERNAL_EVALUATION_RETURN_V1.md",
+  "./reports/GENERATIVE_CAMPAIGN_V1.md",
+  "./reports/GENERATIVE_CAMPAIGN_V1.json",
+  "./reports/GENERATIVE_CAMPAIGN_V1_SPEC.md",
+  "./reports/GOVERNANCE.md",
+  "./reports/REAL_MODEL_RESULTS.md",
+  "./reports/SECOND_TOOLCHAIN_RESULTS.md",
+  "./reports/THREAT_MODEL.md",
+  "./downloads/external-evaluation-pending.json",
+  "./downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl",
+  "./downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256",
+  "./downloads/verify_external_evaluation.py",
+  "./downloads/verify_external_evaluation.py.sha256",
+  "./downloads/verify_phone_study.py",
+  "./downloads/verify_phone_study.py.sha256",
   "./demo/mlp-w32/source.onnx",
   "./demo/mlp-w32/candidate-int8.onnx",
   "./demo/mlp-w32/browser-contract.json",

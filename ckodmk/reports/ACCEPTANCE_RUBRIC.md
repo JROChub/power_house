@@ -193,6 +193,7 @@ mistaken for a qualification evaluation:
 | Mechanized core | Coq 8.20.1; 29/29 exported theorems closed under the recorded global context |
 | Internal hostile outcome | V3 passed: 120 target faults (100 `BLOCK`, 20 expected `INCONCLUSIVE`, 0 false `PASS`), 9/9 controls `PASS`, one evidence fabrication blocked |
 | Internal campaign report | `sha256:41fae9b583100a267047968e3ff237d4584647aa92dc519d61ef07cee3f3ce2d` |
+| Internal generative campaign | 1,000,000/1,000,000 cases passed; report `sha256:14efaaee77b2fa885e163f6fd3d08c19b31e21b96174d16de1d2ef32ef5e9ac7`; internal E2 only |
 | Customer/external use | 0 customers, 0 qualified interviews, 0 pilots, 0 external reproductions |
 
 The Rust Gate adjudicator is separately implemented decision logic but does not
