@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050807">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CKODMK">
   <meta name="description" content="CKODMK compares source and candidate ONNX models against a declared dataset and contract.">
   <meta property="og:title" content="CKODMK ONNX verification">
   <meta property="og:description" content="Browser and command line verification for ONNX model candidates.">
@@ -13,6 +17,8 @@
   <title>CKODMK ONNX verification</title>
   <link rel="canonical" href="https://mfenx.com/ckodmk/">
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css?v=20260810">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810" defer></script>
@@ -42,8 +48,9 @@
         <p class="lede">CKODMK compares a source ONNX model with a candidate model using a declared dataset and contract. The result is <b>PASS</b>, <b>BLOCK</b>, or <b>INCONCLUSIVE</b>.</p>
         <div class="hero-actions">
           <a class="button primary" href="#browser-gate">BROWSER VERIFICATION</a>
-          <a class="button" href="#install">COMMAND LINE INSTALL</a>
+          <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
         </div>
+        <p id="install-status" class="boundary">The browser application runs on this device. Installation enables home screen access and offline use of the retained example.</p>
         <p class="boundary">The report states the evaluated dataset, runtime, claims, results, and unsupported claims.</p>
       </div>
       <aside class="decision-console" aria-label="Example CKODMK decision">
