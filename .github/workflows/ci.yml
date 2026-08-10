@@ -44,6 +44,7 @@ jobs:
             scripts/rpc_load_test.py \
             scripts/test_reliability_campaign.py \
             scripts/test_observatory_contract.py \
+            scripts/test_ckodmk_page.py \
             scripts/test_observer_intake.py \
             scripts/test_observer_registry.py \
             scripts/test_status_registry.py \
@@ -150,8 +151,22 @@ jobs:
         run: |
           node --check publicpower/app.js
           node --check publicpower/campaign.js
+          node --check publicpower/ckodmk/app.js
           node scripts/test_observatory_stream.mjs
           python3 scripts/test_observatory_contract.py
+          python3 scripts/test_ckodmk_page.py
+
+      - name: CKODMK real-model browser gate
+        run: |
+          npm install --prefix /tmp/ckodmk-browser-test --no-save puppeteer-core@24.16.0
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory publicpower \
+            >/tmp/ckodmk-browser-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          chrome_path="$(command -v google-chrome || command -v chromium)"
+          NODE_PATH=/tmp/ckodmk-browser-test/node_modules \
+            CKODMK_CHROME="$chrome_path" \
+            node scripts/test_ckodmk_browser_e2e.cjs
 
       - name: Soundness budget checks
         run: |
