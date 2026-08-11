@@ -38,7 +38,7 @@ The score applies the rubric's evidence multipliers and an explicit scope-covera
 | C1 | E2 | 100.00% | 2.5 / 5 | Qualified external audit. |
 | C2 | E2 | 100.00% | 1.5 / 3 | External parser differential campaign. |
 | C3 | E2 | 100.00% | 1.5 / 3 | External filesystem and failure-injection review. |
-| C4 | E2 | 100.00% | 2 / 4 | Independent corpus execution. |
+| C4 | E2 | 100.00% | 2 / 4 | Independent corpus execution and a mechanized source-code refinement proof. |
 | C5 | E2 | 85.00% | 1.275 / 3 | MFENX owner-root authorization, protected branch, and externally audited provenance. |
 | D1 | E2 | 100.00% | 1.5 / 3 | External replay. |
 | D2 | E2 | 100.00% | 2 / 4 | Non-author generation and coverage review. |
