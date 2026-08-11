@@ -89,6 +89,16 @@ button:disabled { opacity: .42; cursor: not-allowed; }
 .pcm-result header > div { display: grid; gap: 5px; }
 .pcm-result header strong { font-size: 14px; }
 .pcm-result header span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.pcm-checks { display: grid; gap: 8px; margin: 18px 0 4px; padding: 0; list-style: none; }
+.pcm-checks li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 50px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.pcm-checks li > span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; color: var(--text); background: #edf0f3; font-size: 10px; font-weight: 800; }
+.pcm-checks li > div { display: grid; gap: 2px; min-width: 0; }
+.pcm-checks strong { font-size: 11px; }
+.pcm-checks small { overflow: hidden; color: var(--quiet); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.pcm-checks li > b { color: var(--quiet); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
+.pcm-checks li[data-state="checking"] { border-color: var(--accent); }
+.pcm-checks li[data-state="pass"] > span, .pcm-checks li[data-state="pass"] > b { color: var(--success); background: var(--success-soft); }
+.pcm-checks li[data-state="block"] > span, .pcm-checks li[data-state="block"] > b { color: var(--danger); background: var(--danger-soft); }
 .pcm-result dl { display: grid; grid-template-columns: 1fr 1fr; margin: 0 0 18px; }
 .pcm-result dl div { min-width: 0; padding: 14px 12px 14px 0; border-bottom: 1px solid var(--line); }
 .pcm-result dl div:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--line); }

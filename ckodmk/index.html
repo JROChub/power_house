@@ -8,9 +8,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="CKODMK">
-  <meta name="description" content="Build, compare, and inspect supported ONNX models in your browser.">
+  <meta name="description" content="Verify signed proof-carrying ONNX models and enforce their behavioral contracts in your browser.">
   <meta property="og:title" content="CKODMK">
-  <meta property="og:description" content="Local ONNX model optimization and verification.">
+  <meta property="og:description" content="Signed ONNX model admission with local behavioral replay.">
   <meta property="og:image" content="https://mfenx.com/ckodmk/assets/icon-512.png">
   <meta property="og:url" content="https://mfenx.com/ckodmk/">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
@@ -19,16 +19,16 @@
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260811a">
+  <link rel="stylesheet" href="styles.css?v=20260811b">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810h" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
   <script src="browser-gate.js?v=20260811a" defer></script>
-  <script src="pcm.js?v=20260811a" defer></script>
+  <script src="pcm.js?v=20260811b" defer></script>
   <script src="phone-study.js?v=20260810f" defer></script>
 </head>
 <body>
-  <a class="skip" href="#workspace">Skip to workspace</a>
+  <a class="skip" href="#pcm-gate">Skip to admission gate</a>
   <header class="site-header">
     <a class="wordmark" href="/" aria-label="MFENX home">
       <img src="assets/powerhouse-logo.svg" alt="">
@@ -74,6 +74,11 @@
         </div>
         <div class="pcm-result" aria-live="polite">
           <header><div><strong>Admission result</strong><span id="pcm-status">Select a PCM or run the included trained-model package.</span></div><b id="pcm-decision" class="decision-badge">Ready</b></header>
+          <ol class="pcm-checks" aria-label="Admission checks">
+            <li id="pcm-check-package" data-state="waiting"><span>1</span><div><strong>Package</strong><small>Issuer, signature, RootID, time and file bindings</small></div><b>Waiting</b></li>
+            <li id="pcm-check-replay" data-state="waiting"><span>2</span><div><strong>Replay</strong><small>Every required behavioral contract check</small></div><b>Waiting</b></li>
+            <li id="pcm-check-admission" data-state="waiting"><span>3</span><div><strong>Admission</strong><small>Unlock only the candidate that passed</small></div><b>Locked</b></li>
+          </ol>
           <dl>
             <div><dt>Statement RootID</dt><dd id="pcm-root-id">Not verified</dd></div>
             <div><dt>Issuer</dt><dd id="pcm-issuer">Not verified</dd></div>

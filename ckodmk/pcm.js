@@ -109,12 +109,26 @@
     const badge = global.document?.getElementById("pcm-decision"); if (badge) { badge.textContent = decision; badge.className = `decision-badge ${decision === "BLOCK" ? "block" : decision === "ADMITTED" ? "pass" : ""}`; }
     const status = global.document?.getElementById("pcm-status"); if (status) status.textContent = message;
   }
+  function check(id, status, label) { const row = global.document?.getElementById(id); if (!row) return; row.dataset.state = status; row.querySelector("b").textContent = label; }
+  function resetAdmission(message = "Select a PCM or run the included trained-model package.") {
+    admittedCandidate = null;
+    const download = global.document.getElementById("download-admitted-model");
+    download.disabled = true;
+    for (const id of ["pcm-root-id", "pcm-issuer", "pcm-expiry", "pcm-artifact"]) global.document.getElementById(id).textContent = "Not verified";
+    check("pcm-check-package", "waiting", "Waiting"); check("pcm-check-replay", "waiting", "Waiting"); check("pcm-check-admission", "waiting", "Locked");
+    state("READY", message);
+  }
+  function blockCurrentCheck() {
+    for (const id of ["pcm-check-package", "pcm-check-replay", "pcm-check-admission"]) { const row = global.document.getElementById(id); if (row?.dataset.state !== "pass") { check(id, "block", "Blocked"); return; } }
+  }
   async function fetchBytes(path, maximum, label) { const response = await fetch(path, { cache: "no-store", credentials: "same-origin" }); if (!response.ok) throw new PCMError(`${label} could not be loaded`); const bytes = new Uint8Array(await response.arrayBuffer()); if (bytes.length < 1 || bytes.length > maximum) throw new PCMError(`${label} exceeds its byte limit`); return bytes; }
   async function admit(raw, trustedKey, requiredKeyId = null) {
-    admittedCandidate = null; const download = global.document.getElementById("download-admitted-model"); download.disabled = true;
+    const download = global.document.getElementById("download-admitted-model");
+    check("pcm-check-package", "checking", "Checking");
     state("VERIFYING", "Checking signature, RootID, trust key, validity and artifact bindings…");
     if (requiredKeyId && await sha256(trustedKey) !== requiredKeyId) throw new PCMError("built-in release key pin mismatch");
     const verified = await verifyEnvelope(raw, trustedKey);
+    check("pcm-check-package", "pass", "Passed"); check("pcm-check-replay", "checking", "Running");
     const files = Object.fromEntries(ARTIFACTS.map((name) => [name, new File([verified.decoded[name].bytes], verified.decoded[name].record.name, { type: verified.decoded[name].record.media_type })]));
     const contractDigest = verified.bundle.statement.artifacts.contract.sha256;
     global.document.getElementById("pcm-root-id").textContent = verified.rootId;
@@ -130,15 +144,15 @@
       if (!["PASS", "BLOCK", "INCONCLUSIVE"].includes(decision)) continue;
       if (global.document.getElementById("gate-contract-digest").value !== contractDigest) throw new PCMError("active contract changed during replay");
       if (decision !== "PASS") { state("BLOCK", "Required behavioral checks failed. The model was not admitted."); throw new PCMError("behavioral replay blocked admission"); }
-      admittedCandidate = files.candidate; download.disabled = false; state("ADMITTED", "Signature, identity, artifacts and required behavioral checks passed. The candidate is admitted in this session."); return verified;
+      admittedCandidate = files.candidate; download.disabled = false; check("pcm-check-replay", "pass", "Passed"); check("pcm-check-admission", "pass", "Unlocked"); state("ADMITTED", "Signature, identity, artifacts and required behavioral checks passed. The candidate is admitted in this session."); return verified;
     }
     throw new PCMError("behavioral replay timed out");
   }
   async function selected() { const file = global.document.getElementById("pcm-file").files[0], key = global.document.getElementById("pcm-trusted-key").files[0]; if (!file || file.size > LIMITS.pcm) throw new PCMError("select a bounded .pcm file"); if (!key || key.size < 1 || key.size > 65536) throw new PCMError("select the issuer's trusted SPKI DER public key"); return admit(new Uint8Array(await file.arrayBuffer()), new Uint8Array(await key.arrayBuffer())); }
   async function included() { const key = await fetchBytes("trust/pcm-release-public.der", 65536, "trusted release key"); return admit(await fetchBytes("pcm/optdigits-cnn-int8.pcm", LIMITS.pcm, "included PCM"), key, TRUSTED_KEY_ID); }
-  function download() { if (!admittedCandidate) return; const url = URL.createObjectURL(admittedCandidate), anchor = global.document.createElement("a"); anchor.href = url; anchor.download = admittedCandidate.name; anchor.click(); URL.revokeObjectURL(url); }
-  function action(operation) { return async () => { const buttons = ["verify-pcm", "verify-included-pcm"].map((id) => global.document.getElementById(id)); buttons.forEach((button) => { button.disabled = true; }); try { await operation(); } catch (error) { state("BLOCK", `Fail closed: ${error.message || "PCM verification failed"}`); } finally { buttons.forEach((button) => { button.disabled = false; }); } }; }
-  function bind() { global.document.getElementById("verify-pcm").addEventListener("click", action(selected)); global.document.getElementById("verify-included-pcm").addEventListener("click", action(included)); global.document.getElementById("download-admitted-model").addEventListener("click", download); }
+  function download() { if (!admittedCandidate) return; const url = URL.createObjectURL(admittedCandidate), anchor = global.document.createElement("a"); anchor.href = url; anchor.download = admittedCandidate.name; anchor.click(); global.setTimeout(() => URL.revokeObjectURL(url), 0); }
+  function action(operation) { return async () => { const buttons = ["verify-pcm", "verify-included-pcm"].map((id) => global.document.getElementById(id)); resetAdmission("Preparing a new admission check…"); buttons.forEach((button) => { button.disabled = true; }); try { await operation(); } catch (error) { blockCurrentCheck(); state("BLOCK", `Fail closed: ${error.message || "PCM verification failed"}`); } finally { buttons.forEach((button) => { button.disabled = false; }); } }; }
+  function bind() { global.document.getElementById("verify-pcm").addEventListener("click", action(selected)); global.document.getElementById("verify-included-pcm").addEventListener("click", action(included)); global.document.getElementById("download-admitted-model").addEventListener("click", download); for (const id of ["pcm-file", "pcm-trusted-key"]) global.document.getElementById(id).addEventListener("change", () => resetAdmission("Selected files changed. Verify again before admission.")); }
 
   const api = Object.freeze({ PCMError, canonical, verifyEnvelope }); global.CKODMKPCM = api; if (typeof module !== "undefined" && module.exports) module.exports = api; if (global.document) bind();
 })(typeof window !== "undefined" ? window : globalThis);
