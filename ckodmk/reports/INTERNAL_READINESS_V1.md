@@ -4,7 +4,7 @@ Artifact: `v0.2.0-evidence.4` at `965600821fef3c4a2dd580be3296ee0f5f1b1dbe`
 Evaluation time: `2026-08-10T23:59:00Z`  
 Status: internal self-assessment; not an external qualification
 
-**Weighted internal score: 38.8625 / 100 (3.88625 / 10).**
+**Weighted internal score: 41.2125 / 100 (4.12125 / 10).**
 Hard gates with internal pass status: **3 / 10**.
 Qualification above 9/10: **NO**.
 
@@ -15,7 +15,7 @@ The score applies the rubric's evidence multipliers and an explicit scope-covera
 | Category | Awarded | Maximum | 9+ minimum | Minimum met |
 |---|---:|---:|---:|---|
 | A. Thesis and prior art | 4.5 | 12 | 10 | NO |
-| B. Formal assurance model | 10 | 22 | 18 | NO |
+| B. Formal assurance model | 12.35 | 22 | 18 | NO |
 | C. Checker and artifact integrity | 8.775 | 18 | 15 | NO |
 | D. Adversarial correctness | 4.8 | 14 | 12 | NO |
 | E. Real-world external validity | 6.8 | 18 | 15 | NO |
@@ -30,9 +30,9 @@ The score applies the rubric's evidence multipliers and an explicit scope-covera
 | A2 | E1 | 100.00% | 1 / 4 | Independent literature review. |
 | A3 | E2 | 100.00% | 1.5 / 3 | External review of the surviving delta. |
 | A4 | E1 | 100.00% | 0.5 / 2 | Professional patent search and independent reviewer. |
-| B1 | E2 | 60.00% | 1.5 / 5 | Semantics for every claimed runtime and composition boundary. |
+| B1 | E3 | 45.00% | 2.25 / 5 | Mechanized semantics for certificates, parsers, resource limits, every assurance construct, Float32 runtime, and deployment kernels. |
 | B2 | E2 | 100.00% | 2 / 4 | External conformance review. |
-| B3 | E3 | 50.00% | 4 / 8 | Mechanized leaf soundness and implementation/specification conformance. |
+| B3 | E3 | 70.00% | 5.6 / 8 | Mechanized parser/resource semantics, leaf-checker soundness, and Python/Rust implementation conformance. |
 | B4 | E2 | 100.00% | 1.5 / 3 | External threat-model review. |
 | B5 | E2 | 100.00% | 1 / 2 | External negative-case reproduction. |
 | C1 | E2 | 100.00% | 2.5 / 5 | Qualified external audit. |
@@ -62,7 +62,7 @@ The score applies the rubric's evidence multipliers and an explicit scope-covera
 | Gate | Status | Missing evidence |
 |---|---|---|
 | H1 | `PASS_INTERNAL` | Qualified external claim review. |
-| H2 | `PASS_INTERNAL_SUBSET` | Concrete implementation conformance and the unmodeled specification. |
+| H2 | `PASS_INTERNAL_SUBSET` | Concrete Python/Rust conformance to the rational rewrite and box definitions, plus the unmodeled specification. |
 | H3 | `PENDING` | Qualified external checker audit and independent semantic-agreement review. |
 | H4 | `PASS_INTERNAL` | Qualified external confirmation that no critical or high false-accept defect remains. |
 | H5 | `PENDING` | At least 1,000 preregistered mutations controlled by a non-author. |

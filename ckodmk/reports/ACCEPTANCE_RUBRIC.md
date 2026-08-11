@@ -63,7 +63,7 @@ compensate for a failed or missing gate.
 | Gate | Passing evidence | Status |
 |---|---|---|
 | H1 — claim hygiene | Public materials contain no universal "same intelligence," category-novelty, or exactness claim outside a declared semantics, scope, and boundary. | `PASS — INTERNAL REVIEW`: current materials explicitly retire those claims; external review is still required for E3 credit. |
-| H2 — mechanized core | A proof assistant checks artifact continuity, scope non-expansion, registered relation composition, evidence non-escalation, and trust propagation for the core assurance calculus. | `PASS — INTERNAL STRICT SUBSET`: Coq 8.20.1 checks the modeled core; the [hash-bound report](formal/proof-report.json) explicitly excludes implementation conformance, leaf-checker soundness, and the unmodeled specification. |
+| H2 — mechanized core | A proof assistant checks artifact continuity, scope non-expansion, registered relation composition, evidence non-escalation, trust propagation, and the exact rational rewrite core. | `PASS — INTERNAL STRICT SUBSET`: Coq 8.20.1 checks the modeled assurance core and 18 concrete ReLU/affine-box results; the [hash-bound report](formal/proof-report.json) excludes Python/Rust conformance and the unmodeled specification. |
 | H3 — checker independence | A qualified external audit finds no shared implementation authority between producer and checker and validates semantic agreement with the specification. | `PENDING` |
 | H4 — soundness defects | No unresolved critical or high-severity false-accept defect exists in the frozen release; all historical reproduced failures have regression evidence. | `PASS — INTERNAL SNAPSHOT`: final exact, Gate, adjudicator, and independent-checker reviews found no open critical/high defect; this is not a qualified external audit. |
 | H5 — blinded hostile campaign | A non-author controls at least 1,000 preregistered semantics-changing mutations; CKODMK returns zero false `PASS` decisions in the declared supported class and reports an exact confidence bound. | `PENDING` |
@@ -177,7 +177,7 @@ The following internal snapshot is recorded so that development evidence is not
 mistaken for a qualification evaluation:
 
 The conservative machine-checked [internal readiness score](https://mfenx.com/ckodmk/reports/INTERNAL_READINESS_V1.md)
-is **38.8625/100 (3.88625/10), with 3/10 hard gates carrying internal pass
+is **41.2125/100 (4.12125/10), with 3/10 hard gates carrying internal pass
 status**. It applies the rubric's E0-E3 multipliers and explicit partial-scope
 coverage. It is not an external qualification score and may not be rounded up
 or substituted for missing non-author evidence.
@@ -196,7 +196,7 @@ or substituted for missing non-author evidence.
 | Exact suites | Python 18/18; Rust exact checker 2/2 |
 | Gate suites | Python Gate 15/15; Rust adjudicator 18/18 |
 | Independent ONNX checker | NumPy implementation 38/38; no Gate, ONNX Runtime, or Polygraphy execution code; external audit absent |
-| Mechanized core | Coq 8.20.1; 29/29 exported theorems closed under the recorded global context |
+| Mechanized core | Coq 8.20.1; 47/47 exported theorems closed under the recorded global context, including 18 concrete rational ReLU/affine-box results |
 | Internal hostile outcome | V3 passed: 120 target faults (100 `BLOCK`, 20 expected `INCONCLUSIVE`, 0 false `PASS`), 9/9 controls `PASS`, one evidence fabrication blocked |
 | Internal campaign report | `sha256:41fae9b583100a267047968e3ff237d4584647aa92dc519d61ef07cee3f3ce2d` |
 | Internal generative campaign | 1,000,000/1,000,000 cases passed; report `sha256:14efaaee77b2fa885e163f6fd3d08c19b31e21b96174d16de1d2ef32ef5e9ac7`; internal E2 only |
