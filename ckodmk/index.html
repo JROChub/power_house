@@ -21,10 +21,10 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css?v=20260810h">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
-  <script src="app.js?v=20260810f" defer></script>
+  <script src="app.js?v=20260810g" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810k" defer></script>
-  <script src="phone-study.js?v=20260810e" defer></script>
+  <script src="browser-gate.js?v=20260810l" defer></script>
+  <script src="phone-study.js?v=20260810f" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -117,7 +117,7 @@
             <div><dt>Maximum L∞</dt><dd id="gate-linf">Not run</dd></div>
             <div><dt>Model bytes</dt><dd id="gate-size">Not built</dd></div>
           </dl>
-          <ol id="gate-claims" aria-label="Claim results"></ol>
+          <ol id="gate-claims" aria-label="Check results"></ol>
           <small>Execution: ONNX Runtime Web 1.27.0, WASM, batch size one.</small>
         </aside>
       </div>
@@ -151,10 +151,11 @@
       <div class="section-head">
         <p class="eyebrow">RETAINED TEST RESULTS</p>
         <h2>Retained test results.</h2>
-        <p>The retained results include six Optdigits pairs and the pretrained ONNX Model Zoo MNIST convolutional network. Select a model to view its recorded measurements.</p>
+        <p>The retained results include six Optdigits pairs, the pretrained ONNX Model Zoo MNIST convolutional network, and MobileNet v2 evaluated on Imagenette. Select a model to view its recorded measurements.</p>
       </div>
       <div class="evidence-lab">
         <div class="candidate-list" role="list" aria-label="Retained model candidates">
+          <button type="button" data-candidate="mobilenet-int8"><b>MOBILENET V2</b><span>STATIC INT8</span></button>
           <button type="button" data-candidate="mnist-int8"><b>MNIST CNN</b><span>STATIC INT8</span></button>
           <button type="button" data-candidate="w16-int8" class="active"><b>WIDTH 16</b><span>DYNAMIC INT8</span></button>
           <button type="button" data-candidate="w32-int8"><b>WIDTH 32</b><span>DYNAMIC INT8</span></button>
@@ -164,7 +165,7 @@
           <button type="button" data-candidate="w64-graph"><b>WIDTH 64</b><span>ORT GRAPH</span></button>
         </div>
         <article class="candidate-result" aria-live="polite">
-          <header><span id="result-model">WIDTH 16 / DYNAMIC INT8</span><b id="result-decision">PASS</b></header>
+          <header><span id="result-model">WIDTH 16 / DYNAMIC INT8</span><b id="result-decision">RECORDED</b></header>
           <dl>
             <div><dt>Accuracy</dt><dd id="result-accuracy">95.882026% → 95.882026%</dd></div>
             <div><dt>Decision changes</dt><dd id="result-changes">0 / 1,797</dd></div>
@@ -173,7 +174,7 @@
             <div><dt>Sample p95</dt><dd id="result-latency">0.032763 → 0.043051 ms</dd></div>
             <div><dt>Max finite set L∞</dt><dd id="result-linf">0.202297449</dd></div>
           </dl>
-          <p id="result-note">Smaller, but slower on the recorded private test host. The required accuracy and absolute latency claims passed.</p>
+          <p id="result-note">Smaller, but slower in the recorded test. Accuracy stayed within the configured limit.</p>
           <a href="reports/REAL_MODEL_RESULTS.md">View retained results</a>
         </article>
       </div>

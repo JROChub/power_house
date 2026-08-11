@@ -9,45 +9,12 @@
   const MAX_INNER_REPETITIONS = 128;
   const TARGET_GROUP_NANOSECONDS = 20_000_000;
   const SHA = /^sha256:[0-9a-f]{64}$/;
-  const RELATIONSHIPS = new Set(["independent-external", "mfenx-author", "other"]);
   let authorized = false;
   let running = false;
   let cancelRequested = false;
   let lastStudy = null;
 
   class PhoneStudyError extends Error {}
-
-  function boundedDeclarationText(value, label) {
-    if (typeof value !== "string") throw new PhoneStudyError(`${label} is invalid`);
-    const normalized = value.normalize("NFC").trim();
-    if (normalized.length < 2 || normalized.length > 96 || /[\u0000-\u001f\u007f]/u.test(normalized)) {
-      throw new PhoneStudyError(`${label} must contain 2 to 96 printable characters`);
-    }
-    return normalized;
-  }
-
-  function validateTargetDeclarationFields(value) {
-    if (!value || value.include !== true) return null;
-    if (!RELATIONSHIPS.has(value.evaluator_relationship)) throw new PhoneStudyError("evaluator relationship is invalid");
-    return {
-      basis: "evaluator-entered; not automatically detected or attested",
-      target_model: boundedDeclarationText(value.target_model, "target model"),
-      operating_system: boundedDeclarationText(value.operating_system, "operating system"),
-      browser: boundedDeclarationText(value.browser, "browser"),
-      evaluator_relationship: value.evaluator_relationship,
-      consent: "include in this local report only"
-    };
-  }
-
-  function targetDeclaration() {
-    return validateTargetDeclarationFields({
-      include: Boolean(global.document.getElementById("include-target-declaration")?.checked),
-      target_model: global.document.getElementById("target-model")?.value || "",
-      operating_system: global.document.getElementById("target-os")?.value || "",
-      browser: global.document.getElementById("target-browser")?.value || "",
-      evaluator_relationship: global.document.getElementById("evaluator-relationship")?.value || ""
-    });
-  }
 
   function sessionNonce() {
     const bytes = new Uint8Array(32);
@@ -118,10 +85,6 @@
     if (cancel) cancel.disabled = !running;
     if (download) download.disabled = running || !lastStudy;
     if (share) share.disabled = running || !lastStudy || !(global.navigator?.share && global.navigator?.canShare?.({ files: [studyFile()] }));
-    for (const id of ["include-target-declaration", "target-model", "target-os", "target-browser", "evaluator-relationship"]) {
-      const control = global.document.getElementById(id);
-      if (control) control.disabled = running;
-    }
   }
 
   function invalidate() {
@@ -162,7 +125,6 @@
     let sourceSession = null;
     let candidateSession = null;
     try {
-      const declaredTarget = targetDeclaration();
       const nonce = sessionNonce();
       if (global.navigator?.wakeLock?.request) { try { wakeLock = await global.navigator.wakeLock.request("screen"); } catch { wakeLock = null; } }
       const [sourceBuffer, candidateBuffer, datasetBuffer, contractBuffer] = await Promise.all([
@@ -236,7 +198,7 @@
         authentication: "none",
         session_nonce: nonce,
         privacy: { automatic_device_identifiers_collected: [], files_uploaded: false, network_result_submission: false },
-        target_declaration: declaredTarget,
+        target_declaration: null,
         execution: {
           profile: "onnxruntime-web-wasm-f32-batch1-paired-timing/v2", runtime: "onnxruntime-web", runtime_version: "1.27.0",
           backend: "wasm", threads: 1, graph_optimization: "disabled", warmup_pairs: WARMUP_PAIRS,
@@ -289,20 +251,13 @@
     for (const id of ["gate-source", "gate-candidate", "gate-dataset", "gate-contract", "gate-contract-digest"]) {
       global.document.getElementById(id)?.addEventListener(id === "gate-contract-digest" ? "input" : "change", invalidate);
     }
-    for (const id of ["include-target-declaration", "target-model", "target-os", "target-browser", "evaluator-relationship"]) {
-      global.document.getElementById(id)?.addEventListener("input", () => {
-        lastStudy = null;
-        if (authorized) setStatus("READY", "Verified files are ready. A new timing run will use the current declaration.");
-        setActions();
-      });
-    }
     global.addEventListener("ckodmk:verification-complete", () => {
       authorized = true; lastStudy = null; setStatus("READY", "Verified files are ready for a local paired timing study."); setActions();
     });
     invalidate();
   }
 
-  global.CKODMKPhoneStudy = Object.freeze({ PhoneStudyError, percentile, repetitionsForPilot, validateTargetDeclarationFields });
+  global.CKODMKPhoneStudy = Object.freeze({ PhoneStudyError, percentile, repetitionsForPilot });
   if (typeof module !== "undefined" && module.exports) module.exports = global.CKODMKPhoneStudy;
   if (global.document) bind();
 })(typeof window !== "undefined" ? window : globalThis);

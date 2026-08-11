@@ -1,7 +1,7 @@
 {
   "candidate": {
     "format": "onnx",
-    "sha256": "sha256:cc10de187629231abc781ff671bce40a6519e84d85e0c72f62d38e4ffb1fb008"
+    "sha256": "sha256:3bc4ea55c7c39ccca1de7a504643f5a937b425b1a23bb1dc900760784a4c9adf"
   },
   "claims": [
     {
@@ -37,13 +37,13 @@
       "evidence_required": "finite-dataset-exhaustive",
       "id": "sample-output-distance",
       "parameters": {
-        "maximum": "3.5",
+        "maximum": "3",
         "metric": "linf"
       },
       "relation": "bounded_deviation"
     }
   ],
-  "contract_id": "onnx-model-zoo/mobilenet-v2-12/source-vs-int8/sample-632",
+  "contract_id": "onnx-model-zoo/mobilenet-v2-12/source-vs-per-channel-int8/imagenette-ten-class-smoke",
   "dataset": {
     "batch_size": 1,
     "format": "numpy-npz-stored-canonical-v1",
@@ -56,8 +56,8 @@
       224,
       224
     ],
-    "samples": 1,
-    "sha256": "sha256:a5318bd6a3008909699eb3bd23683c2e35ee92f7aad1e701810cc037e85bfaa3"
+    "samples": 10,
+    "sha256": "sha256:f832c0f7dac449e4ce986ebb6a8d77ea9d2826ca21afaaa83042c2ac79b15fc4"
   },
   "output": {
     "class_count": 1000,

@@ -1,16 +1,16 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-29";
+const CACHE_NAME = "ckodmk-browser-v0.2.1-30";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./styles.css?v=20260810h",
-  "./app.js?v=20260810f",
+  "./app.js?v=20260810g",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810k",
-  "./phone-study.js?v=20260810e",
+  "./browser-gate.js?v=20260810l",
+  "./phone-study.js?v=20260810f",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
   "./assets/icon-192.png",
@@ -28,7 +28,7 @@ const CORE = Object.freeze([
   "./demo/mobilenet/source.part-002",
   "./demo/mobilenet/source.part-003",
   "./demo/mobilenet/candidate.part-000",
-  "./demo/mobilenet/test-one.npz",
+  "./demo/mobilenet/test-ten.npz",
   "./demo/mobilenet/browser-contract.json",
   "./reports/REAL_MODEL_RESULTS.md",
   "./downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl",
