@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-24";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-25";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
@@ -25,6 +25,7 @@ const CORE = Object.freeze([
   "./reports/BROWSER_PHONE_STUDY_V2.md",
   "./reports/EXTERNAL_EVALUATION_RETURN_V1.md",
   "./reports/EXTERNAL_CAMPAIGN_PREREGISTRATION_V1.md",
+  "./reports/EXTERNAL_CAMPAIGN_RESULT_V1.md",
   "./reports/GENERATIVE_CAMPAIGN_V1.md",
   "./reports/GENERATIVE_CAMPAIGN_V1.json",
   "./reports/GENERATIVE_CAMPAIGN_V1_SPEC.md",
@@ -42,6 +43,8 @@ const CORE = Object.freeze([
   "./downloads/verify_external_evaluation.py.sha256",
   "./downloads/verify_external_campaign_preregistration.py",
   "./downloads/verify_external_campaign_preregistration.py.sha256",
+  "./downloads/verify_external_campaign_result.py",
+  "./downloads/verify_external_campaign_result.py.sha256",
   "./downloads/verify_phone_study.py",
   "./downloads/verify_phone_study.py.sha256",
   "./demo/mlp-w32/source.onnx",

@@ -25,7 +25,7 @@
     "authored_by_mfenx": false
   },
   "seed": {
-    "commitment": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "commitment": "sha256:8c8419e7d26b4ff03bcb31e4b7842ec47f75ddd551e893d9a44d3aa8dba14dd4",
     "commitment_scheme": "sha256-domain-separated-v1",
     "source": "evaluator-controlled operating-system randomness",
     "revealed": false

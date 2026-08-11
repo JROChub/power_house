@@ -20,6 +20,11 @@ evaluator. They must receive the identical selected fault set and the same
 content-addressed resource budget. A baseline may finish early, but unused
 budget cannot be transferred to another case or tool.
 
+The seed commitment uses
+`SHA256(ASCII "mfenx/ckodmk-external-campaign-seed/v1", NUL, 32 seed bytes)`.
+Only the commitment appears in the preregistration. The seed appears later in
+the terminal result after its result manifest is caller-pinned.
+
 The execution reserve is derived from bounded snapshots and four bounded tool
 outputs per selected attempt. This avoids the historical V3 campaign's
 unnecessarily pessimistic multiplication of multiple 64 MiB streams. The

@@ -187,6 +187,23 @@ terminal result-manifest digest, the post-terminal seed-reveal digest, and the
 complete raw-evidence digest. The strict external-return consumer rejects a
 `PASS` record with missing or placeholder bindings.
 
+Before signing the external-return assertion, recompute the terminal campaign
+from its ordered per-case records:
+
+```bash
+python scripts/verify_external_campaign_result.py \
+  /evaluator/terminal-result.json \
+  --sha256 sha256:<terminal-result-digest> \
+  --preregistration /evaluator/preregistration.json \
+  --preregistration-sha256 sha256:<authenticated-preregistration-digest>
+```
+
+This consumer verifies the seed opening, result-manifest binding, exact quotas,
+selected denominator, case ordering, CKODMK outcomes, full baseline presence,
+and common budget-profile digest. It does not authenticate the evaluator or
+open every referenced evidence object; those remain separate signed-return and
+package-review requirements.
+
 ## Required return package
 
 Return one immutable package containing:
