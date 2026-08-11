@@ -167,7 +167,7 @@ Minimum category score for 9+ qualification: **5/8**.
 | E. Real-world external validity | 18 | 15 | `PENDING` |
 | F. Efficiency and reproducibility | 8 | 6 | `PENDING` |
 | G. Product usefulness and governance | 8 | 5 | `PENDING` |
-| **Total** | **100** | **91 overall** | **NOT SCORED** |
+| **Total** | **100** | **91 overall** | **EXTERNAL QUALIFICATION NOT SCORED** |
 
 All category minima and all hard gates apply in addition to the 91-point total.
 
@@ -175,6 +175,12 @@ All category minima and all hard gates apply in addition to the 91-point total.
 
 The following internal snapshot is recorded so that development evidence is not
 mistaken for a qualification evaluation:
+
+The conservative machine-checked [internal readiness score](https://mfenx.com/ckodmk/reports/INTERNAL_READINESS_V1.md)
+is **38.8625/100 (3.88625/10), with 3/10 hard gates carrying internal pass
+status**. It applies the rubric's E0-E3 multipliers and explicit partial-scope
+coverage. It is not an external qualification score and may not be rounded up
+or substituted for missing non-author evidence.
 
 | Item | Current value |
 |---|---|

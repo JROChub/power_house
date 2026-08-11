@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-20";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-21";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
@@ -28,6 +28,8 @@ const CORE = Object.freeze([
   "./reports/GENERATIVE_CAMPAIGN_V1.json",
   "./reports/GENERATIVE_CAMPAIGN_V1_SPEC.md",
   "./reports/GOVERNANCE.md",
+  "./reports/INTERNAL_READINESS_V1.md",
+  "./reports/INTERNAL_READINESS_V1.json",
   "./reports/REAL_MODEL_RESULTS.md",
   "./reports/SECOND_TOOLCHAIN_RESULTS.md",
   "./reports/THREAT_MODEL.md",
