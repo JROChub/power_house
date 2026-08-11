@@ -152,10 +152,40 @@ semantics-changing cases. The evaluator selects the seed, mutation generator,
 case distribution, exclusions, and unblinding procedure. MFENX receives only
 the preregistration commitment until execution is irreversibly complete.
 
+Before selecting or generating any case, create a document conforming to
+`specs/external-campaign-preregistration-v1.md`. The included golden document
+is a structural example with placeholder identities and hashes; it is not an
+evaluation result. Replace every placeholder, obtain the document digest over
+an evaluator-controlled channel, and require both structural validation and
+OpenSSH evaluator authentication:
+
+```bash
+python scripts/verify_external_campaign_preregistration.py \
+  /evaluator/preregistration.json \
+  --sha256 sha256:<digest-obtained-separately> \
+  --signature /evaluator/preregistration.json.sig \
+  --allowed-signers /secure/ckodmk-evaluators.allowed_signers \
+  --evaluator evaluator@example.org
+```
+
+The validator requires at least 1,000 effective-fault targets, at least 100
+valid controls, exact subtype allocations, evaluator ownership of the
+generator/oracle/seed, no pre-execution MFENX access, a common selected fault
+set, three matched-budget baselines, retained invalid and unsupported attempts,
+bounded output storage, terminal result pinning before seed reveal, and a
+no-rerun rule. Its success establishes only that the signed plan has those
+properties. It does not execute the evaluator's generator or determine whether
+the chosen fault distribution is scientifically representative.
+
 Every crash, timeout, unsupported case, invalid mutation, exclusion, and false
 block remains in the returned denominator. The evaluator reports exact counts,
 confidence intervals, and raw per-case outcomes. A CKODMK `PASS` on an
 effective contract violation is a false accept regardless of aggregate score.
+
+The terminal return must bind the authenticated preregistration digest, the
+terminal result-manifest digest, the post-terminal seed-reveal digest, and the
+complete raw-evidence digest. The strict external-return consumer rejects a
+`PASS` record with missing or placeholder bindings.
 
 ## Required return package
 

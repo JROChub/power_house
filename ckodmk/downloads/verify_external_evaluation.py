@@ -241,6 +241,7 @@ def _validate_campaign(value: Any) -> dict[str, Any]:
         {
             "status",
             "preregistered",
+            "preregistration_signature_verified",
             "non_author_controlled",
             "selected_cases",
             "effective_cases",
@@ -258,12 +259,19 @@ def _validate_campaign(value: Any) -> dict[str, Any]:
             "control_crashes",
             "control_timeouts",
             "zero_false_pass_upper_95_ppm",
+            "preregistration_sha256",
+            "terminal_results_manifest_sha256",
+            "seed_reveal_sha256",
             "raw_evidence_sha256",
         },
         "hostile_campaign",
     )
     status = _status(value["status"], "hostile_campaign.status")
     _bool(value["preregistered"], "hostile_campaign.preregistered")
+    _bool(
+        value["preregistration_signature_verified"],
+        "hostile_campaign.preregistration_signature_verified",
+    )
     _bool(value["non_author_controlled"], "hostile_campaign.non_author_controlled")
     fields = (
         "selected_cases",
@@ -320,7 +328,15 @@ def _validate_campaign(value: Any) -> dict[str, Any]:
             raise VerificationError("zero-false-pass bound must be null for this campaign")
     elif type(bound) is not int or bound != expected_bound:
         raise VerificationError("zero-false-pass confidence bound is incorrect")
-    _digest(value["raw_evidence_sha256"], "hostile_campaign.raw_evidence_sha256")
+    for field in (
+        "preregistration_sha256",
+        "terminal_results_manifest_sha256",
+        "seed_reveal_sha256",
+        "raw_evidence_sha256",
+    ):
+        digest = _digest(value[field], f"hostile_campaign.{field}")
+        if status == "PASS" and digest == "sha256:" + "0" * 64:
+            raise VerificationError(f"hostile_campaign.{field} cannot be a placeholder")
     if status == "NOT_EVALUATED" and value["selected_cases"] != 0:
         raise VerificationError("a not-evaluated campaign must have an empty denominator")
     return value
@@ -516,6 +532,7 @@ def validate_report(report: Any, expected_identity: str) -> dict[str, Any]:
             audit["open_high_findings"] == 0,
             campaign["status"] == "PASS",
             campaign["preregistered"],
+            campaign["preregistration_signature_verified"],
             campaign["non_author_controlled"],
             campaign["effective_cases"] >= 1_000,
             campaign["false_passes"] == 0,

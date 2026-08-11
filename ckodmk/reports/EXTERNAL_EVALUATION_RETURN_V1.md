@@ -55,6 +55,8 @@ by `specs/golden/external-evaluation-pending.json`. The report binds:
 - source commit, release archive, CI run, environment, commands, and logs;
 - checker-independence and specification-agreement audit results;
 - the complete non-author hostile campaign denominator and raw-evidence hash;
+- the authenticated preregistration, terminal result manifest, and post-terminal
+  seed-reveal digests;
 - physical-target profiles and measurement packages;
 - matched baselines and common-fault-set records;
 - third-party reproduction results;
