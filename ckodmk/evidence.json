@@ -20,6 +20,22 @@
     "valid_control_pass": 9,
     "false_pass_two_sided_95_upper": "0.030272972577420065"
   },
+  "cnn_demo": {
+    "source_provenance": "trained in this repository on the official UCI Optdigits training split",
+    "source_sha256": "sha256:b3b95f9454843d75a5557f92d69f91358997122e2cd40d16e65b3cbdcfb6f7c7",
+    "candidate_sha256": "sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc",
+    "dataset_sha256": "sha256:b281019a68b5f20f7900774fffa870f51e3a7df263407d1b73a030358710874d",
+    "contract_sha256": "sha256:b1212573ebf8ca4f69f5f5ae6a7e15efeabd14d88d26b030e788ed3a45801a44",
+    "training_record_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+    "candidate_generation_profile": "onnxruntime-static-qoperator-u8s8-per-channel-minmax/v2",
+    "source_bytes": 8749,
+    "candidate_bytes": 3865,
+    "samples": 1797,
+    "source_correct": 1743,
+    "candidate_correct": 1743,
+    "decision_changes": 0,
+    "maximum_linf_native": "0.33646392822265625"
+  },
   "demo": {
     "source_sha256": "sha256:cd224b0e300d36721ecf961be584b979620779cefa8c5082fe22d838c24a0d47",
     "candidate_sha256": "sha256:d3f98ad864f5aaa270834ec788dc33f5408c6d4164c56c249f1427376ab2e782",

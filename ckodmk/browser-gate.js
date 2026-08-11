@@ -299,6 +299,7 @@
 
   async function createTestContractFromUi() { try { await createTestContract(); } catch (error) { lastContract = null; localContract = false; showDecision("BLOCK", `Contract creation stopped: ${error.message || "unknown contract error"}`); } }
   const DEMOS = Object.freeze({
+    cnn: Object.freeze({ source: "demo/cnn/source.onnx", sourceName: "optdigits-cnn-source.onnx", candidate: "demo/cnn/candidate-int8.onnx", candidateName: "optdigits-cnn-ckodmk-int8.onnx", contract: "demo/cnn/browser-contract.json", contractName: "optdigits-cnn-browser-contract.json", contractDigest: "sha256:b1212573ebf8ca4f69f5f5ae6a7e15efeabd14d88d26b030e788ed3a45801a44" }),
     mlp16: Object.freeze({ source: "demo/source.onnx", sourceName: "mlp-w16-source.onnx", contract: "demo/browser-contract.json", contractName: "mlp-w16-browser-contract.json", contractDigest: "sha256:df48a3f723e5a8da61c3fe401172195f12c520a37e19a2bd4f5af03ee6f1c39e" }),
     mlp32: Object.freeze({ source: "demo/mlp-w32/source.onnx", sourceName: "mlp-w32-source.onnx", contract: "demo/mlp-w32/browser-contract.json", contractName: "mlp-w32-browser-contract.json", contractDigest: "sha256:78517c553ea43957f9efe8157318d8761ee64f52dfd215c868c6da3743cf2d32" }),
     mlp64: Object.freeze({ source: "demo/mlp-w64/source.onnx", sourceName: "mlp-w64-source.onnx", contract: "demo/mlp-w64/browser-contract.json", contractName: "mlp-w64-browser-contract.json", contractDigest: "sha256:bec1da451af633ed9e3d1941ab553313dab62c491b09f6c8b01991bc9eb9a25d" }),

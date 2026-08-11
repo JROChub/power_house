@@ -3,233 +3,207 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#050807">
+  <meta name="theme-color" content="#f7f8fa">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="CKODMK">
-  <meta name="description" content="CKODMK builds and checks supported ONNX model candidates in the browser.">
-  <meta property="og:title" content="CKODMK ONNX model tool">
-  <meta property="og:description" content="Browser candidate generation and verification for supported ONNX models.">
-  <meta property="og:image" content="https://mfenx.com/assets/proof-lattice.webp">
+  <meta name="description" content="Build, compare, and inspect supported ONNX models in your browser.">
+  <meta property="og:title" content="CKODMK">
+  <meta property="og:description" content="Local ONNX model optimization and verification.">
+  <meta property="og:image" content="https://mfenx.com/ckodmk/assets/icon-512.png">
   <meta property="og:url" content="https://mfenx.com/ckodmk/">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
-  <title>CKODMK ONNX model tool</title>
+  <title>CKODMK</title>
   <link rel="canonical" href="https://mfenx.com/ckodmk/">
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260810h">
+  <link rel="stylesheet" href="styles.css?v=20260810i">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
-  <script src="app.js?v=20260810g" defer></script>
+  <script src="app.js?v=20260810h" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810l" defer></script>
+  <script src="browser-gate.js?v=20260810m" defer></script>
   <script src="phone-study.js?v=20260810f" defer></script>
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#workspace">Skip to workspace</a>
   <header class="site-header">
     <a class="wordmark" href="/" aria-label="MFENX home">
       <img src="assets/powerhouse-logo.svg" alt="">
-      <span><strong>MFENX</strong><small>CKODMK</small></span>
+      <span><strong>CKODMK</strong><small>by MFENX</small></span>
     </a>
     <nav aria-label="CKODMK navigation">
-      <a href="#browser-gate">Application</a>
-      <a href="#evidence">Results</a>
-      <a href="#install">Install</a>
+      <a href="#workspace">Workspace</a>
+      <a href="#results">Reference runs</a>
+      <a href="#install">CLI</a>
     </nav>
+    <button class="install-control" id="install-app" type="button">Install app</button>
   </header>
 
-  <main id="main">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-copy">
-        <p class="eyebrow"><i></i> CKODMK 0.2.1</p>
-        <h1 id="hero-title">ONNX MODEL<br><span>BUILD AND CHECK</span></h1>
-        <p class="lede">CKODMK builds smaller INT8 ONNX models and compares them with their source models directly in your browser.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#browser-gate">OPEN CKODMK</a>
-          <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
-        </div>
-        <p id="install-status" class="boundary">CKODMK runs in this browser. Installation enables home screen access and offline use of the included trained models.</p>
-        <p class="boundary">Your model and data remain on your device. You can download the optimized model and its test report.</p>
+  <main>
+    <section class="intro" aria-labelledby="intro-title">
+      <div>
+        <p class="product-version">CKODMK 0.2.1</p>
+        <h1 id="intro-title">Prepare an ONNX model for deployment.</h1>
+        <p>Build an INT8 candidate, compare it with the source on labeled data, measure both files, and export the model with its result.</p>
       </div>
-      <aside class="decision-console" aria-label="CKODMK browser application summary">
-        <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
-        <div class="app-preview">
-          <span>01</span><p>Choose a trained example, including the pretrained MNIST convolutional model, or select your own supported ONNX files.</p>
-          <span>02</span><p>Build a deterministic dynamic INT8 candidate on this device.</p>
-          <span>03</span><p>Check the declared data, then save the candidate and report.</p>
-        </div>
-        <div class="console-status"><i></i><span>FILES ARE CHECKED BEFORE DOWNLOAD</span></div>
-      </aside>
+      <dl class="runtime-summary" aria-label="Application properties">
+        <div><dt>Execution</dt><dd>In this browser</dd></div>
+        <div><dt>Files</dt><dd>Remain on this device</dd></div>
+        <div><dt>Runtime</dt><dd>ONNX Runtime Web</dd></div>
+        <div><dt>Offline</dt><dd id="install-status">Available after installation</dd></div>
+      </dl>
     </section>
 
-    <section class="proof-strip" aria-label="Current evidence summary">
-      <div><strong>8</strong><span>TRAINED MODELS</span><small>Two pretrained convolutional models plus included test models</small></div>
-      <div><strong>14 MB</strong><span>MOBILE MODEL</span><small>Integrity checked chunk loading for larger files</small></div>
-      <div><strong>100%</strong><span>LOCAL</span><small>Model execution stays in this browser</small></div>
-      <div><strong>OFFLINE</strong><span>INSTALLABLE</span><small>Included models are cached after installation</small></div>
-    </section>
+    <section id="workspace" class="workspace" aria-labelledby="workspace-title">
+      <header class="workspace-header">
+        <div>
+          <p class="section-label">Workspace</p>
+          <h2 id="workspace-title">Model comparison</h2>
+        </div>
+        <p>Nothing is uploaded. Closing the page clears the active session unless you download the files.</p>
+      </header>
 
-    <section id="browser-gate" class="section browser-gate">
-      <div class="section-head">
-        <p class="eyebrow">BROWSER APPLICATION</p>
-        <h2>Run CKODMK on this device.</h2>
-        <p>Build and check an included model with one tap or choose your own ONNX files. CKODMK performs candidate generation, hashing, and execution locally. It does not upload the files or require a desktop connection.</p>
+      <div class="quick-run">
+        <div class="quick-run-copy">
+          <span class="step-number">1</span>
+          <div><strong>Start with a working model</strong><small>Run an included trained model, or continue below with your own files.</small></div>
+        </div>
+        <label class="demo-choice"><span>Included model</span><select id="demo-model" aria-label="Included trained model"><option value="cnn">New Optdigits convolutional model</option><option value="mlp16">Optdigits MLP, width 16</option><option value="mnist">MNIST convolutional model, 1,000 images</option><option value="mobilenet">MobileNet v2, ImageNet sample</option><option value="mlp32">Optdigits MLP, width 32</option><option value="mlp64">Optdigits MLP, width 64</option><option value="rbf40">Optdigits radial basis, 40 centers</option><option value="rbf80">Optdigits radial basis, 80 centers</option><option value="rbf160">Optdigits radial basis, 160 centers</option></select></label>
+        <button id="run-demo" class="primary" type="button">Run model</button>
       </div>
-      <div class="mobile-start" aria-label="Quick start">
-        <div><strong>QUICK START</strong><span>Choose a trained model. CKODMK loads or builds its INT8 candidate, checks every declared row on this device, then enables the candidate and report downloads.</span></div>
-        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mnist">Pretrained MNIST CNN, 1,000 test images</option><option value="mobilenet">Pretrained MobileNet v2, ImageNet sample</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
-        <button id="run-demo" class="primary" type="button">RUN EXAMPLE</button>
-      </div>
-      <div class="gate-shell">
-        <form id="gate-form" novalidate>
-          <h3 class="form-title">BUILD OR VERIFY YOUR FILES</h3>
-          <p class="form-help">To optimize a model, select a source and choose BUILD INT8 CANDIDATE. To compare existing files, provide the source, candidate, dataset, contract, and contract digest.</p>
-          <div class="file-grid">
-            <label><span>01 / SOURCE ONNX</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
-            <label><span>02 / CANDIDATE ONNX</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
-            <label><span>03 / CANONICAL DATASET</span><input id="gate-dataset" type="file" accept=".npz,application/octet-stream" required><small id="dataset-name">No file selected</small></label>
-            <label><span>04 / BROWSER CONTRACT</span><input id="gate-contract" type="file" accept=".json,application/json" required><small id="contract-name">No file selected</small></label>
+
+      <div class="application-grid">
+        <form id="gate-form" class="file-workspace" novalidate>
+          <div class="panel-heading">
+            <span class="step-number">2</span>
+            <div><h3>Files and settings</h3><p>Supply a source model and dataset. Build a candidate here or select one you already have.</p></div>
           </div>
-          <label class="digest-input"><span>EXPECTED CONTRACT SHA-256 / INDEPENDENTLY PROVIDED DIGEST</span><input id="gate-contract-digest" type="text" spellcheck="false" autocomplete="off" placeholder="sha256:64 lowercase hexadecimal characters" required></label>
-          <div class="gate-actions">
-            <button id="load-demo" type="button">LOAD EXAMPLE INPUTS</button>
-            <button id="build-candidate" type="button">BUILD INT8 CANDIDATE</button>
-            <button id="create-contract" type="button">CREATE TEST CONTRACT</button>
-            <button id="run-gate" class="primary" type="submit">RUN LOCAL GATE</button>
-            <button id="cancel-gate" type="button" disabled>CANCEL</button>
-            <button id="download-candidate" type="button" disabled>DOWNLOAD CANDIDATE</button>
-            <button id="download-contract" type="button" disabled>DOWNLOAD CONTRACT</button>
-            <button id="download-report" type="button" disabled>DOWNLOAD REPORT</button>
-            <button id="share-report" type="button" disabled>SHARE REPORT</button>
+
+          <div class="file-grid">
+            <label><span>Source model</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
+            <label><span>Candidate model</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
+            <label><span>Evaluation data</span><input id="gate-dataset" type="file" accept=".npz,application/octet-stream" required><small id="dataset-name">No file selected</small></label>
+            <label><span>Comparison settings</span><input id="gate-contract" type="file" accept=".json,application/json" required><small id="contract-name">No file selected</small></label>
+          </div>
+
+          <label class="digest-input"><span>Settings file SHA-256</span><input id="gate-contract-digest" type="text" spellcheck="false" autocomplete="off" placeholder="sha256:…" required><small>Use a digest obtained independently from the settings file.</small></label>
+
+          <div class="workflow-actions" aria-label="Model preparation actions">
+            <button id="load-demo" type="button">Load selected files</button>
+            <button id="build-candidate" type="button">Build INT8 candidate</button>
+            <button id="create-contract" type="button">Create settings</button>
+          </div>
+          <div class="run-actions">
+            <button id="run-gate" class="primary" type="submit">Compare models</button>
+            <button id="cancel-gate" type="button" disabled>Cancel</button>
           </div>
         </form>
-        <aside class="gate-output" aria-live="polite" aria-atomic="false">
-          <header><span>LOCAL EXECUTION</span><b id="gate-decision">READY</b></header>
-          <div class="progress" aria-label="Verification progress"><i id="gate-progress"></i></div>
-          <p id="gate-status">Load the retained model example or choose four local files.</p>
-          <dl>
+
+        <aside class="result-panel" aria-live="polite" aria-atomic="false">
+          <div class="panel-heading result-heading">
+            <span class="step-number">3</span>
+            <div><h3>Result</h3><p id="gate-status">Choose an included model or select local files.</p></div>
+            <b id="gate-decision" class="decision-badge">Ready</b>
+          </div>
+          <div class="progress" aria-label="Comparison progress"><i id="gate-progress"></i></div>
+          <dl class="metric-grid">
             <div><dt>Rows evaluated</dt><dd id="gate-rows">0 / 0</dd></div>
             <div><dt>Decision changes</dt><dd id="gate-changes">Not run</dd></div>
             <div><dt>Accuracy delta</dt><dd id="gate-accuracy">Not run</dd></div>
             <div><dt>Maximum L∞</dt><dd id="gate-linf">Not run</dd></div>
-            <div><dt>Model bytes</dt><dd id="gate-size">Not built</dd></div>
+            <div class="wide"><dt>Model bytes</dt><dd id="gate-size">Not built</dd></div>
           </dl>
-          <ol id="gate-claims" aria-label="Check results"></ol>
-          <small>Execution: ONNX Runtime Web 1.27.0, WASM, batch size one.</small>
+          <ol id="gate-claims" class="check-list" aria-label="Comparison checks"></ol>
+          <p class="runtime-note">ONNX Runtime Web 1.27.0, WASM, batch size one.</p>
+          <div class="export-actions" aria-label="Result downloads">
+            <button id="download-candidate" type="button" disabled>Download model</button>
+            <button id="download-contract" type="button" disabled>Download settings</button>
+            <button id="download-report" type="button" disabled>Download result</button>
+            <button id="share-report" type="button" disabled>Share result</button>
+          </div>
         </aside>
       </div>
-      <div class="phone-study" aria-live="polite">
-        <div>
-          <p class="eyebrow">LOCAL PHONE TIMING</p>
-          <h3>Measure the verified pair in this browser.</h3>
-          <p>After a successful comparison, measure both files in this browser using alternating runs. The result stays on this device until you download or share it.</p>
-          <p class="privacy-note">CKODMK does not collect the device model, operating system, browser version, account, or network address.</p>
+
+      <section class="timing-panel" aria-labelledby="timing-title" aria-live="polite">
+        <div class="timing-copy">
+          <span class="step-number">4</span>
+          <div><h3 id="timing-title">Measure this browser</h3><p>After the comparison passes, CKODMK alternates source and candidate runs and records the observed timing. It does not record the device model, operating system, browser version, account, or network address.</p></div>
         </div>
-        <div class="phone-study-results">
-          <header><span>PAIRED TIMING</span><b id="phone-study-state">LOCKED</b></header>
-          <p id="phone-study-status">Complete the local gate before running the timing study.</p>
+        <div class="timing-result">
+          <header><span id="phone-study-status">Complete the comparison first.</span><b id="phone-study-state" class="decision-badge">Locked</b></header>
           <dl>
             <div><dt>Source p50</dt><dd id="phone-source-p50">Not run</dd></div>
             <div><dt>Source p95</dt><dd id="phone-source-p95">Not run</dd></div>
             <div><dt>Candidate p50</dt><dd id="phone-candidate-p50">Not run</dd></div>
             <div><dt>Candidate p95</dt><dd id="phone-candidate-p95">Not run</dd></div>
           </dl>
-          <div class="gate-actions">
-            <button id="run-phone-study" class="primary" type="button" disabled>RUN LOCAL TIMING</button>
-            <button id="cancel-phone-study" type="button" disabled>CANCEL TIMING</button>
-            <button id="download-phone-study" type="button" disabled>DOWNLOAD TIMING REPORT</button>
-            <button id="share-phone-study" type="button" disabled>SHARE TIMING REPORT</button>
+          <div class="workflow-actions">
+            <button id="run-phone-study" class="primary" type="button" disabled>Measure</button>
+            <button id="cancel-phone-study" type="button" disabled>Cancel</button>
+            <button id="download-phone-study" type="button" disabled>Download timing</button>
+            <button id="share-phone-study" type="button" disabled>Share timing</button>
           </div>
         </div>
-      </div>
+      </section>
     </section>
 
-    <section id="evidence" class="section evidence">
-      <div class="section-head">
-        <p class="eyebrow">RETAINED TEST RESULTS</p>
-        <h2>Retained test results.</h2>
-        <p>The retained results include six Optdigits pairs, the pretrained ONNX Model Zoo MNIST convolutional network, and MobileNet v2 evaluated on Imagenette. Select a model to view its recorded measurements.</p>
-      </div>
-      <div class="evidence-lab">
-        <div class="candidate-list" role="list" aria-label="Retained model candidates">
-          <button type="button" data-candidate="mobilenet-int8"><b>MOBILENET V2</b><span>STATIC INT8</span></button>
-          <button type="button" data-candidate="mnist-int8"><b>MNIST CNN</b><span>STATIC INT8</span></button>
-          <button type="button" data-candidate="w16-int8" class="active"><b>WIDTH 16</b><span>DYNAMIC INT8</span></button>
-          <button type="button" data-candidate="w32-int8"><b>WIDTH 32</b><span>DYNAMIC INT8</span></button>
-          <button type="button" data-candidate="w64-int8"><b>WIDTH 64</b><span>DYNAMIC INT8</span></button>
-          <button type="button" data-candidate="w16-graph"><b>WIDTH 16</b><span>ORT GRAPH</span></button>
-          <button type="button" data-candidate="w32-graph"><b>WIDTH 32</b><span>ORT GRAPH</span></button>
-          <button type="button" data-candidate="w64-graph"><b>WIDTH 64</b><span>ORT GRAPH</span></button>
+    <section id="results" class="reference-section" aria-labelledby="results-title">
+      <header class="section-header">
+        <div><p class="section-label">Reference runs</p><h2 id="results-title">Results from included models</h2></div>
+        <p>These records make the examples inspectable before you run them locally. Select a row to view its measurements.</p>
+      </header>
+      <div class="reference-browser">
+        <div class="candidate-list" role="list" aria-label="Included model results">
+          <button type="button" data-candidate="cnn-int8" class="active"><b>New Optdigits CNN</b><span>Static INT8</span></button>
+          <button type="button" data-candidate="mobilenet-int8"><b>MobileNet v2</b><span>Static INT8</span></button>
+          <button type="button" data-candidate="mnist-int8"><b>MNIST CNN</b><span>Static INT8</span></button>
+          <button type="button" data-candidate="w16-int8"><b>Optdigits MLP 16</b><span>Dynamic INT8</span></button>
+          <button type="button" data-candidate="w32-int8"><b>Optdigits MLP 32</b><span>Dynamic INT8</span></button>
+          <button type="button" data-candidate="w64-int8"><b>Optdigits MLP 64</b><span>Dynamic INT8</span></button>
+          <button type="button" data-candidate="w16-graph"><b>Optdigits MLP 16</b><span>Graph optimization</span></button>
+          <button type="button" data-candidate="w32-graph"><b>Optdigits MLP 32</b><span>Graph optimization</span></button>
+          <button type="button" data-candidate="w64-graph"><b>Optdigits MLP 64</b><span>Graph optimization</span></button>
         </div>
         <article class="candidate-result" aria-live="polite">
-          <header><span id="result-model">WIDTH 16 / DYNAMIC INT8</span><b id="result-decision">RECORDED</b></header>
+          <header><div><span>Model</span><strong id="result-model">New Optdigits CNN / Static INT8</strong></div><b id="result-decision">Recorded</b></header>
           <dl>
-            <div><dt>Accuracy</dt><dd id="result-accuracy">95.882026% → 95.882026%</dd></div>
+            <div><dt>Accuracy</dt><dd id="result-accuracy">96.994992% to 96.994992%</dd></div>
             <div><dt>Decision changes</dt><dd id="result-changes">0 / 1,797</dd></div>
-            <div><dt>Bytes</dt><dd id="result-bytes">5,253 → 3,106</dd></div>
-            <div><dt>Size ratio</dt><dd id="result-ratio">1.691243× smaller</dd></div>
-            <div><dt>Sample p95</dt><dd id="result-latency">0.032763 → 0.043051 ms</dd></div>
-            <div><dt>Max finite set L∞</dt><dd id="result-linf">0.202297449</dd></div>
+            <div><dt>Bytes</dt><dd id="result-bytes">8,749 to 3,865</dd></div>
+            <div><dt>Size ratio</dt><dd id="result-ratio">2.263648× smaller</dd></div>
+            <div><dt>Sample p95</dt><dd id="result-latency">0.040512 to 0.053696 ms</dd></div>
+            <div><dt>Maximum finite set L∞</dt><dd id="result-linf">0.336463928</dd></div>
           </dl>
-          <p id="result-note">Smaller, but slower in the recorded test. Accuracy stayed within the configured limit.</p>
-          <a href="reports/REAL_MODEL_RESULTS.md">View retained results</a>
+          <p id="result-note">Trained in this repository on the official Optdigits training split. The candidate is smaller and made the same classifications on the complete official test split. Its recorded latency is higher.</p>
         </article>
       </div>
-      <p class="machine">RECORDED ENVIRONMENT: private test host / ONNX Runtime CPU 1.28.0 / one thread</p>
     </section>
 
-    <section id="architecture" class="section architecture">
-      <div class="section-head">
-        <p class="eyebrow">PROCESS</p>
-        <h2>How a model is processed.</h2>
+    <section id="install" class="resources-section" aria-labelledby="resources-title">
+      <header class="section-header">
+        <div><p class="section-label">Command line</p><h2 id="resources-title">Use CKODMK in a build pipeline</h2></div>
+        <p>The browser is suited to direct use. The Python package provides the same workflow for repeatable local jobs and build systems. The source repository is private.</p>
+      </header>
+      <div class="command-card">
+        <div><strong>Install version 0.2.1</strong><code>python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'</code></div>
+        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'" aria-label="Copy install command">Copy</button>
       </div>
-      <div class="pipeline" aria-label="CKODMK assurance pipeline">
-        <article><span>01</span><h3>READ</h3><p>CKODMK reads and hashes the source, candidate, dataset, and settings.</p></article>
-        <i aria-hidden="true">→</i>
-        <article><span>02</span><h3>RUN</h3><p>The source and candidate execute on the same rows at batch size one.</p></article>
-        <i aria-hidden="true">→</i>
-        <article><span>03</span><h3>COMPARE</h3><p>CKODMK compares classifications, accuracy, output distance, size, and timing.</p></article>
-        <i aria-hidden="true">→</i>
-        <article><span>04</span><h3>SAVE</h3><p>Download the optimized ONNX model and its machine readable result.</p></article>
-      </div>
-    </section>
-
-    <section id="install" class="section install">
-      <div>
-        <p class="eyebrow">COMMAND LINE TOOL</p>
-        <h2>Install CKODMK 0.2.1.</h2>
-        <p>The wheel provides the Python command line interface. The source repository is private.</p>
-      </div>
-      <div class="install-box">
-        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'" aria-label="Copy install command">COPY</button>
-        <code>python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'</code>
-        <small>This installs the reproducibly built wheel and the pinned ONNX optimization dependencies directly from MFENX. The source repository is private.</small>
-      </div>
-      <div class="install-box">
-        <button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256" aria-label="Copy checksum command">COPY</button>
-        <code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256</code>
-        <small>Verify the wheel against the published checksum before installation.</small>
-      </div>
-    </section>
-
-    <section id="limits" class="section limits">
-      <div class="section-head"><p class="eyebrow">SUPPORTED INPUT</p><h2>File requirements.</h2></div>
-      <ul>
-        <li>ONNX source and candidate files up to 64 MB.</li>
-        <li>Float32 classification input with one model input and one model output.</li>
-        <li>Canonical NPZ data containing Float32 inputs and Int64 labels.</li>
-        <li>Batch size one with no more than 25,000 rows and 250,000 output values.</li>
-      </ul>
+      <details class="technical-details">
+        <summary>Package checksum and supported file profile</summary>
+        <div class="details-grid">
+          <div><h3>Verify the package</h3><code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256</code><button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256" aria-label="Copy checksum command">Copy checksum command</button></div>
+          <div><h3>Supported browser files</h3><ul><li>Source and candidate ONNX files up to 64 MB</li><li>One Float32 classification input and one output</li><li>NPZ with Float32 inputs and Int64 labels</li><li>Batch size one, up to 25,000 rows and 250,000 output values</li></ul></div>
+        </div>
+      </details>
     </section>
   </main>
 
   <footer>
-    <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>MFENX / CKODMK</strong><small>MODEL DEPLOYMENT ASSURANCE</small></span></a>
-    <p>CKODMK 0.2.1</p>
-    <nav><a href="#browser-gate">Open application</a><a href="#evidence">Results</a><a href="#install">Install</a></nav>
+    <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>CKODMK</strong><small>MFENX</small></span></a>
+    <p>Version 0.2.1</p>
+    <nav><a href="#workspace">Workspace</a><a href="#results">Reference runs</a><a href="#install">CLI</a></nav>
   </footer>
 </body>
 </html>

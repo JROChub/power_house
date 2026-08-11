@@ -1,58 +1,24 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.1-30";
+const CACHE_NAME = "ckodmk-browser-v0.2.1-33";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./styles.css?v=20260810h",
-  "./app.js?v=20260810g",
+  "./styles.css?v=20260810i",
+  "./app.js?v=20260810h",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810l",
+  "./browser-gate.js?v=20260810m",
   "./phone-study.js?v=20260810f",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
-  "./demo/source.onnx",
-  "./demo/candidate-int8.onnx",
   "./demo/optdigits-official-test.npz",
-  "./demo/browser-contract.json",
-  "./demo/mnist/source.onnx",
-  "./demo/mnist/candidate-int8.onnx",
-  "./demo/mnist/test-1000.npz",
-  "./demo/mnist/browser-contract.json",
-  "./demo/mobilenet/source.part-000",
-  "./demo/mobilenet/source.part-001",
-  "./demo/mobilenet/source.part-002",
-  "./demo/mobilenet/source.part-003",
-  "./demo/mobilenet/candidate.part-000",
-  "./demo/mobilenet/test-ten.npz",
-  "./demo/mobilenet/browser-contract.json",
-  "./reports/REAL_MODEL_RESULTS.md",
-  "./downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl",
-  "./downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256",
-  "./demo/mlp-w32/source.onnx",
-  "./demo/mlp-w32/candidate-int8.onnx",
-  "./demo/mlp-w32/browser-contract.json",
-  "./demo/mlp-w32/training-record.json",
-  "./demo/mlp-w64/source.onnx",
-  "./demo/mlp-w64/candidate-int8.onnx",
-  "./demo/mlp-w64/browser-contract.json",
-  "./demo/mlp-w64/training-record.json",
-  "./demo/rbf/source.onnx",
-  "./demo/rbf/candidate-int8.onnx",
-  "./demo/rbf/browser-contract.json",
-  "./demo/rbf/training-record.json",
-  "./demo/rbf-c40/source.onnx",
-  "./demo/rbf-c40/candidate-int8.onnx",
-  "./demo/rbf-c40/browser-contract.json",
-  "./demo/rbf-c40/training-record.json",
-  "./demo/rbf-c160/source.onnx",
-  "./demo/rbf-c160/candidate-int8.onnx",
-  "./demo/rbf-c160/browser-contract.json",
-  "./demo/rbf-c160/training-record.json",
+  "./demo/cnn/source.onnx",
+  "./demo/cnn/candidate-int8.onnx",
+  "./demo/cnn/browser-contract.json",
   "./vendor/ort/ort.wasm.min.js",
   "./vendor/ort/ort-wasm-simd-threaded.mjs",
   "./vendor/ort/ort-wasm-simd-threaded.wasm"
@@ -104,8 +70,11 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", response.clone()));
+        .then(async (response) => {
+          if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put("./index.html", response.clone());
+          }
           return response;
         })
         .catch(() => caches.match("./index.html"))
@@ -115,9 +84,10 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request)
-      .then((cached) => cached || fetch(request).then((response) => {
+      .then((cached) => cached || fetch(request).then(async (response) => {
         if (response.ok && response.type === "basic") {
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, response.clone());
         }
         return response;
       }))
