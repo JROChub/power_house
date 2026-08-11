@@ -35,6 +35,26 @@
     "accuracy_delta_denominator": 1797,
     "maximum_linf_native_retained": "0.20229744911193848"
   },
+  "mnist_demo": {
+    "source_provenance": "ONNX Model Zoo validated MNIST-12",
+    "source_sha256": "sha256:5c688690f8bacf667d4c2074af5ad0646ca328d7ab03eccf944a65b320171bdd",
+    "candidate_sha256": "sha256:8687b9979df02a90cf7e0f937539f7bdc5c96e8a5d35cbaf299f43c4556a3ff6",
+    "dataset_sha256": "sha256:03a2210eaa6859f68582ee01dfdb05f4c40800760903e3dba5ae1e955a4ceb7a",
+    "contract_sha256": "sha256:e142cb46083980dbd357fee5ab1db2118dcaba5d2c35dc41bcf31718fd9d3887",
+    "candidate_generation_profile": "onnxruntime-static-qoperator-u8s8-minmax/v1",
+    "source_bytes": 26143,
+    "candidate_bytes": 18440,
+    "browser_samples": 1000,
+    "browser_source_correct": 984,
+    "browser_candidate_correct": 985,
+    "browser_decision_changes": 1,
+    "browser_maximum_linf": "2.9286537170410156",
+    "full_test_samples": 10000,
+    "full_test_source_accuracy": "0.989",
+    "full_test_candidate_accuracy": "0.9894",
+    "full_test_official_int8_accuracy": "0.5452",
+    "native_cpu_latency_relation": "candidate slower in the recorded run"
+  },
   "mlp_w32_demo": {
     "source_sha256": "sha256:efaf1bec54e8eea3d49f6ff5abef1482ca3f69775e5978772913032d75ad9ff9",
     "candidate_sha256": "sha256:cbb46d6b7934cc873967f4e0c1fec607940608c7496fab31f49c80b3fcf4ddb3",

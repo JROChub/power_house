@@ -1,0 +1,74 @@
+{
+  "candidate": {
+    "format": "onnx",
+    "sha256": "sha256:8687b9979df02a90cf7e0f937539f7bdc5c96e8a5d35cbaf299f43c4556a3ff6"
+  },
+  "claims": [
+    {
+      "boundary": "artifact",
+      "criticality": "required",
+      "evidence_required": "digest",
+      "id": "artifact-binding",
+      "parameters": {},
+      "relation": "artifact_identity"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "advisory",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "mnist-decision-invariance",
+      "parameters": {},
+      "relation": "decision_invariant"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "required",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "mnist-accuracy-delta",
+      "parameters": {
+        "metric": "accuracy",
+        "minimum": "-0.005"
+      },
+      "relation": "finite_set_accuracy_delta"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "advisory",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "mnist-logit-deviation",
+      "parameters": {
+        "maximum": "3.0",
+        "metric": "linf"
+      },
+      "relation": "bounded_deviation"
+    }
+  ],
+  "contract_id": "mfenx/ckodmk/mnist-12/test-first-1000/v1",
+  "dataset": {
+    "batch_size": 1,
+    "format": "numpy-npz-stored-canonical-v1",
+    "input_dtype": "float32",
+    "input_key": "inputs",
+    "input_layout": "NC",
+    "label_key": "labels",
+    "sample_shape": [
+      1,
+      28,
+      28
+    ],
+    "samples": 1000,
+    "sha256": "sha256:03a2210eaa6859f68582ee01dfdb05f4c40800760903e3dba5ae1e955a4ceb7a"
+  },
+  "output": {
+    "class_count": 10,
+    "decision_rule": "argmax-first",
+    "dtype": "float32",
+    "semantic_role": "classification-logits"
+  },
+  "policy_profile": "ckodmk/browser-wasm-f32-batch1-classification/v1",
+  "schema": "mfenx/ckodmk-browser-contract/v1",
+  "source": {
+    "format": "onnx",
+    "sha256": "sha256:5c688690f8bacf667d4c2074af5ad0646ca328d7ab03eccf944a65b320171bdd"
+  }
+}

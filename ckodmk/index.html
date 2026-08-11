@@ -21,9 +21,9 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css?v=20260810h">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
-  <script src="app.js?v=20260810e" defer></script>
+  <script src="app.js?v=20260810f" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810i" defer></script>
+  <script src="browser-gate.js?v=20260810j" defer></script>
   <script src="phone-study.js?v=20260810d" defer></script>
 </head>
 <body>
@@ -45,20 +45,20 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-grid" aria-hidden="true"></div>
       <div class="hero-copy">
-        <p class="eyebrow"><i></i> CKODMK 0.2</p>
+        <p class="eyebrow"><i></i> CKODMK 0.2.1</p>
         <h1 id="hero-title">ONNX MODEL<br><span>BUILD AND CHECK</span></h1>
         <p class="lede">CKODMK can build an INT8 candidate from a supported source model, compare both models using declared data and claims, and export the candidate and report.</p>
         <div class="hero-actions">
           <a class="button primary" href="#browser-gate">OPEN CKODMK</a>
           <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
         </div>
-        <p id="install-status" class="boundary">CKODMK runs in this browser. Installation enables home screen access and offline use of all six included trained models.</p>
+        <p id="install-status" class="boundary">CKODMK runs in this browser. Installation enables home screen access and offline use of the included trained models.</p>
         <p class="boundary">The report states the evaluated dataset, runtime, claims, results, and unsupported claims.</p>
       </div>
       <aside class="decision-console" aria-label="CKODMK browser application summary">
         <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
         <div class="app-preview">
-          <span>01</span><p>Choose a trained example or a supported MLP or radial basis ONNX model.</p>
+          <span>01</span><p>Choose a trained example, including the pretrained MNIST convolutional model, or select your own supported ONNX files.</p>
           <span>02</span><p>Build a deterministic dynamic INT8 candidate on this device.</p>
           <span>03</span><p>Check the declared data, then save the candidate and report.</p>
         </div>
@@ -67,7 +67,7 @@
     </section>
 
     <section class="proof-strip" aria-label="Current evidence summary">
-      <div><strong>6</strong><span>TRAINED MODELS</span><small>Three MLPs and three radial basis models</small></div>
+      <div><strong>7</strong><span>TRAINED MODELS</span><small>MLP, radial basis, and pretrained convolutional models</small></div>
       <div><strong>1,797</strong><span>ROWS PER PAIR</span><small>Complete official test split</small></div>
       <div><strong>0 / 120</strong><span>FALSE PASS</span><small>Selected internal fault corpus</small></div>
       <div><strong>3</strong><span>CHECKING PATHS</span><small>Python, Rust, independent NumPy</small></div>
@@ -80,9 +80,9 @@
         <p>Build and check any included trained model with one tap or select your own supported source. CKODMK performs candidate generation, hashing, execution, and claim checks locally. It does not upload the files or require a desktop connection.</p>
       </div>
       <div class="mobile-start" aria-label="Quick start">
-        <div><strong>QUICK START</strong><span>Choose one of six trained models. CKODMK builds its INT8 candidate here, checks every declared row, then enables the candidate and report downloads.</span></div>
-        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
-        <button id="run-demo" class="primary" type="button">BUILD AND VERIFY EXAMPLE</button>
+        <div><strong>QUICK START</strong><span>Choose a trained model. CKODMK loads or builds its INT8 candidate, checks every declared row on this device, then enables the candidate and report downloads.</span></div>
+        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mnist">Pretrained MNIST CNN, 1,000 test images</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
+        <button id="run-demo" class="primary" type="button">RUN EXAMPLE</button>
       </div>
       <div class="gate-shell">
         <form id="gate-form" novalidate>
@@ -162,10 +162,11 @@
       <div class="section-head">
         <p class="eyebrow">RETAINED TEST RESULTS</p>
         <h2>Retained test results.</h2>
-        <p>Six source and candidate pairs were evaluated on all 1,797 rows of the test file. Select a candidate to view its recorded measurements.</p>
+        <p>The retained results include six Optdigits pairs and the pretrained ONNX Model Zoo MNIST convolutional network. Select a candidate to view its recorded measurements.</p>
       </div>
       <div class="evidence-lab">
         <div class="candidate-list" role="list" aria-label="Retained model candidates">
+          <button type="button" data-candidate="mnist-int8"><b>MNIST CNN</b><span>STATIC INT8</span></button>
           <button type="button" data-candidate="w16-int8" class="active"><b>WIDTH 16</b><span>DYNAMIC INT8</span></button>
           <button type="button" data-candidate="w32-int8"><b>WIDTH 32</b><span>DYNAMIC INT8</span></button>
           <button type="button" data-candidate="w64-int8"><b>WIDTH 64</b><span>DYNAMIC INT8</span></button>
@@ -225,17 +226,17 @@
     <section id="install" class="section install">
       <div>
         <p class="eyebrow">COMMAND LINE TOOL</p>
-        <h2>Install CKODMK 0.2.0.</h2>
+        <h2>Install CKODMK 0.2.1.</h2>
         <p>The wheel provides the Python command line interface. The source repository is private.</p>
       </div>
       <div class="install-box">
-        <button type="button" id="copy-install" data-copy="python -m pip install https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl" aria-label="Copy install command">COPY</button>
-        <code>python -m pip install https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl</code>
-        <small>This installs the reproducibly built, SHA-256-published wheel directly from MFENX. The source repository is private.</small>
+        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'" aria-label="Copy install command">COPY</button>
+        <code>python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'</code>
+        <small>This installs the reproducibly built wheel and the pinned ONNX optimization dependencies directly from MFENX. The source repository is private.</small>
       </div>
       <div class="install-box">
-        <button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256" aria-label="Copy checksum command">COPY</button>
-        <code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256</code>
+        <button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256" aria-label="Copy checksum command">COPY</button>
+        <code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256</code>
         <small>Verify the wheel against the published checksum before installation.</small>
       </div>
     </section>
@@ -253,7 +254,7 @@
 
   <footer>
     <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>MFENX / CKODMK</strong><small>MODEL DEPLOYMENT ASSURANCE</small></span></a>
-    <p>CKODMK 0.2.0 · Evidence date 2026-08-10</p>
+    <p>CKODMK 0.2.1 · Evidence date 2026-08-10</p>
     <nav><a href="#browser-gate">Browser verification</a><a href="reports/SECOND_TOOLCHAIN_RESULTS.md">Second toolchain</a><a href="reports/EXACT_FORMAL_CONFORMANCE_V1.json">Formal conformance matrix</a><a href="reports/THREAT_MODEL.md">Threat model</a><a href="reports/GOVERNANCE.md">Governance</a><a href="reports/ACCEPTANCE_RUBRIC.md">Acceptance rubric</a><a href="reports/INTERNAL_READINESS_V1.md">Internal score</a></nav>
   </footer>
 </body>

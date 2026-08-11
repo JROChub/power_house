@@ -1,15 +1,15 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.0-25";
+const CACHE_NAME = "ckodmk-browser-v0.2.0-26";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./styles.css?v=20260810h",
-  "./app.js?v=20260810e",
+  "./app.js?v=20260810f",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810i",
+  "./browser-gate.js?v=20260810j",
   "./phone-study.js?v=20260810d",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
@@ -19,6 +19,10 @@ const CORE = Object.freeze([
   "./demo/candidate-int8.onnx",
   "./demo/optdigits-official-test.npz",
   "./demo/browser-contract.json",
+  "./demo/mnist/source.onnx",
+  "./demo/mnist/candidate-int8.onnx",
+  "./demo/mnist/test-1000.npz",
+  "./demo/mnist/browser-contract.json",
   "./reports/ACCEPTANCE_RUBRIC.md",
   "./reports/AUDITOR_HANDOFF.md",
   "./reports/BLIND_CAMPAIGN_V3_RESULTS.md",
@@ -37,8 +41,8 @@ const CORE = Object.freeze([
   "./reports/THREAT_MODEL.md",
   "./downloads/external-evaluation-pending.json",
   "./downloads/external-campaign-preregistration-v1.json",
-  "./downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl",
-  "./downloads/mfenx_ckodmk-0.2.0-py3-none-any.whl.sha256",
+  "./downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl",
+  "./downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256",
   "./downloads/verify_external_evaluation.py",
   "./downloads/verify_external_evaluation.py.sha256",
   "./downloads/verify_external_campaign_preregistration.py",
