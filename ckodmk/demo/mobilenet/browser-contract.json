@@ -1,7 +1,7 @@
 {
   "candidate": {
     "format": "onnx",
-    "sha256": "sha256:cc028fe6cae7bc11a4ff53cfc9b79c920e8be65ce33a904ec3e2a8f66d77f95f"
+    "sha256": "sha256:cc10de187629231abc781ff671bce40a6519e84d85e0c72f62d38e4ffb1fb008"
   },
   "claims": [
     {
@@ -16,6 +16,14 @@
       "boundary": "onnxruntime-web-wasm-observation",
       "criticality": "required",
       "evidence_required": "finite-dataset-exhaustive",
+      "id": "sample-decision",
+      "parameters": {},
+      "relation": "decision_invariant"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "required",
+      "evidence_required": "finite-dataset-exhaustive",
       "id": "sample-accuracy",
       "parameters": {
         "metric": "accuracy",
@@ -25,11 +33,11 @@
     },
     {
       "boundary": "onnxruntime-web-wasm-observation",
-      "criticality": "advisory",
+      "criticality": "required",
       "evidence_required": "finite-dataset-exhaustive",
       "id": "sample-output-distance",
       "parameters": {
-        "maximum": "8",
+        "maximum": "3.5",
         "metric": "linf"
       },
       "relation": "bounded_deviation"

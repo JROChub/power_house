@@ -6,7 +6,8 @@
   const CONTRACT_LIMIT = 1024 * 1024;
   const WARMUP_PAIRS = 12;
   const MEASURED_PAIRS = 60;
-  const INNER_REPETITIONS = 128;
+  const MAX_INNER_REPETITIONS = 128;
+  const TARGET_GROUP_NANOSECONDS = 20_000_000;
   const SHA = /^sha256:[0-9a-f]{64}$/;
   const RELATIONSHIPS = new Set(["independent-external", "mfenx-author", "other"]);
   let authorized = false;
@@ -81,6 +82,13 @@
     return ordered[Math.ceil(ordered.length * numerator / denominator) - 1];
   }
 
+  function repetitionsForPilot(sourceNanoseconds, candidateNanoseconds) {
+    for (const value of [sourceNanoseconds, candidateNanoseconds]) {
+      if (!Number.isSafeInteger(value) || value < 1 || value > 60_000_000_000) throw new PhoneStudyError("pilot timing is invalid");
+    }
+    return Math.max(1, Math.min(MAX_INNER_REPETITIONS, Math.ceil(TARGET_GROUP_NANOSECONDS / Math.max(sourceNanoseconds, candidateNanoseconds))));
+  }
+
   function formatMilliseconds(nanoseconds) {
     return `${(nanoseconds / 1_000_000).toFixed(3)} ms`;
   }
@@ -127,18 +135,19 @@
     setActions();
   }
 
-  async function timeInference(session, inputName, outputName, input, shape, classCount) {
+  async function timeInference(session, inputName, outputName, input, shape, classCount, repetitions) {
+    if (!Number.isSafeInteger(repetitions) || repetitions < 1 || repetitions > MAX_INNER_REPETITIONS) throw new PhoneStudyError("timing repetition count is invalid");
     const start = global.performance.now();
     let result;
-    for (let repetition = 0; repetition < INNER_REPETITIONS; repetition += 1) {
+    for (let repetition = 0; repetition < repetitions; repetition += 1) {
       result = await session.run({ [inputName]: new global.ort.Tensor("float32", input, shape) });
     }
     const elapsed = global.performance.now() - start;
     const output = result[outputName];
     if (!output || output.type !== "float32" || output.data.length !== classCount) throw new PhoneStudyError("timing run returned an unsupported output");
     for (const value of output.data) if (!Number.isFinite(value)) throw new PhoneStudyError("timing run returned a nonfinite output");
-    const nanoseconds = Math.round(elapsed * 1_000_000 / INNER_REPETITIONS);
-    if (!Number.isSafeInteger(nanoseconds) || nanoseconds < 1 || nanoseconds > 60_000_000_000) throw new PhoneStudyError("timing observation is outside the supported range");
+    const nanoseconds = Math.max(1, Math.round(elapsed * 1_000_000 / repetitions));
+    if (!Number.isSafeInteger(nanoseconds) || nanoseconds > 60_000_000_000) throw new PhoneStudyError("timing observation is outside the supported range");
     return nanoseconds;
   }
 
@@ -185,16 +194,20 @@
       const candidateInput = candidateSession.inputNames[0], candidateOutput = candidateSession.outputNames[0];
       const shape = [1, ...contract.dataset.sample_shape];
       const inputFor = (index) => dataset.inputs.slice(index * dataset.sampleElements, (index + 1) * dataset.sampleElements);
+      const pilotInput = inputFor(0);
+      const sourcePilot = await timeInference(sourceSession, sourceInput, sourceOutput, pilotInput, shape, contract.output.class_count, 1);
+      const candidatePilot = await timeInference(candidateSession, candidateInput, candidateOutput, pilotInput.slice(), shape, contract.output.class_count, 1);
+      const innerRepetitions = repetitionsForPilot(sourcePilot, candidatePilot);
       for (let round = 0; round < WARMUP_PAIRS; round += 1) {
         if (cancelRequested) throw new PhoneStudyError("timing study was cancelled");
         if (global.performance.now() - studyStarted > 300_000) throw new PhoneStudyError("timing study exceeded five minutes");
         const input = inputFor(round % contract.dataset.samples);
         if (round % 2 === 0) {
-          await timeInference(sourceSession, sourceInput, sourceOutput, input, shape, contract.output.class_count);
-          await timeInference(candidateSession, candidateInput, candidateOutput, input.slice(), shape, contract.output.class_count);
+          await timeInference(sourceSession, sourceInput, sourceOutput, input, shape, contract.output.class_count, innerRepetitions);
+          await timeInference(candidateSession, candidateInput, candidateOutput, input.slice(), shape, contract.output.class_count, innerRepetitions);
         } else {
-          await timeInference(candidateSession, candidateInput, candidateOutput, input, shape, contract.output.class_count);
-          await timeInference(sourceSession, sourceInput, sourceOutput, input.slice(), shape, contract.output.class_count);
+          await timeInference(candidateSession, candidateInput, candidateOutput, input, shape, contract.output.class_count, innerRepetitions);
+          await timeInference(sourceSession, sourceInput, sourceOutput, input.slice(), shape, contract.output.class_count, innerRepetitions);
         }
       }
       const pairs = [];
@@ -206,11 +219,11 @@
         let sourceNs, candidateNs;
         const order = round % 2 === 0 ? "source-candidate" : "candidate-source";
         if (round % 2 === 0) {
-          sourceNs = await timeInference(sourceSession, sourceInput, sourceOutput, input, shape, contract.output.class_count);
-          candidateNs = await timeInference(candidateSession, candidateInput, candidateOutput, input.slice(), shape, contract.output.class_count);
+          sourceNs = await timeInference(sourceSession, sourceInput, sourceOutput, input, shape, contract.output.class_count, innerRepetitions);
+          candidateNs = await timeInference(candidateSession, candidateInput, candidateOutput, input.slice(), shape, contract.output.class_count, innerRepetitions);
         } else {
-          candidateNs = await timeInference(candidateSession, candidateInput, candidateOutput, input, shape, contract.output.class_count);
-          sourceNs = await timeInference(sourceSession, sourceInput, sourceOutput, input.slice(), shape, contract.output.class_count);
+          candidateNs = await timeInference(candidateSession, candidateInput, candidateOutput, input, shape, contract.output.class_count, innerRepetitions);
+          sourceNs = await timeInference(sourceSession, sourceInput, sourceOutput, input.slice(), shape, contract.output.class_count, innerRepetitions);
         }
         pairs.push({ candidate_ns: candidateNs, order, sample_index: sampleIndex, source_ns: sourceNs });
       }
@@ -218,17 +231,17 @@
       const sourceP50 = percentile(sourceValues, 1, 2), sourceP95 = percentile(sourceValues, 95, 100);
       const candidateP50 = percentile(candidateValues, 1, 2), candidateP95 = percentile(candidateValues, 95, 100);
       lastStudy = {
-        schema: "mfenx/ckodmk-browser-phone-study/v2",
+        schema: "mfenx/ckodmk-browser-phone-study/v3",
         created_at: new Date().toISOString(),
         authentication: "none",
         session_nonce: nonce,
         privacy: { automatic_device_identifiers_collected: [], files_uploaded: false, network_result_submission: false },
         target_declaration: declaredTarget,
         execution: {
-          profile: "onnxruntime-web-wasm-f32-batch1-paired-timing/v1", runtime: "onnxruntime-web", runtime_version: "1.27.0",
+          profile: "onnxruntime-web-wasm-f32-batch1-paired-timing/v2", runtime: "onnxruntime-web", runtime_version: "1.27.0",
           backend: "wasm", threads: 1, graph_optimization: "disabled", warmup_pairs: WARMUP_PAIRS,
-          measured_pairs: MEASURED_PAIRS, inner_repetitions: INNER_REPETITIONS, order: "alternating",
-          clock: "performance.now group duration divided by inner repetitions and converted to integer nanoseconds"
+          measured_pairs: MEASURED_PAIRS, inner_repetitions: innerRepetitions, order: "alternating",
+          clock: "performance.now adaptive group duration divided by inner repetitions and converted to integer nanoseconds"
         },
         artifacts: { source_sha256: sourceDigest, candidate_sha256: candidateDigest, dataset_sha256: datasetDigest, contract_sha256: contractDigest },
         contract: { id: contract.contract_id, samples: contract.dataset.samples, class_count: contract.output.class_count },
@@ -289,7 +302,7 @@
     invalidate();
   }
 
-  global.CKODMKPhoneStudy = Object.freeze({ PhoneStudyError, percentile, validateTargetDeclarationFields });
+  global.CKODMKPhoneStudy = Object.freeze({ PhoneStudyError, percentile, repetitionsForPilot, validateTargetDeclarationFields });
   if (typeof module !== "undefined" && module.exports) module.exports = global.CKODMKPhoneStudy;
   if (global.document) bind();
 })(typeof window !== "undefined" ? window : globalThis);
