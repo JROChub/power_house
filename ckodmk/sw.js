@@ -1,15 +1,16 @@
 "use strict";
 
-const CACHE_NAME = "ckodmk-browser-v0.2.1-33";
+const CACHE_NAME = "ckodmk-browser-v0.3.0-1";
 const MAX_CORE_ASSET_BYTES = 16 * 1024 * 1024;
 const CORE = Object.freeze([
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./styles.css?v=20260810i",
+  "./styles.css?v=20260811a",
   "./app.js?v=20260810h",
   "./browser-optimizer.js?v=20260810f",
-  "./browser-gate.js?v=20260810m",
+  "./browser-gate.js?v=20260811a",
+  "./pcm.js?v=20260811a",
   "./phone-study.js?v=20260810f",
   "./evidence.json",
   "./assets/powerhouse-logo.svg",
@@ -19,6 +20,8 @@ const CORE = Object.freeze([
   "./demo/cnn/source.onnx",
   "./demo/cnn/candidate-int8.onnx",
   "./demo/cnn/browser-contract.json",
+  "./pcm/optdigits-cnn-int8.pcm",
+  "./trust/pcm-release-public.der",
   "./vendor/ort/ort.wasm.min.js",
   "./vendor/ort/ort-wasm-simd-threaded.mjs",
   "./vendor/ort/ort-wasm-simd-threaded.wasm"

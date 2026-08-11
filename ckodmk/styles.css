@@ -53,7 +53,7 @@ h1 { max-width: 750px; margin: 0; font-size: clamp(40px,5vw,68px); line-height: 
 .runtime-summary dt { color: var(--quiet); font-size: 11px; font-weight: 650; }
 .runtime-summary dd { margin: 9px 0 0; font-size: 13px; font-weight: 650; line-height: 1.35; }
 
-.workspace, .reference-section, .resources-section { max-width: 1240px; margin: 0 auto 28px; padding: 0 24px; }
+.pcm-section, .workspace, .reference-section, .resources-section { max-width: 1240px; margin: 0 auto 28px; padding: 0 24px; }
 .workspace-header, .section-header { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: 20px; }
 h2 { margin: 0; font-size: clamp(29px,3.4vw,42px); line-height: 1.1; letter-spacing: -.035em; }
 .workspace-header > p, .section-header > p { max-width: 540px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
@@ -74,6 +74,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 button.primary { border-color: var(--accent); color: white; background: var(--accent); }
 button.primary:hover:not(:disabled) { border-color: var(--accent-hover); background: var(--accent-hover); }
 button:disabled { opacity: .42; cursor: not-allowed; }
+.decision-badge.pass { color: var(--success); background: var(--success-soft); }
+
+.pcm-section { padding-top: 18px; }
+.pcm-card { display: grid; grid-template-columns: .8fr 1.2fr; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.pcm-input, .pcm-result { min-width: 0; padding: 26px; }
+.pcm-input { border-right: 1px solid var(--line); }
+.pcm-input label { display: grid; gap: 12px; }
+.pcm-input label span { font-size: 13px; font-weight: 700; }
+.pcm-input label small { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.pcm-input input { width: 100%; padding: 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-subtle); font-size: 11px; }
+.pcm-result { background: var(--surface-subtle); }
+.pcm-result header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.pcm-result header > div { display: grid; gap: 5px; }
+.pcm-result header strong { font-size: 14px; }
+.pcm-result header span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.pcm-result dl { display: grid; grid-template-columns: 1fr 1fr; margin: 0 0 18px; }
+.pcm-result dl div { min-width: 0; padding: 14px 12px 14px 0; border-bottom: 1px solid var(--line); }
+.pcm-result dl div:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--line); }
+.pcm-result dt { color: var(--quiet); font-size: 10px; }
+.pcm-result dd { overflow: hidden; margin: 7px 0 0; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.pcm-result > button { min-height: 44px; padding: 9px 13px; }
 .quick-run > button { min-height: 42px; padding: 10px 20px; }
 
 .application-grid { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(380px,.92fr); border: 1px solid var(--line); border-top: 0; background: var(--surface); box-shadow: var(--shadow); }
@@ -167,6 +188,8 @@ footer p { font-size: 11px; }
   .intro { grid-template-columns: 1fr; gap: 30px; padding-top: 48px; }
   .runtime-summary { max-width: 620px; }
   .application-grid { grid-template-columns: 1fr; }
+  .pcm-card { grid-template-columns: 1fr; }
+  .pcm-input { border-right: 0; border-bottom: 1px solid var(--line); }
   .file-workspace { border-right: 0; border-bottom: 1px solid var(--line); }
   .timing-panel { grid-template-columns: 1fr; }
   .timing-result { padding: 20px 0 0; border-top: 1px solid var(--line); border-left: 0; }
@@ -179,12 +202,15 @@ footer p { font-size: 11px; }
   h1 { font-size: clamp(36px,11vw,50px); }
   .intro > div > p:last-child { font-size: 15px; }
   .runtime-summary div { min-height: 78px; padding: 14px; }
-  .workspace, .reference-section, .resources-section { padding-right: 16px; padding-left: 16px; }
+  .pcm-section, .workspace, .reference-section, .resources-section { padding-right: 16px; padding-left: 16px; }
   .workspace-header, .section-header { display: grid; gap: 12px; }
   .quick-run { grid-template-columns: 1fr; }
   .quick-run > button { width: 100%; min-height: 48px; }
   .demo-choice select { min-height: 48px; }
   .file-workspace, .result-panel { padding: 20px 16px; }
+  .pcm-input, .pcm-result { padding: 20px 16px; }
+  .pcm-result dl { grid-template-columns: 1fr; }
+  .pcm-result dl div:nth-child(even) { padding-left: 0; border-left: 0; }
   .file-grid { grid-template-columns: 1fr; }
   .file-grid label { min-height: 102px; }
   .workflow-actions button, .export-actions button { flex: 1 1 calc(50% - 8px); min-height: 44px; }

@@ -1,7 +1,7 @@
 {
-  "name": "CKODMK ONNX Model Tool",
+  "name": "CKODMK Proof-Carrying Model Gate",
   "short_name": "CKODMK",
-  "description": "Build and check supported ONNX model candidates on this device.",
+  "description": "Verify signed proof-carrying ONNX models before admission.",
   "id": "/ckodmk/",
   "start_url": "./",
   "scope": "./",

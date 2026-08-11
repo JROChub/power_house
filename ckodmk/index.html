@@ -19,11 +19,12 @@
   <link rel="icon" type="image/svg+xml" href="assets/powerhouse-logo.svg">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260810i">
+  <link rel="stylesheet" href="styles.css?v=20260811a">
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810h" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810m" defer></script>
+  <script src="browser-gate.js?v=20260811a" defer></script>
+  <script src="pcm.js?v=20260811a" defer></script>
   <script src="phone-study.js?v=20260810f" defer></script>
 </head>
 <body>
@@ -34,6 +35,7 @@
       <span><strong>CKODMK</strong><small>by MFENX</small></span>
     </a>
     <nav aria-label="CKODMK navigation">
+      <a href="#pcm-gate">PCM gate</a>
       <a href="#workspace">Workspace</a>
       <a href="#results">Reference runs</a>
       <a href="#install">CLI</a>
@@ -44,9 +46,9 @@
   <main>
     <section class="intro" aria-labelledby="intro-title">
       <div>
-        <p class="product-version">CKODMK 0.2.1</p>
-        <h1 id="intro-title">Prepare an ONNX model for deployment.</h1>
-        <p>Build an INT8 candidate, compare it with the source on labeled data, measure both files, and export the model with its result.</p>
+        <p class="product-version">CKODMK 0.3.0</p>
+        <h1 id="intro-title">Verify a model before it runs.</h1>
+        <p>CKODMK checks a signed model package, binds it to its source and contract, replays the required behavioral checks locally, and blocks model admission when any required condition fails.</p>
       </div>
       <dl class="runtime-summary" aria-label="Application properties">
         <div><dt>Execution</dt><dd>In this browser</dd></div>
@@ -54,6 +56,33 @@
         <div><dt>Runtime</dt><dd>ONNX Runtime Web</dd></div>
         <div><dt>Offline</dt><dd id="install-status">Available after installation</dd></div>
       </dl>
+    </section>
+
+    <section id="pcm-gate" class="pcm-section" aria-labelledby="pcm-title">
+      <header class="workspace-header">
+        <div><p class="section-label">Admission gate</p><h2 id="pcm-title">Proof-carrying model</h2></div>
+        <p>The candidate cannot be downloaded from this gate until its issuer signature, RootID, file bindings, validity period and required behavioral checks pass.</p>
+      </header>
+      <div class="pcm-card">
+        <div class="pcm-input">
+          <label><span>PCM package</span><input id="pcm-file" type="file" accept=".pcm,application/json"><small>A signed CKODMK PCM containing the source, candidate, contract and replay data.</small></label>
+          <label><span>Trusted issuer public key</span><input id="pcm-trusted-key" type="file" accept=".der,application/octet-stream"><small>Required for a selected PCM. Choose the issuer's P-256 SPKI DER public key from a trusted source.</small></label>
+          <div class="workflow-actions">
+            <button id="verify-included-pcm" class="primary" type="button">Verify included PCM</button>
+            <button id="verify-pcm" type="button">Verify selected PCM</button>
+          </div>
+        </div>
+        <div class="pcm-result" aria-live="polite">
+          <header><div><strong>Admission result</strong><span id="pcm-status">Select a PCM or run the included trained-model package.</span></div><b id="pcm-decision" class="decision-badge">Ready</b></header>
+          <dl>
+            <div><dt>Statement RootID</dt><dd id="pcm-root-id">Not verified</dd></div>
+            <div><dt>Issuer</dt><dd id="pcm-issuer">Not verified</dd></div>
+            <div><dt>Valid until</dt><dd id="pcm-expiry">Not verified</dd></div>
+            <div><dt>Candidate digest</dt><dd id="pcm-artifact">Not verified</dd></div>
+          </dl>
+          <button id="download-admitted-model" type="button" disabled>Download admitted model</button>
+        </div>
+      </div>
     </section>
 
     <section id="workspace" class="workspace" aria-labelledby="workspace-title">
@@ -184,16 +213,16 @@
     <section id="install" class="resources-section" aria-labelledby="resources-title">
       <header class="section-header">
         <div><p class="section-label">Command line</p><h2 id="resources-title">Use CKODMK in a build pipeline</h2></div>
-        <p>The browser is suited to direct use. The Python package provides the same workflow for repeatable local jobs and build systems. The source repository is private.</p>
+        <p>The browser provides local PCM admission. The Python package creates issuer keys, signs PCM files and verifies cryptographic bindings for build systems. The source repository is private.</p>
       </header>
       <div class="command-card">
-        <div><strong>Install version 0.2.1</strong><code>python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'</code></div>
-        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[optimization] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl'" aria-label="Copy install command">Copy</button>
+        <div><strong>Install version 0.3.0</strong><code>python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.3.0-py3-none-any.whl'</code></div>
+        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.3.0-py3-none-any.whl'" aria-label="Copy install command">Copy</button>
       </div>
       <details class="technical-details">
         <summary>Package checksum and supported file profile</summary>
         <div class="details-grid">
-          <div><h3>Verify the package</h3><code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256</code><button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.2.1-py3-none-any.whl.sha256" aria-label="Copy checksum command">Copy checksum command</button></div>
+          <div><h3>Verify the package</h3><code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.3.0-py3-none-any.whl.sha256</code><button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.3.0-py3-none-any.whl.sha256" aria-label="Copy checksum command">Copy checksum command</button></div>
           <div><h3>Supported browser files</h3><ul><li>Source and candidate ONNX files up to 64 MB</li><li>One Float32 classification input and one output</li><li>NPZ with Float32 inputs and Int64 labels</li><li>Batch size one, up to 25,000 rows and 250,000 output values</li></ul></div>
         </div>
       </details>
@@ -202,8 +231,8 @@
 
   <footer>
     <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>CKODMK</strong><small>MFENX</small></span></a>
-    <p>Version 0.2.1</p>
-    <nav><a href="#workspace">Workspace</a><a href="#results">Reference runs</a><a href="#install">CLI</a></nav>
+    <p>Version 0.3.0</p>
+    <nav><a href="#pcm-gate">PCM gate</a><a href="#workspace">Workspace</a><a href="#install">CLI</a></nav>
   </footer>
 </body>
 </html>
