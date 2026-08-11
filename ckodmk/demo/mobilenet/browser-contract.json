@@ -1,0 +1,66 @@
+{
+  "candidate": {
+    "format": "onnx",
+    "sha256": "sha256:cc028fe6cae7bc11a4ff53cfc9b79c920e8be65ce33a904ec3e2a8f66d77f95f"
+  },
+  "claims": [
+    {
+      "boundary": "artifact",
+      "criticality": "required",
+      "evidence_required": "digest",
+      "id": "artifact-binding",
+      "parameters": {},
+      "relation": "artifact_identity"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "required",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "sample-accuracy",
+      "parameters": {
+        "metric": "accuracy",
+        "minimum": "0"
+      },
+      "relation": "finite_set_accuracy_delta"
+    },
+    {
+      "boundary": "onnxruntime-web-wasm-observation",
+      "criticality": "advisory",
+      "evidence_required": "finite-dataset-exhaustive",
+      "id": "sample-output-distance",
+      "parameters": {
+        "maximum": "8",
+        "metric": "linf"
+      },
+      "relation": "bounded_deviation"
+    }
+  ],
+  "contract_id": "onnx-model-zoo/mobilenet-v2-12/source-vs-int8/sample-632",
+  "dataset": {
+    "batch_size": 1,
+    "format": "numpy-npz-stored-canonical-v1",
+    "input_dtype": "float32",
+    "input_key": "inputs",
+    "input_layout": "NC",
+    "label_key": "labels",
+    "sample_shape": [
+      3,
+      224,
+      224
+    ],
+    "samples": 1,
+    "sha256": "sha256:a5318bd6a3008909699eb3bd23683c2e35ee92f7aad1e701810cc037e85bfaa3"
+  },
+  "output": {
+    "class_count": 1000,
+    "decision_rule": "argmax-first",
+    "dtype": "float32",
+    "semantic_role": "classification-logits"
+  },
+  "policy_profile": "ckodmk/browser-wasm-f32-batch1-classification/v1",
+  "schema": "mfenx/ckodmk-browser-contract/v1",
+  "source": {
+    "format": "onnx",
+    "sha256": "sha256:c0c3f76d93fa3fd6580652a45618618a220fced18babf65774ed169de0432ad5"
+  }
+}

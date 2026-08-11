@@ -23,7 +23,7 @@
   <script src="vendor/ort/ort.wasm.min.js" integrity="sha384-tfUvHgp9/GSRWo8HC27M+k72kO9DXscoOHJVFMMo17my+b613YTj9vpom0og1Cwe" defer></script>
   <script src="app.js?v=20260810f" defer></script>
   <script src="browser-optimizer.js?v=20260810f" defer></script>
-  <script src="browser-gate.js?v=20260810j" defer></script>
+  <script src="browser-gate.js?v=20260810k" defer></script>
   <script src="phone-study.js?v=20260810d" defer></script>
 </head>
 <body>
@@ -34,10 +34,9 @@
       <span><strong>MFENX</strong><small>CKODMK</small></span>
     </a>
     <nav aria-label="CKODMK navigation">
-      <a href="#evidence">Evidence</a>
-      <a href="#architecture">Architecture</a>
+      <a href="#browser-gate">Application</a>
+      <a href="#evidence">Results</a>
       <a href="#install">Install</a>
-      <a href="#limits">Coverage</a>
     </nav>
   </header>
 
@@ -47,13 +46,13 @@
       <div class="hero-copy">
         <p class="eyebrow"><i></i> CKODMK 0.2.1</p>
         <h1 id="hero-title">ONNX MODEL<br><span>BUILD AND CHECK</span></h1>
-        <p class="lede">CKODMK can build an INT8 candidate from a supported source model, compare both models using declared data and claims, and export the candidate and report.</p>
+        <p class="lede">CKODMK builds smaller INT8 ONNX models and compares them with their source models directly in your browser.</p>
         <div class="hero-actions">
           <a class="button primary" href="#browser-gate">OPEN CKODMK</a>
           <button class="button" id="install-app" type="button">INSTALL ON THIS DEVICE</button>
         </div>
         <p id="install-status" class="boundary">CKODMK runs in this browser. Installation enables home screen access and offline use of the included trained models.</p>
-        <p class="boundary">The report states the evaluated dataset, runtime, claims, results, and unsupported claims.</p>
+        <p class="boundary">Your model and data remain on your device. You can download the optimized model and its test report.</p>
       </div>
       <aside class="decision-console" aria-label="CKODMK browser application summary">
         <div class="console-top"><span>PHONE AND DESKTOP</span><b>LOCAL EXECUTION</b></div>
@@ -62,32 +61,32 @@
           <span>02</span><p>Build a deterministic dynamic INT8 candidate on this device.</p>
           <span>03</span><p>Check the declared data, then save the candidate and report.</p>
         </div>
-        <div class="console-status"><i></i><span>UNSUPPORTED CLAIMS DO NOT PASS</span></div>
+        <div class="console-status"><i></i><span>FILES ARE CHECKED BEFORE DOWNLOAD</span></div>
       </aside>
     </section>
 
     <section class="proof-strip" aria-label="Current evidence summary">
-      <div><strong>7</strong><span>TRAINED MODELS</span><small>MLP, radial basis, and pretrained convolutional models</small></div>
-      <div><strong>1,797</strong><span>ROWS PER PAIR</span><small>Complete official test split</small></div>
-      <div><strong>0 / 120</strong><span>FALSE PASS</span><small>Selected internal fault corpus</small></div>
-      <div><strong>3</strong><span>CHECKING PATHS</span><small>Python, Rust, independent NumPy</small></div>
+      <div><strong>8</strong><span>TRAINED MODELS</span><small>Two pretrained convolutional models plus included test models</small></div>
+      <div><strong>14 MB</strong><span>MOBILE MODEL</span><small>Integrity checked chunk loading for larger files</small></div>
+      <div><strong>100%</strong><span>LOCAL</span><small>Model execution stays in this browser</small></div>
+      <div><strong>OFFLINE</strong><span>INSTALLABLE</span><small>Included models are cached after installation</small></div>
     </section>
 
     <section id="browser-gate" class="section browser-gate">
       <div class="section-head">
         <p class="eyebrow">BROWSER APPLICATION</p>
         <h2>Run CKODMK on this device.</h2>
-        <p>Build and check any included trained model with one tap or select your own supported source. CKODMK performs candidate generation, hashing, execution, and claim checks locally. It does not upload the files or require a desktop connection.</p>
+        <p>Build and check an included model with one tap or choose your own ONNX files. CKODMK performs candidate generation, hashing, and execution locally. It does not upload the files or require a desktop connection.</p>
       </div>
       <div class="mobile-start" aria-label="Quick start">
         <div><strong>QUICK START</strong><span>Choose a trained model. CKODMK loads or builds its INT8 candidate, checks every declared row on this device, then enables the candidate and report downloads.</span></div>
-        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mnist">Pretrained MNIST CNN, 1,000 test images</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
+        <label class="demo-choice"><span>TRAINED MODEL</span><select id="demo-model" aria-label="Example trained model"><option value="mlp16">MLP, width 16</option><option value="mnist">Pretrained MNIST CNN, 1,000 test images</option><option value="mobilenet">Pretrained MobileNet v2, ImageNet sample</option><option value="mlp32">MLP, width 32</option><option value="mlp64">MLP, width 64</option><option value="rbf40">Radial basis, 40 centers</option><option value="rbf80">Radial basis, 80 centers</option><option value="rbf160">Radial basis, 160 centers</option></select></label>
         <button id="run-demo" class="primary" type="button">RUN EXAMPLE</button>
       </div>
       <div class="gate-shell">
         <form id="gate-form" novalidate>
           <h3 class="form-title">BUILD OR VERIFY YOUR FILES</h3>
-          <p class="form-help">For candidate generation, select a supported source and choose BUILD INT8 CANDIDATE. For verification, provide all four files and the separately supplied contract digest.</p>
+          <p class="form-help">To optimize a model, select a source and choose BUILD INT8 CANDIDATE. To compare existing files, provide the source, candidate, dataset, contract, and contract digest.</p>
           <div class="file-grid">
             <label><span>01 / SOURCE ONNX</span><input id="gate-source" type="file" accept=".onnx,application/octet-stream" required><small id="source-name">No file selected</small></label>
             <label><span>02 / CANDIDATE ONNX</span><input id="gate-candidate" type="file" accept=".onnx,application/octet-stream" required><small id="candidate-name">No file selected</small></label>
@@ -119,25 +118,15 @@
             <div><dt>Model bytes</dt><dd id="gate-size">Not built</dd></div>
           </dl>
           <ol id="gate-claims" aria-label="Claim results"></ol>
-          <small>Execution scope: ONNX Runtime Web 1.27.0 / WASM / batch one. This page does not evaluate native runtime, device, latency, power, thermal, or universal equivalence claims.</small>
+          <small>Execution: ONNX Runtime Web 1.27.0, WASM, batch size one.</small>
         </aside>
       </div>
       <div class="phone-study" aria-live="polite">
         <div>
           <p class="eyebrow">LOCAL PHONE TIMING</p>
           <h3>Measure the verified pair in this browser.</h3>
-          <p>After verification, run 12 warmup pairs and 60 alternating measured pairs. Each observation averages 128 repeated inferences to exceed the browser clock resolution. The result stays on this device until you download or share it.</p>
-          <p class="privacy-note">No device or account information is detected automatically. Optional target values entered below are never uploaded and enter the local report only with explicit consent.</p>
-          <fieldset class="target-declaration">
-            <legend>Optional evaluator entered target record</legend>
-            <label><input id="include-target-declaration" type="checkbox"> Include the following values in my local report</label>
-            <label>Retail device model<input id="target-model" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter retail model"></label>
-            <label>Operating system and version<input id="target-os" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter operating system and version"></label>
-            <label>Browser and version<input id="target-browser" type="text" minlength="2" maxlength="96" autocomplete="off" placeholder="Enter browser and version"></label>
-            <label>Evaluator relationship<select id="evaluator-relationship"><option value="independent-external">Independent external evaluator</option><option value="mfenx-author">MFENX author</option><option value="other">Other</option></select></label>
-            <small>Nothing is detected or uploaded. These self declared values are included only if you check the box. They are not device attestation.</small>
-          </fieldset>
-          <p class="method-links"><a href="reports/BROWSER_PHONE_STUDY_V2.md">Timing method</a> <a href="downloads/verify_phone_study.py">Phone report verifier</a> <a href="reports/AUDITOR_HANDOFF.md">Evaluator checklist</a> <a href="reports/EXTERNAL_CAMPAIGN_PREREGISTRATION_V1.md">Campaign preregistration</a> <a href="downloads/external-campaign-preregistration-v1.json">Campaign template</a> <a href="downloads/verify_external_campaign_preregistration.py">Campaign-plan verifier</a> <a href="reports/EXTERNAL_CAMPAIGN_RESULT_V1.md">Terminal result format</a> <a href="downloads/verify_external_campaign_result.py">Terminal result verifier</a> <a href="reports/EXTERNAL_EVALUATION_RETURN_V1.md">Signed return format</a> <a href="downloads/verify_external_evaluation.py">Signed return verifier</a></p>
+          <p>After a successful comparison, measure both files in this browser using alternating runs. The result stays on this device until you download or share it.</p>
+          <p class="privacy-note">CKODMK does not collect the device model, operating system, browser version, account, or network address.</p>
         </div>
         <div class="phone-study-results">
           <header><span>PAIRED TIMING</span><b id="phone-study-state">LOCKED</b></header>
@@ -162,7 +151,7 @@
       <div class="section-head">
         <p class="eyebrow">RETAINED TEST RESULTS</p>
         <h2>Retained test results.</h2>
-        <p>The retained results include six Optdigits pairs and the pretrained ONNX Model Zoo MNIST convolutional network. Select a candidate to view its recorded measurements.</p>
+        <p>The retained results include six Optdigits pairs and the pretrained ONNX Model Zoo MNIST convolutional network. Select a model to view its recorded measurements.</p>
       </div>
       <div class="evidence-lab">
         <div class="candidate-list" role="list" aria-label="Retained model candidates">
@@ -193,33 +182,17 @@
 
     <section id="architecture" class="section architecture">
       <div class="section-head">
-        <p class="eyebrow">VERIFICATION COMPONENTS</p>
-        <h2>Candidate generation and checking are separate.</h2>
+        <p class="eyebrow">PROCESS</p>
+        <h2>How a model is processed.</h2>
       </div>
       <div class="pipeline" aria-label="CKODMK assurance pipeline">
-        <article><span>01</span><h3>CANDIDATE MODEL</h3><p>The candidate may come from ONNX Runtime, TensorRT, Olive, another compiler, or a manual transformation.</p></article>
+        <article><span>01</span><h3>READ</h3><p>CKODMK reads and hashes the source, candidate, dataset, and settings.</p></article>
         <i aria-hidden="true">→</i>
-        <article><span>02</span><h3>PYTHON GATE</h3><p>Snapshots bytes, enforces batch one Float32 semantics, executes every declared row, and retains raw output bits and paired timings.</p></article>
+        <article><span>02</span><h3>RUN</h3><p>The source and candidate execute on the same rows at batch size one.</p></article>
         <i aria-hidden="true">→</i>
-        <article><span>03</span><h3>RUST ADJUDICATOR</h3><p>Separately parses evidence, reads bound labels, rehashes artifacts, and recomputes metrics, claims, and the release verdict.</p></article>
+        <article><span>03</span><h3>COMPARE</h3><p>CKODMK compares classifications, accuracy, output distance, size, and timing.</p></article>
         <i aria-hidden="true">→</i>
-        <article><span>04</span><h3>NUMPY SHADOW CHECK</h3><p>A distinct strict ONNX evaluator uses neither Gate nor ONNX Runtime. Unsupported device and latency claims remain inconclusive.</p></article>
-      </div>
-    </section>
-
-    <section class="section campaign">
-      <div class="campaign-copy">
-        <p class="eyebrow">INTERNAL FAULT INJECTION TEST</p>
-        <h2>Recorded campaign result.</h2>
-        <p>One committed run evaluated 120 selected target faults, 9 valid controls, and one separate evidence fabrication case. There were zero false <code>PASS</code> decisions. The exact 95% two sided upper bound is 3.027%.</p>
-        <a class="text-link" href="reports/BLIND_CAMPAIGN_V3_RESULTS.md">View fault injection report</a>
-        <a class="text-link" href="reports/GENERATIVE_CAMPAIGN_V1.md">View generative test report</a>
-      </div>
-      <div class="campaign-grid">
-        <div><strong>100</strong><span>BLOCK</span></div>
-        <div><strong>20</strong><span>INCONCLUSIVE</span></div>
-        <div><strong>0</strong><span>FALSE PASS</span></div>
-        <div><strong>9 / 9</strong><span>CONTROL PASS</span></div>
+        <article><span>04</span><h3>SAVE</h3><p>Download the optimized ONNX model and its machine readable result.</p></article>
       </div>
     </section>
 
@@ -242,20 +215,20 @@
     </section>
 
     <section id="limits" class="section limits">
-      <div class="section-head"><p class="eyebrow">CURRENT COVERAGE</p><h2>Claims not evaluated by this release.</h2></div>
+      <div class="section-head"><p class="eyebrow">SUPPORTED INPUT</p><h2>File requirements.</h2></div>
       <ul>
-        <li>No universal “same intelligence” claim.</li>
-        <li>No claim of fastest model, fastest optimizer, or best phone performance.</li>
-        <li>No behavior guarantee outside the declared finite dataset unless a supported exact proof covers it.</li>
-        <li>No external audit, customer deployment, second device, transformer, accelerator, power, or thermal result yet.</li>
+        <li>ONNX source and candidate files up to 64 MB.</li>
+        <li>Float32 classification input with one model input and one model output.</li>
+        <li>Canonical NPZ data containing Float32 inputs and Int64 labels.</li>
+        <li>Batch size one with no more than 25,000 rows and 250,000 output values.</li>
       </ul>
     </section>
   </main>
 
   <footer>
     <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>MFENX / CKODMK</strong><small>MODEL DEPLOYMENT ASSURANCE</small></span></a>
-    <p>CKODMK 0.2.1 · Evidence date 2026-08-10</p>
-    <nav><a href="#browser-gate">Browser verification</a><a href="reports/SECOND_TOOLCHAIN_RESULTS.md">Second toolchain</a><a href="reports/EXACT_FORMAL_CONFORMANCE_V1.json">Formal conformance matrix</a><a href="reports/THREAT_MODEL.md">Threat model</a><a href="reports/GOVERNANCE.md">Governance</a><a href="reports/ACCEPTANCE_RUBRIC.md">Acceptance rubric</a><a href="reports/INTERNAL_READINESS_V1.md">Internal score</a></nav>
+    <p>CKODMK 0.2.1</p>
+    <nav><a href="#browser-gate">Open application</a><a href="#evidence">Results</a><a href="#install">Install</a></nav>
   </footer>
 </body>
 </html>
