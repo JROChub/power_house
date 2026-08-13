@@ -1,1 +1,85 @@
-{"activation_decision":"AUTHORIZED_FOR_ACTIVATION","capability_result":{"decision":"PASS","evidence_sha256":"sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb"},"claims":[{"claim":"TRAINING_COMPLETE","evidence_class":"verified-final-training-receipt","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510","subject":"optdigits-cnn-int8-v1"},{"claim":"FUNCTIONAL","evidence_class":"reload-and-inference","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510","subject":"optdigits-cnn-int8-v1"}],"contract_sha256":"sha256:b1212573ebf8ca4f69f5f5ae6a7e15efeabd14d88d26b030e788ed3a45801a44","lifecycle":[{"evidence_class":"submitted-training-implementation","evidence_sha256":"sha256:c6e3430fd05a981477714dbc305f50cd6fe0a4aaf3d623eb8de2aacec7380f8a","state":"SUBMITTED","status":"VERIFIED"},{"evidence_class":"completed-training-record","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510","state":"RUNNING","status":"VERIFIED"},{"evidence_class":"final-training-receipt","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510","state":"OUTPUT_PUBLISHED","status":"VERIFIED"},{"evidence_class":"candidate-digest-verification","evidence_sha256":"sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc","state":"ARTIFACT_VERIFIED","status":"VERIFIED"},{"evidence_class":"reload-and-inference","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510","state":"RELOAD_VERIFIED","status":"VERIFIED"},{"evidence_class":"finite-capability-measurement","evidence_sha256":"sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb","state":"CAPABILITY_MEASURED","status":"VERIFIED"},{"evidence_class":"runtime-replay-release-gate","evidence_sha256":"sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb","state":"RELEASE_ELIGIBLE","status":"VERIFIED"}],"lineage_sha256":"sha256:b331195077a1c6ed00a3ad3af2547d8dece395395271defc40d44d982d271676","model_sha256":"sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc","release_id":"optdigits-cnn-int8-release-v1","reload_result":{"decision":"PASS","evidence_sha256":"sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510"},"runtime_replay_result":{"decision":"PASS","evidence_sha256":"sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb"},"schema":"mfenx/release-authorization/v1"}
+{
+  "capability_result": {
+    "decision": "PASS",
+    "evidence_sha256": "sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb"
+  },
+  "claims": [
+    {
+      "claim": "TRAINING_COMPLETE",
+      "evidence_class": "verified-final-training-receipt",
+      "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+      "subject": "optdigits-cnn-int8-v1"
+    },
+    {
+      "claim": "FUNCTIONAL",
+      "evidence_class": "reload-and-inference",
+      "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+      "subject": "optdigits-cnn-int8-v1"
+    }
+  ],
+  "contract_sha256": "sha256:b1212573ebf8ca4f69f5f5ae6a7e15efeabd14d88d26b030e788ed3a45801a44",
+  "lifecycle": [
+    {
+      "evidence_class": "submitted-training-implementation",
+      "evidence_sha256": "sha256:c6e3430fd05a981477714dbc305f50cd6fe0a4aaf3d623eb8de2aacec7380f8a",
+      "state": "SUBMITTED",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "completed-training-record",
+      "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+      "state": "RUNNING",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "final-training-receipt",
+      "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+      "state": "OUTPUT_PUBLISHED",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "candidate-digest-verification",
+      "evidence_sha256": "sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc",
+      "state": "ARTIFACT_VERIFIED",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "reload-and-inference",
+      "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510",
+      "state": "RELOAD_VERIFIED",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "finite-capability-measurement",
+      "evidence_sha256": "sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb",
+      "state": "CAPABILITY_MEASURED",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence_class": "runtime-replay-release-gate",
+      "evidence_sha256": "sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb",
+      "state": "RELEASE_ELIGIBLE",
+      "status": "VERIFIED"
+    }
+  ],
+  "lineage_sha256": "sha256:f140b6a1c7c6b2ff082551e7941dd33dc729a170e9d34b19b566d709df0c2458",
+  "model_sha256": "sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc",
+  "qualification": {
+    "capability_accuracy_ppm": 969949,
+    "comparative_delta_ppm": 0,
+    "evaluation_samples": 1797,
+    "profile": "DEMONSTRATION",
+    "reliability_success_ppm": 1000000,
+    "safety_critical_failures": 0
+  },
+  "release_id": "optdigits-cnn-int8-release-v1",
+  "reload_result": {
+    "decision": "PASS",
+    "evidence_sha256": "sha256:c5ef3a4daca2eba73db6c16159d1930acc48a667fba1c6bc84d213069a564510"
+  },
+  "runtime_replay_result": {
+    "decision": "PASS",
+    "evidence_sha256": "sha256:bdeecff54d6f7cbe7bd005321e9971cdb047b177657cea422b8228009e3f71eb"
+  },
+  "schema": "mfenx/release-authorization/v1"
+}

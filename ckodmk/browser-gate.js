@@ -15,7 +15,7 @@
   class CancelledError extends Error {}
 
   class StrictJsonParser {
-    constructor(text) { this.text = text; this.i = 0; this.depth = 0; }
+    constructor(text, allowFiniteFloats = false) { this.text = text; this.i = 0; this.depth = 0; this.allowFiniteFloats = allowFiniteFloats; }
     parse() { const value = this.value(); this.ws(); if (this.i !== this.text.length) throw new GateError("contract has trailing input"); return value; }
     ws() { while (/[\x20\t\r\n]/.test(this.text[this.i] || "")) this.i += 1; }
     value() {
@@ -56,13 +56,15 @@
       throw new GateError("unterminated string");
     }
     number() {
-      const match = this.text.slice(this.i).match(/^-?(?:0|[1-9][0-9]*)/); if (!match) throw new GateError("invalid JSON value");
-      const end = this.i + match[0].length; if (/[.eE]/.test(this.text[end] || "")) throw new GateError("JSON floats are forbidden in contracts");
-      this.i = end; const value = Number(match[0]); if (!Number.isSafeInteger(value)) throw new GateError("contract integer exceeds safe range"); return value;
+      const expression = this.allowFiniteFloats ? /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/ : /^-?(?:0|[1-9][0-9]*)/;
+      const match = this.text.slice(this.i).match(expression); if (!match) throw new GateError("invalid JSON value");
+      const end = this.i + match[0].length; if (!this.allowFiniteFloats && /[.eE]/.test(this.text[end] || "")) throw new GateError("JSON floats are forbidden in contracts");
+      this.i = end; const value = Number(match[0]); if (!Number.isFinite(value) || (!this.allowFiniteFloats && !Number.isSafeInteger(value))) throw new GateError("JSON number exceeds the supported profile"); return value;
     }
   }
 
   function parseStrictJson(text) { if (typeof text !== "string") throw new GateError("contract must be UTF-8 text"); return new StrictJsonParser(text).parse(); }
+  function parseStrictEvidenceJson(text) { if (typeof text !== "string") throw new GateError("evidence must be UTF-8 text"); return new StrictJsonParser(text, true).parse(); }
   function plainObject(value, name) { if (!value || typeof value !== "object" || Array.isArray(value)) throw new GateError(`${name} must be an object`); return value; }
   function exactKeys(value, expected, name) { plainObject(value, name); const actual = Object.keys(value).sort(); const wanted = [...expected].sort(); if (actual.join("\0") !== wanted.join("\0")) throw new GateError(`${name} fields are not the supported profile`); }
   function integer(value, name, min, max) { if (!Number.isSafeInteger(value) || value < min || value > max) throw new GateError(`${name} is out of range`); return value; }
@@ -331,5 +333,5 @@
   function bindUi() { const labels = [["gate-source", "source-name"], ["gate-candidate", "candidate-name"], ["gate-dataset", "dataset-name"], ["gate-contract", "contract-name"]]; for (const [inputId, labelId] of labels) global.document.getElementById(inputId).addEventListener("change", (event) => setText(labelId, event.target.files[0]?.name || "No file selected")); global.document.getElementById("gate-source").addEventListener("change", () => { lastCandidate = null; lastGeneration = null; global.document.getElementById("download-candidate").disabled = true; }); global.document.getElementById("gate-candidate").addEventListener("change", (event) => { if (event.target.files[0] !== lastCandidate) { lastCandidate = null; lastGeneration = null; global.document.getElementById("download-candidate").disabled = true; } }); global.document.getElementById("gate-contract").addEventListener("change", (event) => { if (event.target.files[0] !== lastContract) { lastContract = null; localContract = false; global.document.getElementById("download-contract").disabled = true; } }); global.document.getElementById("gate-form").addEventListener("submit", runFromUi); global.document.getElementById("load-demo").addEventListener("click", () => loadDemo(false)); global.document.getElementById("run-demo").addEventListener("click", () => loadDemo(true)); global.document.getElementById("build-candidate").addEventListener("click", buildCandidateFromUi); global.document.getElementById("create-contract").addEventListener("click", createTestContractFromUi); global.document.getElementById("download-candidate").addEventListener("click", downloadCandidate); global.document.getElementById("download-contract").addEventListener("click", downloadContract); global.document.getElementById("cancel-gate").addEventListener("click", () => { cancelRequested = true; }); global.document.getElementById("download-report").addEventListener("click", downloadReport); global.document.getElementById("share-report").addEventListener("click", shareReport); }
   function loadInputs({ source, candidate, dataset, contract, contractDigest, generation }) { setInputFile("gate-source", source); setInputFile("gate-candidate", candidate); setInputFile("gate-dataset", dataset); setInputFile("gate-contract", contract); global.document.getElementById("gate-contract-digest").value = contractDigest; lastGeneration = generation || null; }
 
-  const api = Object.freeze({ GateError, parseStrictJson, validateContract, parseStoredNpz, parseNpy, parseDataset, decimalFraction, doubleFraction, adjudicate, crc32, loadInputs }); global.CKODMKBrowserGate = api; if (typeof module !== "undefined" && module.exports) module.exports = api; if (global.document) bindUi();
+  const api = Object.freeze({ GateError, parseStrictJson, parseStrictEvidenceJson, validateContract, parseStoredNpz, parseNpy, parseDataset, decimalFraction, doubleFraction, adjudicate, crc32, loadInputs }); global.CKODMKBrowserGate = api; if (typeof module !== "undefined" && module.exports) module.exports = api; if (global.document) bindUi();
 })(typeof window !== "undefined" ? window : globalThis);

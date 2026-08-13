@@ -1,1 +1,290 @@
-{"architecture_dimensions":{"attention_heads":null,"context_length":null,"hidden_width":12,"layers":2,"vocabulary_size":null},"checkpoint_bytes":{"model":8749,"optimizer":0,"optimizer_status":"NOT_RETAINED"},"compression":{"method":"ONNX_RUNTIME_STATIC_QOPERATOR_U8S8_PER_CHANNEL_MINMAX","ratio_denominator":3865,"ratio_numerator":8749},"deployment":{"artifact_bytes":3865,"deployment_precision":"INT8_MIXED","model_sha256":"sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc","original_parameter_count":2050,"tensor_manifest":{"all_initializer_elements":2104,"parameter_count":2050,"parameter_value_bytes":2116,"tensors":[{"dtype":"int32","elements":12,"is_parameter":true,"name":"conv_b_quantized","shape":[12],"value_bytes":48,"value_sha256":"sha256:57ddd103c8904792b7fbd13d2dc79f963aaf4a553f50cf1e948ad179555ad1c3"},{"dtype":"float32","elements":1,"is_parameter":false,"name":"conv_scale","shape":[1],"value_bytes":4,"value_sha256":"sha256:6c075a2f26fe1f8d0d699aaa359f37cf72785328e1cfc8d5e0f32339b52462ed"},{"dtype":"int8","elements":108,"is_parameter":true,"name":"conv_w_quantized","shape":[12,1,3,3],"value_bytes":108,"value_sha256":"sha256:d7e141b9f01149ff4cbdf1b2907427c1f082eaf4f993884949754ef72df20b07"},{"dtype":"float32","elements":12,"is_parameter":false,"name":"conv_w_scale","shape":[12],"value_bytes":48,"value_sha256":"sha256:d3cd3704f0bc39c19020eac50fb09f353c83e1995afabdfb1c2f513ebb9d1c1d"},{"dtype":"int8","elements":12,"is_parameter":false,"name":"conv_w_zero_point","shape":[12],"value_bytes":12,"value_sha256":"sha256:15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b"},{"dtype":"uint8","elements":1,"is_parameter":false,"name":"conv_zero_point","shape":[1],"value_bytes":1,"value_sha256":"sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"},{"dtype":"int32","elements":10,"is_parameter":true,"name":"dense_b_quantized","shape":[10],"value_bytes":40,"value_sha256":"sha256:9f9fe4915aa73e878fa05e778eb78fbe47a92a08e990b40e9b1aeb89be9d6464"},{"dtype":"int8","elements":1920,"is_parameter":true,"name":"dense_w_quantized","shape":[192,10],"value_bytes":1920,"value_sha256":"sha256:5f8a99cfa7e6cd0e56d91e772ab751800031492556c1926535b2d3270a6e368d"},{"dtype":"float32","elements":10,"is_parameter":false,"name":"dense_w_scale","shape":[10],"value_bytes":40,"value_sha256":"sha256:0115685ed132b81c800facd3c4fa85d4c3be3a686ec1fac864102caf1ecc3b21"},{"dtype":"int8","elements":10,"is_parameter":false,"name":"dense_w_zero_point","shape":[10],"value_bytes":10,"value_sha256":"sha256:01d448afd928065458cf670b60f5a594d735af0172c8d67f22a81680132681ca"},{"dtype":"float32","elements":1,"is_parameter":false,"name":"image_scale","shape":[1],"value_bytes":4,"value_sha256":"sha256:52c37b242f7ae8185a2b223b5b9d0b8772d97180a46b1d6a4d6c8b018c803d64"},{"dtype":"int64","elements":4,"is_parameter":false,"name":"image_shape","shape":[4],"value_bytes":32,"value_sha256":"sha256:87e7217ca89da9f8a09b779a528bce4e9c28e8df6dbeaef53506301524486ea2"},{"dtype":"uint8","elements":1,"is_parameter":false,"name":"image_zero_point","shape":[1],"value_bytes":1,"value_sha256":"sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"},{"dtype":"float32","elements":1,"is_parameter":false,"name":"logits_scale","shape":[1],"value_bytes":4,"value_sha256":"sha256:a5143ae0a5de37fd67511c1ba0080f4e580467a0b55cf7008597d0df49a18ad0"},{"dtype":"uint8","elements":1,"is_parameter":false,"name":"logits_zero_point","shape":[1],"value_bytes":1,"value_sha256":"sha256:9d277175737fb50041e75f641acf94d10df9b9721db8fffe874ab57f8ffb062e"}]}},"inference_measurement":{"peak_ram_bytes":null,"peak_vram_bytes":null,"samples_per_second":null,"status":"NOT_MEASURED"},"lineage_sha256":"sha256:b331195077a1c6ed00a3ad3af2547d8dece395395271defc40d44d982d271676","native_model":{"model_sha256":"sha256:b3b95f9454843d75a5557f92d69f91358997122e2cd40d16e65b3cbdcfb6f7c7","native_precision":"FP32","tensor_manifest":{"all_initializer_elements":2054,"parameter_count":2050,"parameter_value_bytes":8200,"tensors":[{"dtype":"float32","elements":12,"is_parameter":true,"name":"conv_b","shape":[12],"value_bytes":48,"value_sha256":"sha256:f979559e0ef37373c46ac5fca530aac6b1addce7618db16d0d8145363fe2faf4"},{"dtype":"float32","elements":108,"is_parameter":true,"name":"conv_w","shape":[12,1,3,3],"value_bytes":432,"value_sha256":"sha256:dbee17be094d98629d08981847647e768cdeb8d7294fd574047278ccd686b564"},{"dtype":"float32","elements":10,"is_parameter":true,"name":"dense_b","shape":[10],"value_bytes":40,"value_sha256":"sha256:8e710d0418ae557820f3b944d149d9f8d9f49035a22bdb0fdb951689b88ef749"},{"dtype":"float32","elements":1920,"is_parameter":true,"name":"dense_w","shape":[192,10],"value_bytes":7680,"value_sha256":"sha256:12a64e9c46855cb0611a1f3c149a1c84ca3ed6d2ff875f309698313010da5b97"},{"dtype":"int64","elements":4,"is_parameter":false,"name":"image_shape","shape":[4],"value_bytes":32,"value_sha256":"sha256:87e7217ca89da9f8a09b779a528bce4e9c28e8df6dbeaef53506301524486ea2"}]},"theoretical_weight_bytes":8200,"total_parameters":2050,"trainable_parameters":2050},"scale_decision":"SCALE_RECORDED","schema":"mfenx/model-scale/v1","training_scale":{"tokens_per_parameter":{"denominator":2050,"numerator":0},"verified_training_tokens":0}}
+{
+  "architecture_dimensions": {
+    "attention_heads": null,
+    "context_length": null,
+    "hidden_width": 12,
+    "layers": 2,
+    "vocabulary_size": null
+  },
+  "checkpoint_bytes": {
+    "model": 8749,
+    "optimizer": 0,
+    "optimizer_status": "NOT_RETAINED"
+  },
+  "compression": {
+    "method": "ONNX_RUNTIME_STATIC_QOPERATOR_U8S8_PER_CHANNEL_MINMAX",
+    "ratio_denominator": 3865,
+    "ratio_numerator": 8749
+  },
+  "deployment": {
+    "artifact_bytes": 3865,
+    "deployment_precision": "INT8_MIXED",
+    "model_sha256": "sha256:fc47224263b85d8ccdaacb794486cfc112f0d586fd7239a945b183ccc6fcd2cc",
+    "original_parameter_count": 2050,
+    "tensor_manifest": {
+      "all_initializer_elements": 2104,
+      "parameter_count": 2050,
+      "parameter_value_bytes": 2116,
+      "tensors": [
+        {
+          "dtype": "int32",
+          "elements": 12,
+          "is_parameter": true,
+          "name": "conv_b_quantized",
+          "shape": [
+            12
+          ],
+          "value_bytes": 48,
+          "value_sha256": "sha256:57ddd103c8904792b7fbd13d2dc79f963aaf4a553f50cf1e948ad179555ad1c3"
+        },
+        {
+          "dtype": "float32",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "conv_scale",
+          "shape": [
+            1
+          ],
+          "value_bytes": 4,
+          "value_sha256": "sha256:6c075a2f26fe1f8d0d699aaa359f37cf72785328e1cfc8d5e0f32339b52462ed"
+        },
+        {
+          "dtype": "int8",
+          "elements": 108,
+          "is_parameter": true,
+          "name": "conv_w_quantized",
+          "shape": [
+            12,
+            1,
+            3,
+            3
+          ],
+          "value_bytes": 108,
+          "value_sha256": "sha256:d7e141b9f01149ff4cbdf1b2907427c1f082eaf4f993884949754ef72df20b07"
+        },
+        {
+          "dtype": "float32",
+          "elements": 12,
+          "is_parameter": false,
+          "name": "conv_w_scale",
+          "shape": [
+            12
+          ],
+          "value_bytes": 48,
+          "value_sha256": "sha256:d3cd3704f0bc39c19020eac50fb09f353c83e1995afabdfb1c2f513ebb9d1c1d"
+        },
+        {
+          "dtype": "int8",
+          "elements": 12,
+          "is_parameter": false,
+          "name": "conv_w_zero_point",
+          "shape": [
+            12
+          ],
+          "value_bytes": 12,
+          "value_sha256": "sha256:15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b"
+        },
+        {
+          "dtype": "uint8",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "conv_zero_point",
+          "shape": [
+            1
+          ],
+          "value_bytes": 1,
+          "value_sha256": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+        },
+        {
+          "dtype": "int32",
+          "elements": 10,
+          "is_parameter": true,
+          "name": "dense_b_quantized",
+          "shape": [
+            10
+          ],
+          "value_bytes": 40,
+          "value_sha256": "sha256:9f9fe4915aa73e878fa05e778eb78fbe47a92a08e990b40e9b1aeb89be9d6464"
+        },
+        {
+          "dtype": "int8",
+          "elements": 1920,
+          "is_parameter": true,
+          "name": "dense_w_quantized",
+          "shape": [
+            192,
+            10
+          ],
+          "value_bytes": 1920,
+          "value_sha256": "sha256:5f8a99cfa7e6cd0e56d91e772ab751800031492556c1926535b2d3270a6e368d"
+        },
+        {
+          "dtype": "float32",
+          "elements": 10,
+          "is_parameter": false,
+          "name": "dense_w_scale",
+          "shape": [
+            10
+          ],
+          "value_bytes": 40,
+          "value_sha256": "sha256:0115685ed132b81c800facd3c4fa85d4c3be3a686ec1fac864102caf1ecc3b21"
+        },
+        {
+          "dtype": "int8",
+          "elements": 10,
+          "is_parameter": false,
+          "name": "dense_w_zero_point",
+          "shape": [
+            10
+          ],
+          "value_bytes": 10,
+          "value_sha256": "sha256:01d448afd928065458cf670b60f5a594d735af0172c8d67f22a81680132681ca"
+        },
+        {
+          "dtype": "float32",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "image_scale",
+          "shape": [
+            1
+          ],
+          "value_bytes": 4,
+          "value_sha256": "sha256:52c37b242f7ae8185a2b223b5b9d0b8772d97180a46b1d6a4d6c8b018c803d64"
+        },
+        {
+          "dtype": "int64",
+          "elements": 4,
+          "is_parameter": false,
+          "name": "image_shape",
+          "shape": [
+            4
+          ],
+          "value_bytes": 32,
+          "value_sha256": "sha256:87e7217ca89da9f8a09b779a528bce4e9c28e8df6dbeaef53506301524486ea2"
+        },
+        {
+          "dtype": "uint8",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "image_zero_point",
+          "shape": [
+            1
+          ],
+          "value_bytes": 1,
+          "value_sha256": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+        },
+        {
+          "dtype": "float32",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "logits_scale",
+          "shape": [
+            1
+          ],
+          "value_bytes": 4,
+          "value_sha256": "sha256:a5143ae0a5de37fd67511c1ba0080f4e580467a0b55cf7008597d0df49a18ad0"
+        },
+        {
+          "dtype": "uint8",
+          "elements": 1,
+          "is_parameter": false,
+          "name": "logits_zero_point",
+          "shape": [
+            1
+          ],
+          "value_bytes": 1,
+          "value_sha256": "sha256:9d277175737fb50041e75f641acf94d10df9b9721db8fffe874ab57f8ffb062e"
+        }
+      ]
+    }
+  },
+  "inference_measurement": {
+    "peak_ram_bytes": null,
+    "peak_vram_bytes": null,
+    "samples_per_second": null,
+    "status": "NOT_MEASURED"
+  },
+  "lineage_sha256": "sha256:f140b6a1c7c6b2ff082551e7941dd33dc729a170e9d34b19b566d709df0c2458",
+  "native_model": {
+    "model_sha256": "sha256:b3b95f9454843d75a5557f92d69f91358997122e2cd40d16e65b3cbdcfb6f7c7",
+    "native_precision": "FP32",
+    "tensor_manifest": {
+      "all_initializer_elements": 2054,
+      "parameter_count": 2050,
+      "parameter_value_bytes": 8200,
+      "tensors": [
+        {
+          "dtype": "float32",
+          "elements": 12,
+          "is_parameter": true,
+          "name": "conv_b",
+          "shape": [
+            12
+          ],
+          "value_bytes": 48,
+          "value_sha256": "sha256:f979559e0ef37373c46ac5fca530aac6b1addce7618db16d0d8145363fe2faf4"
+        },
+        {
+          "dtype": "float32",
+          "elements": 108,
+          "is_parameter": true,
+          "name": "conv_w",
+          "shape": [
+            12,
+            1,
+            3,
+            3
+          ],
+          "value_bytes": 432,
+          "value_sha256": "sha256:dbee17be094d98629d08981847647e768cdeb8d7294fd574047278ccd686b564"
+        },
+        {
+          "dtype": "float32",
+          "elements": 10,
+          "is_parameter": true,
+          "name": "dense_b",
+          "shape": [
+            10
+          ],
+          "value_bytes": 40,
+          "value_sha256": "sha256:8e710d0418ae557820f3b944d149d9f8d9f49035a22bdb0fdb951689b88ef749"
+        },
+        {
+          "dtype": "float32",
+          "elements": 1920,
+          "is_parameter": true,
+          "name": "dense_w",
+          "shape": [
+            192,
+            10
+          ],
+          "value_bytes": 7680,
+          "value_sha256": "sha256:12a64e9c46855cb0611a1f3c149a1c84ca3ed6d2ff875f309698313010da5b97"
+        },
+        {
+          "dtype": "int64",
+          "elements": 4,
+          "is_parameter": false,
+          "name": "image_shape",
+          "shape": [
+            4
+          ],
+          "value_bytes": 32,
+          "value_sha256": "sha256:87e7217ca89da9f8a09b779a528bce4e9c28e8df6dbeaef53506301524486ea2"
+        }
+      ]
+    },
+    "theoretical_weight_bytes": 8200,
+    "total_parameters": 2050,
+    "trainable_parameters": 2050
+  },
+  "scale_decision": "SCALE_RECORDED",
+  "schema": "mfenx/model-scale/v1",
+  "training_scale": {
+    "tokens_per_parameter": {
+      "denominator": 2050,
+      "numerator": 0
+    },
+    "verified_training_tokens": 0
+  }
+}
