@@ -275,7 +275,7 @@
     global.document.getElementById("pcm-parameters").textContent = verified.scale.native_model.total_parameters.toLocaleString("en-US");
     global.document.getElementById("pcm-precision").textContent = `${verified.scale.native_model.native_precision} checkpoint; ${verified.scale.deployment.deployment_precision} deployment`;
     state("REPLAYING", "Signature accepted. Replaying every required behavioral check before admission…");
-    global.CKODMKBrowserGate.loadInputs({ source: files.source, candidate: files.candidate, dataset: files.dataset, contract: files.contract, contractDigest, generation: { implementation: "mfenx-ckodmk-pcm", version: "0.5.0", profile: PROFILE, statement_root_id: verified.rootId } });
+    global.CKODMKBrowserGate.loadInputs({ source: files.source, candidate: files.candidate, dataset: files.dataset, contract: files.contract, contractDigest, generation: { implementation: "mfenx-ckodmk-pcm", version: "0.5.1", profile: PROFILE, statement_root_id: verified.rootId } });
     global.document.getElementById("gate-form").requestSubmit();
     for (let attempt = 0; attempt < 6000; attempt += 1) {
       await new Promise((resolve) => global.setTimeout(resolve, 100));

@@ -46,7 +46,7 @@
   <main>
     <section class="intro" aria-labelledby="intro-title">
       <div>
-        <p class="product-version">CKODMK 0.5.0</p>
+        <p class="product-version">CKODMK 0.5.1</p>
         <h1 id="intro-title">Verify a model before it runs.</h1>
         <p>CKODMK checks a signed model package, binds it to its source and contract, replays the required behavioral checks locally, and blocks model admission when any required condition fails.</p>
       </div>
@@ -226,14 +226,15 @@
         <p>The browser provides local PCM admission. The Python package creates issuer keys, signs PCM files and verifies cryptographic bindings for build systems. The source repository is private.</p>
       </header>
       <div class="command-card">
-        <div><strong>Install version 0.5.0</strong><code>python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.0-py3-none-any.whl'</code></div>
-        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.0-py3-none-any.whl'" aria-label="Copy install command">Copy</button>
+        <div><strong>Install version 0.5.1</strong><code>python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.1-py3-none-any.whl'</code></div>
+        <button type="button" id="copy-install" data-copy="python -m pip install 'mfenx-ckodmk[production] @ https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.1-py3-none-any.whl'" aria-label="Copy install command">Copy</button>
       </div>
       <details class="technical-details">
         <summary>Package checksum and supported file profile</summary>
         <div class="details-grid">
-          <div><h3>Verify the package</h3><code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.0-py3-none-any.whl.sha256</code><button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.0-py3-none-any.whl.sha256" aria-label="Copy checksum command">Copy checksum command</button></div>
+          <div><h3>Verify the package</h3><code>curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.1-py3-none-any.whl.sha256</code><button type="button" data-copy="curl -O https://mfenx.com/ckodmk/downloads/mfenx_ckodmk-0.5.1-py3-none-any.whl.sha256" aria-label="Copy checksum command">Copy checksum command</button></div>
           <div><h3>Supported browser files</h3><ul><li>Source and candidate ONNX files up to 64 MB</li><li>One Float32 classification input and one output</li><li>NPZ with Float32 inputs and Int64 labels</li><li>Batch size one, up to 25,000 rows and 250,000 output values</li></ul></div>
+          <div><h3>Large checkpoint trees</h3><ul><li>Safetensors and weights-only PyTorch state dictionaries</li><li>Single-file or sharded checkpoints with exact index coverage</li><li>Streaming file and tensor hashes without whole-tree buffering</li><li>Use <code>inspect-checkpoint-scale</code> from the command line</li></ul></div>
         </div>
       </details>
     </section>
@@ -241,7 +242,7 @@
 
   <footer>
     <a class="wordmark" href="/"><img src="assets/powerhouse-logo.svg" alt=""><span><strong>CKODMK</strong><small>MFENX</small></span></a>
-    <p>Version 0.5.0</p>
+    <p>Version 0.5.1</p>
     <nav><a href="#pcm-gate">PCM gate</a><a href="#workspace">Workspace</a><a href="#install">CLI</a></nav>
   </footer>
 </body>
