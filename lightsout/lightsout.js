@@ -99,7 +99,10 @@ async function connect(showDialog = false) {
     fields.laneReadout.textContent = fields.lanes.value;
     $("#host-arch").textContent = health.architecture;
     $("#host-cores").textContent = `${health.logical_cores} physical lanes`;
-    bridgeState("online", `machine present · ${health.logical_cores} lanes`);
+    $("#host-fabric").textContent = health.physical_workers ? `${health.physical_workers} native workers` : "hosted execution";
+    bridgeState("online", health.physical_workers
+      ? `machine present · ${health.physical_workers} nodes / ${health.logical_cores} lanes`
+      : `machine present · ${health.logical_cores} lanes`);
     renderWorkloads();
     if (fields.dialog.open) fields.dialog.close();
   } catch (error) {
@@ -144,7 +147,8 @@ function showResult(payload) {
   $("#result-time").textContent = `${(Number(metrics.end_to_end_ns) / 1e6).toFixed(3)} ms`;
   $("#result-rate").textContent = humanRate(metrics.integer_operations_per_second, "op/s");
   $("#result-bandwidth").textContent = humanRate(metrics.memory_bandwidth_bytes_per_second, "B/s");
-  $("#result-lanes").textContent = payload.lanes;
+  const quorumNodes = payload.cluster?.workers_in_quorum?.length;
+  $("#result-lanes").textContent = quorumNodes ? `${payload.lanes} · ${quorumNodes} nodes` : payload.lanes;
   $("#result-instructions").textContent = payload.instruction_count;
   $("#result-tensor").textContent = decodeTensor(payload.result.outputs[0]);
   $("#result-digest").textContent = payload.image_digest;
@@ -152,6 +156,7 @@ function showResult(payload) {
     name: payload.program,
     elapsed: Number(metrics.end_to_end_ns),
     digest: payload.image_digest,
+    checkpoint: payload.cluster?.checkpoint_id,
     at: Date.now(),
   };
   state.history.unshift(record);
@@ -165,7 +170,7 @@ function renderHistory() {
   fields.history.replaceChildren(...state.history.map((item) => {
     const row = document.createElement("li");
     row.innerHTML = `<span>${item.name}</span><time>${(item.elapsed / 1e6).toFixed(3)} ms</time>`;
-    row.title = item.digest;
+    row.title = item.checkpoint ? `${item.digest} · checkpoint ${item.checkpoint}` : item.digest;
     return row;
   }));
 }
