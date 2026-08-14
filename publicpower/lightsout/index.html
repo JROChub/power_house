@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0a">
+  <meta name="description" content="The rarecomp_mfenx physical execution instrument.">
+  <meta property="og:title" content="rarecomp_mfenx / lights out">
+  <meta property="og:description" content="Compose, execute, and independently verify native machine workloads.">
+  <meta property="og:url" content="https://mfenx.com/lightsout/">
+  <title>lights out / rarecomp_mfenx</title>
+  <link rel="canonical" href="https://mfenx.com/lightsout/">
+  <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
+  <link rel="stylesheet" href="lightsout.css?v=1">
+</head>
+<body>
+  <canvas id="machine-field" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="mast">
+    <a href="/" class="wordmark" aria-label="MFENX home">
+      <span>MFENX</span>
+      <i></i>
+      <small>lights out</small>
+    </a>
+    <div class="bridge-state" id="bridge-state">
+      <i></i>
+      <span>looking for the machine</span>
+    </div>
+    <time id="utc-clock">00:00:00 UTC</time>
+  </header>
+
+  <main>
+    <aside class="workload-index" aria-label="Workloads">
+      <p>program bank</p>
+      <ol id="workload-list"></ol>
+      <button id="new-program" type="button"><span>+</span> blank machine</button>
+    </aside>
+
+    <section class="workbench" aria-label="rarecomp_mfenx workbench">
+      <div class="program-strip">
+        <div>
+          <span id="program-sequence">01 / 06</span>
+          <strong id="program-title">exact gemm</strong>
+        </div>
+        <dl>
+          <div><dt>target</dt><dd>native</dd></div>
+          <div><dt>lanes</dt><dd id="lane-readout">auto</dd></div>
+          <div><dt>oracle</dt><dd>exact</dd></div>
+        </dl>
+      </div>
+
+      <div class="source-frame">
+        <div class="line-numbers" id="line-numbers" aria-hidden="true"></div>
+        <textarea id="source" spellcheck="false" aria-label="Workload JSON source"></textarea>
+        <div class="source-shadow" aria-hidden="true"></div>
+      </div>
+
+      <div class="execution-bar">
+        <label>
+          <span>physical lanes</span>
+          <input id="lanes" type="range" min="1" max="4" value="4">
+        </label>
+        <button id="run" type="button">
+          <span class="run-key">⌘ ↵</span>
+          <span class="run-copy"><b>execute</b><small>compile · run · verify</small></span>
+        </button>
+      </div>
+    </section>
+
+    <aside class="readout" aria-live="polite">
+      <header>
+        <span>return channel</span>
+        <button id="clear-history" type="button">clear</button>
+      </header>
+      <div id="idle-readout" class="idle-readout">
+        <div class="scope"><i></i><i></i><i></i><i></i></div>
+        <p>No result held.</p>
+        <small>The machine returns only after independent replay agrees.</small>
+      </div>
+      <div id="active-readout" class="active-readout" hidden>
+        <div class="verdict"><i></i><span>verified</span><b id="result-time">—</b></div>
+        <dl class="measurements">
+          <div><dt>integer rate</dt><dd id="result-rate">—</dd></div>
+          <div><dt>bandwidth</dt><dd id="result-bandwidth">—</dd></div>
+          <div><dt>physical lanes</dt><dd id="result-lanes">—</dd></div>
+          <div><dt>instructions</dt><dd id="result-instructions">—</dd></div>
+        </dl>
+        <div class="tensor-readout">
+          <span>result tensor</span>
+          <pre id="result-tensor">—</pre>
+        </div>
+        <div class="digest-readout">
+          <span>machine image</span>
+          <button id="copy-digest" type="button"><code id="result-digest">—</code><i>copy</i></button>
+        </div>
+      </div>
+      <ol id="history" class="history"></ol>
+    </aside>
+  </main>
+
+  <footer>
+    <div id="machine-route">
+      <span class="hot">program</span><i></i><span>transmute</span><i></i><span>physical lanes</span><i></i><span>oracle</span>
+    </div>
+    <div class="host-facts">
+      <span id="host-arch">—</span>
+      <span id="host-cores">—</span>
+      <span>loopback only</span>
+    </div>
+  </footer>
+
+  <dialog id="connect-dialog">
+    <form method="dialog">
+      <button class="dialog-close" aria-label="Close">×</button>
+      <span class="dialog-index">local bridge / 7331</span>
+      <p>The instrument is loaded. Start the physical execution bridge on this computer.</p>
+      <button id="copy-command" class="command" type="button"><code>sudo systemctl enable --now rarecomp-mfenx-web</code><span>copy</span></button>
+      <small>It binds only to loopback and accepts this site’s origin. Your browser will ask once for local-network access; no public listener is opened.</small>
+      <button id="retry-bridge" class="retry" type="button">authorize &amp; check</button>
+    </form>
+  </dialog>
+
+  <script src="lightsout.js?v=1" defer></script>
+</body>
+</html>
