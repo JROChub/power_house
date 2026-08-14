@@ -106,21 +106,20 @@
     <div class="host-facts">
       <span id="host-arch">—</span>
       <span id="host-cores">—</span>
-      <span>loopback only</span>
+      <span>hosted execution</span>
     </div>
   </footer>
 
   <dialog id="connect-dialog">
     <form method="dialog">
       <button class="dialog-close" aria-label="Close">×</button>
-      <span class="dialog-index">local bridge / 7331</span>
-      <p>The instrument is loaded. Start the physical execution bridge on this computer.</p>
-      <button id="copy-command" class="command" type="button"><code>sudo systemctl enable --now rarecomp-mfenx-web</code><span>copy</span></button>
-      <small>It binds only to loopback and accepts this site’s origin. Your browser will ask once for local-network access; no public listener is opened.</small>
-      <button id="retry-bridge" class="retry" type="button">authorize &amp; check</button>
+      <span class="dialog-index">hosted machine / global edge</span>
+      <p>The execution fabric did not answer. Your program remains in this browser.</p>
+      <small>Retry the encrypted connection to the hosted rarecomp_mfenx worker.</small>
+      <button id="retry-bridge" class="retry" type="button">retry connection</button>
     </form>
   </dialog>
 
-  <script src="lightsout.js?v=1" defer></script>
+  <script src="lightsout.js?v=2" defer></script>
 </body>
 </html>
