@@ -1,6 +1,6 @@
 "use strict";
 
-const BRIDGE = "https://rarecomp.localhost.direct:7331";
+const BRIDGE = "https://rarecomp-mfenx-api.jrochub-resonance.workers.dev";
 const names = {
   "exact-gemm": "exact gemm",
   "exact-batched-ntt": "batched ntt",
@@ -89,7 +89,7 @@ async function connect(showDialog = false) {
       fetch(`${BRIDGE}/v1/health`, { cache: "no-store" }),
       fetch(`${BRIDGE}/v1/workloads`, { cache: "no-store" }),
     ]);
-    if (!healthResponse.ok || !workloadResponse.ok) throw new Error("bridge rejected handshake");
+    if (!healthResponse.ok || !workloadResponse.ok) throw new Error("machine rejected handshake");
     const health = await healthResponse.json();
     const payload = await workloadResponse.json();
     state.online = true;
@@ -104,7 +104,7 @@ async function connect(showDialog = false) {
     if (fields.dialog.open) fields.dialog.close();
   } catch (error) {
     state.online = false;
-    bridgeState("error", "machine bridge offline");
+    bridgeState("error", "hosted machine unavailable");
     if (showDialog && !fields.dialog.open) fields.dialog.showModal();
   }
 }
@@ -213,10 +213,6 @@ fields.lanes.addEventListener("input", () => { fields.laneReadout.textContent = 
 fields.run.addEventListener("click", execute);
 fields.bridge.addEventListener("click", () => { if (!state.online) fields.dialog.showModal(); });
 $("#retry-bridge").addEventListener("click", () => connect(true));
-$("#copy-command").addEventListener("click", async () => {
-  await navigator.clipboard.writeText("sudo systemctl enable --now rarecomp-mfenx-web");
-  $("#copy-command span").textContent = "copied";
-});
 $("#copy-digest").addEventListener("click", () => navigator.clipboard.writeText($("#result-digest").textContent));
 $("#clear-history").addEventListener("click", () => {
   state.history = [];
