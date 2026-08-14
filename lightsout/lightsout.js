@@ -1,6 +1,6 @@
 "use strict";
 
-const BRIDGE = "http://127.0.0.1:7331";
+const BRIDGE = "https://rarecomp.localhost.direct:7331";
 const names = {
   "exact-gemm": "exact gemm",
   "exact-batched-ntt": "batched ntt",
@@ -214,7 +214,7 @@ fields.run.addEventListener("click", execute);
 fields.bridge.addEventListener("click", () => { if (!state.online) fields.dialog.showModal(); });
 $("#retry-bridge").addEventListener("click", () => connect(true));
 $("#copy-command").addEventListener("click", async () => {
-  await navigator.clipboard.writeText("mfenx serve --listen 127.0.0.1:7331");
+  await navigator.clipboard.writeText("sudo systemctl enable --now rarecomp-mfenx-web");
   $("#copy-command span").textContent = "copied";
 });
 $("#copy-digest").addEventListener("click", () => navigator.clipboard.writeText($("#result-digest").textContent));
