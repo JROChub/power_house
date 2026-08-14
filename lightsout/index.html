@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#090b0a">
-  <meta name="description" content="The rarecomp_mfenx physical execution instrument.">
-  <meta property="og:title" content="rarecomp_mfenx / lights out">
-  <meta property="og:description" content="Compose, execute, and independently verify native machine workloads.">
+  <meta name="description" content="The rarecomp_mfenx machine console.">
+  <meta property="og:title" content="rarecomp_mfenx / machine console">
+  <meta property="og:description" content="Transmute programs, inspect synthesized machines, execute physical workloads, and verify their results.">
   <meta property="og:url" content="https://mfenx.com/lightsout/">
-  <title>lights out / rarecomp_mfenx</title>
+  <title>machine console / rarecomp_mfenx</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=1">
+  <link rel="stylesheet" href="lightsout.css?v=4">
 </head>
 <body>
   <canvas id="machine-field" aria-hidden="true"></canvas>
@@ -19,107 +19,168 @@
 
   <header class="mast">
     <a href="/" class="wordmark" aria-label="MFENX home">
-      <span>MFENX</span>
-      <i></i>
-      <small>lights out</small>
+      <span>MFENX</span><i></i><small>rarecomp_mfenx / machine console</small>
     </a>
-    <div class="bridge-state" id="bridge-state">
-      <i></i>
-      <span>looking for the machine</span>
-    </div>
+    <button class="bridge-state" id="bridge-state" type="button">
+      <i></i><span>looking for the machine</span>
+    </button>
     <time id="utc-clock">00:00:00 UTC</time>
   </header>
 
   <main>
-    <aside class="workload-index" aria-label="Workloads">
-      <p>program bank</p>
+    <aside class="program-bank" aria-label="Programs">
+      <div class="rail-label"><span>program bank</span><b id="program-count">00</b></div>
       <ol id="workload-list"></ol>
-      <button id="new-program" type="button"><span>+</span> blank machine</button>
+      <div class="program-actions">
+        <button id="new-program" type="button"><span>+</span> blank machine</button>
+        <button id="open-program" type="button"><span>↑</span> open JSON</button>
+        <input id="program-file" type="file" accept="application/json,.json" hidden>
+      </div>
+      <div class="cluster-mini" id="cluster-mini"></div>
     </aside>
 
-    <section class="workbench" aria-label="rarecomp_mfenx workbench">
+    <section class="workbench" aria-label="Compiler and execution workbench">
       <div class="program-strip">
-        <div>
-          <span id="program-sequence">01 / 06</span>
-          <strong id="program-title">exact gemm</strong>
+        <div class="program-identity">
+          <span id="program-sequence">— / —</span>
+          <strong id="program-title">awaiting machine</strong>
         </div>
         <dl>
-          <div><dt>target</dt><dd>native</dd></div>
-          <div><dt>lanes</dt><dd id="lane-readout">auto</dd></div>
-          <div><dt>oracle</dt><dd>exact</dd></div>
+          <div><dt>target</dt><dd>mfenx native</dd></div>
+          <div><dt>fabric</dt><dd id="fabric-readout">—</dd></div>
+          <div><dt>oracle</dt><dd>exact replay</dd></div>
         </dl>
       </div>
 
-      <div class="source-frame">
-        <div class="line-numbers" id="line-numbers" aria-hidden="true"></div>
-        <textarea id="source" spellcheck="false" aria-label="Workload JSON source"></textarea>
-        <div class="source-shadow" aria-hidden="true"></div>
+      <nav class="view-tabs" aria-label="Program views">
+        <button type="button" data-view="source" aria-current="true">source</button>
+        <button type="button" data-view="machine">machine ISA <span id="machine-count">—</span></button>
+        <button type="button" data-view="ir">typed IR</button>
+      </nav>
+
+      <div class="view-stack">
+        <section class="console-view source-view" data-panel="source">
+          <div class="line-numbers" id="line-numbers" aria-hidden="true"></div>
+          <textarea id="source" spellcheck="false" aria-label="Workload JSON source"></textarea>
+          <div class="source-shadow" aria-hidden="true"></div>
+        </section>
+
+        <section class="console-view machine-view" data-panel="machine" hidden>
+          <div class="empty-machine" id="empty-machine">
+            <span>TRANSMUTE</span>
+            <p>No machine synthesized from this source.</p>
+            <small>Compile to lower typed operations into the digest-bound lane ISA.</small>
+          </div>
+          <div id="machine-inspection" hidden>
+            <dl class="machine-facts">
+              <div><dt>ISA</dt><dd id="machine-isa">—</dd></div>
+              <div><dt>node lanes</dt><dd id="machine-lanes">—</dd></div>
+              <div><dt>cluster lanes</dt><dd id="machine-cluster-lanes">—</dd></div>
+              <div><dt>tile</dt><dd id="machine-tile">—</dd></div>
+              <div><dt>peak live</dt><dd id="machine-peak">—</dd></div>
+              <div><dt>image quorum</dt><dd id="machine-quorum">—</dd></div>
+            </dl>
+            <ol class="instruction-stream" id="instruction-stream"></ol>
+          </div>
+        </section>
+
+        <section class="console-view ir-view" data-panel="ir" hidden>
+          <pre id="typed-ir">Compile the program to inspect its validated typed IR.</pre>
+        </section>
       </div>
 
       <div class="execution-bar">
         <label>
-          <span>physical lanes</span>
-          <input id="lanes" type="range" min="1" max="4" value="4">
+          <span>requested cluster lanes <b id="lane-readout">auto</b></span>
+          <input id="lanes" type="range" min="1" max="12" value="12">
         </label>
+        <button id="transmute" type="button">
+          <span class="action-index">T</span>
+          <span><b>transmute</b><small>validate · lower · bind</small></span>
+        </button>
         <button id="run" type="button">
-          <span class="run-key">⌘ ↵</span>
-          <span class="run-copy"><b>execute</b><small>compile · run · verify</small></span>
+          <span class="action-index">⌘↵</span>
+          <span><b>execute</b><small>run · quorum · verify</small></span>
         </button>
       </div>
     </section>
 
-    <aside class="readout" aria-live="polite">
-      <header>
-        <span>return channel</span>
-        <button id="clear-history" type="button">clear</button>
-      </header>
-      <div id="idle-readout" class="idle-readout">
-        <div class="scope"><i></i><i></i><i></i><i></i></div>
-        <p>No result held.</p>
-        <small>The machine returns only after independent replay agrees.</small>
-      </div>
-      <div id="active-readout" class="active-readout" hidden>
-        <div class="verdict"><i></i><span>verified</span><b id="result-time">—</b></div>
-        <dl class="measurements">
-          <div><dt>integer rate</dt><dd id="result-rate">—</dd></div>
-          <div><dt>bandwidth</dt><dd id="result-bandwidth">—</dd></div>
-          <div><dt>physical lanes</dt><dd id="result-lanes">—</dd></div>
-          <div><dt>instructions</dt><dd id="result-instructions">—</dd></div>
-        </dl>
-        <div class="tensor-readout">
-          <span>result tensor</span>
-          <pre id="result-tensor">—</pre>
+    <aside class="inspector" aria-live="polite">
+      <nav class="inspector-tabs" aria-label="Machine readouts">
+        <button type="button" data-inspector="result" aria-current="true">result</button>
+        <button type="button" data-inspector="fabric">fabric</button>
+        <button type="button" data-inspector="proof">proof</button>
+        <button type="button" data-inspector="artifacts">artifacts</button>
+      </nav>
+
+      <section class="inspector-panel result-panel" data-inspector-panel="result">
+        <header><span>return channel</span><button id="clear-history" type="button">clear</button></header>
+        <div id="idle-readout" class="idle-readout">
+          <div class="scope"><i></i><i></i><i></i><i></i></div>
+          <p>No result held.</p>
+          <small>The machine returns only after exact replay and cross-worker agreement.</small>
         </div>
-        <div class="digest-readout">
-          <span>machine image</span>
-          <button id="copy-digest" type="button"><code id="result-digest">—</code><i>copy</i></button>
+        <div id="active-readout" class="active-readout" hidden>
+          <div class="verdict"><i></i><span>verified</span><b id="result-time">—</b></div>
+          <dl class="measurements">
+            <div><dt>integer rate</dt><dd id="result-rate">—</dd></div>
+            <div><dt>bandwidth</dt><dd id="result-bandwidth">—</dd></div>
+            <div><dt>fabric</dt><dd id="result-lanes">—</dd></div>
+            <div><dt>instructions</dt><dd id="result-instructions">—</dd></div>
+          </dl>
+          <div class="tensor-readout"><span>materialized outputs</span><pre id="result-tensor">—</pre></div>
+          <div class="digest-readout"><span>machine image</span><button id="copy-digest" type="button"><code id="result-digest">—</code><i>copy</i></button></div>
         </div>
-      </div>
-      <ol id="history" class="history"></ol>
+        <ol id="history" class="history"></ol>
+      </section>
+
+      <section class="inspector-panel fabric-panel" data-inspector-panel="fabric" hidden>
+        <header><span>physical fabric</span><b id="fabric-health">—</b></header>
+        <ol class="node-list" id="node-list"></ol>
+        <div class="backend-matrix" id="backend-matrix"></div>
+      </section>
+
+      <section class="inspector-panel proof-panel" data-inspector-panel="proof" hidden>
+        <header><span>verification record</span><b id="proof-state">empty</b></header>
+        <dl class="proof-list" id="proof-list"></dl>
+        <pre id="telemetry-evidence">No execution evidence held.</pre>
+      </section>
+
+      <section class="inspector-panel artifacts-panel" data-inspector-panel="artifacts" hidden>
+        <header><span>machine artifacts</span><b>local export</b></header>
+        <div class="artifact-actions">
+          <button type="button" data-download="source"><span>workload source</span><small>.json</small></button>
+          <button type="button" data-download="image" disabled><span>native image</span><small>.mfx</small></button>
+          <button type="button" data-download="result" disabled><span>verified result</span><small>.result.json</small></button>
+          <button type="button" data-download="checkpoint" disabled><span>checkpoint record</span><small>.checkpoint.json</small></button>
+        </div>
+        <label class="recovery-control">
+          <span>recover checkpoint</span>
+          <input id="checkpoint-id" type="text" autocomplete="off" spellcheck="false" placeholder="checkpoint UUID">
+          <button id="recover" type="button">recover</button>
+        </label>
+        <p class="artifact-note">Native images are the exact JSON format consumed by <code>mfenx run</code>. Checkpoint knowledge remains the recovery key.</p>
+      </section>
     </aside>
   </main>
 
   <footer>
     <div id="machine-route">
-      <span class="hot">program</span><i></i><span>transmute</span><i></i><span>physical lanes</span><i></i><span>oracle</span>
+      <span class="hot">program</span><i></i><span>TRANSMUTE</span><i></i><span>machine ISA</span><i></i><span>physical fabric</span><i></i><span>proof</span>
     </div>
-    <div class="host-facts">
-      <span id="host-arch">—</span>
-      <span id="host-cores">—</span>
-      <span id="host-fabric">hosted execution</span>
-    </div>
+    <div class="host-facts"><span id="host-arch">—</span><span id="host-cores">—</span><span id="host-fabric">—</span></div>
   </footer>
 
   <dialog id="connect-dialog">
     <form method="dialog">
       <button class="dialog-close" aria-label="Close">×</button>
-      <span class="dialog-index">hosted machine / global edge</span>
-      <p>The execution fabric did not answer. Your program remains in this browser.</p>
-      <small>Retry the encrypted connection to the hosted rarecomp_mfenx worker.</small>
+      <span class="dialog-index">rarecomp_mfenx / native cluster</span>
+      <p>The execution fabric did not answer. Your source remains in this browser.</p>
+      <small>Retry the encrypted connection to the persistent coordinator and native workers.</small>
       <button id="retry-bridge" class="retry" type="button">retry connection</button>
     </form>
   </dialog>
 
-  <script src="lightsout.js?v=3" defer></script>
+  <script src="lightsout.js?v=4" defer></script>
 </body>
 </html>
