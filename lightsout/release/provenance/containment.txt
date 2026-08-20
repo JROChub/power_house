@@ -1,0 +1,2 @@
+containment=bubblewrap_network_namespace
+device_view=bubblewrap_synthetic_dev

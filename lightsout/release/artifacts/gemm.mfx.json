@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "isa_version": 5,
+  "backend": "rarecomp_mfenx_local_virtual_gpu",
+  "program_digest": "a0b6ef8f81bcf95f01095f04f600b3f7c08f7970475ef356dd07eb53025860f6",
+  "program": {
+    "version": 1,
+    "name": "manifest-backed-i32-gemm",
+    "instructions": [
+      {
+        "id": 0,
+        "ty": {
+          "element": "i32",
+          "shape": [
+            4,
+            32
+          ]
+        },
+        "operation": {
+          "op": "input",
+          "name": "left"
+        }
+      },
+      {
+        "id": 1,
+        "ty": {
+          "element": "i32",
+          "shape": [
+            32,
+            1048576
+          ]
+        },
+        "operation": {
+          "op": "input",
+          "name": "right"
+        }
+      },
+      {
+        "id": 2,
+        "ty": {
+          "element": "i32",
+          "shape": [
+            4,
+            1048576
+          ]
+        },
+        "operation": {
+          "op": "mat_mul",
+          "lhs": 0,
+          "rhs": 1
+        }
+      }
+    ],
+    "outputs": [
+      2
+    ]
+  },
+  "inputs": {
+    "left": {
+      "manifest_digest": "fa6f1f060dfc228e261561cb7ffd5295368f20786143ca9e2fcf36cee01f4c0f",
+      "ty": {
+        "element": "i32",
+        "shape": [
+          4,
+          32
+        ]
+      },
+      "byte_length": 512
+    },
+    "right": {
+      "manifest_digest": "cc4dab40adfd5c738d618ea55a8a10a28c25fcbc64714be2b307c2fd59624a38",
+      "ty": {
+        "element": "i32",
+        "shape": [
+          32,
+          1048576
+        ]
+      },
+      "byte_length": 134217728
+    }
+  },
+  "instructions": [
+    {
+      "opcode": "streamed_i32_gemm",
+      "left": {
+        "manifest_digest": "fa6f1f060dfc228e261561cb7ffd5295368f20786143ca9e2fcf36cee01f4c0f",
+        "ty": {
+          "element": "i32",
+          "shape": [
+            4,
+            32
+          ]
+        },
+        "byte_length": 512
+      },
+      "right": {
+        "manifest_digest": "cc4dab40adfd5c738d618ea55a8a10a28c25fcbc64714be2b307c2fd59624a38",
+        "ty": {
+          "element": "i32",
+          "shape": [
+            32,
+            1048576
+          ]
+        },
+        "byte_length": 134217728
+      },
+      "output_type": {
+        "element": "i32",
+        "shape": [
+          4,
+          1048576
+        ]
+      }
+    }
+  ],
+  "resource_certificate": {
+    "schema_version": 2,
+    "max_managed_bytes": 33554432,
+    "max_io_bytes": 1048576,
+    "lanes": 1,
+    "piece_count": 2,
+    "rows_per_piece": 2,
+    "tile_inner": 32,
+    "tile_columns": 1024,
+    "input_chunk_cache_bytes": 1048576,
+    "input_caches_per_lane_bytes": 2097152,
+    "output_piece_bytes_per_lane": 8388608,
+    "left_tile_bytes_per_lane": 256,
+    "right_tile_bytes_per_lane": 131072,
+    "row_decode_bytes_per_lane": 4096,
+    "authenticated_range_staging_bytes_per_lane": 4096,
+    "manifest_working_set_bytes_per_lane": 12582912,
+    "managed_bytes_per_lane": 23208192,
+    "coordinator_base_reserve_bytes": 2097152,
+    "piece_metadata_reserve_bytes": 2097152,
+    "lane_stack_bytes": 1048576,
+    "lane_control_reserve_bytes": 65536,
+    "aggregate_execution_peak_bytes": 28516608,
+    "finalization_peak_bytes": 14680064,
+    "verification_peak_bytes": 32653568,
+    "certified_managed_peak_bytes": 32653568,
+    "retained_input_storage_bytes": 134218240,
+    "retained_output_storage_bytes": 16777216,
+    "retained_checkpoint_storage_upper_bound_bytes": 16844800
+  },
+  "verification": "exact_replay"
+}

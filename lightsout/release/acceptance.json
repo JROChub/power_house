@@ -1,0 +1,249 @@
+{
+  "acceptance_level": "release",
+  "binary_sha256": "5504490202ea9062b4eaaf3890ac89bb863f34ded8620d21c6f6b0d5bbcf0aeb",
+  "build": {
+    "binary": "mfenx-local",
+    "forbidden_dependencies": 0,
+    "forbidden_dynamic_libraries": 0,
+    "locked": true,
+    "offline": true,
+    "package": "rarecomp-mfenx-local"
+  },
+  "captured_at_utc": "2026-08-20T18:14:29.562477+00:00",
+  "containment": {
+    "device_view": "bubblewrap_synthetic_dev",
+    "mode": "bubblewrap_network_namespace"
+  },
+  "corruption_rejection": {
+    "checkpoint_piece": "passed",
+    "checkpoint_receipt": "passed",
+    "image": "passed",
+    "input_chunk": "passed",
+    "result": "passed"
+  },
+  "external_hard_rlimit_as_mib": 192,
+  "independent_attestation": {
+    "recovery_partition": "external_post_kill_and_post_resume_checkpoint_snapshots",
+    "recovery_result_status": "self_reported",
+    "runtime_result_status": "self_reported",
+    "runtime_telemetry": "external_proc_and_monotonic_process_observer"
+  },
+  "machine": {
+    "backend": "rarecomp_mfenx_local_virtual_gpu",
+    "directory_metadata_sync": "available",
+    "gpu_devices_required": 0,
+    "isa_version": 5,
+    "network_transports_required": 0,
+    "opcode": "streamed_i32_gemm",
+    "process_crash_recovery": "supported",
+    "recovery_partition_attestation": "self_reported",
+    "resource_certificate_schema_version": 2,
+    "runtime_telemetry_attestation": "self_reported",
+    "verification_method": "independently_addressed_exact_replay"
+  },
+  "memory": {
+    "external_hard_rlimit_as_bytes": 201326592,
+    "external_runtime_telemetry_attestation": "external_proc_and_monotonic_process_observer",
+    "external_timings": {
+      "compile": {
+        "ended_epoch_ns": 1787249088260666780,
+        "ended_monotonic_ns": 1385086107903,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249087922700885,
+        "started_monotonic_ns": 1384741162037,
+        "wall_ns": 344945866
+      },
+      "corrupt-checkpoint-piece": {
+        "ended_epoch_ns": 1787249655578091707,
+        "ended_monotonic_ns": 1952397437338,
+        "exit_status": 1,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249655257868407,
+        "started_monotonic_ns": 1952085875853,
+        "wall_ns": 311561485
+      },
+      "corrupt-checkpoint-receipt": {
+        "ended_epoch_ns": 1787249656130635008,
+        "ended_monotonic_ns": 1952953609075,
+        "exit_status": 1,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249655803005321,
+        "started_monotonic_ns": 1952625572210,
+        "wall_ns": 328036865
+      },
+      "corrupt-image": {
+        "ended_epoch_ns": 1787249656638370342,
+        "ended_monotonic_ns": 1953460442418,
+        "exit_status": 1,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249656367533729,
+        "started_monotonic_ns": 1953189454024,
+        "wall_ns": 270988394
+      },
+      "corrupt-input-chunk": {
+        "ended_epoch_ns": 1787249654972887777,
+        "ended_monotonic_ns": 1951791420222,
+        "exit_status": 1,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249654851208741,
+        "started_monotonic_ns": 1951672067206,
+        "wall_ns": 119353016
+      },
+      "corrupt-result": {
+        "ended_epoch_ns": 1787249657104236380,
+        "ended_monotonic_ns": 1953922857738,
+        "exit_status": 1,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249656817295241,
+        "started_monotonic_ns": 1953634647896,
+        "wall_ns": 288209842
+      },
+      "inspect": {
+        "ended_epoch_ns": 1787249088639205351,
+        "ended_monotonic_ns": 1385459256083,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249088377208898,
+        "started_monotonic_ns": 1385195900978,
+        "wall_ns": 263355105
+      },
+      "inspect-full": {
+        "ended_epoch_ns": 1787249089026509501,
+        "ended_monotonic_ns": 1385845247065,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249088750482313,
+        "started_monotonic_ns": 1385570814681,
+        "wall_ns": 274432384
+      },
+      "killed-run": {
+        "ended_epoch_ns": 1787249422901344624,
+        "ended_monotonic_ns": 1719719112479,
+        "exit_status": 137,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249369717809603,
+        "started_monotonic_ns": 1666535075210,
+        "wall_ns": 53184037269
+      },
+      "matrix-create-left": {
+        "ended_epoch_ns": 1787249072202978059,
+        "ended_monotonic_ns": 1369021161125,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249071753474491,
+        "started_monotonic_ns": 1368581564135,
+        "wall_ns": 439596990
+      },
+      "matrix-create-right": {
+        "ended_epoch_ns": 1787249087817267750,
+        "ended_monotonic_ns": 1384637565341,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249072289696839,
+        "started_monotonic_ns": 1369108525181,
+        "wall_ns": 15529040160
+      },
+      "resumed-run": {
+        "ended_epoch_ns": 1787249562363586921,
+        "ended_monotonic_ns": 1859187954464,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249423081696517,
+        "started_monotonic_ns": 1719900358733,
+        "wall_ns": 139287595731
+      },
+      "resumed-verify": {
+        "ended_epoch_ns": 1787249654493047415,
+        "ended_monotonic_ns": 1951312570224,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249562449762951,
+        "started_monotonic_ns": 1859269037405,
+        "wall_ns": 92043532819
+      },
+      "uninterrupted-run": {
+        "ended_epoch_ns": 1787249276046835519,
+        "ended_monotonic_ns": 1572866136007,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249089190627835,
+        "started_monotonic_ns": 1386009211943,
+        "wall_ns": 186856924064
+      },
+      "uninterrupted-verify": {
+        "ended_epoch_ns": 1787249369538287986,
+        "ended_monotonic_ns": 1666367208473,
+        "exit_status": 0,
+        "observer": "acceptance_harness_outside_product_process",
+        "started_epoch_ns": 1787249276136429329,
+        "started_monotonic_ns": 1572961926676,
+        "wall_ns": 93405281797
+      }
+    },
+    "maxima_kib": {
+      "VmHWM_kib": 24636,
+      "VmPeak_kib": 137608,
+      "VmRSS_kib": 24636,
+      "VmSize_kib": 82324,
+      "VmSwap_kib": 0
+    },
+    "sample_counts": {
+      "compile": 3,
+      "corrupt-checkpoint-piece": 3,
+      "corrupt-checkpoint-receipt": 3,
+      "corrupt-image": 2,
+      "corrupt-input-chunk": 1,
+      "corrupt-result": 3,
+      "inspect": 2,
+      "inspect-full": 2,
+      "killed-run": 665,
+      "matrix-create-left": 5,
+      "matrix-create-right": 209,
+      "resumed-run": 1817,
+      "resumed-verify": 1189,
+      "uninterrupted-run": 2440,
+      "uninterrupted-verify": 1222
+    },
+    "virtual_memory_within_external_limit": true
+  },
+  "product": "rarecomp-mfenx-local",
+  "recovery": "passed_exact_partial_reuse",
+  "release_acceptance": true,
+  "resumed_output_root": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
+  "schema_version": 1,
+  "source_tree_sha256": "4641548015a7f296c0fe973287c65cbe963da5709360db80cf7dbe0881a658b0",
+  "status": "PASS",
+  "syscall_trace": {
+    "host_trace_files": 893,
+    "offline_build_ip_network_attempts": 0,
+    "product_gpu_device_paths": 0,
+    "product_network_syscalls": 0,
+    "product_trace_files": 18
+  },
+  "uninterrupted_output_root": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
+  "workload": {
+    "backend": "rarecomp_mfenx_local_virtual_gpu",
+    "certified_managed_peak_bytes": 32653568,
+    "gpu_required": 0,
+    "input_at_least_four_times_managed": true,
+    "input_to_managed_ratio_milli": 4110,
+    "io_mib": 1,
+    "isa_version": 5,
+    "lanes": 1,
+    "left_shape": [
+      4,
+      32
+    ],
+    "logical_input_bytes": 134218240,
+    "managed_mib": 32,
+    "network_required": 0,
+    "opcode": "streamed_i32_gemm",
+    "resource_certificate_schema_version": 2,
+    "right_shape": [
+      32,
+      1048576
+    ],
+    "total_pieces": 2
+  }
+}

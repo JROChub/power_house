@@ -1,0 +1,20 @@
+{
+  "captured_epoch_ns": 1787249423063312470,
+  "captured_monotonic_ns": 1719864473668,
+  "entries": [
+    {
+      "index": 0,
+      "piece_bytes": 8388608,
+      "piece_sha256": "240a89bf2006c04cedf58b912a8d0474cdef35d5c1d9f9edc5784f587596673a",
+      "receipt_bytes": 246,
+      "receipt_sha256": "6fe96817f4b8a6ad43b2ab89609bf790ece334966f0179ed54319611fe3a3efd"
+    }
+  ],
+  "expected_total_pieces": 2,
+  "observer": "acceptance_harness_after_process_group_exit",
+  "plan_sha256": "62a5d9685260e50bae4c58c6c77f7d32f7cb3590a7c7016ae5ab3958b504acfe",
+  "receipt_count": 1,
+  "receipt_indices": [
+    0
+  ]
+}

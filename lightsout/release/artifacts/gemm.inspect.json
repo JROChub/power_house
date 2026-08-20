@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "isa_version": 5,
+  "resource_certificate_schema_version": 2,
+  "backend": "rarecomp_mfenx_local_virtual_gpu",
+  "image_digest": "d33f00f2909419af17135a14b5828ac7504bf97868ae0b580f6769bc23d17485",
+  "program_digest": "a0b6ef8f81bcf95f01095f04f600b3f7c08f7970475ef356dd07eb53025860f6",
+  "opcode": "streamed_i32_gemm",
+  "lanes": 1,
+  "piece_count": 2,
+  "certified_managed_peak_bytes": 32653568,
+  "retained_input_storage_bytes": 134218240,
+  "retained_output_storage_bytes": 16777216,
+  "retained_checkpoint_storage_upper_bound_bytes": 16844800,
+  "verification": "exact_replay",
+  "gpu_required": false,
+  "network_required": false
+}

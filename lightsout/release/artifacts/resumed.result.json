@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "image_digest": "d33f00f2909419af17135a14b5828ac7504bf97868ae0b580f6769bc23d17485",
+  "backend": "rarecomp_mfenx_local_virtual_gpu",
+  "resource_certificate_digest": "d1a66cf69b12103c5af6acd9ba4398879b52af42aa6d32a69429bcf23114d434",
+  "outputs": [
+    {
+      "index": 0,
+      "tensor": {
+        "manifest_digest": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
+        "ty": {
+          "element": "i32",
+          "shape": [
+            4,
+            1048576
+          ]
+        },
+        "byte_length": 16777216
+      }
+    }
+  ],
+  "metrics": {
+    "end_to_end_ns": 138887558124,
+    "execution_ns": 45617059460,
+    "finalization_ns": 1711260683,
+    "useful_integer_operations": 268435456,
+    "executed_primary_integer_operations": 134217728,
+    "physical_integer_operations": 402653184,
+    "total_pieces": 2,
+    "reused_pieces": 1,
+    "executed_pieces": 1,
+    "reused_piece_indices": [
+      0
+    ],
+    "executed_piece_indices": [
+      1
+    ],
+    "lanes": 1,
+    "certified_managed_peak_bytes": 32653568,
+    "retained_storage_bytes": 167840256,
+    "gpu_devices_required": 0,
+    "network_transports_required": 0,
+    "runtime_telemetry_attestation": "self_reported",
+    "recovery_partition_attestation": "self_reported",
+    "directory_metadata_sync": "available",
+    "process_crash_recovery": "supported"
+  },
+  "verification": {
+    "verified": true,
+    "method": "independently_addressed_exact_replay",
+    "pieces_checked": 2,
+    "bytes_checked": 16777216,
+    "verification_integer_operations": 268435456,
+    "verification_ns": 91343091390
+  }
+}
