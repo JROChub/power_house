@@ -1,0 +1,13 @@
+{
+  "backend": "rarecomp_mfenx_local_virtual_gpu",
+  "certified_managed_peak_bytes": 32653568,
+  "gpu_required": 0,
+  "input_at_least_four_times_managed": true,
+  "input_to_managed_ratio_milli": 4110,
+  "isa_version": 5,
+  "logical_input_bytes": 134218240,
+  "network_required": 0,
+  "opcode": "streamed_i32_gemm",
+  "resource_certificate_schema_version": 2,
+  "total_pieces": 2
+}

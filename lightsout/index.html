@@ -3,184 +3,320 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090b0a">
-  <meta name="description" content="The rarecomp_mfenx machine console.">
-  <meta property="og:title" content="rarecomp_mfenx / machine console">
-  <meta property="og:description" content="Transmute programs, inspect synthesized machines, execute physical workloads, and verify their results.">
+  <meta name="theme-color" content="#080b09">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="MFENX Local v1 release evidence, measurements, recovery record, and Linux x86_64 executable.">
+  <meta property="og:title" content="MFENX Local v1 / release evidence">
+  <meta property="og:description" content="Review and verify the recorded MFENX Local v1 acceptance artifacts.">
   <meta property="og:url" content="https://mfenx.com/lightsout/">
-  <title>machine console / rarecomp_mfenx</title>
+  <title>MFENX Local v1 / release evidence</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=4">
+  <link rel="stylesheet" href="lightsout.css?v=5">
 </head>
 <body>
-  <canvas id="machine-field" aria-hidden="true"></canvas>
-  <div class="grain" aria-hidden="true"></div>
+  <div class="grid-field" aria-hidden="true"></div>
 
   <header class="mast">
     <a href="/" class="wordmark" aria-label="MFENX home">
-      <span>MFENX</span><i></i><small>rarecomp_mfenx / machine console</small>
+      <span>MFENX</span><i></i><small>local execution / release v1</small>
     </a>
-    <button class="bridge-state" id="bridge-state" type="button">
-      <i></i><span>looking for the machine</span>
-    </button>
+    <a class="release-state pending" id="release-state" href="#verify">
+      <i></i><span>loading sealed release</span>
+    </a>
     <time id="utc-clock">00:00:00 UTC</time>
   </header>
 
   <main>
-    <aside class="program-bank" aria-label="Programs">
-      <div class="rail-label"><span>program bank</span><b id="program-count">00</b></div>
-      <ol id="workload-list"></ol>
-      <div class="program-actions">
-        <button id="new-program" type="button"><span>+</span> blank machine</button>
-        <button id="open-program" type="button"><span>↑</span> open JSON</button>
-        <input id="program-file" type="file" accept="application/json,.json" hidden>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">MFENX LOCAL V1 / RELEASE EVIDENCE</p>
+        <h1>MFENX Local v1</h1>
+        <p class="lede">
+          MFENX Local is a Linux x86_64 program that compiles exact work into its own
+          ISA, streams authenticated tensors through bounded memory, checkpoints durable
+          pieces, and independently replays every output.
+        </p>
+        <p class="boundary">
+          Acceptance used ordinary CPU threads and local storage. The product requires
+          no vendor GPU, GPU driver, VPS, cloud worker, or network transport. This page
+          displays recorded execution evidence; it does not execute or simulate the workload.
+        </p>
+        <div class="hero-actions">
+          <button class="primary" id="verify-release" type="button">verify release files</button>
+          <a class="secondary" href="release/bin/mfenx-local" download="mfenx-local">download Linux executable</a>
+          <a class="text-link" href="#run">usage ↓</a>
+        </div>
+        <ul class="identity-strip" aria-label="Release properties">
+          <li><b>ISA</b><span>MFENX v5</span></li>
+          <li><b>ENGINE</b><span>streamed i32 GEMM</span></li>
+          <li><b>ORACLE</b><span>independent exact replay</span></li>
+          <li><b>RECOVERY</b><span>piece-level resume</span></li>
+        </ul>
       </div>
-      <div class="cluster-mini" id="cluster-mini"></div>
-    </aside>
 
-    <section class="workbench" aria-label="Compiler and execution workbench">
-      <div class="program-strip">
-        <div class="program-identity">
-          <span id="program-sequence">— / —</span>
-          <strong id="program-title">awaiting machine</strong>
+      <aside class="seal" aria-label="Sealed release identity">
+        <div class="seal-head">
+          <span>RECORDED LOCAL PROCESS</span>
+          <b id="release-verdict">LOADING</b>
+        </div>
+        <div class="seal-mark" aria-hidden="true">
+          <span>01</span>
+          <i></i>
+          <small>MFENX<br>LOCAL</small>
         </div>
         <dl>
-          <div><dt>target</dt><dd>mfenx native</dd></div>
-          <div><dt>fabric</dt><dd id="fabric-readout">—</dd></div>
-          <div><dt>oracle</dt><dd>exact replay</dd></div>
+          <div><dt>captured</dt><dd id="capture-time">—</dd></div>
+          <div><dt>binary SHA-256</dt><dd><code id="binary-hash">—</code></dd></div>
+          <div><dt>source tree</dt><dd><code id="source-hash">—</code></dd></div>
+          <div><dt>evidence manifest</dt><dd><code id="manifest-hash">—</code></dd></div>
         </dl>
-      </div>
+      </aside>
+    </section>
 
-      <nav class="view-tabs" aria-label="Program views">
-        <button type="button" data-view="source" aria-current="true">source</button>
-        <button type="button" data-view="machine">machine ISA <span id="machine-count">—</span></button>
-        <button type="button" data-view="ir">typed IR</button>
-      </nav>
-
-      <div class="view-stack">
-        <section class="console-view source-view" data-panel="source">
-          <div class="line-numbers" id="line-numbers" aria-hidden="true"></div>
-          <textarea id="source" spellcheck="false" aria-label="Workload JSON source"></textarea>
-          <div class="source-shadow" aria-hidden="true"></div>
-        </section>
-
-        <section class="console-view machine-view" data-panel="machine" hidden>
-          <div class="empty-machine" id="empty-machine">
-            <span>TRANSMUTE</span>
-            <p>No machine synthesized from this source.</p>
-            <small>Compile to lower typed operations into the digest-bound lane ISA.</small>
-          </div>
-          <div id="machine-inspection" hidden>
-            <dl class="machine-facts">
-              <div><dt>ISA</dt><dd id="machine-isa">—</dd></div>
-              <div><dt>node lanes</dt><dd id="machine-lanes">—</dd></div>
-              <div><dt>cluster lanes</dt><dd id="machine-cluster-lanes">—</dd></div>
-              <div><dt>tile</dt><dd id="machine-tile">—</dd></div>
-              <div><dt>peak live</dt><dd id="machine-peak">—</dd></div>
-              <div><dt>image quorum</dt><dd id="machine-quorum">—</dd></div>
-            </dl>
-            <ol class="instruction-stream" id="instruction-stream"></ol>
-          </div>
-        </section>
-
-        <section class="console-view ir-view" data-panel="ir" hidden>
-          <pre id="typed-ir">Compile the program to inspect its validated typed IR.</pre>
-        </section>
-      </div>
-
-      <div class="execution-bar">
-        <label>
-          <span>requested cluster lanes <b id="lane-readout">auto</b></span>
-          <input id="lanes" type="range" min="1" max="12" value="12">
-        </label>
-        <button id="transmute" type="button">
-          <span class="action-index">T</span>
-          <span><b>transmute</b><small>validate · lower · bind</small></span>
-        </button>
-        <button id="run" type="button">
-          <span class="action-index">⌘↵</span>
-          <span><b>execute</b><small>run · quorum · verify</small></span>
-        </button>
+    <section class="explain-section" id="about" aria-labelledby="about-title">
+      <header class="section-head">
+        <p>01 / SYSTEM DEFINITION</p>
+        <h2 id="about-title">What MFENX Local is</h2>
+        <span>a specialized software-defined compute system for local, bounded-memory execution</span>
+      </header>
+      <div class="definition-grid">
+        <article>
+          <span>SYSTEM TYPE</span>
+          <h3>Local software machine</h3>
+          <p>
+            MFENX defines its own instruction set, compiler, work scheduler, storage
+            format, resource certificate, recovery protocol, and verifier. In this
+            release, ordinary CPU threads execute the instructions and local files hold
+            the durable tensors.
+          </p>
+        </article>
+        <article>
+          <span>CURRENT COMPUTE SCOPE</span>
+          <h3>Exact rank-two i32 matrix multiplication</h3>
+          <p>
+            Local v1 accepts two canonical signed 32-bit integer matrices and computes
+            their product with defined wrapping arithmetic. Other MFENX operations exist
+            elsewhere in the project, but this bounded local release certifies this one
+            manifest-backed operation.
+          </p>
+        </article>
+        <article>
+          <span>MEMORY MODEL</span>
+          <h3>Durable data is separate from managed RAM</h3>
+          <p>
+            Complete tensors stay in a content-addressed store. The process loads only
+            authenticated chunks, tiles, row buffers, and checkpoint metadata covered by
+            the compiled resource certificate. Data can therefore exceed the admitted
+            managed-memory peak.
+          </p>
+        </article>
+        <article>
+          <span>CLAIM BOUNDARY</span>
+          <h3>What the release does not claim</h3>
+          <p>
+            MFENX combines compute, storage, recovery, and verification in one software
+            system. This release does not claim a fabricated MFENX processor, a vendor
+            GPU, independent compute nodes, or a TOP500 performance ranking.
+          </p>
+        </article>
       </div>
     </section>
 
-    <aside class="inspector" aria-live="polite">
-      <nav class="inspector-tabs" aria-label="Machine readouts">
-        <button type="button" data-inspector="result" aria-current="true">result</button>
-        <button type="button" data-inspector="fabric">fabric</button>
-        <button type="button" data-inspector="proof">proof</button>
-        <button type="button" data-inspector="artifacts">artifacts</button>
-      </nav>
+    <section class="metric-section" aria-labelledby="measured-title">
+      <header class="section-head">
+        <p>02 / MEASUREMENTS</p>
+        <h2 id="measured-title">Release measurements</h2>
+        <span>values loaded from hash-verified acceptance files</span>
+      </header>
+      <div class="metric-grid">
+        <article>
+          <span>logical input</span>
+          <strong id="logical-input">—</strong>
+          <small>authenticated durable tensor bytes</small>
+        </article>
+        <article class="signal">
+          <span>data / managed memory</span>
+          <strong id="memory-ratio">—</strong>
+          <small>strictly greater than four times</small>
+        </article>
+        <article>
+          <span>certified managed peak</span>
+          <strong id="managed-peak">—</strong>
+          <small>resource certificate schema 2</small>
+        </article>
+        <article>
+          <span>observed peak RSS</span>
+          <strong id="peak-rss">—</strong>
+          <small>external /proc observer</small>
+        </article>
+        <article>
+          <span>swap used</span>
+          <strong id="swap-used">—</strong>
+          <small>required zero</small>
+        </article>
+        <article>
+          <span>GPU / network</span>
+          <strong><b id="gpu-count">—</b> / <b id="network-count">—</b></strong>
+          <small>GPU paths / network syscalls</small>
+        </article>
+      </div>
+    </section>
 
-      <section class="inspector-panel result-panel" data-inspector-panel="result">
-        <header><span>return channel</span><button id="clear-history" type="button">clear</button></header>
-        <div id="idle-readout" class="idle-readout">
-          <div class="scope"><i></i><i></i><i></i><i></i></div>
-          <p>No result held.</p>
-          <small>The machine returns only after exact replay and cross-worker agreement.</small>
+    <section class="machine-section" aria-labelledby="machine-title">
+      <header class="section-head">
+        <p>03 / EXECUTION PATH</p>
+        <h2 id="machine-title">How an execution works</h2>
+        <span>each stage is validated and the result is withheld until exact replay passes</span>
+      </header>
+      <div class="machine-route" aria-label="Execution route">
+        <article>
+          <span>01</span>
+          <b>IMPORT / CREATE</b>
+          <small>split canonical matrix bytes into BLAKE3-addressed chunks</small>
+        </article>
+        <i aria-hidden="true"></i>
+        <article>
+          <span>02</span>
+          <b>COMPILE</b>
+          <small>validate shapes and emit a digest-bound ISA-v5 image and memory certificate</small>
+        </article>
+        <i aria-hidden="true"></i>
+        <article>
+          <span>03</span>
+          <b>EXECUTE</b>
+          <small>stream bounded tiles through CPU lanes using exact wrapping-i32 arithmetic</small>
+        </article>
+        <i aria-hidden="true"></i>
+        <article>
+          <span>04</span>
+          <b>CHECKPOINT</b>
+          <small>synchronize each output piece and its content-bound receipt before reuse</small>
+        </article>
+        <i aria-hidden="true"></i>
+        <article>
+          <span>05</span>
+          <b>VERIFY / PUBLISH</b>
+          <small>replay every output independently; publish only when all values match</small>
+        </article>
+      </div>
+      <div class="machine-note">
+        <b>Browser scope</b>
+        <p>
+          The browser hashes selected acceptance files and, on request, the Linux
+          executable. It does not execute the workload. Measurements were recorded from
+          the operating-system process by the acceptance harness.
+        </p>
+      </div>
+    </section>
+
+    <section class="recovery-section" aria-labelledby="recovery-title">
+      <header class="section-head">
+        <p>04 / RECOVERY</p>
+        <h2 id="recovery-title">Process interruption and resume</h2>
+        <span>externally observed SIGKILL and checkpoint snapshots</span>
+      </header>
+      <div class="recovery-layout">
+        <ol class="recovery-line">
+          <li><span>01</span><b>uninterrupted run</b><small>pieces 0 + 1 executed</small></li>
+          <li class="kill"><span>02</span><b>SIGKILL</b><small>exit 137 after <i id="kill-time">—</i></small></li>
+          <li><span>03</span><b>durable receipt</b><small>piece 0 survived unchanged</small></li>
+          <li><span>04</span><b>resume</b><small>reused 0 · executed only 1</small></li>
+          <li class="pass"><span>05</span><b>same output</b><small>exact root equality</small></li>
+        </ol>
+        <div class="root-card">
+          <span>UNINTERRUPTED = RESUMED</span>
+          <code id="output-root">—</code>
+          <small>standalone exact verification passed for both results</small>
         </div>
-        <div id="active-readout" class="active-readout" hidden>
-          <div class="verdict"><i></i><span>verified</span><b id="result-time">—</b></div>
-          <dl class="measurements">
-            <div><dt>integer rate</dt><dd id="result-rate">—</dd></div>
-            <div><dt>bandwidth</dt><dd id="result-bandwidth">—</dd></div>
-            <div><dt>fabric</dt><dd id="result-lanes">—</dd></div>
-            <div><dt>instructions</dt><dd id="result-instructions">—</dd></div>
-          </dl>
-          <div class="tensor-readout"><span>materialized outputs</span><pre id="result-tensor">—</pre></div>
-          <div class="digest-readout"><span>machine image</span><button id="copy-digest" type="button"><code id="result-digest">—</code><i>copy</i></button></div>
+      </div>
+    </section>
+
+    <section class="rejection-section" aria-labelledby="rejection-title">
+      <header class="section-head">
+        <p>05 / CORRUPTION TESTS</p>
+        <h2 id="rejection-title">Rejected mutations</h2>
+        <span>five isolated mutations, no invalid output publication</span>
+      </header>
+      <div class="rejection-grid" id="rejection-grid">
+        <article data-probe="input_chunk"><span>input chunk</span><b>—</b></article>
+        <article data-probe="checkpoint_piece"><span>checkpoint piece</span><b>—</b></article>
+        <article data-probe="checkpoint_receipt"><span>checkpoint receipt</span><b>—</b></article>
+        <article data-probe="image"><span>machine image</span><b>—</b></article>
+        <article data-probe="result"><span>result record</span><b>—</b></article>
+      </div>
+    </section>
+
+    <section class="verify-section" id="verify" aria-labelledby="verify-title">
+      <header class="section-head inverse">
+        <p>06 / INTEGRITY</p>
+        <h2 id="verify-title">Browser integrity checks</h2>
+        <span>Web Crypto SHA-256 over the published evidence and Linux x86_64 executable</span>
+      </header>
+      <div class="verify-console">
+        <ol id="verification-list">
+          <li data-check="manifest"><i></i><span>sealed SHA256SUMS identity</span><b>waiting</b></li>
+          <li data-check="pack"><i></i><span>selected release artifacts bound by manifest</span><b>waiting</b></li>
+          <li data-check="contract"><i></i><span>release invariants recomputed</span><b>waiting</b></li>
+          <li data-check="binary"><i></i><span>Linux executable matches accepted SHA-256</span><b>click verify</b></li>
+        </ol>
+        <div class="verify-action">
+          <button id="verify-binary" type="button">hash the executable</button>
+          <p id="verification-copy">Selected files are internally bound by an unsigned checksum manifest. The 1.9 MB executable is fetched only when you request the full check.</p>
+          <div class="verify-links">
+            <a href="release/acceptance.json">acceptance.json</a>
+            <a href="release/SHA256SUMS">sealed SHA256SUMS</a>
+            <a href="release/bin/mfenx-local" download="mfenx-local">Linux executable</a>
+          </div>
         </div>
-        <ol id="history" class="history"></ol>
-      </section>
+      </div>
+    </section>
 
-      <section class="inspector-panel fabric-panel" data-inspector-panel="fabric" hidden>
-        <header><span>physical fabric</span><b id="fabric-health">—</b></header>
-        <ol class="node-list" id="node-list"></ol>
-        <div class="backend-matrix" id="backend-matrix"></div>
-      </section>
-
-      <section class="inspector-panel proof-panel" data-inspector-panel="proof" hidden>
-        <header><span>verification record</span><b id="proof-state">empty</b></header>
-        <dl class="proof-list" id="proof-list"></dl>
-        <pre id="telemetry-evidence">No execution evidence held.</pre>
-      </section>
-
-      <section class="inspector-panel artifacts-panel" data-inspector-panel="artifacts" hidden>
-        <header><span>machine artifacts</span><b>local export</b></header>
-        <div class="artifact-actions">
-          <button type="button" data-download="source"><span>workload source</span><small>.json</small></button>
-          <button type="button" data-download="image" disabled><span>native image</span><small>.mfx</small></button>
-          <button type="button" data-download="result" disabled><span>verified result</span><small>.result.json</small></button>
-          <button type="button" data-download="checkpoint" disabled><span>checkpoint record</span><small>.checkpoint.json</small></button>
+    <section class="run-section" id="run" aria-labelledby="run-title">
+      <header class="section-head">
+        <p>07 / USAGE</p>
+        <h2 id="run-title">Local commands</h2>
+        <span>Linux x86_64 release · no service, account, production machine manifest, GPU, or network required</span>
+      </header>
+      <div class="run-layout">
+        <div class="terminal">
+          <div class="terminal-head">
+            <span>mfenx-local / exact 256 × 256 identity product</span>
+            <button id="copy-commands" type="button">copy commands</button>
+          </div>
+          <pre id="run-commands">chmod +x ./mfenx-local
+./mfenx-local matrix-create --store mfenx-store --rows 256 --columns 256 --fill sequence --output left.tensor.json --io-mib 1
+./mfenx-local matrix-create --store mfenx-store --rows 256 --columns 256 --fill identity --output right.tensor.json --io-mib 1
+./mfenx-local compile --store mfenx-store --left left.tensor.json --right right.tensor.json --output product.image.json --max-managed-mib 64 --lanes 2 --io-mib 1
+./mfenx-local run --store mfenx-store --image product.image.json --checkpoint-dir product.checkpoint --output product.result.json --io-mib 1
+./mfenx-local verify --store mfenx-store --image product.image.json --result product.result.json --io-mib 1</pre>
         </div>
-        <label class="recovery-control">
-          <span>recover checkpoint</span>
-          <input id="checkpoint-id" type="text" autocomplete="off" spellcheck="false" placeholder="checkpoint UUID">
-          <button id="recover" type="button">recover</button>
-        </label>
-        <p class="artifact-note">Native images are the exact JSON format consumed by <code>mfenx run</code>. Checkpoint knowledge remains the recovery key.</p>
-      </section>
-    </aside>
+        <aside class="run-facts">
+          <div><span>binary</span><b>x86_64 Linux ELF</b></div>
+          <div><span>dynamic libraries</span><b>libc + libgcc_s only</b></div>
+          <div><span>data location</span><b>your local content store</b></div>
+          <div><span>result rule</span><b>publish only after exact replay</b></div>
+          <a href="release/bin/mfenx-local" download="mfenx-local">download mfenx-local →</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="truth-section">
+      <p>
+        <b>Scope.</b> MFENX Local v1 is a CPU-and-storage-backed software machine. It is
+        not fabricated custom silicon and does not claim a TOP500 ranking. This page
+        publishes a recorded acceptance run, selected evidence files, and its executable.
+      </p>
+    </section>
   </main>
 
   <footer>
-    <div id="machine-route">
-      <span class="hot">program</span><i></i><span>TRANSMUTE</span><i></i><span>machine ISA</span><i></i><span>physical fabric</span><i></i><span>proof</span>
-    </div>
-    <div class="host-facts"><span id="host-arch">—</span><span id="host-cores">—</span><span id="host-fabric">—</span></div>
+    <a href="/">MFENX.COM</a>
+    <span>RECORDED RELEASE EVIDENCE</span>
+    <time id="capture-footer">release evidence pending</time>
   </footer>
 
-  <dialog id="connect-dialog">
-    <form method="dialog">
-      <button class="dialog-close" aria-label="Close">×</button>
-      <span class="dialog-index">rarecomp_mfenx / native cluster</span>
-      <p>The execution fabric did not answer. Your source remains in this browser.</p>
-      <small>Retry the encrypted connection to the persistent coordinator and native workers.</small>
-      <button id="retry-bridge" class="retry" type="button">retry connection</button>
-    </form>
-  </dialog>
-
-  <script src="lightsout.js?v=4" defer></script>
+  <script src="lightsout.js?v=5" defer></script>
 </body>
 </html>
