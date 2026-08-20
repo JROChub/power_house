@@ -2,7 +2,7 @@
   "verified": true,
   "method": "independently_addressed_exact_replay",
   "pieces_checked": 2,
-  "bytes_checked": 16777216,
-  "verification_integer_operations": 268435456,
-  "verification_ns": 91760479963
+  "bytes_checked": 12582912,
+  "verification_integer_operations": 352321536,
+  "verification_ns": 171388719375
 }

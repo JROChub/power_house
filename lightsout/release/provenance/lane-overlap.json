@@ -1,0 +1,38 @@
+{
+  "configured_lanes": 2,
+  "minimum_distinct_overlapping_lane_tasks": 2,
+  "observed_lane_task_rows": 2182,
+  "observer": "acceptance_harness_outside_product_process_via_proc_task",
+  "overlap_proven": true,
+  "primary_execution": "uninterrupted-run",
+  "raw_evidence": "memory/uninterrupted-run.lane-tasks.tsv",
+  "witness": {
+    "anchor_tid_reobserved_after_sweep": 226187,
+    "epoch_ns": 1787260469144403272,
+    "product_pid": 225964,
+    "tasks": [
+      {
+        "anchor_reobserved_after_sweep": 1,
+        "anchor_tid": 226187,
+        "comm": "mfx-lane-00",
+        "epoch_ns": 1787260469144403272,
+        "lane_index": 0,
+        "pid": 225964,
+        "starttime_ticks": 1276591,
+        "state": "R",
+        "tid": 226187
+      },
+      {
+        "anchor_reobserved_after_sweep": 1,
+        "anchor_tid": 226187,
+        "comm": "mfx-lane-01",
+        "epoch_ns": 1787260469144403272,
+        "lane_index": 1,
+        "pid": 225964,
+        "starttime_ticks": 1276591,
+        "state": "R",
+        "tid": 226188
+      }
+    ]
+  }
+}

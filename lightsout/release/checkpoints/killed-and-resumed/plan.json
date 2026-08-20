@@ -1,0 +1,1 @@
+{"schema_version":2,"image_digest":"322d045dfd2dac75e323fda16c8dbfe0552f86974281a9d3222a5efb9238a59b","output_type":{"element":"i32","shape":[3,1048576]},"schedule":{"schema_version":1,"instruction_index":0,"policy":"deterministic_striped_v1","lanes":2,"piece_count":2},"rows_per_piece":2,"piece_count":2}
