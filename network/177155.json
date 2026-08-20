@@ -1,0 +1,23 @@
+{
+  "name": "mfenx",
+  "chain": "MFENX",
+  "chainId": 177155,
+  "networkId": 177155,
+  "nativeCurrency": {
+    "name": "JULIAN",
+    "symbol": "JULIAN",
+    "decimals": 18
+  },
+  "rpc": [
+    "https://rpc.mfenx.com"
+  ],
+  "infoURL": "https://mfenx.com/power-house",
+  "logo": {
+    "https": "https://mfenx.com/assets/mfenx-network.png",
+    "ipfs": "ipfs://QmRfVbYhLSo68KLPJb9gHD7CPzCgPNEZpQLafL4AwGQxoV",
+    "sha256": "c16a32c782a2b13cdf6c3296c66d3a4c9dadd04a22b388f6ea6c023301d24e31",
+    "width": 1024,
+    "height": 1024,
+    "format": "png"
+  }
+}
