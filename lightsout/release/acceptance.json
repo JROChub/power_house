@@ -1,15 +1,16 @@
 {
   "acceptance_level": "release",
-  "binary_sha256": "5504490202ea9062b4eaaf3890ac89bb863f34ded8620d21c6f6b0d5bbcf0aeb",
+  "binary_sha256": "fffa18543f4764e7ad0344c34fa8bac61b9a415a4ebdca871032d1ed63ce6eae",
   "build": {
     "binary": "mfenx-local",
     "forbidden_dependencies": 0,
     "forbidden_dynamic_libraries": 0,
+    "jobs": 1,
     "locked": true,
     "offline": true,
     "package": "rarecomp-mfenx-local"
   },
-  "captured_at_utc": "2026-08-20T18:14:29.562477+00:00",
+  "captured_at_utc": "2026-08-20T21:31:20.456112+00:00",
   "containment": {
     "device_view": "bubblewrap_synthetic_dev",
     "mode": "bubblewrap_network_namespace"
@@ -21,227 +22,301 @@
     "input_chunk": "passed",
     "result": "passed"
   },
-  "external_hard_rlimit_as_mib": 192,
+  "external_hard_rlimit_as_mib": 256,
   "independent_attestation": {
+    "physical_lane_concurrency": "external_proc_task_overlap_witness",
+    "physical_lane_concurrency_evidence": "provenance/lane-overlap.json",
     "recovery_partition": "external_post_kill_and_post_resume_checkpoint_snapshots",
     "recovery_result_status": "self_reported",
     "runtime_result_status": "self_reported",
     "runtime_telemetry": "external_proc_and_monotonic_process_observer"
   },
   "machine": {
-    "backend": "rarecomp_mfenx_local_virtual_gpu",
+    "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+    "checkpoint_plan_schema_version": 2,
     "directory_metadata_sync": "available",
     "gpu_devices_required": 0,
-    "isa_version": 5,
+    "image_schema_version": 2,
+    "isa_version": 6,
+    "lane_schedule_instruction_index": 0,
+    "lane_schedule_policy": "deterministic_striped_v1",
+    "lane_schedule_schema_version": 1,
+    "machine_class": "software_defined_local_supercomputer_v1",
     "network_transports_required": 0,
     "opcode": "streamed_i32_gemm",
+    "piece_receipt_schema_version": 2,
+    "piece_to_lane_assignment": "lane_index = piece_index % lanes",
     "process_crash_recovery": "supported",
     "recovery_partition_attestation": "self_reported",
-    "resource_certificate_schema_version": 2,
+    "resource_certificate_schema_version": 4,
+    "result_schema_version": 2,
     "runtime_telemetry_attestation": "self_reported",
     "verification_method": "independently_addressed_exact_replay"
   },
   "memory": {
-    "external_hard_rlimit_as_bytes": 201326592,
+    "external_hard_rlimit_as_bytes": 268435456,
+    "external_lane_concurrency_attestation": {
+      "configured_lanes": 2,
+      "minimum_distinct_overlapping_lane_tasks": 2,
+      "observed_lane_task_rows": 2182,
+      "observer": "acceptance_harness_outside_product_process_via_proc_task",
+      "overlap_proven": true,
+      "primary_execution": "uninterrupted-run",
+      "raw_evidence": "memory/uninterrupted-run.lane-tasks.tsv",
+      "witness": {
+        "anchor_tid_reobserved_after_sweep": 226187,
+        "epoch_ns": 1787260469144403272,
+        "product_pid": 225964,
+        "tasks": [
+          {
+            "anchor_reobserved_after_sweep": 1,
+            "anchor_tid": 226187,
+            "comm": "mfx-lane-00",
+            "epoch_ns": 1787260469144403272,
+            "lane_index": 0,
+            "pid": 225964,
+            "starttime_ticks": 1276591,
+            "state": "R",
+            "tid": 226187
+          },
+          {
+            "anchor_reobserved_after_sweep": 1,
+            "anchor_tid": 226187,
+            "comm": "mfx-lane-01",
+            "epoch_ns": 1787260469144403272,
+            "lane_index": 1,
+            "pid": 225964,
+            "starttime_ticks": 1276591,
+            "state": "R",
+            "tid": 226188
+          }
+        ]
+      }
+    },
     "external_runtime_telemetry_attestation": "external_proc_and_monotonic_process_observer",
     "external_timings": {
       "compile": {
-        "ended_epoch_ns": 1787249088260666780,
-        "ended_monotonic_ns": 1385086107903,
+        "ended_epoch_ns": 1787260464595008717,
+        "ended_monotonic_ns": 12761493632109,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249087922700885,
-        "started_monotonic_ns": 1384741162037,
-        "wall_ns": 344945866
+        "started_epoch_ns": 1787260463163657071,
+        "started_monotonic_ns": 12760055275304,
+        "wall_ns": 1438356805
       },
       "corrupt-checkpoint-piece": {
-        "ended_epoch_ns": 1787249655578091707,
-        "ended_monotonic_ns": 1952397437338,
+        "ended_epoch_ns": 1787261445281682901,
+        "ended_monotonic_ns": 13742184594020,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249655257868407,
-        "started_monotonic_ns": 1952085875853,
-        "wall_ns": 311561485
+        "started_epoch_ns": 1787261444764527186,
+        "started_monotonic_ns": 13741661261842,
+        "wall_ns": 523332178
       },
       "corrupt-checkpoint-receipt": {
-        "ended_epoch_ns": 1787249656130635008,
-        "ended_monotonic_ns": 1952953609075,
+        "ended_epoch_ns": 1787261446335743045,
+        "ended_monotonic_ns": 13743235645130,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249655803005321,
-        "started_monotonic_ns": 1952625572210,
-        "wall_ns": 328036865
+        "started_epoch_ns": 1787261445816346227,
+        "started_monotonic_ns": 13742709343123,
+        "wall_ns": 526302007
       },
       "corrupt-image": {
-        "ended_epoch_ns": 1787249656638370342,
-        "ended_monotonic_ns": 1953460442418,
+        "ended_epoch_ns": 1787261447301439897,
+        "ended_monotonic_ns": 13744201618421,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249656367533729,
-        "started_monotonic_ns": 1953189454024,
-        "wall_ns": 270988394
+        "started_epoch_ns": 1787261446829310121,
+        "started_monotonic_ns": 13743727986224,
+        "wall_ns": 473632197
       },
       "corrupt-input-chunk": {
-        "ended_epoch_ns": 1787249654972887777,
-        "ended_monotonic_ns": 1951791420222,
+        "ended_epoch_ns": 1787261444186350816,
+        "ended_monotonic_ns": 13741078941856,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249654851208741,
-        "started_monotonic_ns": 1951672067206,
-        "wall_ns": 119353016
+        "started_epoch_ns": 1787261443920190584,
+        "started_monotonic_ns": 13740819594494,
+        "wall_ns": 259347362
       },
       "corrupt-result": {
-        "ended_epoch_ns": 1787249657104236380,
-        "ended_monotonic_ns": 1953922857738,
+        "ended_epoch_ns": 1787261448273750987,
+        "ended_monotonic_ns": 13745171339390,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249656817295241,
-        "started_monotonic_ns": 1953634647896,
-        "wall_ns": 288209842
+        "started_epoch_ns": 1787261447789464030,
+        "started_monotonic_ns": 13744686313110,
+        "wall_ns": 485026280
       },
       "inspect": {
-        "ended_epoch_ns": 1787249088639205351,
-        "ended_monotonic_ns": 1385459256083,
+        "ended_epoch_ns": 1787260465737177601,
+        "ended_monotonic_ns": 12762635344590,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249088377208898,
-        "started_monotonic_ns": 1385195900978,
-        "wall_ns": 263355105
+        "started_epoch_ns": 1787260464830167438,
+        "started_monotonic_ns": 12761726719861,
+        "wall_ns": 908624729
       },
       "inspect-full": {
-        "ended_epoch_ns": 1787249089026509501,
-        "ended_monotonic_ns": 1385845247065,
+        "ended_epoch_ns": 1787260466960851010,
+        "ended_monotonic_ns": 12763852540128,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249088750482313,
-        "started_monotonic_ns": 1385570814681,
-        "wall_ns": 274432384
+        "started_epoch_ns": 1787260465979047618,
+        "started_monotonic_ns": 12762871341531,
+        "wall_ns": 981198597
       },
       "killed-run": {
-        "ended_epoch_ns": 1787249422901344624,
-        "ended_monotonic_ns": 1719719112479,
+        "ended_epoch_ns": 1787261033793131077,
+        "ended_monotonic_ns": 13330693064428,
         "exit_status": 137,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249369717809603,
-        "started_monotonic_ns": 1666535075210,
-        "wall_ns": 53184037269
+        "started_epoch_ns": 1787260902698075311,
+        "started_monotonic_ns": 13199592856115,
+        "wall_ns": 131100208313
       },
       "matrix-create-left": {
-        "ended_epoch_ns": 1787249072202978059,
-        "ended_monotonic_ns": 1369021161125,
+        "ended_epoch_ns": 1787260327373702563,
+        "ended_monotonic_ns": 12624262006014,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249071753474491,
-        "started_monotonic_ns": 1368581564135,
-        "wall_ns": 439596990
+        "started_epoch_ns": 1787260323563875564,
+        "started_monotonic_ns": 12620458645914,
+        "wall_ns": 3803360100
       },
       "matrix-create-right": {
-        "ended_epoch_ns": 1787249087817267750,
-        "ended_monotonic_ns": 1384637565341,
+        "ended_epoch_ns": 1787260462667796731,
+        "ended_monotonic_ns": 12759725534260,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249072289696839,
-        "started_monotonic_ns": 1369108525181,
-        "wall_ns": 15529040160
+        "started_epoch_ns": 1787260327605813873,
+        "started_monotonic_ns": 12624498687566,
+        "wall_ns": 135226846694
       },
       "resumed-run": {
-        "ended_epoch_ns": 1787249562363586921,
-        "ended_monotonic_ns": 1859187954464,
+        "ended_epoch_ns": 1787261270681971396,
+        "ended_monotonic_ns": 13567605980792,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249423081696517,
-        "started_monotonic_ns": 1719900358733,
-        "wall_ns": 139287595731
+        "started_epoch_ns": 1787261034313610068,
+        "started_monotonic_ns": 13331208441243,
+        "wall_ns": 236397539549
       },
       "resumed-verify": {
-        "ended_epoch_ns": 1787249654493047415,
-        "ended_monotonic_ns": 1951312570224,
+        "ended_epoch_ns": 1787261442976542397,
+        "ended_monotonic_ns": 13740008926630,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249562449762951,
-        "started_monotonic_ns": 1859269037405,
-        "wall_ns": 92043532819
+        "started_epoch_ns": 1787261270969993459,
+        "started_monotonic_ns": 13567862153750,
+        "wall_ns": 172146772880
       },
       "uninterrupted-run": {
-        "ended_epoch_ns": 1787249276046835519,
-        "ended_monotonic_ns": 1572866136007,
+        "ended_epoch_ns": 1787260743411533285,
+        "ended_monotonic_ns": 13040310730114,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249089190627835,
-        "started_monotonic_ns": 1386009211943,
-        "wall_ns": 186856924064
+        "started_epoch_ns": 1787260467312146236,
+        "started_monotonic_ns": 12764207461213,
+        "wall_ns": 276103268901
       },
       "uninterrupted-verify": {
-        "ended_epoch_ns": 1787249369538287986,
-        "ended_monotonic_ns": 1666367208473,
+        "ended_epoch_ns": 1787260902114275700,
+        "ended_monotonic_ns": 13199095758535,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787249276136429329,
-        "started_monotonic_ns": 1572961926676,
-        "wall_ns": 93405281797
+        "started_epoch_ns": 1787260743645443539,
+        "started_monotonic_ns": 13040539442848,
+        "wall_ns": 158556315687
       }
     },
     "maxima_kib": {
-      "VmHWM_kib": 24636,
-      "VmPeak_kib": 137608,
-      "VmRSS_kib": 24636,
-      "VmSize_kib": 82324,
+      "VmHWM_kib": 18548,
+      "VmPeak_kib": 204196,
+      "VmRSS_kib": 18548,
+      "VmSize_kib": 149892,
       "VmSwap_kib": 0
     },
     "sample_counts": {
-      "compile": 3,
-      "corrupt-checkpoint-piece": 3,
-      "corrupt-checkpoint-receipt": 3,
-      "corrupt-image": 2,
+      "compile": 12,
+      "corrupt-checkpoint-piece": 5,
+      "corrupt-checkpoint-receipt": 5,
+      "corrupt-image": 4,
       "corrupt-input-chunk": 1,
-      "corrupt-result": 3,
-      "inspect": 2,
-      "inspect-full": 2,
-      "killed-run": 665,
-      "matrix-create-left": 5,
-      "matrix-create-right": 209,
-      "resumed-run": 1817,
-      "resumed-verify": 1189,
-      "uninterrupted-run": 2440,
-      "uninterrupted-verify": 1222
+      "corrupt-result": 4,
+      "inspect": 10,
+      "inspect-full": 11,
+      "killed-run": 1304,
+      "matrix-create-left": 30,
+      "matrix-create-right": 1797,
+      "resumed-run": 2901,
+      "resumed-verify": 2184,
+      "uninterrupted-run": 3235,
+      "uninterrupted-verify": 2039
     },
     "virtual_memory_within_external_limit": true
   },
   "product": "rarecomp-mfenx-local",
-  "recovery": "passed_exact_partial_reuse",
+  "recovery": "passed_exact_partial_reuse_with_deterministic_lane_assignments",
   "release_acceptance": true,
-  "resumed_output_root": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
-  "schema_version": 1,
-  "source_tree_sha256": "4641548015a7f296c0fe973287c65cbe963da5709360db80cf7dbe0881a658b0",
+  "resumed_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
+  "schema_version": 2,
+  "source_tree_sha256": "f6e20b1cf441cf20d26efa993fdc2d69731c4961f8de42df4e6eca9016d70f2c",
   "status": "PASS",
   "syscall_trace": {
     "host_trace_files": 893,
     "offline_build_ip_network_attempts": 0,
     "product_gpu_device_paths": 0,
     "product_network_syscalls": 0,
-    "product_trace_files": 18
+    "product_trace_files": 21
   },
-  "uninterrupted_output_root": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
+  "uninterrupted_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
   "workload": {
-    "backend": "rarecomp_mfenx_local_virtual_gpu",
-    "certified_managed_peak_bytes": 32653568,
-    "gpu_required": 0,
-    "input_at_least_four_times_managed": true,
-    "input_to_managed_ratio_milli": 4110,
-    "io_mib": 1,
-    "isa_version": 5,
-    "lanes": 1,
-    "left_shape": [
-      4,
-      32
+    "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+    "certified_managed_peak_bytes": 53035904,
+    "checkpoint_temporary_json_storage_upper_bound_bytes": 67584,
+    "checkpoint_temporary_piece_storage_upper_bound_bytes": 16777216,
+    "expected_piece_lane_assignments": [
+      {
+        "lane_index": 0,
+        "piece_index": 0
+      },
+      {
+        "lane_index": 1,
+        "piece_index": 1
+      }
     ],
-    "logical_input_bytes": 134218240,
-    "managed_mib": 32,
+    "gpu_required": 0,
+    "image_schema_version": 2,
+    "input_more_than_four_times_managed": true,
+    "input_to_managed_ratio_milli": 4428,
+    "io_mib": 1,
+    "isa_version": 6,
+    "lane_schedule": {
+      "instruction_index": 0,
+      "lanes": 2,
+      "piece_count": 2,
+      "policy": "deterministic_striped_v1",
+      "schema_version": 1
+    },
+    "lanes": 2,
+    "left_shape": [
+      3,
+      56
+    ],
+    "logical_input_bytes": 234881696,
+    "machine_class": "software_defined_local_supercomputer_v1",
+    "managed_mib": 64,
     "network_required": 0,
     "opcode": "streamed_i32_gemm",
-    "resource_certificate_schema_version": 2,
+    "resource_certificate_schema_version": 4,
+    "result_schema_version": 2,
+    "retained_checkpoint_storage_upper_bound_bytes": 29495296,
+    "retained_output_storage_bytes": 12582912,
+    "retained_storage_upper_bound_bytes": 276959904,
     "right_shape": [
-      32,
+      56,
       1048576
     ],
     "total_pieces": 2

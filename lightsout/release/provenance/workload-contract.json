@@ -1,13 +1,38 @@
 {
-  "backend": "rarecomp_mfenx_local_virtual_gpu",
-  "certified_managed_peak_bytes": 32653568,
+  "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+  "certified_managed_peak_bytes": 53035904,
+  "checkpoint_temporary_json_storage_upper_bound_bytes": 67584,
+  "checkpoint_temporary_piece_storage_upper_bound_bytes": 16777216,
+  "expected_piece_lane_assignments": [
+    {
+      "lane_index": 0,
+      "piece_index": 0
+    },
+    {
+      "lane_index": 1,
+      "piece_index": 1
+    }
+  ],
   "gpu_required": 0,
-  "input_at_least_four_times_managed": true,
-  "input_to_managed_ratio_milli": 4110,
-  "isa_version": 5,
-  "logical_input_bytes": 134218240,
+  "image_schema_version": 2,
+  "input_more_than_four_times_managed": true,
+  "input_to_managed_ratio_milli": 4428,
+  "isa_version": 6,
+  "lane_schedule": {
+    "instruction_index": 0,
+    "lanes": 2,
+    "piece_count": 2,
+    "policy": "deterministic_striped_v1",
+    "schema_version": 1
+  },
+  "logical_input_bytes": 234881696,
+  "machine_class": "software_defined_local_supercomputer_v1",
   "network_required": 0,
   "opcode": "streamed_i32_gemm",
-  "resource_certificate_schema_version": 2,
+  "resource_certificate_schema_version": 4,
+  "result_schema_version": 2,
+  "retained_checkpoint_storage_upper_bound_bytes": 29495296,
+  "retained_output_storage_bytes": 12582912,
+  "retained_storage_upper_bound_bytes": 276959904,
   "total_pieces": 2
 }

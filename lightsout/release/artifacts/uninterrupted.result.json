@@ -1,42 +1,49 @@
 {
-  "schema_version": 1,
-  "image_digest": "d33f00f2909419af17135a14b5828ac7504bf97868ae0b580f6769bc23d17485",
-  "backend": "rarecomp_mfenx_local_virtual_gpu",
-  "resource_certificate_digest": "d1a66cf69b12103c5af6acd9ba4398879b52af42aa6d32a69429bcf23114d434",
+  "schema_version": 2,
+  "image_digest": "322d045dfd2dac75e323fda16c8dbfe0552f86974281a9d3222a5efb9238a59b",
+  "machine_class": "software_defined_local_supercomputer_v1",
+  "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+  "resource_certificate_digest": "5ff679a1ce136c816b10a17f624dc8b9090dbbfbe579e6c0be1930201c9a1250",
   "outputs": [
     {
       "index": 0,
       "tensor": {
-        "manifest_digest": "537a37804bcac86da07a7973cdce6f84b75b3d85bc40b256ae38cace96a12739",
+        "manifest_digest": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
         "ty": {
           "element": "i32",
           "shape": [
-            4,
+            3,
             1048576
           ]
         },
-        "byte_length": 16777216
+        "byte_length": 12582912
       }
     }
   ],
   "metrics": {
-    "end_to_end_ns": 186695440122,
-    "execution_ns": 92211007415,
-    "finalization_ns": 1931265612,
-    "useful_integer_operations": 268435456,
-    "executed_primary_integer_operations": 268435456,
-    "physical_integer_operations": 536870912,
+    "end_to_end_ns": 275328005440,
+    "execution_ns": 108881565986,
+    "finalization_ns": 7730599093,
+    "useful_integer_operations": 352321536,
+    "executed_primary_integer_operations": 352321536,
+    "physical_integer_operations": 704643072,
     "total_pieces": 2,
     "reused_pieces": 0,
     "executed_pieces": 2,
-    "reused_piece_indices": [],
-    "executed_piece_indices": [
-      0,
-      1
+    "reused_assignments": [],
+    "executed_assignments": [
+      {
+        "piece_index": 0,
+        "lane_index": 0
+      },
+      {
+        "piece_index": 1,
+        "lane_index": 1
+      }
     ],
-    "lanes": 1,
-    "certified_managed_peak_bytes": 32653568,
-    "retained_storage_bytes": 167840256,
+    "lanes": 2,
+    "certified_managed_peak_bytes": 53035904,
+    "retained_storage_bytes": 276959904,
     "gpu_devices_required": 0,
     "network_transports_required": 0,
     "runtime_telemetry_attestation": "self_reported",
@@ -48,8 +55,8 @@
     "verified": true,
     "method": "independently_addressed_exact_replay",
     "pieces_checked": 2,
-    "bytes_checked": 16777216,
-    "verification_integer_operations": 268435456,
-    "verification_ns": 92253678102
+    "bytes_checked": 12582912,
+    "verification_integer_operations": 352321536,
+    "verification_ns": 157585352901
   }
 }
