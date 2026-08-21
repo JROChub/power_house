@@ -1,0 +1,109 @@
+{
+  "certificate_authenticated_byte_upper_bounds": {
+    "primary_authenticated_input_bytes_upper_bound": {
+      "bound": 469763392,
+      "exact": 469763392
+    },
+    "verification_authenticated_input_bytes_upper_bound": {
+      "bound": 469763392,
+      "exact": 469763392
+    },
+    "verification_authenticated_output_bytes_upper_bound": {
+      "bound": 16777212,
+      "exact": 12582912
+    }
+  },
+  "certificate_requested_byte_equalities": {
+    "primary_requested_input_bytes_upper_bound": 469762720,
+    "verification_requested_input_bytes_upper_bound": 469762720,
+    "verification_requested_output_bytes": 12582912
+  },
+  "derivation": "independent_manifest_range_single_cache_simulation",
+  "executed_assignments": [
+    {
+      "lane_index": 0,
+      "piece_index": 0
+    },
+    {
+      "lane_index": 1,
+      "piece_index": 1
+    }
+  ],
+  "expected": {
+    "admission_input_io": {
+      "authenticated_chunk_bytes": 234881696,
+      "cache_hits": 0,
+      "chunk_loads": 225,
+      "requested_bytes": 0
+    },
+    "primary_input_io": {
+      "authenticated_chunk_bytes": 469763392,
+      "cache_hits": 0,
+      "chunk_loads": 450,
+      "requested_bytes": 469762720
+    },
+    "verification_input_io": {
+      "authenticated_chunk_bytes": 469763392,
+      "cache_hits": 1,
+      "chunk_loads": 450,
+      "requested_bytes": 469762720
+    },
+    "verification_output_io": {
+      "authenticated_chunk_bytes": 12582912,
+      "cache_hits": 0,
+      "chunk_loads": 12,
+      "requested_bytes": 12582912
+    }
+  },
+  "label": "uninterrupted",
+  "manifests": {
+    "left": "manifests/9c/9c2464f3983f92bdbc8e017833cadbe22c10e20cd4e446533676ab7122b0822d.json",
+    "output": "manifests/46/4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c.json",
+    "right": "manifests/78/7812c2477d8c10ef6e3c1b6d6420d6bbcddec78e5a5c6696e807ac423ecd1bd5.json"
+  },
+  "observed": {
+    "primary_input_io": {
+      "authenticated_chunk_bytes": 469763392,
+      "cache_hits": 0,
+      "chunk_loads": 450,
+      "requested_bytes": 469762720
+    },
+    "result_admission_input_io": {
+      "authenticated_chunk_bytes": 234881696,
+      "cache_hits": 0,
+      "chunk_loads": 225,
+      "requested_bytes": 0
+    },
+    "result_verification_input_io": {
+      "authenticated_chunk_bytes": 469763392,
+      "cache_hits": 1,
+      "chunk_loads": 450,
+      "requested_bytes": 469762720
+    },
+    "result_verification_output_io": {
+      "authenticated_chunk_bytes": 12582912,
+      "cache_hits": 0,
+      "chunk_loads": 12,
+      "requested_bytes": 12582912
+    },
+    "standalone_admission_input_io": {
+      "authenticated_chunk_bytes": 234881696,
+      "cache_hits": 0,
+      "chunk_loads": 225,
+      "requested_bytes": 0
+    },
+    "standalone_verification_input_io": {
+      "authenticated_chunk_bytes": 469763392,
+      "cache_hits": 1,
+      "chunk_loads": 450,
+      "requested_bytes": 469762720
+    },
+    "standalone_verification_output_io": {
+      "authenticated_chunk_bytes": 12582912,
+      "cache_hits": 0,
+      "chunk_loads": 12,
+      "requested_bytes": 12582912
+    }
+  },
+  "status": "PASS"
+}

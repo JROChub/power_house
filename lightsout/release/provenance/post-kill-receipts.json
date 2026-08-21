@@ -1,28 +1,28 @@
 {
-  "captured_epoch_ns": 1787261034285399740,
-  "captured_monotonic_ns": 13331086557322,
+  "captured_epoch_ns": 1787335933142391576,
+  "captured_monotonic_ns": 88229943555087,
   "entries": [
     {
-      "index": 0,
-      "lane_index": 0,
-      "piece_bytes": 8388608,
-      "piece_sha256": "b315fdb7b7738f4094f18a3ad57fd5b89679bfe6702d7082b335627e0432f117",
+      "index": 1,
+      "lane_index": 1,
+      "piece_bytes": 4194304,
+      "piece_sha256": "061f19ffbe00943a5636ca6999e1ae5321f17087d942cfc8d6bf22fe039085c9",
       "receipt_bytes": 261,
-      "receipt_sha256": "c3f08140a4e8f23b2ec22de696f585d504123e5bdd0dd8fca2ad8a910788e8f3"
+      "receipt_sha256": "5e06c86c785dfa3ed4e9849662338695f1dcfcfc05856408538d622bea6622ad"
     }
   ],
   "expected_total_pieces": 2,
   "observer": "acceptance_harness_after_process_group_exit",
-  "plan_sha256": "7f77872d52cfec9ecced84f1f09187e57896825612ba65b386f2ecafabddc93e",
+  "plan_sha256": "ce015d9e93a6c7f41882e9db14669ca3262411705ea5336cdc9c8fcaf7bd03a2",
   "receipt_assignments": [
     {
-      "lane_index": 0,
-      "piece_index": 0
+      "lane_index": 1,
+      "piece_index": 1
     }
   ],
   "receipt_count": 1,
   "receipt_indices": [
-    0
+    1
   ],
   "schedule": {
     "instruction_index": 0,

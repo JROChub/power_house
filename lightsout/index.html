@@ -6,24 +6,24 @@
   <meta name="theme-color" content="#080b09">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="MFENX is a software-defined local supercomputer. Review its ISA 6 CPU-lane execution, recovery, verification evidence, and Linux x86_64 executable.">
-  <meta property="og:title" content="MFENX software-defined local supercomputer / release evidence">
-  <meta property="og:description" content="Review the recorded MFENX Local v1 CPU-lane execution, recovery, memory, and verification evidence.">
+  <meta name="description" content="MFENX Local v2 is a software-defined local supercomputer. Review its ISA 6 CPU execution, authenticated storage, recovery, exact replay, measured performance, and accepted Linux executable.">
+  <meta property="og:title" content="MFENX Local v2 / software-defined local supercomputer">
+  <meta property="og:description" content="Hash-checked release evidence for real local CPU and storage execution. No browser simulation, VPS, cloud worker, GPU, or network is used by the accepted workload.">
   <meta property="og:url" content="https://mfenx.com/lightsout/">
-  <title>MFENX software-defined local supercomputer / release evidence</title>
+  <title>MFENX Local v2 / software-defined local supercomputer</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=6">
+  <link rel="stylesheet" href="lightsout.css?v=7">
 </head>
 <body>
   <div class="grid-field" aria-hidden="true"></div>
 
   <header class="mast">
     <a href="/" class="wordmark" aria-label="MFENX home">
-      <span>MFENX</span><i></i><small>software-defined local supercomputer / local v1</small>
+      <span>MFENX</span><i></i><small>software-defined local supercomputer / Local v2</small>
     </a>
     <a class="release-state pending" id="release-state" href="#verify">
-      <i></i><span>checking release files</span>
+      <i></i><span>checking selected release files</span>
     </a>
     <time id="utc-clock">00:00:00 UTC</time>
   </header>
@@ -31,29 +31,29 @@
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">MFENX LOCAL V1 / RELEASE EVIDENCE</p>
+        <p class="eyebrow">MFENX LOCAL V2 / ACCEPTED RELEASE EVIDENCE</p>
         <h1>Software-defined local supercomputer</h1>
         <p class="lede">
-          MFENX is a software-defined local supercomputer. Its Local v1 profile compiles
-          exact work into MFENX ISA 6, assigns durable pieces to deterministic CPU lanes,
-          stores tensors by content, recovers from checkpoints, and independently replays
-          every output before publishing it.
+          MFENX Local v2 is a compute system that combines an ISA 6 compiler, a
+          deterministic two-lane CPU runtime, authenticated content-addressed tensor
+          storage, a memory certificate, durable recovery, and independent exact replay.
         </p>
         <p class="boundary">
-          The Linux executable performs the physical work on the host's CPU cores and
-          local storage. It is not a browser simulation and does not send execution to a
-          VPS or cloud worker. This profile requires no GPU device, GPU driver, or network.
+          The accepted executable did the recorded work on physical CPU cores and local
+          storage. The browser only hashes and checks selected evidence files. The
+          workload did not use a browser simulation, VPS, cloud worker, GPU, network
+          transport, or custom MFENX silicon.
         </p>
         <div class="hero-actions">
-          <button class="primary" id="verify-release" type="button">verify release files</button>
-          <a class="secondary" href="release/bin/mfenx-local" download="mfenx-local">download Linux executable</a>
+          <button class="primary" id="verify-release" type="button">verify selected files</button>
+          <a class="secondary" href="release/bin/mfenx-local" download="mfenx-local">download accepted Linux executable</a>
           <a class="text-link" href="#run">usage ↓</a>
         </div>
         <ul class="identity-strip" aria-label="Release properties">
-          <li><b>ISA</b><span>MFENX 6</span></li>
-          <li><b>SCHEDULER</b><span>deterministic CPU lanes</span></li>
-          <li><b>STORAGE</b><span>content-addressed tensors</span></li>
-          <li><b>VERIFIER</b><span>independent exact replay</span></li>
+          <li><b>IMAGE / ISA</b><span>schema 3 / MFENX 6</span></li>
+          <li><b>SCHEDULER</b><span>2 deterministic CPU lanes</span></li>
+          <li><b>DATAFLOW</b><span>contiguous right panels v2</span></li>
+          <li><b>VERIFIER</b><span>parallel independent exact replay</span></li>
         </ul>
       </div>
 
@@ -63,9 +63,9 @@
           <b id="release-verdict">LOADING</b>
         </div>
         <div class="seal-mark" aria-hidden="true">
-          <span>01</span>
+          <span>02</span>
           <i></i>
-          <small>MFENX<br>SUPERCOMPUTER</small>
+          <small>MFENX<br>LOCAL</small>
         </div>
         <dl>
           <div><dt>captured</dt><dd id="capture-time">—</dd></div>
@@ -78,57 +78,97 @@
 
     <section class="explain-section" id="about" aria-labelledby="about-title">
       <header class="section-head">
-        <p>01 / SYSTEM DEFINITION</p>
-        <h2 id="about-title">What this supercomputer is</h2>
-        <span>a compute architecture implemented in software and executed by local CPU cores and storage</span>
+        <p>01 / DEFINITION</p>
+        <h2 id="about-title">What it is</h2>
+        <span>one local compute architecture implemented in software and run by the host CPU and storage</span>
       </header>
       <div class="definition-grid">
         <article>
-          <span>SYSTEM TYPE</span>
-          <h3>Software-defined local supercomputer</h3>
+          <span>ARCHITECTURE</span>
+          <h3>Why the page uses “supercomputer”</h3>
           <p>
-            MFENX defines an instruction set, compiler, scheduler, storage format,
-            memory certificate, recovery protocol, and verifier as one system. Local v1
-            is the profile that maps this architecture onto the host's CPU and storage.
+            The term describes the combined compute architecture: instruction set,
+            compiler, parallel scheduler, bounded-memory storage path, recovery protocol,
+            and verifier. It does not claim a TOP500 ranking or a particular benchmark class.
           </p>
         </article>
         <article>
-          <span>PHYSICAL EXECUTION</span>
-          <h3>Deterministic parallel CPU lanes</h3>
+          <span>PHYSICAL WORK</span>
+          <h3>Two operating-system CPU lane tasks</h3>
           <p>
-            The compiler binds a lane count and piece schedule into the machine image.
-            Piece <code>p</code> belongs to lane <code>p mod lanes</code>. The acceptance
-            harness observes distinct named operating-system tasks overlapping while
-            they execute useful work.
+            The compiled image binds each output piece to lane <code>piece mod 2</code>.
+            The acceptance harness observed both named lane tasks inside the product
+            process at the same instant while the fresh workload was running.
           </p>
         </article>
         <article>
-          <span>MEMORY MODEL</span>
-          <h3>Durable data is separate from managed RAM</h3>
+          <span>STORAGE / MEMORY</span>
+          <h3>Large tensors stay in authenticated local storage</h3>
           <p>
-            Complete tensors remain in a content-addressed store. CPU lanes load bounded
-            authenticated chunks and tiles. Each completed output piece is synchronized
-            with a receipt, so a killed process can reuse valid pieces and compute only
-            those still missing.
+            Tensor manifests name BLAKE3-addressed chunks. Lanes read bounded,
+            authenticated ranges instead of loading the complete 224 MiB right tensor
+            into managed memory. Resource certificate schema 5 records the bound.
           </p>
         </article>
         <article>
-          <span>LOCAL V1 SCOPE</span>
+          <span>RELEASE SCOPE</span>
           <h3>Exact streamed i32 matrix multiplication</h3>
           <p>
-            This release certifies one manifest-backed rank-two operation with defined
-            wrapping arithmetic. "Software-defined supercomputer" does not mean custom
-            MFENX silicon, independent compute nodes, or a TOP500 performance ranking.
+            This accepted release demonstrates one defined workload and wrapping-i32
+            arithmetic. It is not evidence of distributed compute nodes, a GPU
+            accelerator, custom silicon, or general TOP500 performance.
           </p>
         </article>
       </div>
     </section>
 
+    <section class="performance-section" id="performance" aria-labelledby="performance-title">
+      <header class="section-head">
+        <p>02 / SAME WORKLOAD</p>
+        <h2 id="performance-title">Accepted cross-release timing</h2>
+        <span>single fresh accepted run per release; values appear only after both selected payloads pass browser checks</span>
+      </header>
+      <div class="performance-grid">
+        <article>
+          <span>Local v2 external wall</span>
+          <strong id="v2-wall">—</strong>
+          <small>acceptance harness monotonic process observer</small>
+        </article>
+        <article>
+          <span>preserved Local v1 external wall</span>
+          <strong id="v1-wall">—</strong>
+          <small>same shapes, operation count, lanes, and output root</small>
+        </article>
+        <article class="signal">
+          <span>v1 wall / v2 wall</span>
+          <strong id="release-speedup">—</strong>
+          <small id="release-reduction">waiting for both releases</small>
+        </article>
+      </div>
+      <p class="comparison-note">
+        This is a same-workload, cross-release, single-run comparison:
+        <code>276.103268901 s ÷ 5.608764486 s</code>. It is not a multi-run benchmark
+        distribution and does not support a universal speedup claim.
+      </p>
+      <div class="phase-table" aria-label="Accepted internal phase comparisons">
+        <div class="phase-head"><span>accepted phase</span><span>Local v1</span><span>Local v2</span><span>v1 / v2</span></div>
+        <div><span>internal end to end</span><b id="v1-e2e">—</b><b id="v2-e2e">—</b><b id="ratio-e2e">—</b></div>
+        <div><span>primary execution</span><b id="v1-execution">—</b><b id="v2-execution">—</b><b id="ratio-execution">—</b></div>
+        <div><span>durable output finalization</span><b id="v1-finalization">—</b><b id="v2-finalization">—</b><b id="ratio-finalization">—</b></div>
+        <div><span>embedded exact replay</span><b id="v1-verification">—</b><b id="v2-verification">—</b><b id="ratio-verification">—</b></div>
+      </div>
+      <p class="comparison-note">
+        In v2, primary arithmetic no longer dominates the accepted internal timing.
+        Durable output commit/finalization and exact replay are the larger remaining
+        phases on this rotating local disk.
+      </p>
+    </section>
+
     <section class="metric-section" aria-labelledby="measured-title">
       <header class="section-head">
-        <p>02 / MEASUREMENTS</p>
-        <h2 id="measured-title">Release measurements</h2>
-        <span>values loaded from hash-verified acceptance files</span>
+        <p>03 / RESOURCE MEASUREMENTS</p>
+        <h2 id="measured-title">Accepted v2 measurements</h2>
+        <span>loaded only from selected files that match the sealed capture manifest</span>
       </header>
       <div class="metric-grid">
         <article>
@@ -137,19 +177,19 @@
           <small>authenticated durable tensor bytes</small>
         </article>
         <article class="signal">
-          <span>data / managed memory</span>
+          <span>data / certified managed peak</span>
           <strong id="memory-ratio">—</strong>
           <small>strictly greater than four times</small>
         </article>
         <article>
           <span>certified managed peak</span>
           <strong id="managed-peak">—</strong>
-          <small>resource certificate schema 4</small>
+          <small>resource certificate schema 5</small>
         </article>
         <article>
           <span>overlapping CPU lanes</span>
           <strong id="lane-count">—</strong>
-          <small>observed / configured · external /proc witness</small>
+          <small>observed / configured by external /proc sampling</small>
         </article>
         <article>
           <span>observed peak RSS</span>
@@ -157,120 +197,161 @@
           <small>external /proc · swap <b id="swap-used">—</b></small>
         </article>
         <article>
-          <span>GPU / network</span>
+          <span>GPU paths / network syscalls</span>
           <strong><b id="gpu-count">—</b> / <b id="network-count">—</b></strong>
-          <small>GPU paths / network syscalls</small>
+          <small>recorded product syscall traces</small>
         </article>
       </div>
     </section>
 
     <section class="machine-section" aria-labelledby="machine-title">
       <header class="section-head">
-        <p>03 / EXECUTION PATH</p>
-        <h2 id="machine-title">How an execution works</h2>
-        <span>each stage is validated and the result is withheld until exact replay passes</span>
+        <p>04 / EXECUTION PATH</p>
+        <h2 id="machine-title">How it works</h2>
+        <span>the result is not accepted until independently addressed exact replay checks every output value</span>
       </header>
-      <div class="machine-route" aria-label="Execution route">
+      <div class="machine-route six" aria-label="Execution route">
         <article>
           <span>01</span>
-          <b>IMPORT / CREATE</b>
-          <small>split canonical matrix bytes into BLAKE3-addressed chunks</small>
+          <b>COMPILE ISA 6</b>
+          <small>validate tensor shapes and emit a digest-bound schema-3 machine image</small>
         </article>
         <i aria-hidden="true"></i>
         <article>
           <span>02</span>
-          <b>COMPILE</b>
-          <small>validate shapes and emit a digest-bound ISA-6 image, lane schedule, and memory certificate</small>
+          <b>CERTIFY</b>
+          <small>bind two lanes, piece geometry, I/O bounds, and a 42,411,200-byte managed peak</small>
         </article>
         <i aria-hidden="true"></i>
         <article>
           <span>03</span>
-          <b>EXECUTE</b>
-          <small>physically execute bounded tiles on CPU lane p mod lanes with exact wrapping-i32 arithmetic</small>
+          <b>READ PANELS</b>
+          <small>stream contiguous authenticated right-tensor panels from local content-addressed storage</small>
         </article>
         <i aria-hidden="true"></i>
         <article>
           <span>04</span>
-          <b>CHECKPOINT</b>
-          <small>synchronize each output piece and its content-bound receipt before reuse</small>
+          <b>EXECUTE LANES</b>
+          <small>two deterministic CPU lanes compute disjoint output-row pieces with exact wrapping-i32 arithmetic</small>
         </article>
         <i aria-hidden="true"></i>
         <article>
           <span>05</span>
-          <b>VERIFY / PUBLISH</b>
-          <small>replay every output independently; publish only when all values match</small>
+          <b>CHECKPOINT</b>
+          <small>synchronize each piece and content-bound schema-2 receipt before it may be reused</small>
+        </article>
+        <i aria-hidden="true"></i>
+        <article>
+          <span>06</span>
+          <b>REPLAY / PUBLISH</b>
+          <small>parallel verifier lanes derive addresses separately and replay all 352,321,536 integer operations</small>
         </article>
       </div>
       <div class="machine-note">
-        <b>Browser scope</b>
+        <b>Browser boundary</b>
         <p>
-          The browser hashes selected acceptance files and, on request, the Linux
-          executable. It does not execute or simulate the workload. Process memory and
-          simultaneous CPU-lane tasks were recorded outside the product through Linux
-          <code>/proc</code> by the acceptance harness.
+          JavaScript on this page downloads, hashes, and cross-checks the selected
+          release files. It does not perform or simulate the accepted matrix
+          multiplication. Runtime memory, timing, process interruption, lane overlap,
+          and syscall observations were recorded outside the product process.
         </p>
+      </div>
+    </section>
+
+    <section class="io-section" aria-labelledby="io-title">
+      <header class="section-head">
+        <p>05 / AUTHENTICATED I/O</p>
+        <h2 id="io-title">Exact recorded counters</h2>
+        <span>observed records equal an independent manifest/range/cache derivation</span>
+      </header>
+      <div class="io-grid">
+        <article>
+          <span>admission input</span>
+          <strong id="io-admission-auth">—</strong>
+          <small><b id="io-admission-requested">—</b> requested · <b id="io-admission-loads">—</b> loads · <b id="io-admission-hits">—</b> hits</small>
+        </article>
+        <article>
+          <span>primary input</span>
+          <strong id="io-primary-auth">—</strong>
+          <small><b id="io-primary-requested">—</b> requested · <b id="io-primary-loads">—</b> loads · <b id="io-primary-hits">—</b> hits</small>
+        </article>
+        <article>
+          <span>replay input</span>
+          <strong id="io-replay-auth">—</strong>
+          <small><b id="io-replay-requested">—</b> requested · <b id="io-replay-loads">—</b> loads · <b id="io-replay-hits">—</b> hits</small>
+        </article>
+        <article>
+          <span>replay output</span>
+          <strong id="io-output-auth">—</strong>
+          <small><b id="io-output-requested">—</b> requested · <b id="io-output-loads">—</b> loads · <b id="io-output-hits">—</b> hits</small>
+        </article>
       </div>
     </section>
 
     <section class="recovery-section" aria-labelledby="recovery-title">
       <header class="section-head">
-        <p>04 / RECOVERY</p>
-        <h2 id="recovery-title">Process interruption and resume</h2>
-        <span>external SIGKILL, schema-2 checkpoints and receipts, and missing-only restart</span>
+        <p>06 / RECOVERY</p>
+        <h2 id="recovery-title">SIGKILL and exact resume</h2>
+        <span>the harness killed the process group; valid durable work was retained and only the missing piece ran after restart</span>
       </header>
       <div class="recovery-layout">
         <ol class="recovery-line">
-          <li><span>01</span><b>uninterrupted run</b><small><i id="uninterrupted-assignments">—</i> assignments executed</small></li>
+          <li><span>01</span><b>fresh run</b><small><i id="uninterrupted-assignments">—</i> executed</small></li>
           <li class="kill"><span>02</span><b>SIGKILL</b><small>exit 137 after <i id="kill-time">—</i></small></li>
-          <li><span>03</span><b>durable receipts</b><small><i id="retained-assignments">—</i> survived unchanged</small></li>
+          <li><span>03</span><b>durable receipt</b><small><i id="retained-assignments">—</i> retained</small></li>
           <li><span>04</span><b>resume</b><small>reused <i id="reused-assignments">—</i> · executed <i id="executed-assignments">—</i></small></li>
-          <li class="pass"><span>05</span><b>same output</b><small>exact root equality</small></li>
+          <li class="pass"><span>05</span><b>same output</b><small>both standalone replay checks passed</small></li>
         </ol>
         <div class="root-card">
-          <span>UNINTERRUPTED = RESUMED</span>
+          <span>UNINTERRUPTED ROOT = RESUMED ROOT</span>
           <code id="output-root">—</code>
-          <small>standalone exact verification passed for both results</small>
+          <small>the output root also matches the preserved v1 comparator</small>
         </div>
       </div>
     </section>
 
     <section class="rejection-section" aria-labelledby="rejection-title">
       <header class="section-head">
-        <p>05 / CORRUPTION TESTS</p>
+        <p>07 / CORRUPTION TESTS</p>
         <h2 id="rejection-title">Rejected mutations</h2>
-        <span>five isolated mutations, no invalid output publication</span>
+        <span>five isolated mutations returned failure and did not publish an invalid output</span>
       </header>
       <div class="rejection-grid" id="rejection-grid">
         <article data-probe="input_chunk"><span>input chunk</span><b>—</b></article>
         <article data-probe="checkpoint_piece"><span>checkpoint piece</span><b>—</b></article>
         <article data-probe="checkpoint_receipt"><span>checkpoint receipt</span><b>—</b></article>
         <article data-probe="image"><span>machine image</span><b>—</b></article>
-        <article data-probe="result"><span>result record</span><b>—</b></article>
+        <article data-probe="result"><span>result / I/O counter</span><b>—</b></article>
       </div>
     </section>
 
     <section class="verify-section" id="verify" aria-labelledby="verify-title">
       <header class="section-head inverse">
-        <p>06 / INTEGRITY</p>
-        <h2 id="verify-title">Browser integrity checks</h2>
-        <span>Web Crypto SHA-256 over the published evidence and Linux x86_64 executable</span>
+        <p>08 / BROWSER CHECKS</p>
+        <h2 id="verify-title">Selected-artifact integrity</h2>
+        <span>Web Crypto SHA-256 plus independent structural and cross-file checks for v2 and the preserved v1 comparator</span>
       </header>
       <div class="verify-console">
         <ol id="verification-list">
-          <li data-check="manifest"><i></i><span>expected SHA256SUMS digest</span><b>waiting</b></li>
-          <li data-check="pack"><i></i><span>selected release artifacts bound by manifest</span><b>waiting</b></li>
-          <li data-check="contract"><i></i><span>architecture, schedule, and evidence invariants recomputed</span><b>waiting</b></li>
-          <li data-check="binary"><i></i><span>Linux executable matches accepted SHA-256</span><b>click verify</b></li>
+          <li data-check="v2-manifest"><i></i><span>expected v2 full-capture SHA256SUMS digest</span><b>waiting</b></li>
+          <li data-check="v2-pack"><i></i><span>every published v2 selected file, including executable</span><b>waiting</b></li>
+          <li data-check="v1-pack"><i></i><span>every preserved v1 selected file, including executable</span><b>waiting</b></li>
+          <li data-check="contract"><i></i><span>schemas, counters, lanes, memory, recovery, roots, and containment</span><b>waiting</b></li>
+          <li data-check="comparison"><i></i><span>same-workload v1/v2 comparator checked before speedup display</span><b>waiting</b></li>
         </ol>
         <div class="verify-action">
-          <button id="verify-binary" type="button">hash the executable</button>
-          <p id="verification-copy">Selected files are internally bound by an unsigned checksum manifest. The executable is fetched only when you request the full check.</p>
+          <button id="rerun-verification" type="button">rerun browser checks</button>
+          <p id="verification-copy">
+            These are selected files from two complete captures. SHA256SUMS is a
+            checksum manifest, not a digital signature or third-party attestation.
+          </p>
           <div class="verify-links">
-            <a href="release/acceptance.json">acceptance.json</a>
-            <a href="release/provenance/lane-overlap.json">CPU lane witness</a>
-            <a href="release/artifacts/gemm.mfx.json">ISA 6 image</a>
-            <a href="release/SHA256SUMS">SHA256SUMS</a>
-            <a href="release/bin/mfenx-local" download="mfenx-local">Linux executable</a>
+            <a href="release/acceptance.json">v2 acceptance</a>
+            <a href="release/provenance/uninterrupted-io-counters.json">v2 I/O derivation</a>
+            <a href="release/provenance/lane-overlap.json">v2 lane witness</a>
+            <a href="release/artifacts/gemm.mfx.json">v2 ISA 6 image</a>
+            <a href="release-v1/acceptance.json">preserved v1 acceptance</a>
+            <a href="RELEASES.md">selection note</a>
           </div>
         </div>
       </div>
@@ -278,9 +359,9 @@
 
     <section class="run-section" id="run" aria-labelledby="run-title">
       <header class="section-head">
-        <p>07 / USAGE</p>
-        <h2 id="run-title">Local commands</h2>
-        <span>Linux x86_64 release · no service, account, cloud worker, GPU, or network required</span>
+        <p>09 / LOCAL USAGE</p>
+        <h2 id="run-title">Run the accepted executable</h2>
+        <span>Linux x86_64 · local CPU and storage · no service, account, VPS, cloud worker, GPU, or network required</span>
       </header>
       <div class="run-layout">
         <div class="terminal">
@@ -297,9 +378,9 @@
         </div>
         <aside class="run-facts">
           <div><span>binary</span><b>x86_64 Linux ELF</b></div>
-          <div><span>dynamic libraries</span><b>libc + libgcc_s only</b></div>
-          <div><span>data location</span><b>your local content store</b></div>
-          <div><span>result rule</span><b>publish only after exact replay</b></div>
+          <div><span>runtime libraries</span><b>libc + libgcc_s</b></div>
+          <div><span>data location</span><b>local content-addressed store</b></div>
+          <div><span>result rule</span><b>publish after exact replay</b></div>
           <a href="release/bin/mfenx-local" download="mfenx-local">download mfenx-local →</a>
         </aside>
       </div>
@@ -307,22 +388,22 @@
 
     <section class="truth-section">
       <p>
-        <b>Scope.</b> MFENX is called a software-defined local supercomputer because its
-        ISA, compiler, deterministic parallel scheduler, content-addressed storage,
-        crash recovery, and independent verifier operate as one compute architecture.
-        Local v1 runs that architecture on physical CPU cores and local storage. The
-        claim is architectural; it is not a claim of custom silicon, distributed nodes,
-        benchmark speed, or TOP500 classification.
+        <b>Claim boundary.</b> “Software-defined local supercomputer” is an
+        architectural description of the combined ISA, compiler, deterministic parallel
+        runtime, content-addressed storage, resource certificate, recovery, and verifier.
+        The accepted Local v2 workload ran on one host’s CPU cores and local storage.
+        This page makes no TOP500, custom-silicon, GPU, cloud, VPS, distributed-node, or
+        universal performance claim.
       </p>
     </section>
   </main>
 
   <footer>
     <a href="/">MFENX.COM</a>
-    <span>RECORDED RELEASE EVIDENCE</span>
+    <span>SELECTED ACCEPTED RELEASE FILES</span>
     <time id="capture-footer">release evidence pending</time>
   </footer>
 
-  <script src="lightsout.js?v=6" defer></script>
+  <script src="lightsout.js?v=7" defer></script>
 </body>
 </html>

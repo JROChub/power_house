@@ -1,9 +1,9 @@
 {
-  "schema_version": 3,
-  "image_digest": "4d04ef1086530929226ee9c75356ce6a7230ce55e7220dbb1f380fa1077c07a1",
-  "machine_class": "software_defined_local_supercomputer_v2",
+  "schema_version": 2,
+  "image_digest": "322d045dfd2dac75e323fda16c8dbfe0552f86974281a9d3222a5efb9238a59b",
+  "machine_class": "software_defined_local_supercomputer_v1",
   "backend": "rarecomp_mfenx_local_cpu_lane_engine",
-  "resource_certificate_digest": "0c054cd037201279132c838fbae473608a62563da246225bea234b864fbb7218",
+  "resource_certificate_digest": "5ff679a1ce136c816b10a17f624dc8b9090dbbfbe579e6c0be1930201c9a1250",
   "outputs": [
     {
       "index": 0,
@@ -21,18 +21,12 @@
     }
   ],
   "metrics": {
-    "end_to_end_ns": 5375569420,
-    "execution_ns": 1392552037,
-    "finalization_ns": 1717503054,
+    "end_to_end_ns": 275328005440,
+    "execution_ns": 108881565986,
+    "finalization_ns": 7730599093,
     "useful_integer_operations": 352321536,
     "executed_primary_integer_operations": 352321536,
     "physical_integer_operations": 704643072,
-    "primary_input_io": {
-      "requested_bytes": 469762720,
-      "authenticated_chunk_bytes": 469763392,
-      "chunk_loads": 450,
-      "cache_hits": 0
-    },
     "total_pieces": 2,
     "reused_pieces": 0,
     "executed_pieces": 2,
@@ -48,7 +42,7 @@
       }
     ],
     "lanes": 2,
-    "certified_managed_peak_bytes": 42411200,
+    "certified_managed_peak_bytes": 53035904,
     "retained_storage_bytes": 276959904,
     "gpu_devices_required": 0,
     "network_transports_required": 0,
@@ -59,28 +53,10 @@
   },
   "verification": {
     "verified": true,
-    "method": "parallel_independently_addressed_exact_replay_v2",
+    "method": "independently_addressed_exact_replay",
     "pieces_checked": 2,
     "bytes_checked": 12582912,
     "verification_integer_operations": 352321536,
-    "admission_input_io": {
-      "requested_bytes": 0,
-      "authenticated_chunk_bytes": 234881696,
-      "chunk_loads": 225,
-      "cache_hits": 0
-    },
-    "input_io": {
-      "requested_bytes": 469762720,
-      "authenticated_chunk_bytes": 469763392,
-      "chunk_loads": 450,
-      "cache_hits": 1
-    },
-    "output_io": {
-      "requested_bytes": 12582912,
-      "authenticated_chunk_bytes": 12582912,
-      "chunk_loads": 12,
-      "cache_hits": 0
-    },
-    "verification_ns": 1722296839
+    "verification_ns": 157585352901
   }
 }

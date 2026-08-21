@@ -1,6 +1,6 @@
 {
   "acceptance_level": "release",
-  "binary_sha256": "fffa18543f4764e7ad0344c34fa8bac61b9a415a4ebdca871032d1ed63ce6eae",
+  "binary_sha256": "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c",
   "build": {
     "binary": "mfenx-local",
     "forbidden_dependencies": 0,
@@ -10,7 +10,7 @@
     "offline": true,
     "package": "rarecomp-mfenx-local"
   },
-  "captured_at_utc": "2026-08-20T21:31:20.456112+00:00",
+  "captured_at_utc": "2026-08-21T18:12:24.277820+00:00",
   "containment": {
     "device_view": "bubblewrap_synthetic_dev",
     "mode": "bubblewrap_network_namespace"
@@ -20,7 +20,8 @@
     "checkpoint_receipt": "passed",
     "image": "passed",
     "input_chunk": "passed",
-    "result": "passed"
+    "result": "passed",
+    "result_mutation_target": "metrics.primary_input_io.cache_hits"
   },
   "external_hard_rlimit_as_mib": 256,
   "independent_attestation": {
@@ -31,64 +32,123 @@
     "runtime_result_status": "self_reported",
     "runtime_telemetry": "external_proc_and_monotonic_process_observer"
   },
+  "io_accounting": {
+    "actual": {
+      "admission_input_io": {
+        "authenticated_chunk_bytes": 234881696,
+        "cache_hits": 0,
+        "chunk_loads": 225,
+        "requested_bytes": 0
+      },
+      "primary_input_io": {
+        "authenticated_chunk_bytes": 469763392,
+        "cache_hits": 0,
+        "chunk_loads": 450,
+        "requested_bytes": 469762720
+      },
+      "verification_input_io": {
+        "authenticated_chunk_bytes": 469763392,
+        "cache_hits": 1,
+        "chunk_loads": 450,
+        "requested_bytes": 469762720
+      },
+      "verification_output_io": {
+        "authenticated_chunk_bytes": 12582912,
+        "cache_hits": 0,
+        "chunk_loads": 12,
+        "requested_bytes": 12582912
+      }
+    },
+    "derivation": "independent_manifest_range_single_cache_simulation",
+    "independently_derived": {
+      "admission_input_io": {
+        "authenticated_chunk_bytes": 234881696,
+        "cache_hits": 0,
+        "chunk_loads": 225,
+        "requested_bytes": 0
+      },
+      "primary_input_io": {
+        "authenticated_chunk_bytes": 469763392,
+        "cache_hits": 0,
+        "chunk_loads": 450,
+        "requested_bytes": 469762720
+      },
+      "verification_input_io": {
+        "authenticated_chunk_bytes": 469763392,
+        "cache_hits": 1,
+        "chunk_loads": 450,
+        "requested_bytes": 469762720
+      },
+      "verification_output_io": {
+        "authenticated_chunk_bytes": 12582912,
+        "cache_hits": 0,
+        "chunk_loads": 12,
+        "requested_bytes": 12582912
+      }
+    },
+    "resumed_evidence": "provenance/resumed-io-counters.json",
+    "status": "PASS",
+    "uninterrupted_evidence": "provenance/uninterrupted-io-counters.json"
+  },
   "machine": {
     "backend": "rarecomp_mfenx_local_cpu_lane_engine",
     "checkpoint_plan_schema_version": 2,
     "directory_metadata_sync": "available",
+    "execution_dataflow": "contiguous_right_panels_v2",
     "gpu_devices_required": 0,
-    "image_schema_version": 2,
+    "image_schema_version": 3,
     "isa_version": 6,
     "lane_schedule_instruction_index": 0,
     "lane_schedule_policy": "deterministic_striped_v1",
     "lane_schedule_schema_version": 1,
-    "machine_class": "software_defined_local_supercomputer_v1",
+    "machine_class": "software_defined_local_supercomputer_v2",
     "network_transports_required": 0,
     "opcode": "streamed_i32_gemm",
     "piece_receipt_schema_version": 2,
     "piece_to_lane_assignment": "lane_index = piece_index % lanes",
     "process_crash_recovery": "supported",
     "recovery_partition_attestation": "self_reported",
-    "resource_certificate_schema_version": 4,
-    "result_schema_version": 2,
+    "resource_certificate_schema_version": 5,
+    "result_schema_version": 3,
     "runtime_telemetry_attestation": "self_reported",
-    "verification_method": "independently_addressed_exact_replay"
+    "verification_method": "parallel_independently_addressed_exact_replay_v2"
   },
   "memory": {
     "external_hard_rlimit_as_bytes": 268435456,
     "external_lane_concurrency_attestation": {
       "configured_lanes": 2,
       "minimum_distinct_overlapping_lane_tasks": 2,
-      "observed_lane_task_rows": 2182,
+      "observed_lane_task_rows": 28,
       "observer": "acceptance_harness_outside_product_process_via_proc_task",
       "overlap_proven": true,
       "primary_execution": "uninterrupted-run",
       "raw_evidence": "memory/uninterrupted-run.lane-tasks.tsv",
       "witness": {
-        "anchor_tid_reobserved_after_sweep": 226187,
-        "epoch_ns": 1787260469144403272,
-        "product_pid": 225964,
+        "anchor_tid_reobserved_after_sweep": 845079,
+        "epoch_ns": 1787335923872232703,
+        "product_pid": 845004,
         "tasks": [
           {
             "anchor_reobserved_after_sweep": 1,
-            "anchor_tid": 226187,
+            "anchor_tid": 845079,
             "comm": "mfx-lane-00",
-            "epoch_ns": 1787260469144403272,
+            "epoch_ns": 1787335923872232703,
             "lane_index": 0,
-            "pid": 225964,
-            "starttime_ticks": 1276591,
+            "pid": 845004,
+            "starttime_ticks": 8822064,
             "state": "R",
-            "tid": 226187
+            "tid": 845079
           },
           {
             "anchor_reobserved_after_sweep": 1,
-            "anchor_tid": 226187,
+            "anchor_tid": 845079,
             "comm": "mfx-lane-01",
-            "epoch_ns": 1787260469144403272,
+            "epoch_ns": 1787335923872232703,
             "lane_index": 1,
-            "pid": 225964,
-            "starttime_ticks": 1276591,
-            "state": "R",
-            "tid": 226188
+            "pid": 845004,
+            "starttime_ticks": 8822064,
+            "state": "t",
+            "tid": 845080
           }
         ]
       }
@@ -96,187 +156,203 @@
     "external_runtime_telemetry_attestation": "external_proc_and_monotonic_process_observer",
     "external_timings": {
       "compile": {
-        "ended_epoch_ns": 1787260464595008717,
-        "ended_monotonic_ns": 12761493632109,
+        "ended_epoch_ns": 1787335921833165236,
+        "ended_monotonic_ns": 88218658333744,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260463163657071,
-        "started_monotonic_ns": 12760055275304,
-        "wall_ns": 1438356805
+        "started_epoch_ns": 1787335916672425856,
+        "started_monotonic_ns": 88213491547846,
+        "wall_ns": 5166785898
       },
       "corrupt-checkpoint-piece": {
-        "ended_epoch_ns": 1787261445281682901,
-        "ended_monotonic_ns": 13742184594020,
+        "ended_epoch_ns": 1787335941675514468,
+        "ended_monotonic_ns": 88238499318707,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261444764527186,
-        "started_monotonic_ns": 13741661261842,
-        "wall_ns": 523332178
+        "started_epoch_ns": 1787335941165577973,
+        "started_monotonic_ns": 88237987944327,
+        "wall_ns": 511374380
       },
       "corrupt-checkpoint-receipt": {
-        "ended_epoch_ns": 1787261446335743045,
-        "ended_monotonic_ns": 13743235645130,
+        "ended_epoch_ns": 1787335942453892618,
+        "ended_monotonic_ns": 88239276925198,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261445816346227,
-        "started_monotonic_ns": 13742709343123,
-        "wall_ns": 526302007
+        "started_epoch_ns": 1787335941981242762,
+        "started_monotonic_ns": 88238807556227,
+        "wall_ns": 469368971
       },
       "corrupt-image": {
-        "ended_epoch_ns": 1787261447301439897,
-        "ended_monotonic_ns": 13744201618421,
+        "ended_epoch_ns": 1787335942788891405,
+        "ended_monotonic_ns": 88239607136092,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261446829310121,
-        "started_monotonic_ns": 13743727986224,
-        "wall_ns": 473632197
+        "started_epoch_ns": 1787335942671699664,
+        "started_monotonic_ns": 88239493641989,
+        "wall_ns": 113494103
       },
       "corrupt-input-chunk": {
-        "ended_epoch_ns": 1787261444186350816,
-        "ended_monotonic_ns": 13741078941856,
+        "ended_epoch_ns": 1787335940881813112,
+        "ended_monotonic_ns": 88237700805393,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261443920190584,
-        "started_monotonic_ns": 13740819594494,
-        "wall_ns": 259347362
+        "started_epoch_ns": 1787335940628130343,
+        "started_monotonic_ns": 88237451012182,
+        "wall_ns": 249793211
       },
       "corrupt-result": {
-        "ended_epoch_ns": 1787261448273750987,
-        "ended_monotonic_ns": 13745171339390,
+        "ended_epoch_ns": 1787335943445696543,
+        "ended_monotonic_ns": 88240267946467,
         "exit_status": 1,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261447789464030,
-        "started_monotonic_ns": 13744686313110,
-        "wall_ns": 485026280
+        "started_epoch_ns": 1787335943004352466,
+        "started_monotonic_ns": 88239824125601,
+        "wall_ns": 443820866
       },
       "inspect": {
-        "ended_epoch_ns": 1787260465737177601,
-        "ended_monotonic_ns": 12762635344590,
+        "ended_epoch_ns": 1787335922403400398,
+        "ended_monotonic_ns": 88219229030346,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260464830167438,
-        "started_monotonic_ns": 12761726719861,
-        "wall_ns": 908624729
+        "started_epoch_ns": 1787335921957743092,
+        "started_monotonic_ns": 88218784594873,
+        "wall_ns": 444435473
       },
       "inspect-full": {
-        "ended_epoch_ns": 1787260466960851010,
-        "ended_monotonic_ns": 12763852540128,
+        "ended_epoch_ns": 1787335922980663311,
+        "ended_monotonic_ns": 88219802624918,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260465979047618,
-        "started_monotonic_ns": 12762871341531,
-        "wall_ns": 981198597
+        "started_epoch_ns": 1787335922536979132,
+        "started_monotonic_ns": 88219359796525,
+        "wall_ns": 442828393
       },
       "killed-run": {
-        "ended_epoch_ns": 1787261033793131077,
-        "ended_monotonic_ns": 13330693064428,
+        "ended_epoch_ns": 1787335932881011759,
+        "ended_monotonic_ns": 88229705479312,
         "exit_status": 137,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260902698075311,
-        "started_monotonic_ns": 13199592856115,
-        "wall_ns": 131100208313
+        "started_epoch_ns": 1787335931129407695,
+        "started_monotonic_ns": 88227948587167,
+        "wall_ns": 1756892145
       },
       "matrix-create-left": {
-        "ended_epoch_ns": 1787260327373702563,
-        "ended_monotonic_ns": 12624262006014,
+        "ended_epoch_ns": 1787335869011702041,
+        "ended_monotonic_ns": 88165830142840,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260323563875564,
-        "started_monotonic_ns": 12620458645914,
-        "wall_ns": 3803360100
+        "started_epoch_ns": 1787335868579552172,
+        "started_monotonic_ns": 88165397496868,
+        "wall_ns": 432645972
       },
       "matrix-create-right": {
-        "ended_epoch_ns": 1787260462667796731,
-        "ended_monotonic_ns": 12759725534260,
+        "ended_epoch_ns": 1787335916148852333,
+        "ended_monotonic_ns": 88213359992619,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260327605813873,
-        "started_monotonic_ns": 12624498687566,
-        "wall_ns": 135226846694
+        "started_epoch_ns": 1787335869119108957,
+        "started_monotonic_ns": 88165939788674,
+        "wall_ns": 47420203945
       },
       "resumed-run": {
-        "ended_epoch_ns": 1787261270681971396,
-        "ended_monotonic_ns": 13567605980792,
+        "ended_epoch_ns": 1787335938089652331,
+        "ended_monotonic_ns": 88234908422037,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261034313610068,
-        "started_monotonic_ns": 13331208441243,
-        "wall_ns": 236397539549
+        "started_epoch_ns": 1787335933162997676,
+        "started_monotonic_ns": 88229984065056,
+        "wall_ns": 4924356981
       },
       "resumed-verify": {
-        "ended_epoch_ns": 1787261442976542397,
-        "ended_monotonic_ns": 13740008926630,
+        "ended_epoch_ns": 1787335940198427560,
+        "ended_monotonic_ns": 88237023446401,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787261270969993459,
-        "started_monotonic_ns": 13567862153750,
-        "wall_ns": 172146772880
+        "started_epoch_ns": 1787335938185287453,
+        "started_monotonic_ns": 88235003914104,
+        "wall_ns": 2019532297
       },
       "uninterrupted-run": {
-        "ended_epoch_ns": 1787260743411533285,
-        "ended_monotonic_ns": 13040310730114,
+        "ended_epoch_ns": 1787335928762936174,
+        "ended_monotonic_ns": 88225584969209,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260467312146236,
-        "started_monotonic_ns": 12764207461213,
-        "wall_ns": 276103268901
+        "started_epoch_ns": 1787335923152093710,
+        "started_monotonic_ns": 88219976204723,
+        "wall_ns": 5608764486
       },
       "uninterrupted-verify": {
-        "ended_epoch_ns": 1787260902114275700,
-        "ended_monotonic_ns": 13199095758535,
+        "ended_epoch_ns": 1787335930900370086,
+        "ended_monotonic_ns": 88227721680629,
         "exit_status": 0,
         "observer": "acceptance_harness_outside_product_process",
-        "started_epoch_ns": 1787260743645443539,
-        "started_monotonic_ns": 13040539442848,
-        "wall_ns": 158556315687
+        "started_epoch_ns": 1787335928879022592,
+        "started_monotonic_ns": 88225701061081,
+        "wall_ns": 2020619548
       }
     },
     "maxima_kib": {
-      "VmHWM_kib": 18548,
-      "VmPeak_kib": 204196,
-      "VmRSS_kib": 18548,
-      "VmSize_kib": 149892,
+      "VmHWM_kib": 36820,
+      "VmPeak_kib": 224724,
+      "VmRSS_kib": 36820,
+      "VmSize_kib": 150004,
       "VmSwap_kib": 0
     },
     "sample_counts": {
-      "compile": 12,
+      "compile": 64,
       "corrupt-checkpoint-piece": 5,
       "corrupt-checkpoint-receipt": 5,
-      "corrupt-image": 4,
-      "corrupt-input-chunk": 1,
-      "corrupt-result": 4,
-      "inspect": 10,
-      "inspect-full": 11,
-      "killed-run": 1304,
-      "matrix-create-left": 30,
-      "matrix-create-right": 1797,
-      "resumed-run": 2901,
-      "resumed-verify": 2184,
-      "uninterrupted-run": 3235,
-      "uninterrupted-verify": 2039
+      "corrupt-image": 0,
+      "corrupt-input-chunk": 2,
+      "corrupt-result": 5,
+      "inspect": 4,
+      "inspect-full": 4,
+      "killed-run": 16,
+      "matrix-create-left": 5,
+      "matrix-create-right": 605,
+      "resumed-run": 57,
+      "resumed-verify": 19,
+      "uninterrupted-run": 63,
+      "uninterrupted-verify": 22
     },
     "virtual_memory_within_external_limit": true
+  },
+  "performance": {
+    "executed_primary_integer_operations": 352321536,
+    "external_wall_ns": 5608764486,
+    "external_wall_observer": "acceptance_harness_monotonic_process_observer",
+    "internal_end_to_end_ns": 5375569420,
+    "internal_execution_ns": 1392552037,
+    "internal_finalization_ns": 1717503054,
+    "internal_timing_attestation": "self_reported",
+    "internal_verification_ns": 1722296839,
+    "physical_integer_operations": 704643072,
+    "speedup_claim": null,
+    "useful_integer_operations": 352321536,
+    "workload": "uninterrupted_fresh_execution"
   },
   "product": "rarecomp-mfenx-local",
   "recovery": "passed_exact_partial_reuse_with_deterministic_lane_assignments",
   "release_acceptance": true,
   "resumed_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
-  "schema_version": 2,
-  "source_tree_sha256": "f6e20b1cf441cf20d26efa993fdc2d69731c4961f8de42df4e6eca9016d70f2c",
+  "schema_version": 3,
+  "source_tree_sha256": "e3c87a14c466e3a335f13f86738a72459bff1629c5b5d969733f0d7f544bb9ca",
   "status": "PASS",
   "syscall_trace": {
     "host_trace_files": 893,
     "offline_build_ip_network_attempts": 0,
     "product_gpu_device_paths": 0,
     "product_network_syscalls": 0,
-    "product_trace_files": 21
+    "product_trace_files": 29
   },
   "uninterrupted_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
   "workload": {
+    "acceptance_envelope_schema_version": 3,
     "backend": "rarecomp_mfenx_local_cpu_lane_engine",
-    "certified_managed_peak_bytes": 53035904,
+    "certified_managed_peak_bytes": 42411200,
     "checkpoint_temporary_json_storage_upper_bound_bytes": 67584,
     "checkpoint_temporary_piece_storage_upper_bound_bytes": 16777216,
+    "execution_dataflow": "contiguous_right_panels_v2",
     "expected_piece_lane_assignments": [
       {
         "lane_index": 0,
@@ -288,9 +364,65 @@
       }
     ],
     "gpu_required": 0,
-    "image_schema_version": 2,
+    "image_schema_version": 3,
     "input_more_than_four_times_managed": true,
-    "input_to_managed_ratio_milli": 4428,
+    "input_to_managed_ratio_milli": 5538,
+    "io_accounting": {
+      "actual": {
+        "admission_input_io": {
+          "authenticated_chunk_bytes": 234881696,
+          "cache_hits": 0,
+          "chunk_loads": 225,
+          "requested_bytes": 0
+        },
+        "primary_input_io": {
+          "authenticated_chunk_bytes": 469763392,
+          "cache_hits": 0,
+          "chunk_loads": 450,
+          "requested_bytes": 469762720
+        },
+        "verification_input_io": {
+          "authenticated_chunk_bytes": 469763392,
+          "cache_hits": 1,
+          "chunk_loads": 450,
+          "requested_bytes": 469762720
+        },
+        "verification_output_io": {
+          "authenticated_chunk_bytes": 12582912,
+          "cache_hits": 0,
+          "chunk_loads": 12,
+          "requested_bytes": 12582912
+        }
+      },
+      "derivation": "independent_manifest_range_single_cache_simulation",
+      "evidence": "provenance/uninterrupted-io-counters.json",
+      "independently_derived": {
+        "admission_input_io": {
+          "authenticated_chunk_bytes": 234881696,
+          "cache_hits": 0,
+          "chunk_loads": 225,
+          "requested_bytes": 0
+        },
+        "primary_input_io": {
+          "authenticated_chunk_bytes": 469763392,
+          "cache_hits": 0,
+          "chunk_loads": 450,
+          "requested_bytes": 469762720
+        },
+        "verification_input_io": {
+          "authenticated_chunk_bytes": 469763392,
+          "cache_hits": 1,
+          "chunk_loads": 450,
+          "requested_bytes": 469762720
+        },
+        "verification_output_io": {
+          "authenticated_chunk_bytes": 12582912,
+          "cache_hits": 0,
+          "chunk_loads": 12,
+          "requested_bytes": 12582912
+        }
+      }
+    },
     "io_mib": 1,
     "isa_version": 6,
     "lane_schedule": {
@@ -306,12 +438,28 @@
       56
     ],
     "logical_input_bytes": 234881696,
-    "machine_class": "software_defined_local_supercomputer_v1",
+    "machine_class": "software_defined_local_supercomputer_v2",
     "managed_mib": 64,
     "network_required": 0,
     "opcode": "streamed_i32_gemm",
-    "resource_certificate_schema_version": 4,
-    "result_schema_version": 2,
+    "performance": {
+      "executed_primary_integer_operations": 352321536,
+      "external_wall_ns": 5608764486,
+      "external_wall_observer": "acceptance_harness_monotonic_process_observer",
+      "internal_end_to_end_ns": 5375569420,
+      "internal_execution_ns": 1392552037,
+      "internal_finalization_ns": 1717503054,
+      "internal_timing_attestation": "self_reported",
+      "internal_verification_ns": 1722296839,
+      "physical_integer_operations": 704643072,
+      "speedup_claim": null,
+      "useful_integer_operations": 352321536,
+      "workload": "uninterrupted_fresh_execution"
+    },
+    "primary_authenticated_input_bytes_upper_bound": 469763392,
+    "primary_requested_input_bytes_upper_bound": 469762720,
+    "resource_certificate_schema_version": 5,
+    "result_schema_version": 3,
     "retained_checkpoint_storage_upper_bound_bytes": 29495296,
     "retained_output_storage_bytes": 12582912,
     "retained_storage_upper_bound_bytes": 276959904,
@@ -319,6 +467,10 @@
       56,
       1048576
     ],
-    "total_pieces": 2
+    "total_pieces": 2,
+    "verification_authenticated_input_bytes_upper_bound": 469763392,
+    "verification_authenticated_output_bytes_upper_bound": 16777212,
+    "verification_requested_input_bytes_upper_bound": 469762720,
+    "verification_requested_output_bytes": 12582912
   }
 }

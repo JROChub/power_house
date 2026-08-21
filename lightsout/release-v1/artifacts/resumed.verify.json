@@ -1,0 +1,8 @@
+{
+  "verified": true,
+  "method": "independently_addressed_exact_replay",
+  "pieces_checked": 2,
+  "bytes_checked": 12582912,
+  "verification_integer_operations": 352321536,
+  "verification_ns": 171388719375
+}
