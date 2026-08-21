@@ -61,6 +61,35 @@ const RELEASES = Object.freeze({
   })
 });
 
+const CONTRACT_V1 = Object.freeze({
+  root: "contract-v1/",
+  transportManifestSha256: "30163ec79fbc134bbe619a5e0d84f73e1f23a3f75620ecd3d52e279da72e0555",
+  releaseManifestSha256: "bf854ef7144f11358725aaf8021a91f12fede517ac8110fc44bc08a50950b071",
+  releaseSignatureSha256: "2b26d302e978566c95709ac3c4cf93cc10f29ac5d9a02e97470283460efbf1db",
+  publicKeyFingerprint: "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc",
+  files: Object.freeze([
+    "CANONICAL_FORMATS_V1.md",
+    "CLAIM_LEDGER.md",
+    "EXECUTION_CONTRACT_V1.md",
+    "README.md",
+    "THREAT_MODEL.md",
+    "VALIDATION_ROADMAP.md",
+    "conformance/README.md",
+    "conformance/SHA256SUMS",
+    "conformance/vectors.json",
+    "release/README.md",
+    "release/RELEASE-MANIFEST.canonical.json",
+    "release/RELEASE-MANIFEST.canonical.json.sig",
+    "release/SIGNING-AUDIT.md",
+    "release/SIGNING.md",
+    "release/allowed_signers",
+    "release/local-reproduction-record.json",
+    "release/mfenx-local-v2.provenance.intoto.json",
+    "release/mfenx-local-v2.sbom.cdx.json",
+    "release/release-signing-key.pub"
+  ])
+});
+
 const V2_CONTRACT = Object.freeze({
   acceptanceSchema: 3,
   imageSchema: 3,
@@ -250,6 +279,125 @@ async function loadSelectedRelease(label, config) {
     if (path.endsWith(".json")) files[path] = parseJson(raw[path], label + "/" + path);
   }
   return { label, config, manifest, raw, files };
+}
+
+async function loadContractPack() {
+  const checksumBytes = await fetchBytes(CONTRACT_V1.root, "SHA256SUMS", 4 * 1024);
+  assert(
+    await sha256(checksumBytes) === CONTRACT_V1.transportManifestSha256,
+    "Contract v1 public-subset checksum index changed"
+  );
+  const inventory = parseManifest(checksumBytes, "Contract v1", CONTRACT_V1.files.length);
+  assert(
+    equalArray([...inventory.keys()].sort(), [...CONTRACT_V1.files].sort()),
+    "Contract v1 public-subset file set changed"
+  );
+
+  const raw = Object.create(null);
+  await Promise.all(CONTRACT_V1.files.map(async (path) => {
+    const bytes = await fetchBytes(CONTRACT_V1.root, path, 256 * 1024);
+    assert(await sha256(bytes) === inventory.get(path), "Contract v1 file failed SHA-256: " + path);
+    raw[path] = bytes;
+  }));
+  return { inventory, raw };
+}
+
+function decodeBase64(value, label) {
+  try {
+    return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+  } catch {
+    throw new Error(label + " is not valid base64");
+  }
+}
+
+function base64WithoutPadding(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=+$/, "");
+}
+
+async function validateContractPack(pack) {
+  const releaseManifestPath = "release/RELEASE-MANIFEST.canonical.json";
+  const signaturePath = "release/RELEASE-MANIFEST.canonical.json.sig";
+  assert(pack.inventory.get(releaseManifestPath) === CONTRACT_V1.releaseManifestSha256, "Contract v1 release-manifest identity changed");
+  assert(pack.inventory.get(signaturePath) === CONTRACT_V1.releaseSignatureSha256, "Contract v1 detached-signature identity changed");
+
+  const manifest = parseJson(pack.raw[releaseManifestPath], "Contract v1 signed release manifest");
+  assert(manifest.schema === "mfenx.release-manifest.v1", "Contract v1 release-manifest schema changed");
+  assert(manifest.release_id === "mfenx-local-v2-20260821-a1", "Contract v1 release identity changed");
+  assert(manifest.encoding_profile === "mfenx.json.jq-cS-integer.v1", "Contract v1 canonical encoding profile changed");
+  assert(!Object.hasOwn(manifest, "created_at_utc"), "Contract v1 signed subject contains a post-finalization timestamp");
+  assert(Array.isArray(manifest.artifacts) && manifest.artifact_count === 27 && manifest.artifacts.length === 27, "Contract v1 signed artifact inventory changed");
+  assert(manifest.product.machine_class === V2_CONTRACT.machineClass && manifest.product.name === "rarecomp-mfenx-local", "Contract v1 signed product identity changed");
+  assert(manifest.signature.algorithm === "ssh-ed25519" && manifest.signature.format === "openssh-sshsig", "Contract v1 signature algorithm changed");
+  assert(manifest.signature.namespace === "mfenx-release" && manifest.signature.signer_identity === "mfenx-release", "Contract v1 signature domain changed");
+  assert(manifest.signature.public_key_fingerprint === CONTRACT_V1.publicKeyFingerprint, "Contract v1 manifest fingerprint changed");
+  assert(manifest.signature.signed_object === "release/mfenx-local-v2-20260821-a1/RELEASE-MANIFEST.canonical.json", "Contract v1 signed-object path changed");
+
+  const signedArtifacts = new Map();
+  for (const artifact of manifest.artifacts) {
+    assert(isRecord(artifact) && typeof artifact.path === "string", "Contract v1 signed artifact record is malformed");
+    assertDigest(artifact.sha256, "Contract v1 signed artifact digest is malformed");
+    assertSafeInteger(artifact.size_bytes, "Contract v1 signed artifact size is malformed");
+    assert(!signedArtifacts.has(artifact.path), "Contract v1 signed artifact path is duplicated");
+    signedArtifacts.set(artifact.path, artifact);
+  }
+
+  const publicToSigned = Object.freeze({
+    "CANONICAL_FORMATS_V1.md": "docs/CANONICAL_FORMATS_V1.md",
+    "CLAIM_LEDGER.md": "docs/CLAIM_LEDGER.md",
+    "EXECUTION_CONTRACT_V1.md": "docs/EXECUTION_CONTRACT_V1.md",
+    "THREAT_MODEL.md": "docs/THREAT_MODEL.md",
+    "VALIDATION_ROADMAP.md": "docs/VALIDATION_ROADMAP.md",
+    "conformance/README.md": "conformance/execution-contract-v1/README.md",
+    "conformance/SHA256SUMS": "conformance/execution-contract-v1/SHA256SUMS",
+    "conformance/vectors.json": "conformance/execution-contract-v1/vectors.json",
+    "release/README.md": "release/mfenx-local-v2-20260821-a1/README.md",
+    "release/SIGNING-AUDIT.md": "release/mfenx-local-v2-20260821-a1/SIGNING-AUDIT.md",
+    "release/SIGNING.md": "release/mfenx-local-v2-20260821-a1/SIGNING.md",
+    "release/allowed_signers": "release/mfenx-local-v2-20260821-a1/allowed_signers",
+    "release/local-reproduction-record.json": "release/mfenx-local-v2-20260821-a1/local-reproduction-record.json",
+    "release/mfenx-local-v2.provenance.intoto.json": "release/mfenx-local-v2-20260821-a1/mfenx-local-v2.provenance.intoto.json",
+    "release/mfenx-local-v2.sbom.cdx.json": "release/mfenx-local-v2-20260821-a1/mfenx-local-v2.sbom.cdx.json",
+    "release/release-signing-key.pub": "release/mfenx-local-v2-20260821-a1/release-signing-key.pub"
+  });
+  for (const [publicPath, signedPath] of Object.entries(publicToSigned)) {
+    const artifact = signedArtifacts.get(signedPath);
+    assert(artifact, "Contract v1 signed manifest omits " + signedPath);
+    assert(pack.inventory.get(publicPath) === artifact.sha256, "Contract v1 public copy differs from signed artifact " + signedPath);
+    assert(pack.raw[publicPath].byteLength === artifact.size_bytes, "Contract v1 public copy size differs from signed artifact " + signedPath);
+  }
+
+  const publicKeyText = decodeUtf8(pack.raw["release/release-signing-key.pub"], "Contract v1 public key").trim();
+  const publicKeyFields = publicKeyText.split(/\s+/);
+  assert(publicKeyFields.length >= 2 && publicKeyFields[0] === "ssh-ed25519", "Contract v1 public key is not OpenSSH Ed25519");
+  const publicKeyBlob = decodeBase64(publicKeyFields[1], "Contract v1 public key");
+  const publicKeyDigest = new Uint8Array(await crypto.subtle.digest("SHA-256", publicKeyBlob));
+  assert("SHA256:" + base64WithoutPadding(publicKeyDigest) === CONTRACT_V1.publicKeyFingerprint, "Contract v1 public-key fingerprint changed");
+  const allowedSignerFields = decodeUtf8(pack.raw["release/allowed_signers"], "Contract v1 allowed-signers policy").trim().split(/\s+/);
+  assert(
+    allowedSignerFields[0] === "mfenx-release"
+      && allowedSignerFields[1] === "namespaces=\"mfenx-release\""
+      && allowedSignerFields[2] === publicKeyFields[0]
+      && allowedSignerFields[3] === publicKeyFields[1],
+    "Contract v1 allowed-signers policy does not bind the release key and namespace"
+  );
+
+  const vectors = parseJson(pack.raw["conformance/vectors.json"], "Contract v1 conformance vectors");
+  assert(vectors.schema_version === 1 && vectors.contract === "mfenx-replay-gated-execution-contract/v1", "Contract v1 conformance identity changed");
+  assert(Array.isArray(vectors.positive_conformance) && vectors.positive_conformance.length === 6, "Contract v1 positive-vector count changed");
+  assert(Array.isArray(vectors.negative_conformance) && vectors.negative_conformance.length === 10, "Contract v1 negative-vector count changed");
+
+  const sbom = parseJson(pack.raw["release/mfenx-local-v2.sbom.cdx.json"], "Contract v1 SBOM");
+  assert(sbom.bomFormat === "CycloneDX" && sbom.specVersion === "1.5", "Contract v1 SBOM format changed");
+  assert(sbom.metadata.component.name === "rarecomp-mfenx-local" && sbom.components.length === 46, "Contract v1 SBOM scope changed");
+  const provenance = parseJson(pack.raw["release/mfenx-local-v2.provenance.intoto.json"], "Contract v1 provenance");
+  assert(provenance._type === "https://in-toto.io/Statement/v1" && provenance.predicateType === "https://slsa.dev/provenance/v1", "Contract v1 provenance envelope changed");
+  assert(provenance.subject.length === 1 && provenance.subject[0].digest.sha256 === "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c", "Contract v1 provenance subject changed");
+  const reproduction = parseJson(pack.raw["release/local-reproduction-record.json"], "Contract v1 reproduction record");
+  assert(reproduction.schema === "mfenx.local-reproduction-record.v1" && reproduction.release_id === manifest.release_id && reproduction.status === "PASS", "Contract v1 reproduction identity changed");
+  assert(reproduction.scope === "single local release-acceptance reproduction", "Contract v1 reproduction scope changed");
+  assert(reproduction.subject.binary_sha256 === provenance.subject[0].digest.sha256, "Contract v1 reproduction/provenance subjects differ");
 }
 
 function setCheck(name, status, text) {
@@ -793,15 +941,16 @@ async function loadAndValidate() {
   state.loading = true;
   state.ready = false;
   clearComparison();
-  releaseState("pending", "hashing v2 and preserved v1 selected files");
+  releaseState("pending", "hashing releases and Contract v1 public files");
   byId("rerun-verification").disabled = true;
   byId("rerun-verification").textContent = "checking…";
-  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison"]) setCheck(name, "", "checking");
+  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison", "trust-pack"]) setCheck(name, "", "checking");
 
   try {
-    const [v2Release, v1Release] = await Promise.all([
+    const [v2Release, v1Release, trustPack] = await Promise.all([
       loadSelectedRelease("v2", RELEASES.v2),
-      loadSelectedRelease("v1", RELEASES.v1)
+      loadSelectedRelease("v1", RELEASES.v1),
+      loadContractPack()
     ]);
     setCheck("v2-manifest", "pass", RELEASES.v2.manifestEntries.toLocaleString() + " full-capture entries");
     setCheck("v2-pack", "pass", RELEASES.v2.files.length + " / " + RELEASES.v2.files.length + " selected files");
@@ -812,14 +961,16 @@ async function loadAndValidate() {
     setCheck("contract", "pass", "independently recomputed / pass");
     validateComparison(v1, v2);
     setCheck("comparison", "pass", "same workload / roots / observer");
+    await validateContractPack(trustPack);
+    setCheck("trust-pack", "pass", CONTRACT_V1.files.length + " signed-bound/public files");
 
     state.v2 = { release: v2Release, validated: v2 };
     state.v1 = { release: v1Release, validated: v1 };
     state.ready = true;
     displayV2(v2);
     displayComparison(v1, v2);
-    byId("verification-copy").textContent = "All published selected v2 and preserved v1 files, including both executables, match their full-capture SHA256SUMS entries. Cross-file semantics also passed. These unsigned checksums establish internal consistency, not publisher identity.";
-    releaseState("pass", "v2 + preserved v1 selected files verified");
+    byId("verification-copy").textContent = "The selected v2/v1 evidence and the Contract v1 public subset match their pinned SHA-256 inventories, and cross-file semantics passed. The page also checks the release-key fingerprint encoded by the public key. Use OpenSSH and an independently pinned fingerprint to authenticate the detached signature.";
+    releaseState("pass", "release evidence + Contract v1 files verified");
   } catch (error) {
     state.ready = false;
     state.v2 = null;
@@ -829,6 +980,7 @@ async function loadAndValidate() {
     byId("release-verdict").className = "fail";
     setCheck("contract", "fail", "rejected");
     setCheck("comparison", "fail", "not displayed");
+    setCheck("trust-pack", "fail", "rejected");
     byId("verification-copy").textContent = error.message;
     releaseState("fail", "selected release evidence rejected");
     throw error;

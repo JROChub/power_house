@@ -1,0 +1,98 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "mfenx-local",
+      "digest": {
+        "sha256": "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://mfenx.com/build-types/cargo-release/v1",
+      "externalParameters": {
+        "package": "rarecomp-mfenx-local",
+        "binary": "mfenx-local",
+        "command": [
+          "cargo",
+          "build",
+          "--jobs",
+          "1",
+          "--release",
+          "--locked",
+          "--offline",
+          "--package",
+          "rarecomp-mfenx-local",
+          "--bin",
+          "mfenx-local"
+        ],
+        "target": "x86_64-unknown-linux-gnu"
+      },
+      "internalParameters": {},
+      "resolvedDependencies": [
+        {
+          "uri": "file:evidence/mfenx-software-supercomputer-v2-20260821-a1/provenance/source-before.sha256",
+          "digest": {
+            "sha256": "e3c87a14c466e3a335f13f86738a72459bff1629c5b5d969733f0d7f544bb9ca"
+          },
+          "name": "MFENX frozen source inventory"
+        },
+        {
+          "uri": "file:Cargo.lock",
+          "digest": {
+            "sha256": "569fc0925ae5732076901dac379f416ed0cefe529e697f0766540d5ac9c0e73f"
+          }
+        },
+        {
+          "uri": "file:Cargo.toml",
+          "digest": {
+            "sha256": "ddb1aeb416d181bfcc369971960c346e74b371df5b9c0c09bdf4c0c1e7480cd1"
+          }
+        },
+        {
+          "uri": "file:rust-toolchain.toml",
+          "digest": {
+            "sha256": "b98cbf372bbc8c731db35cb9ce999d9b02259ae7255fb3c0ab10c4031c8a9879"
+          }
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://mfenx.com/builders/local-acceptance-harness/v1",
+        "version": {
+          "cargo": "1.93.1 (083ac5135 2025-12-15)",
+          "rustc": "1.93.1 (01f6ddf75 2026-02-11)"
+        }
+      },
+      "metadata": {
+        "invocationId": "mfenx-software-supercomputer-v2-20260821-a1"
+      },
+      "byproducts": [
+        {
+          "name": "sealed acceptance record",
+          "uri": "file:evidence/mfenx-software-supercomputer-v2-20260821-a1/acceptance.json",
+          "digest": {
+            "sha256": "4f101f8ec4b592b39b4024f198dd9f80cef79d2612556acf377191bee6270ebc"
+          }
+        },
+        {
+          "name": "sealed evidence inventory",
+          "uri": "file:evidence/mfenx-software-supercomputer-v2-20260821-a1/SHA256SUMS",
+          "digest": {
+            "sha256": "71033d917be233ea260417a1f7521c8098f27715475ad0ddf8318a5ecf2fd966"
+          }
+        },
+        {
+          "name": "CycloneDX 1.5 SBOM",
+          "uri": "file:release/mfenx-local-v2-20260821-a1/mfenx-local-v2.sbom.cdx.json",
+          "digest": {
+            "sha256": "60a2dd45493131ba40986545db2b01bfb881614212b54d4513947065eeba3eba"
+          }
+        }
+      ]
+    }
+  }
+}

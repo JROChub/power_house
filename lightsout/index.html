@@ -13,7 +13,7 @@
   <title>MFENX Local v2 / software-defined local supercomputer</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=7">
+  <link rel="stylesheet" href="lightsout.css?v=8">
 </head>
 <body>
   <div class="grid-field" aria-hidden="true"></div>
@@ -47,6 +47,7 @@
         <div class="hero-actions">
           <button class="primary" id="verify-release" type="button">verify selected files</button>
           <a class="secondary" href="release/bin/mfenx-local" download="mfenx-local">download accepted Linux executable</a>
+          <a class="text-link" href="#contract">Contract v1 ↓</a>
           <a class="text-link" href="#run">usage ↓</a>
         </div>
         <ul class="identity-strip" aria-label="Release properties">
@@ -338,6 +339,7 @@
           <li data-check="v1-pack"><i></i><span>every preserved v1 selected file, including executable</span><b>waiting</b></li>
           <li data-check="contract"><i></i><span>schemas, counters, lanes, memory, recovery, roots, and containment</span><b>waiting</b></li>
           <li data-check="comparison"><i></i><span>same-workload v1/v2 comparator checked before speedup display</span><b>waiting</b></li>
+          <li data-check="trust-pack"><i></i><span>Contract v1 public subset and signed-manifest identity</span><b>waiting</b></li>
         </ol>
         <div class="verify-action">
           <button id="rerun-verification" type="button">rerun browser checks</button>
@@ -351,15 +353,89 @@
             <a href="release/provenance/lane-overlap.json">v2 lane witness</a>
             <a href="release/artifacts/gemm.mfx.json">v2 ISA 6 image</a>
             <a href="release-v1/acceptance.json">preserved v1 acceptance</a>
+            <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json">signed release manifest</a>
             <a href="RELEASES.md">selection note</a>
           </div>
         </div>
       </div>
     </section>
 
+    <section class="contract-section" id="contract" aria-labelledby="contract-title">
+      <header class="section-head">
+        <p>09 / PUBLIC CONTRACT</p>
+        <h2 id="contract-title">Execution Contract v1</h2>
+        <span>the frozen rules, approved claims, accepted formats, threat boundary, and signed release identity</span>
+      </header>
+
+      <div class="contract-status" aria-label="Contract publication status">
+        <article><span>SUBJECT</span><b>FROZEN</b><small>one source tree, executable, evidence inventory, and output root</small></article>
+        <article><span>CONTRACT</span><b>VERSION 1</b><small>arithmetic, scheduling, storage, recovery, replay, and rejection rules</small></article>
+        <article><span>MANIFEST</span><b>SIGNED</b><small>detached OpenSSH Ed25519 signature in the <code>mfenx-release</code> namespace</small></article>
+        <article><span>CLAIMS</span><b>QUALIFIED</b><small>unsupported claims and later validation gates remain explicit</small></article>
+      </div>
+
+      <div class="contract-layout">
+        <div class="contract-links">
+          <article>
+            <span>NORMATIVE MATERIAL</span>
+            <h3>Rules and boundaries</h3>
+            <a href="contract-v1/EXECUTION_CONTRACT_V1.md">Execution Contract v1</a>
+            <a href="contract-v1/CLAIM_LEDGER.md">claim ledger</a>
+            <a href="contract-v1/CANONICAL_FORMATS_V1.md">canonical formats</a>
+            <a href="contract-v1/THREAT_MODEL.md">threat model</a>
+            <a href="contract-v1/VALIDATION_ROADMAP.md">validation roadmap</a>
+          </article>
+          <article>
+            <span>CONFORMANCE</span>
+            <h3>Accept and reject vectors</h3>
+            <a href="contract-v1/conformance/vectors.json">machine-readable vectors</a>
+            <a href="contract-v1/conformance/README.md">vector instructions</a>
+            <a href="contract-v1/conformance/SHA256SUMS">vector checksums</a>
+            <a href="contract-v1/SHA256SUMS">public-subset checksums</a>
+            <a href="contract-v1/README.md">package verification notes</a>
+          </article>
+          <article>
+            <span>RELEASE AUTHENTICITY</span>
+            <h3>Signed identity</h3>
+            <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json">canonical release manifest</a>
+            <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json.sig">detached signature</a>
+            <a href="contract-v1/release/release-signing-key.pub">release public key</a>
+            <a href="contract-v1/release/allowed_signers">allowed-signers policy</a>
+            <a href="contract-v1/release/SIGNING-AUDIT.md">signing decision and limitations</a>
+          </article>
+          <article>
+            <span>SUPPLY CHAIN / REPRODUCTION</span>
+            <h3>Bound records</h3>
+            <a href="contract-v1/release/mfenx-local-v2.sbom.cdx.json">CycloneDX dependency SBOM</a>
+            <a href="contract-v1/release/mfenx-local-v2.provenance.intoto.json">post-hoc in-toto provenance</a>
+            <a href="contract-v1/release/local-reproduction-record.json">signed local reproduction record</a>
+            <a href="contract-v1/release/README.md">release-bundle scope</a>
+            <a href="contract-v1/release/SIGNING.md">command-line signature verification</a>
+          </article>
+        </div>
+
+        <aside class="trust-boundary">
+          <span>RELEASE-KEY FINGERPRINT</span>
+          <code>SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc</code>
+          <p>
+            Pin this fingerprint through an independently trusted channel before relying
+            on publisher identity. The current key is a locally held project-continuity
+            key; it is not hardware-backed or transparency-logged.
+          </p>
+          <p>
+            The SBOM covers the locked Rust normal/build dependency closure. Provenance
+            was assembled after the build and claims no SLSA level. The reproduction
+            record covers one accepted run on one local machine, not an unrelated-machine
+            reproduction or a general performance distribution.
+          </p>
+          <b>Contract v1 does not complete the later roadmap gates.</b>
+        </aside>
+      </div>
+    </section>
+
     <section class="run-section" id="run" aria-labelledby="run-title">
       <header class="section-head">
-        <p>09 / LOCAL USAGE</p>
+        <p>10 / LOCAL USAGE</p>
         <h2 id="run-title">Run the accepted executable</h2>
         <span>Linux x86_64 · local CPU and storage · no service, account, VPS, cloud worker, GPU, or network required</span>
       </header>
@@ -400,10 +476,10 @@
 
   <footer>
     <a href="/">MFENX.COM</a>
-    <span>SELECTED ACCEPTED RELEASE FILES</span>
+    <span>ACCEPTED EVIDENCE + SIGNED CONTRACT V1</span>
     <time id="capture-footer">release evidence pending</time>
   </footer>
 
-  <script src="lightsout.js?v=7" defer></script>
+  <script src="lightsout.js?v=8" defer></script>
 </body>
 </html>
