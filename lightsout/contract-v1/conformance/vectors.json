@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "contract": "mfenx-replay-gated-execution-contract/v1",
+  "standalone_tensor": {
+    "description": "2x2 canonical little-endian i32 tensor containing 1, 2, 3, 4",
+    "tensor_type": {
+      "element": "i32",
+      "shape": [
+        2,
+        2
+      ]
+    },
+    "payload_hex": "01000000020000000300000004000000",
+    "payload_byte_length": 16,
+    "chunk_domain_utf8_nul_hex": "72617265636f6d702d6d66656e782f74656e736f722d6368756e6b2f763100",
+    "chunk_blake3": "fdeae937cf9d2fc823b0207cdf8ea4f24679bf24985da2cdba52af75059d4db9",
+    "manifest": {
+      "schema_version": 1,
+      "ty": {
+        "element": "i32",
+        "shape": [
+          2,
+          2
+        ]
+      },
+      "encoding": "canonical_le_row_major",
+      "byte_length": 16,
+      "chunk_bytes": 16,
+      "chunks": [
+        {
+          "offset": 0,
+          "length": 16,
+          "digest": "fdeae937cf9d2fc823b0207cdf8ea4f24679bf24985da2cdba52af75059d4db9"
+        }
+      ],
+      "content_root": "e4044cd7014ba71d3a0fd7750572a5057b044a399807b801ee47f11a4630e366"
+    },
+    "canonical_manifest_utf8": "{\"schema_version\":1,\"ty\":{\"element\":\"i32\",\"shape\":[2,2]},\"encoding\":\"canonical_le_row_major\",\"byte_length\":16,\"chunk_bytes\":16,\"chunks\":[{\"offset\":0,\"length\":16,\"digest\":\"fdeae937cf9d2fc823b0207cdf8ea4f24679bf24985da2cdba52af75059d4db9\"}],\"content_root\":\"e4044cd7014ba71d3a0fd7750572a5057b044a399807b801ee47f11a4630e366\"}",
+    "canonical_manifest_byte_length": 321,
+    "canonical_manifest_sha256": "267e1c7842699b97652746cc9ffdbdf997c351a986ca2f79313292164c2feb88",
+    "canonical_manifest_blake3": "92ce7b3fb77eda15bd02cbfb66bf0f61cc4c6442dac994408bdb4bbf53f73541",
+    "manifest_root_domain_utf8_nul_hex": "72617265636f6d702d6d66656e782f6368756e6b65642d74656e736f722d6d616e69666573742f763100",
+    "manifest_root_blake3": "e4044cd7014ba71d3a0fd7750572a5057b044a399807b801ee47f11a4630e366"
+  },
+  "frozen_release": {
+    "evidence_root": "evidence/mfenx-software-supercomputer-v2-20260821-a1",
+    "bundle_manifest_sha256": "71033d917be233ea260417a1f7521c8098f27715475ad0ddf8318a5ecf2fd966",
+    "binary_sha256": "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c",
+    "source_tree_sha256": "e3c87a14c466e3a335f13f86738a72459bff1629c5b5d969733f0d7f544bb9ca",
+    "program": {
+      "path": "artifacts/gemm.mfx.json#program",
+      "compact_typed_json_blake3": "02091bb701479b52dcd0543fd27a3441896f45f09fade52baffeec742f409cde"
+    },
+    "image": {
+      "path": "artifacts/gemm.mfx.json",
+      "file_sha256": "7f929d844081a35c02ec7d58bacde73895ac535c86846905022d281e8bc10587",
+      "compact_typed_json_byte_length": 3100,
+      "compact_typed_json_blake3": "4d04ef1086530929226ee9c75356ce6a7230ce55e7220dbb1f380fa1077c07a1"
+    },
+    "resource_certificate": {
+      "path": "artifacts/gemm.mfx.json#resource_certificate",
+      "compact_typed_json_blake3": "0c054cd037201279132c838fbae473608a62563da246225bea234b864fbb7218"
+    },
+    "result": {
+      "path": "artifacts/uninterrupted.result.json",
+      "file_sha256": "a210d08613838ea40e13988d4aaa565cc505422b658d9da95170af42c66e4ad4",
+      "compact_typed_json_byte_length": 1862,
+      "compact_typed_json_blake3": "cd87142ca641bb46881ae87d1e219a17f3b6250fa1593b94371209122c7a1de2"
+    },
+    "left_manifest": {
+      "path": "store/manifests/9c/9c2464f3983f92bdbc8e017833cadbe22c10e20cd4e446533676ab7122b0822d.json",
+      "file_sha256": "db199bf1f9978e9800884af3cbfe0df86c08dc7529fa294895e66ef89c80c4d2",
+      "content_root": "9c2464f3983f92bdbc8e017833cadbe22c10e20cd4e446533676ab7122b0822d"
+    },
+    "checkpoint_plan": {
+      "path": "checkpoints/uninterrupted/plan.json",
+      "file_sha256": "ce015d9e93a6c7f41882e9db14669ca3262411705ea5336cdc9c8fcaf7bd03a2"
+    },
+    "checkpoint_piece_zero": {
+      "path": "checkpoints/uninterrupted/piece-00000000.bin",
+      "file_sha256": "b315fdb7b7738f4094f18a3ad57fd5b89679bfe6702d7082b335627e0432f117",
+      "piece_domain_utf8_nul_hex": "72617265636f6d702d6d66656e782f6c6f63616c2d6f75747075742d70696563652f763200",
+      "piece_index": 0,
+      "lane_index": 0,
+      "row_start": 0,
+      "row_count": 2,
+      "byte_length": 8388608,
+      "content_blake3": "73a2903f80e76d71ea4eb189561f42ddf6b7e44a8f038e2e2139f2276ea91337"
+    },
+    "checkpoint_receipt_zero": {
+      "path": "checkpoints/uninterrupted/receipt-00000000.json",
+      "file_sha256": "adc8f7a8ffa06ff7d9a55af82fa164551d245227985d93da777895553e794020"
+    },
+    "expected_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c"
+  },
+  "positive_conformance": [
+    {
+      "id": "P-001",
+      "operation": "derive_standalone_chunk_digest",
+      "expected": "fdeae937cf9d2fc823b0207cdf8ea4f24679bf24985da2cdba52af75059d4db9"
+    },
+    {
+      "id": "P-002",
+      "operation": "derive_standalone_manifest_root",
+      "expected": "e4044cd7014ba71d3a0fd7750572a5057b044a399807b801ee47f11a4630e366"
+    },
+    {
+      "id": "P-003",
+      "operation": "require_exact_standalone_manifest_bytes",
+      "expected": "accept"
+    },
+    {
+      "id": "P-004",
+      "operation": "typed_digest_frozen_image",
+      "expected": "4d04ef1086530929226ee9c75356ce6a7230ce55e7220dbb1f380fa1077c07a1"
+    },
+    {
+      "id": "P-005",
+      "operation": "typed_digest_frozen_result",
+      "expected": "cd87142ca641bb46881ae87d1e219a17f3b6250fa1593b94371209122c7a1de2"
+    },
+    {
+      "id": "P-006",
+      "operation": "verify_frozen_result_against_frozen_store_and_image",
+      "expected": "accept_with_output_root_4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c"
+    }
+  ],
+  "negative_conformance": [
+    {
+      "id": "N-001",
+      "base": "standalone_tensor.canonical_manifest_utf8",
+      "mutation": "append_lf",
+      "expected": "reject_noncanonical_manifest_bytes"
+    },
+    {
+      "id": "N-002",
+      "base": "standalone_tensor.canonical_manifest_utf8",
+      "mutation": "swap_schema_version_and_ty_member_order",
+      "expected": "reject_noncanonical_manifest_bytes"
+    },
+    {
+      "id": "N-003",
+      "base": "standalone_tensor.payload_hex",
+      "mutation": "xor_byte_0_with_01",
+      "expected": "reject_chunk_digest_mismatch"
+    },
+    {
+      "id": "N-004",
+      "base": "standalone_tensor.manifest",
+      "mutation": "set_chunks_0_offset_to_1_and_reencode",
+      "expected": "reject_noncanonical_chunk_geometry"
+    },
+    {
+      "id": "N-005",
+      "base": "frozen_release.image",
+      "mutation": "set_schema_version_to_2",
+      "expected": "reject_unsupported_image"
+    },
+    {
+      "id": "N-006",
+      "base": "frozen_release.image",
+      "mutation": "set_schedule_lanes_to_1_without_rederiving_certificate",
+      "expected": "reject_image_or_certificate_mismatch"
+    },
+    {
+      "id": "N-007",
+      "base": "frozen_release.result",
+      "mutation": "increment_metrics_primary_input_io_cache_hits",
+      "expected": "reject_resource_accounting_mismatch"
+    },
+    {
+      "id": "N-008",
+      "base": "frozen_release.checkpoint_receipt_zero",
+      "mutation": "set_lane_index_to_1",
+      "expected": "reject_checkpoint_assignment_mismatch"
+    },
+    {
+      "id": "N-009",
+      "base": "frozen_release.checkpoint_piece_zero",
+      "mutation": "xor_byte_0_with_01",
+      "expected": "reject_piece_digest_mismatch"
+    },
+    {
+      "id": "N-010",
+      "base": "frozen_release.image",
+      "mutation": "add_unknown_top_level_member",
+      "expected": "reject_strict_typed_schema"
+    }
+  ]
+}

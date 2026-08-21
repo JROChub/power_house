@@ -1,0 +1,62 @@
+{
+  "schema": "mfenx.local-reproduction-record.v1",
+  "record_finalized_at_utc": "2026-08-21T22:04:00Z",
+  "release_id": "mfenx-local-v2-20260821-a1",
+  "status": "PASS",
+  "scope": "single local release-acceptance reproduction",
+  "subject": {
+    "binary_path": "evidence/mfenx-software-supercomputer-v2-20260821-a1/bin/mfenx-local",
+    "binary_sha256": "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c",
+    "binary_size_bytes": 2021624,
+    "source_inventory_path": "evidence/mfenx-software-supercomputer-v2-20260821-a1/provenance/source-before.sha256",
+    "source_tree_sha256": "e3c87a14c466e3a335f13f86738a72459bff1629c5b5d969733f0d7f544bb9ca"
+  },
+  "evidence": {
+    "bundle_path": "evidence/mfenx-software-supercomputer-v2-20260821-a1",
+    "manifest_path": "evidence/mfenx-software-supercomputer-v2-20260821-a1/SHA256SUMS",
+    "manifest_sha256": "71033d917be233ea260417a1f7521c8098f27715475ad0ddf8318a5ecf2fd966",
+    "manifest_entries": 1307,
+    "acceptance_path": "evidence/mfenx-software-supercomputer-v2-20260821-a1/acceptance.json",
+    "acceptance_sha256": "4f101f8ec4b592b39b4024f198dd9f80cef79d2612556acf377191bee6270ebc",
+    "captured_at_utc": "2026-08-21T18:12:24.277820+00:00",
+    "evidence_permissions": "read-only at metadata creation"
+  },
+  "build": {
+    "command": "cargo build --jobs 1 --release --locked --offline --package rarecomp-mfenx-local --bin mfenx-local",
+    "result": "PASS",
+    "cargo": "cargo 1.93.1 (083ac5135 2025-12-15)",
+    "rustc": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+    "target": "x86_64-unknown-linux-gnu",
+    "cargo_lock_sha256": "569fc0925ae5732076901dac379f416ed0cefe529e697f0766540d5ac9c0e73f"
+  },
+  "execution": {
+    "machine_class": "software_defined_local_supercomputer_v2",
+    "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+    "dataflow": "contiguous_right_panels_v2",
+    "verification_method": "parallel_independently_addressed_exact_replay_v2",
+    "workload": "i32 GEMM [3,56] x [56,1048576]",
+    "lanes": 2,
+    "managed_memory_limit_mib": 64,
+    "external_address_space_limit_bytes": 268435456,
+    "external_wall_ns": 5608764486,
+    "useful_integer_operations": 352321536,
+    "output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
+    "exact_replay": "PASS",
+    "kill_and_resume": "PASS",
+    "corruption_rejections": {
+      "input_chunk": "PASS",
+      "checkpoint_piece": "PASS",
+      "checkpoint_receipt": "PASS",
+      "image": "PASS",
+      "result": "PASS"
+    },
+    "product_network_syscalls": 0,
+    "product_gpu_device_paths": 0
+  },
+  "qualifications": [
+    "This records one local accepted run, not an unrelated-machine reproduction.",
+    "Performance is specific to this workload, machine, build, and run.",
+    "Internal phase timings are self-reported; the external wall clock, process telemetry, and containment observations come from the harness.",
+    "The signature establishes continuity only after the verifier independently pins the release-key fingerprint."
+  ]
+}
