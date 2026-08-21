@@ -1,8 +1,26 @@
 {
   "verified": true,
-  "method": "independently_addressed_exact_replay",
+  "method": "parallel_independently_addressed_exact_replay_v2",
   "pieces_checked": 2,
   "bytes_checked": 12582912,
   "verification_integer_operations": 352321536,
-  "verification_ns": 157929957778
+  "admission_input_io": {
+    "requested_bytes": 0,
+    "authenticated_chunk_bytes": 234881696,
+    "chunk_loads": 225,
+    "cache_hits": 0
+  },
+  "input_io": {
+    "requested_bytes": 469762720,
+    "authenticated_chunk_bytes": 469763392,
+    "chunk_loads": 450,
+    "cache_hits": 1
+  },
+  "output_io": {
+    "requested_bytes": 12582912,
+    "authenticated_chunk_bytes": 12582912,
+    "chunk_loads": 12,
+    "cache_hits": 0
+  },
+  "verification_ns": 1591293110
 }

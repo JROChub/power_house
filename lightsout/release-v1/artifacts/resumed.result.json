@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "image_digest": "322d045dfd2dac75e323fda16c8dbfe0552f86974281a9d3222a5efb9238a59b",
+  "machine_class": "software_defined_local_supercomputer_v1",
+  "backend": "rarecomp_mfenx_local_cpu_lane_engine",
+  "resource_certificate_digest": "5ff679a1ce136c816b10a17f624dc8b9090dbbfbe579e6c0be1930201c9a1250",
+  "outputs": [
+    {
+      "index": 0,
+      "tensor": {
+        "manifest_digest": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
+        "ty": {
+          "element": "i32",
+          "shape": [
+            3,
+            1048576
+          ]
+        },
+        "byte_length": 12582912
+      }
+    }
+  ],
+  "metrics": {
+    "end_to_end_ns": 236093512361,
+    "execution_ns": 79189942404,
+    "finalization_ns": 1277118058,
+    "useful_integer_operations": 352321536,
+    "executed_primary_integer_operations": 117440512,
+    "physical_integer_operations": 469762048,
+    "total_pieces": 2,
+    "reused_pieces": 1,
+    "executed_pieces": 1,
+    "reused_assignments": [
+      {
+        "piece_index": 0,
+        "lane_index": 0
+      }
+    ],
+    "executed_assignments": [
+      {
+        "piece_index": 1,
+        "lane_index": 1
+      }
+    ],
+    "lanes": 2,
+    "certified_managed_peak_bytes": 53035904,
+    "retained_storage_bytes": 276959904,
+    "gpu_devices_required": 0,
+    "network_transports_required": 0,
+    "runtime_telemetry_attestation": "self_reported",
+    "recovery_partition_attestation": "self_reported",
+    "directory_metadata_sync": "available",
+    "process_crash_recovery": "supported"
+  },
+  "verification": {
+    "verified": true,
+    "method": "independently_addressed_exact_replay",
+    "pieces_checked": 2,
+    "bytes_checked": 12582912,
+    "verification_integer_operations": 352321536,
+    "verification_ns": 155278532326
+  }
+}
