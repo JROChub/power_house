@@ -1,0 +1,447 @@
+name: Step 3 three-host reproduction evidence
+
+# The checked-in identity pins one signed candidate tuple whose mfenx.com asset
+# URLs were hash- and signature-verified before activation.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: step3-reproduction-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Validate frozen candidate identity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      archive_url: ${{ steps.identity.outputs.archive_url }}
+      archive_name: ${{ steps.identity.outputs.archive_name }}
+      manifest_url: ${{ steps.identity.outputs.manifest_url }}
+      manifest_name: ${{ steps.identity.outputs.manifest_name }}
+      signature_url: ${{ steps.identity.outputs.signature_url }}
+      signature_name: ${{ steps.identity.outputs.signature_name }}
+      allowed_signers_url: ${{ steps.identity.outputs.allowed_signers_url }}
+      allowed_signers_name: ${{ steps.identity.outputs.allowed_signers_name }}
+    steps:
+      - name: Check out the exact policy revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Fail unless one complete signed identity tuple is enabled
+        id: identity
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-candidate-identity.py check \
+            --identity packaging/step3-candidate-identity.json \
+            --require-enabled
+          python3 packaging/step3-candidate-identity.py export-github \
+            --identity packaging/step3-candidate-identity.json >> "${GITHUB_OUTPUT}"
+
+  reproduce:
+    name: Reproduce ${{ matrix.slot }}
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        slot: [host-1, host-2, host-3]
+    steps:
+      - name: Check out the exact policy revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install archive verification prerequisites
+        id: prerequisites
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl jq openssh-client python3 zstd
+          gh --version
+
+      - name: Download the exact checked-in candidate assets
+        id: signed_inputs
+        continue-on-error: true
+        env:
+          ARCHIVE_URL: ${{ needs.preflight.outputs.archive_url }}
+          ARCHIVE_NAME: ${{ needs.preflight.outputs.archive_name }}
+          MANIFEST_URL: ${{ needs.preflight.outputs.manifest_url }}
+          MANIFEST_NAME: ${{ needs.preflight.outputs.manifest_name }}
+          SIGNATURE_URL: ${{ needs.preflight.outputs.signature_url }}
+          SIGNATURE_NAME: ${{ needs.preflight.outputs.signature_name }}
+          ALLOWED_SIGNERS_URL: ${{ needs.preflight.outputs.allowed_signers_url }}
+          ALLOWED_SIGNERS_NAME: ${{ needs.preflight.outputs.allowed_signers_name }}
+        run: |
+          set -euxo pipefail
+          mkdir -p "${RUNNER_TEMP}/signed-inputs"
+          curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+            "${ARCHIVE_URL}" -o "${RUNNER_TEMP}/signed-inputs/${ARCHIVE_NAME}"
+          curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+            "${MANIFEST_URL}" -o "${RUNNER_TEMP}/signed-inputs/${MANIFEST_NAME}"
+          curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+            "${SIGNATURE_URL}" -o "${RUNNER_TEMP}/signed-inputs/${SIGNATURE_NAME}"
+          curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+            "${ALLOWED_SIGNERS_URL}" -o "${RUNNER_TEMP}/signed-inputs/${ALLOWED_SIGNERS_NAME}"
+
+      - name: Resolve this exact attempt's GitHub runner identity
+        id: runner_identity
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_NAME: Reproduce ${{ matrix.slot }}
+        run: |
+          set -euxo pipefail
+          endpoint="repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs?per_page=100"
+          for _ in 1 2 3 4 5; do
+            gh api -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2026-03-10' "${endpoint}" \
+              > "${RUNNER_TEMP}/workflow-jobs.json"
+            if jq -e --arg name "${JOB_NAME}" \
+              '[.jobs[] | select(.name == $name)] | length == 1' \
+              "${RUNNER_TEMP}/workflow-jobs.json" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          printf 'current matrix job did not appear exactly once in the attempt-scoped API\n' >&2
+          exit 1
+
+      - name: Reproduce the signed candidate workload on this hosted VM
+        id: reproduce
+        continue-on-error: true
+        env:
+          ARCHIVE_NAME: ${{ needs.preflight.outputs.archive_name }}
+          MANIFEST_NAME: ${{ needs.preflight.outputs.manifest_name }}
+          SIGNATURE_NAME: ${{ needs.preflight.outputs.signature_name }}
+          ALLOWED_SIGNERS_NAME: ${{ needs.preflight.outputs.allowed_signers_name }}
+        run: |
+          set -euxo pipefail
+          mkdir -p "${RUNNER_TEMP}/host-evidence"
+          bash packaging/step3-hosted-release-run.sh \
+            --identity packaging/step3-candidate-identity.json \
+            --archive "${RUNNER_TEMP}/signed-inputs/${ARCHIVE_NAME}" \
+            --manifest "${RUNNER_TEMP}/signed-inputs/${MANIFEST_NAME}" \
+            --signature "${RUNNER_TEMP}/signed-inputs/${SIGNATURE_NAME}" \
+            --allowed-signers "${RUNNER_TEMP}/signed-inputs/${ALLOWED_SIGNERS_NAME}" \
+            --output "${RUNNER_TEMP}/host-evidence/reproduction-capture"
+
+      - name: Record the host result without making a cross-host claim
+        id: host_record
+        if: always()
+        continue-on-error: true
+        env:
+          SLOT: ${{ matrix.slot }}
+          JOB_NAME: Reproduce ${{ matrix.slot }}
+        run: |
+          set -uxo pipefail
+          mkdir -p "${RUNNER_TEMP}/host-evidence"
+          test -f "${RUNNER_TEMP}/workflow-jobs.json" || printf '{"jobs":[]}\n' \
+            > "${RUNNER_TEMP}/workflow-jobs.json"
+          python3 packaging/step3-reproduction-evidence.py host-record \
+            --identity packaging/step3-candidate-identity.json \
+            --capture "${RUNNER_TEMP}/host-evidence/reproduction-capture" \
+            --output "${RUNNER_TEMP}/host-evidence/host-record.json" \
+            --slot "${SLOT}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${GITHUB_SHA}" \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}" \
+            --job-name "${JOB_NAME}" \
+            --job-api-json "${RUNNER_TEMP}/workflow-jobs.json"
+
+      - name: Checksum-close and archive every host outcome
+        id: archive
+        if: always()
+        continue-on-error: true
+        env:
+          SLOT: ${{ matrix.slot }}
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-reproduction-evidence.py seal \
+            --root "${RUNNER_TEMP}/host-evidence"
+          cd "${RUNNER_TEMP}"
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 \
+            --numeric-owner -czf "${SLOT}.tar.gz" host-evidence
+          sha256sum "${SLOT}.tar.gz" > "${SLOT}.tar.gz.sha256"
+
+      - name: Attest the host archive with GitHub OIDC provenance
+        id: attest
+        if: always() && steps.archive.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/${{ matrix.slot }}.tar.gz
+
+      - name: Retain the detached host attestation bundle
+        if: always()
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          SLOT: ${{ matrix.slot }}
+        run: |
+          set -euxo pipefail
+          if test -n "${BUNDLE_PATH}" && test -f "${BUNDLE_PATH}"; then
+            cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/${SLOT}.sigstore.json"
+          else
+            printf '{"error":"host attestation was not produced"}\n' \
+              > "${RUNNER_TEMP}/${SLOT}.sigstore.json"
+          fi
+
+      - name: Upload the unfiltered host evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: step3-${{ matrix.slot }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            ${{ runner.temp }}/${{ matrix.slot }}.tar.gz
+            ${{ runner.temp }}/${{ matrix.slot }}.tar.gz.sha256
+            ${{ runner.temp }}/${{ matrix.slot }}.sigstore.json
+
+      - name: Enforce this host gate after evidence upload
+        if: always()
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euxo pipefail
+          test "${{ steps.prerequisites.outcome }}" = success
+          test "${{ steps.signed_inputs.outcome }}" = success
+          test "${{ steps.runner_identity.outcome }}" = success
+          test "${{ steps.reproduce.outcome }}" = success
+          test "${{ steps.host_record.outcome }}" = success
+          test "${{ steps.archive.outcome }}" = success
+          test "${{ steps.attest.outcome }}" = success
+          test -n "${BUNDLE_PATH}"
+          python3 packaging/step3-reproduction-evidence.py check-host \
+            --record "${RUNNER_TEMP}/host-evidence/host-record.json"
+
+  aggregate:
+    name: Attest and finalize the three-host aggregate
+    needs: [preflight, reproduce]
+    if: always() && needs.preflight.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the exact policy revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Download every available host artifact
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: step3-host-*
+          path: ${{ runner.temp }}/downloads
+
+      - name: Verify every retained host attestation
+        id: verify_host_attestations
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          mkdir -p "${RUNNER_TEMP}/verifications"
+          final_status=0
+          for slot in host-1 host-2 host-3; do
+            artifact="${RUNNER_TEMP}/downloads/step3-${slot}/${slot}.tar.gz"
+            bundle="${RUNNER_TEMP}/downloads/step3-${slot}/${slot}.sigstore.json"
+            output="${RUNNER_TEMP}/verifications/${slot}.json"
+            if ! gh attestation verify "${artifact}" \
+              --bundle "${bundle}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/step3-three-host-reproduction.yml" \
+              --source-digest "${GITHUB_SHA}" \
+              --deny-self-hosted-runners \
+              --format json > "${output}"; then
+              printf '{"error":"host attestation verification failed","slot":"%s"}\n' \
+                "${slot}" > "${output}"
+              final_status=1
+            fi
+          done
+          exit "${final_status}"
+
+      - name: Build the checksum-closed provisional aggregate
+        id: aggregate
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          mkdir -p "${RUNNER_TEMP}/downloads" "${RUNNER_TEMP}/verifications"
+          python3 packaging/step3-reproduction-evidence.py aggregate \
+            --identity packaging/step3-candidate-identity.json \
+            --inputs "${RUNNER_TEMP}/downloads" \
+            --verifications "${RUNNER_TEMP}/verifications" \
+            --output "${RUNNER_TEMP}/aggregate-evidence" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${GITHUB_SHA}" \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "${RUNNER_TEMP}/aggregate-evidence/attestations"
+          find "${RUNNER_TEMP}/downloads" -type f -name '*.sigstore.json' \
+            -exec cp -- '{}' "${RUNNER_TEMP}/aggregate-evidence/attestations/" \;
+          find "${RUNNER_TEMP}/verifications" -type f -name '*.json' \
+            -exec cp -- '{}' "${RUNNER_TEMP}/aggregate-evidence/attestations/" \;
+          python3 packaging/step3-reproduction-evidence.py seal \
+            --root "${RUNNER_TEMP}/aggregate-evidence"
+          cd "${RUNNER_TEMP}"
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 \
+            --numeric-owner -czf step3-three-host-aggregate.tar.gz aggregate-evidence
+          sha256sum step3-three-host-aggregate.tar.gz \
+            > step3-three-host-aggregate.tar.gz.sha256
+
+      - name: Enforce the unsigned host gate
+        id: host_gate
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          test "${{ needs.reproduce.result }}" = success
+          test "${{ steps.download.outcome }}" = success
+          test "${{ steps.verify_host_attestations.outcome }}" = success
+          test "${{ steps.aggregate.outcome }}" = success
+          python3 packaging/step3-reproduction-evidence.py check-host-gate \
+            --summary "${RUNNER_TEMP}/aggregate-evidence/summary.json"
+
+      - name: Attest the complete or failed aggregate
+        id: attest_aggregate
+        if: always() && steps.aggregate.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/step3-three-host-aggregate.tar.gz
+
+      - name: Retain the aggregate attestation bundle
+        if: always()
+        env:
+          BUNDLE_PATH: ${{ steps.attest_aggregate.outputs.bundle-path }}
+        run: |
+          set -euxo pipefail
+          if test -n "${BUNDLE_PATH}" && test -f "${BUNDLE_PATH}"; then
+            cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/step3-three-host-aggregate.sigstore.json"
+          else
+            printf '{"error":"aggregate attestation was not produced"}\n' \
+              > "${RUNNER_TEMP}/step3-three-host-aggregate.sigstore.json"
+          fi
+
+      - name: Verify the aggregate attestation before creating a claim
+        id: verify_aggregate_attestation
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          gh attestation verify "${RUNNER_TEMP}/step3-three-host-aggregate.tar.gz" \
+            --bundle "${RUNNER_TEMP}/step3-three-host-aggregate.sigstore.json" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/step3-three-host-reproduction.yml" \
+            --source-digest "${GITHUB_SHA}" \
+            --deny-self-hosted-runners \
+            --format json > "${RUNNER_TEMP}/step3-three-host-aggregate.verification.json"
+
+      - name: Create the claim only from the verified aggregate
+        id: finalize_claim
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-reproduction-evidence.py finalize-claim \
+            --identity packaging/step3-candidate-identity.json \
+            --summary "${RUNNER_TEMP}/aggregate-evidence/summary.json" \
+            --archive "${RUNNER_TEMP}/step3-three-host-aggregate.tar.gz" \
+            --archive-digest "${RUNNER_TEMP}/step3-three-host-aggregate.tar.gz.sha256" \
+            --bundle "${RUNNER_TEMP}/step3-three-host-aggregate.sigstore.json" \
+            --verification "${RUNNER_TEMP}/step3-three-host-aggregate.verification.json" \
+            --output "${RUNNER_TEMP}/step3-three-host-claim.json" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${GITHUB_SHA}" \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}"
+
+      - name: Attest the final claim record
+        id: attest_claim
+        if: always() && steps.finalize_claim.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/step3-three-host-claim.json
+
+      - name: Retain and verify the final claim attestation
+        id: verify_claim_attestation
+        if: always() && steps.attest_claim.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest_claim.outputs.bundle-path }}
+        run: |
+          set -euxo pipefail
+          test -n "${BUNDLE_PATH}"
+          cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/step3-three-host-claim.sigstore.json"
+          gh attestation verify "${RUNNER_TEMP}/step3-three-host-claim.json" \
+            --bundle "${RUNNER_TEMP}/step3-three-host-claim.sigstore.json" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/step3-three-host-reproduction.yml" \
+            --source-digest "${GITHUB_SHA}" \
+            --deny-self-hosted-runners \
+            --format json > "${RUNNER_TEMP}/step3-three-host-claim.verification.json"
+
+      - name: Retain a failure marker when no claim attestation exists
+        if: always() && steps.verify_claim_attestation.outcome != 'success'
+        run: |
+          set -euxo pipefail
+          test -f "${RUNNER_TEMP}/step3-three-host-claim.sigstore.json" || \
+            printf '{"error":"claim attestation was not produced or verified"}\n' \
+              > "${RUNNER_TEMP}/step3-three-host-claim.sigstore.json"
+          test -f "${RUNNER_TEMP}/step3-three-host-claim.verification.json" || \
+            printf '{"error":"claim attestation verification was not produced"}\n' \
+              > "${RUNNER_TEMP}/step3-three-host-claim.verification.json"
+
+      - name: Upload aggregate successes and failures without filtering
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: step3-three-host-aggregate
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            ${{ runner.temp }}/step3-three-host-aggregate.tar.gz
+            ${{ runner.temp }}/step3-three-host-aggregate.tar.gz.sha256
+            ${{ runner.temp }}/step3-three-host-aggregate.sigstore.json
+            ${{ runner.temp }}/step3-three-host-aggregate.verification.json
+            ${{ runner.temp }}/step3-three-host-claim.json
+            ${{ runner.temp }}/step3-three-host-claim.sigstore.json
+            ${{ runner.temp }}/step3-three-host-claim.verification.json
+
+      - name: Permit the claim only after both attestation gates
+        if: always()
+        run: |
+          set -euxo pipefail
+          test "${{ steps.host_gate.outcome }}" = success
+          test "${{ steps.attest_aggregate.outcome }}" = success
+          test "${{ steps.verify_aggregate_attestation.outcome }}" = success
+          test "${{ steps.finalize_claim.outcome }}" = success
+          test "${{ steps.attest_claim.outcome }}" = success
+          test "${{ steps.verify_claim_attestation.outcome }}" = success
+          python3 packaging/step3-reproduction-evidence.py check-claim \
+            --claim "${RUNNER_TEMP}/step3-three-host-claim.json"

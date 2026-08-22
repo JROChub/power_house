@@ -1,0 +1,90 @@
+name: Independent security review request
+description: Volunteer or propose an arms-length review of the replay-gated execution candidate.
+title: "[Independent review] Reviewer proposal"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This public issue requests an independent human code/security review. Opening or replying to it does not mean a review has started or completed. Automated CI is supporting material only.
+
+        Read `docs/STEP3_HUMAN_REVIEW_BRIEF.md` and validate deliverables against `packaging/review/human-review-report.schema.json`. Do not post private keys, unpublished exploit details, personal addresses, or other secrets. Use the repository security-reporting channel for an active vulnerability that should not initially be public.
+
+  - type: input
+    id: reviewer_identity
+    attributes:
+      label: Public reviewer identity
+      description: Name or organization that will appear on the signed report.
+      placeholder: Individual or organization name
+    validations:
+      required: true
+
+  - type: textarea
+    id: qualifications
+    attributes:
+      label: Relevant qualifications
+      description: Summarize experience with Rust, canonical encodings, authenticated storage, crash consistency, or independent verification.
+    validations:
+      required: true
+
+  - type: textarea
+    id: conflicts
+    attributes:
+      label: Conflict disclosure
+      description: Disclose financial, employment, authorship, close personal, or other relationships with the project and maintainers. State "none known" when applicable.
+    validations:
+      required: true
+
+  - type: input
+    id: immutable_candidate
+    attributes:
+      label: Candidate commit and identity digest
+      description: Exact 40-character default-branch commit plus SHA-256 of the enabled Step 3 candidate identity file.
+      placeholder: 40-character commit; identity SHA-256
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_scope
+    attributes:
+      label: Proposed scope and methods
+      description: Identify code paths, threat-model boundaries, tools, malformed inputs, and reproduction work you will cover.
+    validations:
+      required: true
+
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: Exclusions and constraints
+      description: State anything in the required brief you cannot review, plus schedule or access constraints.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: compensation
+    attributes:
+      label: Compensation arrangement
+      description: A fee may be negotiated, but it cannot depend on a passing result.
+      options:
+        - Unpaid independent review
+        - Fixed fee independent of disposition
+        - Arrangement not yet determined
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: independence
+    attributes:
+      label: Independence and publication commitments
+      options:
+        - label: I am not an author or maintainer of the implementation I propose to review.
+          required: true
+        - label: My compensation, if any, will not depend on a passing disposition or absence of findings.
+          required: true
+        - label: I will bind the report to the exact candidate commit and evidence digests.
+          required: true
+        - label: I will publish successes, failures, inconclusive tests, limitations, and open findings without filtering.
+          required: true
+        - label: I will provide schema-valid JSON, a prose report, a reviewer-controlled signature, and verification instructions.
+          required: true
+        - label: I understand that this issue alone does not authorize private access, spending, or a claim that review is complete.
+          required: true

@@ -1,0 +1,31 @@
+[package]
+name = "mfenx-step3-review-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+tempfile = "3"
+mfenx-contract-v1-verifier = { path = "../../../crates/mfenx-contract-v1-verifier" }
+rarecomp-mfenx-ir = { path = "../../../crates/rarecomp-mfenx-ir" }
+rarecomp-mfenx-tensor-store = { path = "../../../crates/rarecomp-mfenx-tensor-store" }
+
+[[bin]]
+name = "contract-control"
+path = "fuzz_targets/contract_control.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tensor-manifest"
+path = "fuzz_targets/tensor_manifest.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

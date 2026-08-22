@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mfenx.example/schemas/independent-human-review-v1.json",
+  "title": "MFENX independent human code/security review report",
+  "type": "object",
+  "required": [
+    "schema",
+    "reviewed_commit",
+    "reviewer",
+    "independence",
+    "scope",
+    "evidence_digests",
+    "method",
+    "findings",
+    "disposition",
+    "limitations",
+    "completed_at",
+    "signature"
+  ],
+  "properties": {
+    "schema": {"const": "mfenx.independent-human-review.v1"},
+    "reviewed_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "reviewer": {
+      "type": "object",
+      "required": ["name", "organization", "contact", "qualifications"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "organization": {"type": "string", "minLength": 1},
+        "contact": {"type": "string", "minLength": 1},
+        "qualifications": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "independence": {
+      "type": "object",
+      "required": ["not_author_or_maintainer", "no_outcome_contingent_compensation", "conflicts_disclosed", "disclosures"],
+      "properties": {
+        "not_author_or_maintainer": {"const": true},
+        "no_outcome_contingent_compensation": {"const": true},
+        "conflicts_disclosed": {"const": true},
+        "disclosures": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidence_digests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["artifact", "sha256"],
+        "properties": {
+          "artifact": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "method": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "evidence", "exploit_preconditions", "affected_claims", "status", "disposition"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^HR-[0-9]{3,}$"},
+          "severity": {"enum": ["critical", "high", "medium", "low", "informational"]},
+          "title": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "exploit_preconditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "affected_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "status": {"enum": ["open", "accepted", "fixed", "disputed"]},
+          "disposition": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "disposition": {"enum": ["pass", "pass_with_findings", "fail"]},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "signature": {
+      "type": "object",
+      "required": ["format", "artifact", "signer_identity", "verification_instructions"],
+      "properties": {
+        "format": {"type": "string", "minLength": 1},
+        "artifact": {"type": "string", "minLength": 1},
+        "signer_identity": {"type": "string", "minLength": 1},
+        "verification_instructions": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

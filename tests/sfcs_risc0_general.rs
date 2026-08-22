@@ -92,8 +92,10 @@ fn reference_output() -> [u32; 8] {
     let mut digest = 0x6a09_e667_u32;
     let mut minimum = u32::MAX;
     let mut signed_negative = 0_u32;
-    for chunk in bytes.chunks_exact(4) {
-        let word = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+    let (words, remainder) = bytes.as_chunks::<4>();
+    debug_assert!(remainder.is_empty());
+    for &word_bytes in words {
+        let word = u32::from_le_bytes(word_bytes);
         minimum = minimum.min(word);
         signed_negative += u32::from((word as i32) < 0);
         digest = digest.rotate_left(5) ^ word.wrapping_mul(0x27d4_eb2d);
