@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Static consistency checks for the deployable Step 3 pipeline package."""
+
+import json
+import pathlib
+import re
+import unittest
+
+import yaml
+
+
+REPOSITORY = pathlib.Path(__file__).resolve().parents[2]
+WORKFLOWS = (
+    ".github/workflows/step3-three-host-reproduction.yml",
+    ".github/workflows/step3-security-review.yml",
+)
+
+
+class Step3FoundationAssetTests(unittest.TestCase):
+    def test_workflows_parse_and_pin_every_external_action(self):
+        for relative in WORKFLOWS:
+            with self.subTest(workflow=relative):
+                path = REPOSITORY / relative
+                document = yaml.safe_load(path.read_text(encoding="utf-8"))
+                self.assertIsInstance(document, dict)
+                uses = re.findall(r"^\s*uses:\s*([^\s#]+)", path.read_text(), re.MULTILINE)
+                self.assertTrue(uses)
+                self.assertTrue(
+                    all(re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", action) for action in uses), uses
+                )
+
+    def test_candidate_identity_is_complete_placeholder_and_disabled(self):
+        identity = json.loads(
+            (REPOSITORY / "packaging/step3-candidate-identity.json").read_text()
+        )
+        self.assertFalse(identity["enabled"])
+        serialized = json.dumps(identity)
+        placeholders = re.findall(r"__FINAL_CANDIDATE_[A-Z0-9_]+__", serialized)
+        self.assertGreaterEqual(len(placeholders), 15)
+        self.assertNotRegex(serialized, r"\b[0-9a-f]{64}\b")
+
+    def test_reproduction_workflow_uses_attempt_scoped_api_and_attested_claim_gate(self):
+        workflow = (REPOSITORY / WORKFLOWS[0]).read_text()
+        policy = (REPOSITORY / "packaging/step3-reproduction-evidence.py").read_text()
+        self.assertIn("slot: [host-1, host-2, host-3]", workflow)
+        self.assertIn("/attempts/${GITHUB_RUN_ATTEMPT}/jobs", workflow)
+        self.assertIn("--deny-self-hosted-runners", workflow)
+        self.assertIn("finalize-claim", workflow)
+        self.assertIn("verify_claim_attestation", workflow)
+        self.assertIn("unsigned aggregate must not contain a public claim", policy)
+
+    def test_security_workflow_analyzes_extracted_candidate_source(self):
+        workflow = (REPOSITORY / WORKFLOWS[1]).read_text()
+        self.assertIn("source-root: candidate-source", workflow)
+        self.assertIn("step3-verify-candidate.sh", workflow)
+        self.assertIn("source-inventory", workflow)
+        self.assertNotIn("push:\n", workflow)
+        self.assertIn("independent_code_or_security_review_complete", (
+            REPOSITORY / "packaging/step3-security-review-evidence.py"
+        ).read_text())
+
+    def test_issue_form_and_review_schema_are_valid(self):
+        issue = yaml.safe_load(
+            (REPOSITORY / ".github/ISSUE_TEMPLATE/independent-security-review.yml").read_text()
+        )
+        self.assertEqual(issue["name"], "Independent security review request")
+        ids = [item.get("id") for item in issue["body"] if isinstance(item, dict)]
+        self.assertIn("conflicts", ids)
+        self.assertIn("independence", ids)
+
+        schema = json.loads(
+            (REPOSITORY / "packaging/review/human-review-report.schema.json").read_text()
+        )
+        try:
+            import jsonschema
+        except ImportError as error:
+            self.skipTest(str(error))
+        jsonschema.Draft202012Validator.check_schema(schema)
+        self.assertIn("evidence_digests", schema["required"])
+
+
+if __name__ == "__main__":
+    unittest.main()

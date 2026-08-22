@@ -1,0 +1,463 @@
+name: Step 3 automated security evidence
+
+# Automation in this workflow is never represented as independent human review.
+# The disabled placeholder identity prevents analysis of an unfrozen candidate.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: step3-security-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  automated-evidence:
+    name: Automated evidence (not independent human review)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      security-events: write
+    env:
+      CARGO_TERM_COLOR: never
+      RUSTUP_TOOLCHAIN: 1.93.1
+    steps:
+      - name: Check out the exact policy revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Fail unless one complete signed identity tuple is enabled
+        id: identity
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-candidate-identity.py check \
+            --identity packaging/step3-candidate-identity.json \
+            --require-enabled
+          python3 packaging/step3-candidate-identity.py export-github \
+            --identity packaging/step3-candidate-identity.json >> "${GITHUB_OUTPUT}"
+
+      - name: Initialize the unfiltered candidate-bound evidence directory
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-security-review-evidence.py init \
+            --identity packaging/step3-candidate-identity.json \
+            --output "${RUNNER_TEMP}/security-evidence" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${GITHUB_SHA}" \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}"
+          cp packaging/step3-candidate-identity.json \
+            "${RUNNER_TEMP}/security-evidence/candidate-identity.json"
+
+      - name: Install pinned analysis prerequisites
+        id: prerequisites
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          mkdir -p "${RUNNER_TEMP}/security-evidence/prerequisites"
+          {
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends \
+              build-essential ca-certificates curl jq libseccomp-dev \
+              openssh-client pkg-config zstd
+            rustup toolchain install 1.93.1 --profile minimal
+            rustup component add --toolchain 1.93.1 rustfmt clippy
+            rustup toolchain install nightly-2026-07-10 --profile minimal
+            cargo install --locked \
+              cargo-audit@0.22.1 cargo-deny@0.20.2 cargo-fuzz@0.13.2
+            gh --version
+          } > "${RUNNER_TEMP}/security-evidence/prerequisites/stdout.log" \
+            2> "${RUNNER_TEMP}/security-evidence/prerequisites/stderr.log"
+
+      - name: Record prerequisite success or failure
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool prerequisites \
+            --status "${{ steps.prerequisites.outcome }}" \
+            --artifacts "${RUNNER_TEMP}/security-evidence/prerequisites" \
+            --note 'Pinned operating-system, Rust, Cargo analyzer, and GitHub CLI prerequisites'
+
+      - name: Download the exact checked-in candidate assets
+        id: signed_inputs
+        continue-on-error: true
+        env:
+          ARCHIVE_URL: ${{ steps.identity.outputs.archive_url }}
+          ARCHIVE_NAME: ${{ steps.identity.outputs.archive_name }}
+          MANIFEST_URL: ${{ steps.identity.outputs.manifest_url }}
+          MANIFEST_NAME: ${{ steps.identity.outputs.manifest_name }}
+          SIGNATURE_URL: ${{ steps.identity.outputs.signature_url }}
+          SIGNATURE_NAME: ${{ steps.identity.outputs.signature_name }}
+          ALLOWED_SIGNERS_URL: ${{ steps.identity.outputs.allowed_signers_url }}
+          ALLOWED_SIGNERS_NAME: ${{ steps.identity.outputs.allowed_signers_name }}
+        run: |
+          set -euxo pipefail
+          mkdir -p "${RUNNER_TEMP}/signed-inputs" \
+            "${RUNNER_TEMP}/security-evidence/candidate-input-verification"
+          {
+            curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+              "${ARCHIVE_URL}" -o "${RUNNER_TEMP}/signed-inputs/${ARCHIVE_NAME}"
+            curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+              "${MANIFEST_URL}" -o "${RUNNER_TEMP}/signed-inputs/${MANIFEST_NAME}"
+            curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+              "${SIGNATURE_URL}" -o "${RUNNER_TEMP}/signed-inputs/${SIGNATURE_NAME}"
+            curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 \
+              "${ALLOWED_SIGNERS_URL}" -o "${RUNNER_TEMP}/signed-inputs/${ALLOWED_SIGNERS_NAME}"
+          } > "${RUNNER_TEMP}/security-evidence/candidate-input-verification/download.stdout.log" \
+            2> "${RUNNER_TEMP}/security-evidence/candidate-input-verification/download.stderr.log"
+
+      - name: Verify, extract, and stage the signed candidate source
+        id: verify_candidate
+        continue-on-error: true
+        env:
+          ARCHIVE_NAME: ${{ steps.identity.outputs.archive_name }}
+          ARCHIVE_ROOT: ${{ steps.identity.outputs.archive_root }}
+          SOURCE_SUBDIR: ${{ steps.identity.outputs.archive_source_subdir }}
+          MANIFEST_NAME: ${{ steps.identity.outputs.manifest_name }}
+          SIGNATURE_NAME: ${{ steps.identity.outputs.signature_name }}
+          ALLOWED_SIGNERS_NAME: ${{ steps.identity.outputs.allowed_signers_name }}
+        run: |
+          set -euxo pipefail
+          bash packaging/step3-verify-candidate.sh \
+            --identity packaging/step3-candidate-identity.json \
+            --archive "${RUNNER_TEMP}/signed-inputs/${ARCHIVE_NAME}" \
+            --manifest "${RUNNER_TEMP}/signed-inputs/${MANIFEST_NAME}" \
+            --signature "${RUNNER_TEMP}/signed-inputs/${SIGNATURE_NAME}" \
+            --allowed-signers "${RUNNER_TEMP}/signed-inputs/${ALLOWED_SIGNERS_NAME}" \
+            --extract-dir "${RUNNER_TEMP}/candidate-extract" \
+            > "${RUNNER_TEMP}/security-evidence/candidate-input-verification/verify.stdout.log" \
+            2> "${RUNNER_TEMP}/security-evidence/candidate-input-verification/verify.stderr.log"
+          source_root="${RUNNER_TEMP}/candidate-extract/${ARCHIVE_ROOT}/${SOURCE_SUBDIR}"
+          test -f "${source_root}/Cargo.toml"
+          test -f "${source_root}/Cargo.lock"
+          cp -a -- "${source_root}" "${GITHUB_WORKSPACE}/candidate-source"
+          find "${GITHUB_WORKSPACE}/candidate-source" ! -type f ! -type d -print -quit \
+            | grep -q . && exit 1 || true
+
+      - name: Record candidate-input verification without hiding failures
+        if: always()
+        continue-on-error: true
+        run: |
+          status=failure
+          if test "${{ steps.signed_inputs.outcome }}" = success \
+            && test "${{ steps.verify_candidate.outcome }}" = success; then
+            status=success
+          fi
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool candidate-input-verification \
+            --status "${status}" \
+            --artifacts "${RUNNER_TEMP}/security-evidence/candidate-input-verification" \
+            --note 'Pinned hashes, namespace-restricted SSH signature, archive binding, inventory, and source extraction'
+
+      - name: Inventory the exact signed source before injecting review harnesses
+        id: source_inventory
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py source-inventory \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --source "${GITHUB_WORKSPACE}/candidate-source"
+
+      - name: Install the commit-bound fuzz harness into the staged source
+        id: fuzz_harness_setup
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          mkdir -p "${GITHUB_WORKSPACE}/candidate-source/packaging" \
+            "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup"
+          cp -a packaging/review "${GITHUB_WORKSPACE}/candidate-source/packaging/review"
+          find packaging/review -type f -print0 | sort -z | xargs -0 sha256sum \
+            > "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup/inventory.sha256"
+
+      - name: Record fuzz-harness setup
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool fuzz-harness-setup \
+            --status "${{ steps.fuzz_harness_setup.outcome }}" \
+            --artifacts "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup" \
+            --note 'Review harness copied only after the signed candidate-source inventory was frozen'
+
+      - name: Retain exact toolchain and analyzer versions
+        id: toolchain_context
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool toolchain-context -- \
+            bash packaging/review/report-tool-versions.sh
+
+      - name: Initialize CodeQL for candidate Rust source
+        id: codeql_init
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          languages: rust
+          build-mode: manual
+          queries: security-extended
+          source-root: candidate-source
+
+      - name: Record CodeQL initialization outcome
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool codeql-init \
+            --status "${{ steps.codeql_init.outcome }}" \
+            --note 'GitHub CodeQL Rust initialization for the extracted signed candidate source'
+
+      - name: Build the candidate workspace under CodeQL tracing
+        id: codeql_build
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool codeql-build \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
+            --timeout-seconds 3600 -- \
+            cargo build --workspace --all-targets --locked
+
+      - name: Analyze and retain CodeQL SARIF
+        id: codeql_analyze
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          category: /language:rust
+          output: ${{ runner.temp }}/security-evidence/codeql-results
+          upload: always
+
+      - name: Record CodeQL analysis outcome and SARIF bytes
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool codeql-analyze \
+            --status "${{ steps.codeql_analyze.outcome }}" \
+            --artifacts "${RUNNER_TEMP}/security-evidence/codeql-results" \
+            --note 'CodeQL action outcome; findings are counted from the retained SARIF'
+
+      - name: Cargo advisory audit
+        id: cargo_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool cargo-audit \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            cargo audit --json
+
+      - name: Cargo license, source, ban, and advisory policy
+        id: cargo_deny
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool cargo-deny \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            cargo deny --config "${GITHUB_WORKSPACE}/packaging/review/deny.toml" check
+
+      - name: Rust formatting static check
+        id: rustfmt
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool rustfmt \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            cargo fmt --all -- --check
+
+      - name: Strict Clippy static analysis
+        id: clippy
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool clippy \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
+            --timeout-seconds 3600 -- \
+            cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Full candidate workspace tests
+        id: unit_tests
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool unit-tests \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
+            --timeout-seconds 3600 -- \
+            cargo test --workspace --all-targets --locked
+
+      - name: Prepare retained fuzz artifact directories
+        if: always()
+        run: |
+          mkdir -p "${RUNNER_TEMP}/security-evidence/fuzz-artifacts/contract-control" \
+            "${RUNNER_TEMP}/security-evidence/fuzz-artifacts/tensor-manifest"
+
+      - name: Bounded contract-control fuzz campaign
+        id: fuzz_contract
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool fuzz-contract-control \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz" \
+            --timeout-seconds 180 -- \
+            cargo +nightly-2026-07-10 fuzz run --fuzz-dir . contract-control -- \
+              -max_total_time=120 -timeout=5 -max_len=1048576 -rss_limit_mb=2048 \
+              -artifact_prefix="${RUNNER_TEMP}/security-evidence/fuzz-artifacts/contract-control/"
+
+      - name: Bounded tensor-manifest fuzz campaign
+        id: fuzz_manifest
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py run \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool fuzz-tensor-manifest \
+            --cwd "${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz" \
+            --timeout-seconds 180 -- \
+            cargo +nightly-2026-07-10 fuzz run --fuzz-dir . tensor-manifest -- \
+              -max_total_time=120 -timeout=5 -max_len=4194304 -rss_limit_mb=2048 \
+              -artifact_prefix="${RUNNER_TEMP}/security-evidence/fuzz-artifacts/tensor-manifest/"
+
+      - name: Retain generated fuzz corpus and crash artifacts
+        id: collect_fuzz
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          destination="${RUNNER_TEMP}/security-evidence/fuzz-corpus"
+          mkdir -p "${destination}"
+          source="${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz/corpus"
+          if test -d "${source}"; then
+            cp -a -- "${source}/." "${destination}/"
+          fi
+          find "${RUNNER_TEMP}/security-evidence/fuzz-artifacts" "${destination}" \
+            -type f -printf '%p\n' | LC_ALL=C sort \
+            > "${RUNNER_TEMP}/security-evidence/fuzz-collection.txt"
+
+      - name: Record fuzz artifact collection
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py record-external \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --tool fuzz-artifact-collection \
+            --status "${{ steps.collect_fuzz.outcome }}" \
+            --artifacts "${RUNNER_TEMP}/security-evidence/fuzz-artifacts" \
+            --note 'Unfiltered generated corpus inventory and all libFuzzer crash, timeout, and OOM artifacts retained'
+
+      - name: Bounded candidate and workflow static policy
+        id: static_policy
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 packaging/step3-security-review-evidence.py static-policy \
+            --root "${RUNNER_TEMP}/security-evidence" \
+            --repository "${GITHUB_WORKSPACE}/candidate-source" \
+            --policy-repository "${GITHUB_WORKSPACE}"
+
+      - name: Finalize automated evidence while leaving human review open
+        id: finalize
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          python3 packaging/step3-security-review-evidence.py finalize \
+            --root "${RUNNER_TEMP}/security-evidence"
+          python3 packaging/step3-security-review-evidence.py seal \
+            --root "${RUNNER_TEMP}/security-evidence"
+          cd "${RUNNER_TEMP}"
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 \
+            --numeric-owner -czf step3-security-evidence.tar.gz security-evidence
+          sha256sum step3-security-evidence.tar.gz \
+            > step3-security-evidence.tar.gz.sha256
+
+      - name: Attest the unfiltered automated evidence archive
+        id: attest
+        if: always() && steps.finalize.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/step3-security-evidence.tar.gz
+
+      - name: Retain and verify the security-evidence attestation
+        id: verify_attestation
+        if: always() && steps.attest.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euxo pipefail
+          test -n "${BUNDLE_PATH}"
+          cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/step3-security-evidence.sigstore.json"
+          gh attestation verify "${RUNNER_TEMP}/step3-security-evidence.tar.gz" \
+            --bundle "${RUNNER_TEMP}/step3-security-evidence.sigstore.json" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/step3-security-review.yml" \
+            --source-digest "${GITHUB_SHA}" \
+            --deny-self-hosted-runners \
+            --format json > "${RUNNER_TEMP}/step3-security-evidence.verification.json"
+
+      - name: Retain an attestation failure marker
+        if: always() && steps.verify_attestation.outcome != 'success'
+        run: |
+          set -euxo pipefail
+          test -f "${RUNNER_TEMP}/step3-security-evidence.sigstore.json" || \
+            printf '{"error":"security evidence attestation was not produced"}\n' \
+              > "${RUNNER_TEMP}/step3-security-evidence.sigstore.json"
+          test -f "${RUNNER_TEMP}/step3-security-evidence.verification.json" || \
+            printf '{"error":"security evidence attestation was not verified"}\n' \
+              > "${RUNNER_TEMP}/step3-security-evidence.verification.json"
+
+      - name: Upload successes and failures without filtering
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: step3-security-evidence
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            ${{ runner.temp }}/step3-security-evidence.tar.gz
+            ${{ runner.temp }}/step3-security-evidence.tar.gz.sha256
+            ${{ runner.temp }}/step3-security-evidence.sigstore.json
+            ${{ runner.temp }}/step3-security-evidence.verification.json
+
+      - name: Enforce the automated gate without claiming human review
+        if: always()
+        run: |
+          set -euxo pipefail
+          test "${{ steps.prerequisites.outcome }}" = success
+          test "${{ steps.signed_inputs.outcome }}" = success
+          test "${{ steps.verify_candidate.outcome }}" = success
+          test "${{ steps.source_inventory.outcome }}" = success
+          test "${{ steps.fuzz_harness_setup.outcome }}" = success
+          test "${{ steps.collect_fuzz.outcome }}" = success
+          test "${{ steps.finalize.outcome }}" = success
+          test "${{ steps.attest.outcome }}" = success
+          test "${{ steps.verify_attestation.outcome }}" = success
+          python3 packaging/step3-security-review-evidence.py check-automated \
+            --summary "${RUNNER_TEMP}/security-evidence/summary.json"

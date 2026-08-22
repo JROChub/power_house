@@ -1,0 +1,37 @@
+{
+  "schema": "mfenx.step3-candidate-identity.v1",
+  "enabled": false,
+  "release_id": "__FINAL_CANDIDATE_RELEASE_ID__",
+  "archive": {
+    "url": "__FINAL_CANDIDATE_ARCHIVE_URL__",
+    "name": "__FINAL_CANDIDATE_ARCHIVE_NAME__",
+    "root": "__FINAL_CANDIDATE_ARCHIVE_ROOT__",
+    "sha256": "__FINAL_CANDIDATE_ARCHIVE_SHA256__",
+    "source_subdir": "__FINAL_CANDIDATE_SOURCE_SUBDIR__",
+    "manifest_path": "__FINAL_CANDIDATE_ARCHIVE_MANIFEST_PATH__",
+    "manifest_role": "revisioned_distribution_archive"
+  },
+  "manifest": {
+    "url": "__FINAL_CANDIDATE_MANIFEST_URL__",
+    "name": "__FINAL_CANDIDATE_MANIFEST_NAME__",
+    "sha256": "__FINAL_CANDIDATE_MANIFEST_SHA256__"
+  },
+  "signature": {
+    "url": "__FINAL_CANDIDATE_SIGNATURE_URL__",
+    "name": "__FINAL_CANDIDATE_SIGNATURE_NAME__",
+    "sha256": "__FINAL_CANDIDATE_SIGNATURE_SHA256__",
+    "principal": "mfenx-release",
+    "namespace": "mfenx-validation-candidate"
+  },
+  "allowed_signers": {
+    "url": "__FINAL_CANDIDATE_ALLOWED_SIGNERS_URL__",
+    "name": "allowed_signers",
+    "sha256": "__FINAL_CANDIDATE_ALLOWED_SIGNERS_SHA256__",
+    "key_fingerprint": "__FINAL_CANDIDATE_KEY_FINGERPRINT__"
+  },
+  "workload": {
+    "executor_sha256": "__FINAL_CANDIDATE_EXECUTOR_SHA256__",
+    "verifier_sha256": "__FINAL_CANDIDATE_VERIFIER_SHA256__",
+    "canonical_output_root": "__FINAL_CANDIDATE_CANONICAL_OUTPUT_ROOT__"
+  }
+}
