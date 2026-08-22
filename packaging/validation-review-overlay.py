@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and verify the analysis-only workspace used by the Step 3 review.
+"""Build and verify the analysis-only workspace used by the validation review.
 
 The validation candidate intentionally remains immutable.  Its local-source
 workspace manifest names crates that are not included in the release archive,
@@ -91,7 +91,7 @@ def load_identity(path: pathlib.Path) -> dict[str, object]:
     except (OSError, json.JSONDecodeError) as error:
         raise OverlayError(f"cannot read identity {path}: {error}") from error
     if identity.get("schema") != IDENTITY_SCHEMA or identity.get("enabled") is not True:
-        raise OverlayError("identity must be the enabled Step 3 candidate identity")
+        raise OverlayError("identity must be the enabled validation candidate identity")
     archive = identity.get("archive")
     if not isinstance(archive, dict) or not re.fullmatch(
         r"[0-9a-f]{64}", str(archive.get("sha256", ""))
@@ -285,7 +285,7 @@ def main() -> int:
     try:
         return args.function(args)
     except (OverlayError, OSError, KeyError, json.JSONDecodeError) as error:
-        print(f"step3 review overlay: {error}", file=sys.stderr)
+        print(f"validation review overlay: {error}", file=sys.stderr)
         return 1
 
 

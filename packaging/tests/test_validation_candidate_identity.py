@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed tests for the Step 3 candidate identity and signature verifier."""
+"""Fail-closed tests for the validation candidate identity and signature verifier."""
 
 import argparse
 import contextlib
@@ -14,19 +14,19 @@ import tempfile
 import unittest
 
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "step3-candidate-identity.py"
-SPEC = importlib.util.spec_from_file_location("step3_candidate_identity", SCRIPT)
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "validation-candidate-identity.py"
+SPEC = importlib.util.spec_from_file_location("validation_candidate_identity", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
-TEMPLATE = SCRIPT.with_name("step3-candidate-identity.json")
+TEMPLATE = SCRIPT.with_name("validation-candidate-identity.json")
 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-class Step3CandidateIdentityTests(unittest.TestCase):
+class ValidationCandidateIdentityTests(unittest.TestCase):
     def test_checked_in_identity_is_complete_enabled_and_frozen(self):
         document = MODULE.load_identity(TEMPLATE, require_enabled=True)
         self.assertTrue(document["enabled"])
@@ -274,7 +274,7 @@ class Step3CandidateIdentityTests(unittest.TestCase):
             subprocess.run(
                 [
                     "bash",
-                    str(SCRIPT.with_name("step3-verify-candidate.sh")),
+                    str(SCRIPT.with_name("validation-verify-candidate.sh")),
                     "--identity",
                     str(identity_path),
                     "--archive",

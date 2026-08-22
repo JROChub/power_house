@@ -1,5 +1,5 @@
 [package]
-name = "mfenx-step3-review-fuzz"
+name = "mfenx-validation-review-fuzz"
 version = "0.0.0"
 edition = "2024"
 publish = false

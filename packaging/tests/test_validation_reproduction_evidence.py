@@ -10,8 +10,8 @@ import tempfile
 import unittest
 
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "step3-reproduction-evidence.py"
-SPEC = importlib.util.spec_from_file_location("step3_reproduction_evidence", SCRIPT)
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "validation-reproduction-evidence.py"
+SPEC = importlib.util.spec_from_file_location("validation_reproduction_evidence", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
@@ -26,7 +26,7 @@ def checksum_close(root):
     (root / "SHA256SUMS").write_text("".join(MODULE.manifest_lines(root)), encoding="ascii")
 
 
-class Step3ReproductionEvidenceTests(unittest.TestCase):
+class ValidationReproductionEvidenceTests(unittest.TestCase):
     def make_identity(self, root, enabled=True):
         identity = root / "identity.json"
         document = {
@@ -89,7 +89,7 @@ class Step3ReproductionEvidenceTests(unittest.TestCase):
         return capture
 
     def make_archive(self, root, slot, runner_id, job_id, fingerprint, expected):
-        artifact = root / f"step3-{slot}"
+        artifact = root / f"validation-{slot}"
         artifact.mkdir(parents=True)
         tree = root / f"tree-{slot}" / "host-evidence"
         tree.mkdir(parents=True)

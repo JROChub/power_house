@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static consistency checks for the deployable Step 3 pipeline package."""
+"""Static consistency checks for the deployable Validation pipeline package."""
 
 import json
 import pathlib
@@ -11,12 +11,12 @@ import yaml
 
 REPOSITORY = pathlib.Path(__file__).resolve().parents[2]
 WORKFLOWS = (
-    ".github/workflows/step3-three-host-reproduction.yml",
-    ".github/workflows/step3-security-review.yml",
+    ".github/workflows/validation-three-host-reproduction.yml",
+    ".github/workflows/validation-security-review.yml",
 )
 
 
-class Step3FoundationAssetTests(unittest.TestCase):
+class ValidationFoundationAssetTests(unittest.TestCase):
     def test_workflows_parse_and_pin_every_external_action(self):
         for relative in WORKFLOWS:
             with self.subTest(workflow=relative):
@@ -31,7 +31,7 @@ class Step3FoundationAssetTests(unittest.TestCase):
 
     def test_candidate_identity_is_complete_enabled_and_pinned(self):
         identity = json.loads(
-            (REPOSITORY / "packaging/step3-candidate-identity.json").read_text()
+            (REPOSITORY / "packaging/validation-candidate-identity.json").read_text()
         )
         self.assertTrue(identity["enabled"])
         serialized = json.dumps(identity)
@@ -58,7 +58,7 @@ class Step3FoundationAssetTests(unittest.TestCase):
 
     def test_reproduction_workflow_uses_attempt_scoped_api_and_attested_claim_gate(self):
         workflow = (REPOSITORY / WORKFLOWS[0]).read_text()
-        policy = (REPOSITORY / "packaging/step3-reproduction-evidence.py").read_text()
+        policy = (REPOSITORY / "packaging/validation-reproduction-evidence.py").read_text()
         self.assertIn("slot: [host-1, host-2, host-3]", workflow)
         self.assertIn("/attempts/${GITHUB_RUN_ATTEMPT}/jobs", workflow)
         self.assertIn("--deny-self-hosted-runners", workflow)
@@ -72,18 +72,18 @@ class Step3FoundationAssetTests(unittest.TestCase):
         self.assertIn("build-mode: none", workflow)
         self.assertNotIn("build-mode: manual", workflow)
         self.assertNotIn("cargo build --workspace", workflow)
-        self.assertIn("step3-verify-candidate.sh", workflow)
+        self.assertIn("validation-verify-candidate.sh", workflow)
         self.assertIn("source-inventory", workflow)
-        self.assertIn("step3-review-overlay.py create", workflow)
+        self.assertIn("validation-review-overlay.py create", workflow)
         self.assertIn("candidate-verifier-source", workflow)
         self.assertNotIn("push:\n", workflow)
         self.assertIn(
             "release_source_mutated",
-            (REPOSITORY / "packaging/step3-review-overlay.py").read_text(),
+            (REPOSITORY / "packaging/validation-review-overlay.py").read_text(),
         )
         self.assertIn(
             "independent_code_or_security_review_complete",
-            (REPOSITORY / "packaging/step3-security-review-evidence.py").read_text(),
+            (REPOSITORY / "packaging/validation-security-review-evidence.py").read_text(),
         )
 
     def test_issue_form_and_review_schema_are_valid(self):

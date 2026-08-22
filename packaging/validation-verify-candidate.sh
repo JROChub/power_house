@@ -27,7 +27,7 @@ done
 [[ -n $allowed_signers && -n $extract_dir ]] || usage
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-identity_tool="$script_dir/step3-candidate-identity.py"
+identity_tool="$script_dir/validation-candidate-identity.py"
 for tool in bash python3 tar zstd find grep awk; do
   command -v "$tool" >/dev/null 2>&1 || {
     printf 'missing required candidate-verification tool: %s\n' "$tool" >&2

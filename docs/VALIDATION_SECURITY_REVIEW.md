@@ -1,4 +1,4 @@
-# Step 3 security-review package
+# Validation security-review package
 
 ## Status and boundary
 
@@ -64,7 +64,7 @@ for a prospective reviewer to disclose identity, qualifications, conflicts,
 scope, exclusions, and compensation terms. Creating the template does not
 engage a reviewer. Opening an issue does not mean work began or completed.
 
-The deliverable must follow `docs/STEP3_HUMAN_REVIEW_BRIEF.md` and validate
+The deliverable must follow `docs/VALIDATION_HUMAN_REVIEW_BRIEF.md` and validate
 against `packaging/review/human-review-report.schema.json`. Active unpublished
 vulnerabilities should use the repository's private security-reporting channel,
 not a public issue.
@@ -72,12 +72,12 @@ not a public issue.
 ## Deployment set
 
 ```text
-.github/workflows/step3-security-review.yml
+.github/workflows/validation-security-review.yml
 .github/ISSUE_TEMPLATE/independent-security-review.yml
-packaging/step3-candidate-identity.json
-packaging/step3-candidate-identity.py
-packaging/step3-verify-candidate.sh
-packaging/step3-security-review-evidence.py
+packaging/validation-candidate-identity.json
+packaging/validation-candidate-identity.py
+packaging/validation-verify-candidate.sh
+packaging/validation-security-review-evidence.py
 packaging/review/deny.toml
 packaging/review/fuzz/Cargo.toml
 packaging/review/fuzz/Cargo.lock
@@ -85,8 +85,8 @@ packaging/review/fuzz/fuzz_targets/contract_control.rs
 packaging/review/fuzz/fuzz_targets/tensor_manifest.rs
 packaging/review/report-tool-versions.sh
 packaging/review/human-review-report.schema.json
-docs/STEP3_SECURITY_REVIEW.md
-docs/STEP3_HUMAN_REVIEW_BRIEF.md
+docs/VALIDATION_SECURITY_REVIEW.md
+docs/VALIDATION_HUMAN_REVIEW_BRIEF.md
 ```
 
 GitHub Code Security/CodeQL and artifact attestations must be available. The

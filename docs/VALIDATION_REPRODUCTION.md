@@ -1,9 +1,9 @@
-# Step 3 hosted-VM reproduction protocol
+# Validation hosted-VM reproduction protocol
 
 ## Status
 
 The workflow and evidence policy are prepared for manual dispatch.
-`packaging/step3-candidate-identity.json` is enabled and pins the complete
+`packaging/validation-candidate-identity.json` is enabled and pins the complete
 signed validation-candidate tuple. The four exact assets are deployed at their
 checked-in `mfenx.com` URLs; fresh downloads matched every pinned SHA-256 and
 passed the namespace-restricted SSH signature check.
@@ -97,13 +97,13 @@ are reuse checks, not trusted hardware identities.
 The default branch must contain these files before manual dispatch:
 
 ```text
-.github/workflows/step3-three-host-reproduction.yml
-packaging/step3-candidate-identity.json
-packaging/step3-candidate-identity.py
-packaging/step3-verify-candidate.sh
-packaging/step3-hosted-release-run.sh
-packaging/step3-reproduction-evidence.py
-docs/STEP3_REPRODUCTIONS.md
+.github/workflows/validation-three-host-reproduction.yml
+packaging/validation-candidate-identity.json
+packaging/validation-candidate-identity.py
+packaging/validation-verify-candidate.sh
+packaging/hosted-release-run.sh
+packaging/validation-reproduction-evidence.py
+docs/VALIDATION_REPRODUCTION.md
 ```
 
 GitHub only accepts `workflow_dispatch` for a workflow present on the default

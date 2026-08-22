@@ -27,8 +27,8 @@ done
 [[ -n $allowed_signers && -n $output ]] || usage
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-identity_tool="$script_dir/step3-candidate-identity.py"
-verify_tool="$script_dir/step3-verify-candidate.sh"
+identity_tool="$script_dir/validation-candidate-identity.py"
+verify_tool="$script_dir/validation-verify-candidate.sh"
 
 for tool in bash sha256sum ssh-keygen jq tar zstd find sort awk sed cp mkdir mv mktemp grep stat date python3; do
   command -v "$tool" >/dev/null 2>&1 || {
@@ -172,7 +172,7 @@ finish() {
 trap finish EXIT
 
 stage=copy_signed_inputs
-cp -- "$identity" "$output/inputs/step3-candidate-identity.json"
+cp -- "$identity" "$output/inputs/validation-candidate-identity.json"
 cp -- "$archive" "$output/inputs/$archive_name"
 cp -- "$manifest" "$output/inputs/$manifest_name"
 cp -- "$signature" "$output/inputs/$signature_name"
@@ -180,7 +180,7 @@ cp -- "$allowed_signers" "$output/inputs/$allowed_signers_name"
 
 stage=record_pinned_hashes
 {
-  printf '%s  %s\n' "$identity_sha256" "$output/inputs/step3-candidate-identity.json"
+  printf '%s  %s\n' "$identity_sha256" "$output/inputs/validation-candidate-identity.json"
   printf '%s  %s\n' "$expected_archive_sha256" "$output/inputs/$archive_name"
   printf '%s  %s\n' "$expected_manifest_sha256" "$output/inputs/$manifest_name"
   printf '%s  %s\n' "$expected_signature_sha256" "$output/inputs/$signature_name"
@@ -190,7 +190,7 @@ sha256sum -c "$output/logs/pinned-inputs.sha256" >"$output/logs/pinned-input-val
 
 stage=verify_and_extract_candidate
 bash "$verify_tool" \
-  --identity "$output/inputs/step3-candidate-identity.json" \
+  --identity "$output/inputs/validation-candidate-identity.json" \
   --archive "$output/inputs/$archive_name" \
   --manifest "$output/inputs/$manifest_name" \
   --signature "$output/inputs/$signature_name" \

@@ -9,8 +9,8 @@ import tempfile
 import unittest
 
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "step3-security-review-evidence.py"
-SPEC = importlib.util.spec_from_file_location("step3_security_review_evidence", SCRIPT)
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "validation-security-review-evidence.py"
+SPEC = importlib.util.spec_from_file_location("validation_security_review_evidence", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
@@ -21,7 +21,7 @@ def write_json(path, value):
     path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="ascii")
 
 
-class Step3SecurityReviewEvidenceTests(unittest.TestCase):
+class ValidationSecurityReviewEvidenceTests(unittest.TestCase):
     def make_identity(self, root):
         identity = root / "identity.json"
         write_json(
@@ -91,7 +91,7 @@ class Step3SecurityReviewEvidenceTests(unittest.TestCase):
         )
         policy = root / "policy/packaging"
         policy.mkdir(parents=True)
-        (policy / "step3-policy.py").write_text("print('bounded')\n", encoding="utf-8")
+        (policy / "validation-policy.py").write_text("print('bounded')\n", encoding="utf-8")
         return root / "policy"
 
     def test_zero_result_automation_passes_but_never_claims_human_review(self):

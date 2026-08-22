@@ -1,4 +1,4 @@
-name: Step 3 automated security evidence
+name: Validation security review
 
 # Automation in this workflow is never represented as independent human review.
 # The enabled identity pins one signed candidate and its complete source path.
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: step3-security-${{ github.ref }}
+  group: validation-security-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -33,23 +33,23 @@ jobs:
         id: identity
         run: |
           set -euxo pipefail
-          python3 packaging/step3-candidate-identity.py check \
-            --identity packaging/step3-candidate-identity.json \
+          python3 packaging/validation-candidate-identity.py check \
+            --identity packaging/validation-candidate-identity.json \
             --require-enabled
-          python3 packaging/step3-candidate-identity.py export-github \
-            --identity packaging/step3-candidate-identity.json >> "${GITHUB_OUTPUT}"
+          python3 packaging/validation-candidate-identity.py export-github \
+            --identity packaging/validation-candidate-identity.json >> "${GITHUB_OUTPUT}"
 
       - name: Initialize the unfiltered candidate-bound evidence directory
         run: |
           set -euxo pipefail
-          python3 packaging/step3-security-review-evidence.py init \
-            --identity packaging/step3-candidate-identity.json \
+          python3 packaging/validation-security-review-evidence.py init \
+            --identity packaging/validation-candidate-identity.json \
             --output "${RUNNER_TEMP}/security-evidence" \
             --repository "${GITHUB_REPOSITORY}" \
             --commit "${GITHUB_SHA}" \
             --run-id "${GITHUB_RUN_ID}" \
             --run-attempt "${GITHUB_RUN_ATTEMPT}"
-          cp packaging/step3-candidate-identity.json \
+          cp packaging/validation-candidate-identity.json \
             "${RUNNER_TEMP}/security-evidence/candidate-identity.json"
 
       - name: Install pinned analysis prerequisites
@@ -76,7 +76,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool prerequisites \
             --status "${{ steps.prerequisites.outcome }}" \
@@ -123,8 +123,8 @@ jobs:
           ALLOWED_SIGNERS_NAME: ${{ steps.identity.outputs.allowed_signers_name }}
         run: |
           set -euxo pipefail
-          bash packaging/step3-verify-candidate.sh \
-            --identity packaging/step3-candidate-identity.json \
+          bash packaging/validation-verify-candidate.sh \
+            --identity packaging/validation-candidate-identity.json \
             --archive "${RUNNER_TEMP}/signed-inputs/${ARCHIVE_NAME}" \
             --manifest "${RUNNER_TEMP}/signed-inputs/${MANIFEST_NAME}" \
             --signature "${RUNNER_TEMP}/signed-inputs/${SIGNATURE_NAME}" \
@@ -154,7 +154,7 @@ jobs:
             && test "${{ steps.verify_candidate.outcome }}" = success; then
             status=success
           fi
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool candidate-input-verification \
             --status "${status}" \
@@ -166,7 +166,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py source-inventory \
+          python3 packaging/validation-security-review-evidence.py source-inventory \
             --root "${RUNNER_TEMP}/security-evidence" \
             --source "${GITHUB_WORKSPACE}/candidate-source"
 
@@ -176,21 +176,21 @@ jobs:
         continue-on-error: true
         run: |
           set -euxo pipefail
-          python3 packaging/step3-review-overlay.py create \
-            --identity packaging/step3-candidate-identity.json \
+          python3 packaging/validation-review-overlay.py create \
+            --identity packaging/validation-candidate-identity.json \
             --candidate-source "${GITHUB_WORKSPACE}/candidate-source" \
             --verifier-source "${GITHUB_WORKSPACE}/candidate-verifier-source" \
             --review-harness "${GITHUB_WORKSPACE}/packaging/review" \
             --output "${GITHUB_WORKSPACE}/candidate-review-source" \
             --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
-          python3 packaging/step3-review-overlay.py check \
+          python3 packaging/validation-review-overlay.py check \
             --output "${GITHUB_WORKSPACE}/candidate-review-source" \
             --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
           cargo metadata \
             --manifest-path "${GITHUB_WORKSPACE}/candidate-review-source/Cargo.toml" \
             --format-version 1 --locked --no-deps \
             > "${RUNNER_TEMP}/security-evidence/review-overlay/cargo-metadata.json"
-          python3 packaging/step3-review-overlay.py check \
+          python3 packaging/validation-review-overlay.py check \
             --output "${GITHUB_WORKSPACE}/candidate-review-source" \
             --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
 
@@ -198,7 +198,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-harness-setup \
             --status "${{ steps.fuzz_harness_setup.outcome }}" \
@@ -210,7 +210,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool toolchain-context -- \
             bash packaging/review/report-tool-versions.sh
@@ -230,7 +230,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool codeql-init \
             --status "${{ steps.codeql_init.outcome }}" \
@@ -241,7 +241,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool codeql-build \
             --status "${{ steps.codeql_init.outcome }}" \
@@ -261,7 +261,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool codeql-analyze \
             --status "${{ steps.codeql_analyze.outcome }}" \
@@ -273,7 +273,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool cargo-audit \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
@@ -284,7 +284,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool cargo-deny \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
@@ -295,7 +295,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool rustfmt \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
@@ -306,7 +306,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool clippy \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source" \
@@ -318,7 +318,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool unit-tests \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source" \
@@ -336,7 +336,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-contract-control \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source/packaging/review/fuzz" \
@@ -350,7 +350,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/validation-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-tensor-manifest \
             --cwd "${GITHUB_WORKSPACE}/candidate-review-source/packaging/review/fuzz" \
@@ -379,7 +379,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py record-external \
+          python3 packaging/validation-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-artifact-collection \
             --status "${{ steps.collect_fuzz.outcome }}" \
@@ -391,7 +391,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py static-policy \
+          python3 packaging/validation-security-review-evidence.py static-policy \
             --root "${RUNNER_TEMP}/security-evidence" \
             --repository "${GITHUB_WORKSPACE}/candidate-review-source" \
             --policy-repository "${GITHUB_WORKSPACE}"
@@ -402,15 +402,15 @@ jobs:
         continue-on-error: true
         run: |
           set -euxo pipefail
-          python3 packaging/step3-security-review-evidence.py finalize \
+          python3 packaging/validation-security-review-evidence.py finalize \
             --root "${RUNNER_TEMP}/security-evidence"
-          python3 packaging/step3-security-review-evidence.py seal \
+          python3 packaging/validation-security-review-evidence.py seal \
             --root "${RUNNER_TEMP}/security-evidence"
           cd "${RUNNER_TEMP}"
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 \
-            --numeric-owner -czf step3-security-evidence.tar.gz security-evidence
-          sha256sum step3-security-evidence.tar.gz \
-            > step3-security-evidence.tar.gz.sha256
+            --numeric-owner -czf validation-security-evidence.tar.gz security-evidence
+          sha256sum validation-security-evidence.tar.gz \
+            > validation-security-evidence.tar.gz.sha256
 
       - name: Attest the unfiltered automated evidence archive
         id: attest
@@ -418,7 +418,7 @@ jobs:
         continue-on-error: true
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: ${{ runner.temp }}/step3-security-evidence.tar.gz
+          subject-path: ${{ runner.temp }}/validation-security-evidence.tar.gz
 
       - name: Retain and verify the security-evidence attestation
         id: verify_attestation
@@ -430,38 +430,38 @@ jobs:
         run: |
           set -euxo pipefail
           test -n "${BUNDLE_PATH}"
-          cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/step3-security-evidence.sigstore.json"
-          gh attestation verify "${RUNNER_TEMP}/step3-security-evidence.tar.gz" \
-            --bundle "${RUNNER_TEMP}/step3-security-evidence.sigstore.json" \
+          cp "${BUNDLE_PATH}" "${RUNNER_TEMP}/validation-security-evidence.sigstore.json"
+          gh attestation verify "${RUNNER_TEMP}/validation-security-evidence.tar.gz" \
+            --bundle "${RUNNER_TEMP}/validation-security-evidence.sigstore.json" \
             --repo "${GITHUB_REPOSITORY}" \
-            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/step3-security-review.yml" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/validation-security-review.yml" \
             --source-digest "${GITHUB_SHA}" \
             --deny-self-hosted-runners \
-            --format json > "${RUNNER_TEMP}/step3-security-evidence.verification.json"
+            --format json > "${RUNNER_TEMP}/validation-security-evidence.verification.json"
 
       - name: Retain an attestation failure marker
         if: always() && steps.verify_attestation.outcome != 'success'
         run: |
           set -euxo pipefail
-          test -f "${RUNNER_TEMP}/step3-security-evidence.sigstore.json" || \
+          test -f "${RUNNER_TEMP}/validation-security-evidence.sigstore.json" || \
             printf '{"error":"security evidence attestation was not produced"}\n' \
-              > "${RUNNER_TEMP}/step3-security-evidence.sigstore.json"
-          test -f "${RUNNER_TEMP}/step3-security-evidence.verification.json" || \
+              > "${RUNNER_TEMP}/validation-security-evidence.sigstore.json"
+          test -f "${RUNNER_TEMP}/validation-security-evidence.verification.json" || \
             printf '{"error":"security evidence attestation was not verified"}\n' \
-              > "${RUNNER_TEMP}/step3-security-evidence.verification.json"
+              > "${RUNNER_TEMP}/validation-security-evidence.verification.json"
 
       - name: Upload successes and failures without filtering
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: step3-security-evidence
+          name: validation-security-evidence
           if-no-files-found: error
           retention-days: 90
           path: |
-            ${{ runner.temp }}/step3-security-evidence.tar.gz
-            ${{ runner.temp }}/step3-security-evidence.tar.gz.sha256
-            ${{ runner.temp }}/step3-security-evidence.sigstore.json
-            ${{ runner.temp }}/step3-security-evidence.verification.json
+            ${{ runner.temp }}/validation-security-evidence.tar.gz
+            ${{ runner.temp }}/validation-security-evidence.tar.gz.sha256
+            ${{ runner.temp }}/validation-security-evidence.sigstore.json
+            ${{ runner.temp }}/validation-security-evidence.verification.json
 
       - name: Enforce the automated gate without claiming human review
         if: always()
@@ -476,5 +476,5 @@ jobs:
           test "${{ steps.finalize.outcome }}" = success
           test "${{ steps.attest.outcome }}" = success
           test "${{ steps.verify_attestation.outcome }}" = success
-          python3 packaging/step3-security-review-evidence.py check-automated \
+          python3 packaging/validation-security-review-evidence.py check-automated \
             --summary "${RUNNER_TEMP}/security-evidence/summary.json"

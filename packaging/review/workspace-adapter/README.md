@@ -1,6 +1,6 @@
 # Analysis workspace adapter
 
-`Cargo.lock` is a commit-bound input for the Step 3 automated security
+`Cargo.lock` is a commit-bound input for the validation automated security
 workflow. It resolves only the four Rust crates whose source is present in the
 signed validation-candidate archive: the three local-executor crates and the
 standalone reference verifier.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and consume the one frozen Step 3 release identity."""
+"""Validate and consume the one frozen Validation release identity."""
 
 from __future__ import annotations
 
@@ -571,7 +571,7 @@ def main() -> int:
         arguments = parser().parse_args()
         return int(arguments.function(arguments))
     except (IdentityError, OSError, UnicodeError, ValueError, json.JSONDecodeError) as error:
-        print(f"Step 3 candidate identity error: {error}", file=sys.stderr)
+        print(f"Validation candidate identity error: {error}", file=sys.stderr)
         return 1
 
 

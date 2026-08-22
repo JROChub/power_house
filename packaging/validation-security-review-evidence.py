@@ -371,7 +371,7 @@ def static_policy(args: argparse.Namespace) -> int:
     findings.extend({"kind": "verifier_process_token", "token": item} for item in process_hits)
 
     python_shell_hits = []
-    for path in sorted((policy_repository / "packaging").glob("step3-*.py")):
+    for path in sorted((policy_repository / "packaging").glob("validation-*.py")):
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if re.search(r"\bshell\s*=\s*True\b", line):
                 python_shell_hits.append(
@@ -387,7 +387,7 @@ def static_policy(args: argparse.Namespace) -> int:
         "created_at": utc_now(),
         "scope": {
             "candidate_source": list(critical_roots),
-            "workflow_policy": "packaging/step3-*.py",
+            "workflow_policy": "packaging/validation-*.py",
         },
         "checks": checks,
         "findings": findings,
@@ -552,7 +552,7 @@ def seal(args: argparse.Namespace) -> int:
 def check_automated(args: argparse.Namespace) -> int:
     summary = load_json(args.summary)
     if summary.get("schema") != SCHEMA or summary.get("kind") != "security_review_summary":
-        raise ReviewError("not a Step 3 security review summary")
+        raise ReviewError("not a validation security review summary")
     if summary.get("automated_evidence", {}).get("status") != "pass":
         raise ReviewError("automated security evidence gate did not pass")
     if summary.get("independent_code_or_security_review_complete") is not False:
@@ -614,7 +614,7 @@ def main() -> int:
             arguments.command = arguments.command[1:]
         return int(arguments.function(arguments))
     except (ReviewError, OSError, ValueError, json.JSONDecodeError) as error:
-        print(f"step3 security evidence error: {error}", file=sys.stderr)
+        print(f"validation security evidence error: {error}", file=sys.stderr)
         return 1
 
 

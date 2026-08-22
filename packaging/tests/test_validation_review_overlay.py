@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed tests for the Step 3 analysis-only workspace overlay."""
+"""Fail-closed tests for the validation analysis-only workspace overlay."""
 
 import argparse
 import hashlib
@@ -10,8 +10,8 @@ import tempfile
 import unittest
 
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "step3-review-overlay.py"
-SPEC = importlib.util.spec_from_file_location("step3_review_overlay", SCRIPT)
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "validation-review-overlay.py"
+SPEC = importlib.util.spec_from_file_location("validation_review_overlay", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
@@ -31,7 +31,7 @@ def tree_digest(root):
     return digest.hexdigest()
 
 
-class Step3ReviewOverlayTests(unittest.TestCase):
+class ValidationReviewOverlayTests(unittest.TestCase):
     def fixture(self, root):
         candidate = root / "candidate"
         write(

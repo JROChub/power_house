@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and validate fail-closed Step 3 cross-host reproduction evidence."""
+"""Create and validate fail-closed cross-host reproduction evidence."""
 
 from __future__ import annotations
 
@@ -412,7 +412,7 @@ def aggregate(args: argparse.Namespace) -> int:
     failures: list[str] = []
     artifact_rows: list[dict[str, Any]] = []
     for slot in EXPECTED_SLOTS:
-        directory = args.inputs / f"step3-{slot}"
+        directory = args.inputs / f"validation-{slot}"
         archive = directory / f"{slot}.tar.gz"
         digest_file = directory / f"{slot}.tar.gz.sha256"
         bundle = directory / f"{slot}.sigstore.json"
@@ -527,7 +527,7 @@ def aggregate(args: argparse.Namespace) -> int:
 def check_host_gate(args: argparse.Namespace) -> int:
     summary = load_json(args.summary)
     if summary.get("schema") != SCHEMA or summary.get("kind") != "three_host_aggregate":
-        raise EvidenceError("not a Step 3 aggregate summary")
+        raise EvidenceError("not a validation aggregate summary")
     if summary.get("status") != "host_gate_complete" or summary.get("host_gate_eligible") is not True:
         raise EvidenceError("three-host reproduction host gate is not complete")
     if summary.get("failures") != []:
@@ -643,7 +643,7 @@ def finalize_claim(args: argparse.Namespace) -> int:
 def check_claim(args: argparse.Namespace) -> int:
     record = load_json(args.claim)
     if record.get("schema") != SCHEMA or record.get("kind") != "attested_three_host_claim":
-        raise EvidenceError("not a Step 3 attested three-host claim")
+        raise EvidenceError("not a validation attested three-host claim")
     if record.get("status") != "complete" or record.get("claim_eligible") is not True:
         raise EvidenceError("three-host attested claim is not complete")
     if not isinstance(record.get("claim"), str) or not record["claim"]:
@@ -654,7 +654,7 @@ def check_claim(args: argparse.Namespace) -> int:
 def check_host(args: argparse.Namespace) -> int:
     record = load_json(args.record)
     if record.get("schema") != SCHEMA or record.get("kind") != "host_reproduction":
-        raise EvidenceError("not a Step 3 host reproduction record")
+        raise EvidenceError("not a validation host reproduction record")
     if record.get("status") != "succeeded" or record.get("failures") != []:
         raise EvidenceError("host reproduction gate is not successful")
     return 0
@@ -718,7 +718,7 @@ def main() -> int:
         arguments = parser().parse_args()
         return int(arguments.function(arguments))
     except (EvidenceError, OSError, ValueError, json.JSONDecodeError) as error:
-        print(f"step3 reproduction evidence error: {error}", file=sys.stderr)
+        print(f"validation reproduction evidence error: {error}", file=sys.stderr)
         return 1
 
 

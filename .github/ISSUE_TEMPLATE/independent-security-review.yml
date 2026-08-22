@@ -7,7 +7,7 @@ body:
       value: |
         This public issue requests an independent human code/security review. Opening or replying to it does not mean a review has started or completed. Automated CI is supporting material only.
 
-        Read `docs/STEP3_HUMAN_REVIEW_BRIEF.md` and validate deliverables against `packaging/review/human-review-report.schema.json`. Do not post private keys, unpublished exploit details, personal addresses, or other secrets. Use the repository security-reporting channel for an active vulnerability that should not initially be public.
+        Read `docs/VALIDATION_HUMAN_REVIEW_BRIEF.md` and validate deliverables against `packaging/review/human-review-report.schema.json`. Do not post private keys, unpublished exploit details, personal addresses, or other secrets. Use the repository security-reporting channel for an active vulnerability that should not initially be public.
 
   - type: input
     id: reviewer_identity
@@ -38,7 +38,7 @@ body:
     id: immutable_candidate
     attributes:
       label: Candidate commit and identity digest
-      description: Exact 40-character default-branch commit plus SHA-256 of the enabled Step 3 candidate identity file.
+      description: Exact 40-character default-branch commit plus SHA-256 of the enabled validation candidate identity file.
       placeholder: 40-character commit; identity SHA-256
     validations:
       required: true
