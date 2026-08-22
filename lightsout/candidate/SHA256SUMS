@@ -1,0 +1,6 @@
+9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f  downloads/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst
+3cdbf5d25e1dbab32da6e5159d1e12eb511014ef9877348808840ee82fa023ea  downloads/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst.sha256
+fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229  release/VALIDATION-CANDIDATE-MANIFEST.canonical.json
+f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458  release/VALIDATION-CANDIDATE-MANIFEST.canonical.json.sig
+67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e  release/allowed_signers
+0f7c5f5eacc52b9f5c54eb7a5166e7e8e0a5a5b73d9a23f94dc9e2bdad244426  release/release-signing-key.pub
