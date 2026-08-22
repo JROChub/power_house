@@ -1,0 +1,520 @@
+{
+  "automated_evidence": {
+    "codeql_sarif": [
+      {
+        "path": "rust.sarif",
+        "results": 1,
+        "sha256": "9a08b91c1776a626e5db8cb90f220cbd7306f609a1f602903feb2bf5d3e95726"
+      }
+    ],
+    "failures": [
+      "CodeQL retained 1 unwaived result(s)"
+    ],
+    "outcomes": {
+      "candidate-input-verification": {
+        "artifacts": [
+          {
+            "path": "download.stderr.log",
+            "sha256": "f079848a3f62e4864db372ccfe7c0d5e0642f378dc28e0fb487ffa6070557774",
+            "size_bytes": 1034
+          },
+          {
+            "path": "download.stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0
+          },
+          {
+            "path": "verify.stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0
+          },
+          {
+            "path": "verify.stdout.log",
+            "sha256": "fcbd84547757850e57439be257e086bb823e20ff0f8d43819424fe7e224bec76",
+            "size_bytes": 1381
+          }
+        ],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:43:25Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "Pinned hashes, namespace-restricted SSH signature, archive binding, inventory, and source extraction",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "candidate-input-verification",
+        "working_directory": null
+      },
+      "candidate-source-inventory": {
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:43:25Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "report": {
+          "path": "candidate-source-inventory.json",
+          "sha256": "5a10edbda31bf9f6d1e17690d657ac038328d3c7b62c6ebda46adce8b4b9fe72",
+          "size_bytes": 4355
+        },
+        "schema": "mfenx.step3-security-review.v1",
+        "status": "success",
+        "timed_out": false,
+        "tool": "candidate-source-inventory"
+      },
+      "cargo-audit": {
+        "command": [
+          "cargo",
+          "audit",
+          "--json"
+        ],
+        "duration_ns": 2927639416,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:55:53Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:55:50Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/cargo-audit.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "path": "logs/cargo-audit.stdout.log",
+          "sha256": "112df2c509941c3cd5903fa6b7987e5cb2fddf542a822e6ae1eba95abd776770",
+          "size_bytes": 374
+        },
+        "timed_out": false,
+        "tool": "cargo-audit",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source"
+      },
+      "cargo-deny": {
+        "command": [
+          "cargo",
+          "deny",
+          "--config",
+          "/home/runner/work/power_house/power_house/packaging/review/deny.toml",
+          "check"
+        ],
+        "duration_ns": 966598079,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:55:54Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:55:53Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/cargo-deny.stderr.log",
+          "sha256": "1265494b331436129480ae8fb123c10c0b3a1307284a6ecccc034f08ea49bf5e",
+          "size_bytes": 706
+        },
+        "stdout": {
+          "path": "logs/cargo-deny.stdout.log",
+          "sha256": "f1a0fca39d4280363937aabd77783990ea6480bd9ca257816de3b68fc8efa845",
+          "size_bytes": 48
+        },
+        "timed_out": false,
+        "tool": "cargo-deny",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source"
+      },
+      "clippy": {
+        "command": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "duration_ns": 10757856127,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:56:05Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:55:54Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/clippy.stderr.log",
+          "sha256": "092b60f9a8040033acf003c7834786e29241941db219ed2869428ee9ca65ce43",
+          "size_bytes": 2504
+        },
+        "stdout": {
+          "path": "logs/clippy.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "timed_out": false,
+        "tool": "clippy",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source"
+      },
+      "codeql-analyze": {
+        "artifacts": [
+          {
+            "path": "rust.sarif",
+            "sha256": "9a08b91c1776a626e5db8cb90f220cbd7306f609a1f602903feb2bf5d3e95726",
+            "size_bytes": 249886
+          }
+        ],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:55:50Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "CodeQL action outcome; findings are counted from the retained SARIF",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "codeql-analyze",
+        "working_directory": null
+      },
+      "codeql-build": {
+        "artifacts": [],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:43:33Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "No manual build: CodeQL Rust build-mode none analyzes the recorded source overlay",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "codeql-build",
+        "working_directory": null
+      },
+      "codeql-init": {
+        "artifacts": [],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:43:33Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "GitHub CodeQL Rust initialization for the extracted signed candidate source",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "codeql-init",
+        "working_directory": null
+      },
+      "fuzz-artifact-collection": {
+        "artifacts": [],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T15:01:01Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "Unfiltered generated corpus inventory and all libFuzzer crash, timeout, and OOM artifacts retained",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "fuzz-artifact-collection",
+        "working_directory": null
+      },
+      "fuzz-contract-control": {
+        "command": [
+          "cargo",
+          "+nightly-2026-07-10",
+          "fuzz",
+          "run",
+          "--fuzz-dir",
+          ".",
+          "contract-control",
+          "--",
+          "-max_total_time=120",
+          "-timeout=5",
+          "-max_len=1048576",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/home/runner/work/_temp/security-evidence/fuzz-artifacts/contract-control/"
+        ],
+        "duration_ns": 148386499958,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:58:59Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:56:30Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/fuzz-contract-control.stderr.log",
+          "sha256": "3176e2e2a0bed059ee00fdbbdc38d79a2961d6cb137941c8702c84458395d8b4",
+          "size_bytes": 310019
+        },
+        "stdout": {
+          "path": "logs/fuzz-contract-control.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "timed_out": false,
+        "tool": "fuzz-contract-control",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source/packaging/review/fuzz"
+      },
+      "fuzz-harness-setup": {
+        "artifacts": [
+          {
+            "path": "cargo-metadata.json",
+            "sha256": "ed663378c797565ed5b10c13117b97bf030e191be7eec099aae49a168877129e",
+            "size_bytes": 11714
+          },
+          {
+            "path": "overlay.json",
+            "sha256": "ab4983beafc1379f0ea32263dafde28c375dbc15248525a1fe2f96141404d8a2",
+            "size_bytes": 16038
+          }
+        ],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:43:26Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "Analysis-only four-crate overlay and review harness created after signed-source inventory; release bytes were not mutated",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "fuzz-harness-setup",
+        "working_directory": null
+      },
+      "fuzz-tensor-manifest": {
+        "command": [
+          "cargo",
+          "+nightly-2026-07-10",
+          "fuzz",
+          "run",
+          "--fuzz-dir",
+          ".",
+          "tensor-manifest",
+          "--",
+          "-max_total_time=120",
+          "-timeout=5",
+          "-max_len=4194304",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/home/runner/work/_temp/security-evidence/fuzz-artifacts/tensor-manifest/"
+        ],
+        "duration_ns": 121562604248,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T15:01:00Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:58:59Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/fuzz-tensor-manifest.stderr.log",
+          "sha256": "0b6c2ac187375c2e0506b3733f47e03a15bebf0fe29022b000d584c902f942ba",
+          "size_bytes": 110900
+        },
+        "stdout": {
+          "path": "logs/fuzz-tensor-manifest.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "timed_out": false,
+        "tool": "fuzz-tensor-manifest",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source/packaging/review/fuzz"
+      },
+      "prerequisites": {
+        "artifacts": [
+          {
+            "path": "stderr.log",
+            "sha256": "07735208992460eabd23964262514667baf593fcdc6d339e99a57f5357924e9e",
+            "size_bytes": 30724
+          },
+          {
+            "path": "stdout.log",
+            "sha256": "201be12497018df0a82afa232ff88040f4cfc4d884b9a5693f60cc535f9a63dc",
+            "size_bytes": 6431
+          }
+        ],
+        "command": null,
+        "duration_ns": null,
+        "exit_status": 0,
+        "external_step": true,
+        "finished_at": "2026-08-22T14:43:24Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "note": "Pinned operating-system, Rust, Cargo analyzer, and GitHub CLI prerequisites",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": null,
+        "status": "success",
+        "timed_out": false,
+        "tool": "prerequisites",
+        "working_directory": null
+      },
+      "rustfmt": {
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "duration_ns": 214482011,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:55:54Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:55:54Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/rustfmt.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "path": "logs/rustfmt.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "timed_out": false,
+        "tool": "rustfmt",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source"
+      },
+      "static-policy": {
+        "exit_status": 0,
+        "finished_at": "2026-08-22T15:01:01Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "report": {
+          "path": "static-policy.json",
+          "sha256": "8811542680746904c09701f33b5395aaeeae2c0b11a6a6231a7fa327f619b83f",
+          "size_bytes": 923
+        },
+        "schema": "mfenx.step3-security-review.v1",
+        "status": "success",
+        "timed_out": false,
+        "tool": "static-policy"
+      },
+      "toolchain-context": {
+        "command": [
+          "bash",
+          "packaging/review/report-tool-versions.sh"
+        ],
+        "duration_ns": 164513539,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:43:26Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:43:26Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/toolchain-context.stderr.log",
+          "sha256": "1a254068c5966d987f341f0d0bee45407114457586da487a9a3f92a27af1ee09",
+          "size_bytes": 62
+        },
+        "stdout": {
+          "path": "logs/toolchain-context.stdout.log",
+          "sha256": "e9d1f580d1eef4e1804c439538146f197bf3e7296ba1e01d3c9b4e9589728687",
+          "size_bytes": 918
+        },
+        "timed_out": false,
+        "tool": "toolchain-context",
+        "working_directory": "/home/runner/work/power_house/power_house"
+      },
+      "unit-tests": {
+        "command": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked"
+        ],
+        "duration_ns": 25507240491,
+        "exit_status": 0,
+        "finished_at": "2026-08-22T14:56:30Z",
+        "human_review_performed": false,
+        "kind": "automated_tool_outcome",
+        "schema": "mfenx.step3-security-review.v1",
+        "started_at": "2026-08-22T14:56:05Z",
+        "status": "success",
+        "stderr": {
+          "path": "logs/unit-tests.stderr.log",
+          "sha256": "6b65d7df1c533d709d182666079f66debf0bc2aa8f0a4cbc632019c47762be4e",
+          "size_bytes": 2799
+        },
+        "stdout": {
+          "path": "logs/unit-tests.stdout.log",
+          "sha256": "1c1cd7a8a13d383916c38ac5b0cbb45ceeb3a946e1d856d6a957082a64a19743",
+          "size_bytes": 5377
+        },
+        "timed_out": false,
+        "tool": "unit-tests",
+        "working_directory": "/home/runner/work/power_house/power_house/candidate-review-source"
+      }
+    },
+    "required_tools": [
+      "prerequisites",
+      "candidate-input-verification",
+      "candidate-source-inventory",
+      "toolchain-context",
+      "codeql-init",
+      "codeql-build",
+      "codeql-analyze",
+      "cargo-audit",
+      "cargo-deny",
+      "rustfmt",
+      "clippy",
+      "unit-tests",
+      "fuzz-harness-setup",
+      "fuzz-contract-control",
+      "fuzz-tensor-manifest",
+      "fuzz-artifact-collection",
+      "static-policy"
+    ],
+    "status": "fail",
+    "unwaived_codeql_result_count": 1
+  },
+  "candidate": {
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "signature_namespace": "mfenx-validation-candidate",
+    "signature_principal": "mfenx-release",
+    "source_subdir": "source/mfenx-local-candidate/frozen",
+    "verifier_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa"
+  },
+  "claim_policy": {
+    "automated_pass_may_be_called_independent_review": false,
+    "human_review_requires_external_reviewer_and_signed_report": true,
+    "successes_and_failures_must_both_be_retained": true
+  },
+  "created_at": "2026-08-22T15:01:01Z",
+  "independent_code_or_security_review_complete": false,
+  "independent_human_review": {
+    "independence_checked": false,
+    "reviewer": null,
+    "signed_report": null,
+    "status": "not_performed"
+  },
+  "kind": "security_review_summary",
+  "schema": "mfenx.step3-security-review.v1",
+  "source": {
+    "commit": "0b147086aabc2b4f2281c75e32f0b2d7943966fb",
+    "repository": "JROChub/power_house",
+    "workflow_run_attempt": "1",
+    "workflow_run_id": "32579252384"
+  }
+}

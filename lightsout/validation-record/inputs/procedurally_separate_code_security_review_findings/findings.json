@@ -1,0 +1,61 @@
+{
+  "schema": "mfenx-independent-code-security-review-findings/v1",
+  "candidate_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+  "open_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 1,
+    "informational": 1
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "status": "open",
+      "severity": "low",
+      "title": "Standalone verifier report publication follows symlinks and permits destructive input overlap",
+      "component": "standalone verifier CLI",
+      "affected_binary_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+      "source": {
+        "path": "source/mfenx-contract-v1-verifier/src/main.rs",
+        "sha256": "8ecac76a97a7ad6067e3261b7a46885654be63b85938d17ea6fb527e900c1fa0",
+        "lines": "69-71"
+      },
+      "weaknesses": [
+        "CWE-59"
+      ],
+      "description": "After verification succeeds, the CLI passes the caller-controlled --report path directly to std::fs::write. Existing files are truncated, existing symlinks are followed, and the parser permits --report to equal --image or --result. Thus a successful invocation can destroy the just-verified input or replace another user-writable symlink target and still return success.",
+      "impact": "Local integrity/availability footgun and a conventional shared-directory symlink hazard. Verification and replay decisions remain correct before the write; stdout mode is unaffected. Exploitation requires the invoking user's path choice or an untrusted report directory, so this review rates the issue low rather than medium.",
+      "reproduction": {
+        "command_record": "commands/cli_canonicalization_probe.sh",
+        "log": "logs/cli-canonicalization-probe.log",
+        "result_report_overlap_exit_status": 0,
+        "overlap_input_sha256_before": "dce0151fe36285f5ba25e0f4656fe48f88bb1f4cad9628682d192f4d223dc129",
+        "overlap_file_sha256_after": "cdbbf835982c8ca8d044d2833c41f49e9bb75f0545f484b8502378ae6ab40294",
+        "symlink_report_exit_status": 0,
+        "symlink_target_sha256_before": "02a501917668162a5d2bdf394c12f632d0768c303ba287c4502a30a117299dba",
+        "symlink_target_sha256_after": "4c12abb2afc2681c0b8254a90da96ca358314d07c8229c9435d174e501d6adef"
+      },
+      "recommendation": "Reuse the executor's no-replace publication pattern: require a real parent directory; create and sync a new temporary file in that directory; publish without replacement; remove staging; sync the parent. Reject an existing report path, any path overlap with image/result, and any report path inside the tensor store. Add existing-file, symlink, hard-link, input-overlap, and interrupted-publication tests."
+    },
+    {
+      "id": "F-002",
+      "status": "open",
+      "severity": "informational",
+      "title": "Packaged core documentation points to normative contract and threat-model documents absent from the signed closure",
+      "component": "signed documentation / claim boundary",
+      "source": {
+        "path": "source/mfenx-local-candidate/frozen/docs/MFENX_LOCAL.md",
+        "sha256": "bc718c7671968067f773550e7281284ce8b7235bbdd5f34a912ff0b657794fd2",
+        "lines": "241-242"
+      },
+      "description": "The core document identifies EXECUTION_CONTRACT_V1.md as normative and THREAT_MODEL.md as the location of risks and exclusions, but neither file exists anywhere in the 68-file signed candidate. The package does contain substantial boundary language in README.md, docs/FAILPOINT-BOUNDARY.md, and the standalone verifier README, so this review found no direct contradiction; the gap primarily limits standalone auditability.",
+      "impact": "A recipient cannot recover the named normative contract or complete broader threat model from the authenticated archive alone.",
+      "reproduction": {
+        "inventory": "inventory/signed-candidate-files.sha256",
+        "archive_member_log": "logs/archive-identity-and-safety.log"
+      },
+      "recommendation": "Include checksum-bound copies of both named documents in the next candidate, or change the signed documentation to point only to the boundary documents actually present."
+    }
+  ]
+}

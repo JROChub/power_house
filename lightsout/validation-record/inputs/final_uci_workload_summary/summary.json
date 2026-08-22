@@ -1,0 +1,290 @@
+{
+  "claim": "The exact signed MFENX validation-candidate executor completed and replay-verified the pinned UCI Iris feature-Gram workload, and its 16 i32 outputs matched the independent fixed oracle.",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "/home/lexluger/rarcomp_mfenx/packaging/external-workloads/uci-iris/adapter.py",
+        "prepare",
+        "--dataset",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/inputs/bezdekIris.data",
+        "--output",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/prepared"
+      ],
+      "duration_ns": 793747470,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:39:59Z",
+      "label": "prepare",
+      "started_at": "2026-08-22T11:39:58Z",
+      "stderr": {
+        "path": "logs/prepare.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/prepare.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+        "import",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--input",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/prepared/left-4x150.i32le",
+        "--rows",
+        "4",
+        "--columns",
+        "150",
+        "--output",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/left.tensor.json",
+        "--io-mib",
+        "1"
+      ],
+      "duration_ns": 8132799712,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:07Z",
+      "label": "import-left",
+      "started_at": "2026-08-22T11:39:59Z",
+      "stderr": {
+        "path": "logs/import-left.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/import-left.stdout.log",
+        "sha256": "945fa54e1c7f80c423bc69025b41e2b11962d9e7464db7c6a352743a6e544cf4"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+        "import",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--input",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/prepared/right-150x4.i32le",
+        "--rows",
+        "150",
+        "--columns",
+        "4",
+        "--output",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/right.tensor.json",
+        "--io-mib",
+        "1"
+      ],
+      "duration_ns": 8027894969,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:15Z",
+      "label": "import-right",
+      "started_at": "2026-08-22T11:40:07Z",
+      "stderr": {
+        "path": "logs/import-right.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/import-right.stdout.log",
+        "sha256": "45e295032d7514c452671936f44dfc7dd076a7c0788f9dd0b187848be81594ae"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+        "compile",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--left",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/left.tensor.json",
+        "--right",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/right.tensor.json",
+        "--output",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.image.json",
+        "--max-managed-mib",
+        "64",
+        "--lanes",
+        "2",
+        "--io-mib",
+        "1"
+      ],
+      "duration_ns": 2974931589,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:18Z",
+      "label": "compile",
+      "started_at": "2026-08-22T11:40:15Z",
+      "stderr": {
+        "path": "logs/compile.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/compile.stdout.log",
+        "sha256": "45a64e391f8570ecc09e59c74cc22dcb0e660f33527cef35a08113d1ea3f7bc4"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+        "run",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--image",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.image.json",
+        "--checkpoint-dir",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/checkpoint",
+        "--output",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.result.json",
+        "--io-mib",
+        "1"
+      ],
+      "duration_ns": 11000545272,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:29Z",
+      "label": "run",
+      "started_at": "2026-08-22T11:40:18Z",
+      "stderr": {
+        "path": "logs/run.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/run.stdout.log",
+        "sha256": "e19f378513827fdbc2cc6ac2ec17e0b8ae361e6da670913f8f2f13dc6a5cecc0"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+        "verify",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--image",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.image.json",
+        "--result",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.result.json",
+        "--io-mib",
+        "1"
+      ],
+      "duration_ns": 1474394491,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:31Z",
+      "label": "executor-verify",
+      "started_at": "2026-08-22T11:40:29Z",
+      "stderr": {
+        "path": "logs/executor-verify.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/executor-verify.stdout.log",
+        "sha256": "fae0bfdc555ccee9de439f694ee5ddaff7d05b691cfd4903555adcc07a758bca"
+      }
+    },
+    {
+      "argv": [
+        "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-contract-v1-verifier",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--image",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.image.json",
+        "--result",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.result.json",
+        "--report",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/reference.verify.json"
+      ],
+      "duration_ns": 2933054,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:31Z",
+      "label": "reference-verify",
+      "started_at": "2026-08-22T11:40:31Z",
+      "stderr": {
+        "path": "logs/reference-verify.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/reference-verify.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "/home/lexluger/rarcomp_mfenx/packaging/external-workloads/uci-iris/adapter.py",
+        "verify-output",
+        "--result",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/iris-gram.result.json",
+        "--store",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/store",
+        "--oracle",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/inputs/oracle.json",
+        "--report",
+        "/home/lexluger/rarcomp_mfenx/evidence/external-workload-uci-iris-final-candidate-20260822-a1/run/oracle-check.json"
+      ],
+      "duration_ns": 244214149,
+      "exit_status": 0,
+      "finished_at": "2026-08-22T11:40:31Z",
+      "label": "oracle-check",
+      "started_at": "2026-08-22T11:40:31Z",
+      "stderr": {
+        "path": "logs/oracle-check.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "logs/oracle-check.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "executor": {
+    "path": "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-local",
+    "sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "size_bytes": 2061856
+  },
+  "failure": null,
+  "failure_stage": null,
+  "finished_at": "2026-08-22T11:40:31Z",
+  "gates": {
+    "executor_exact_replay_accepted": true,
+    "executor_import_compile_run_succeeded": true,
+    "fixed_external_oracle_accepted": true,
+    "oracle_i32le_sha256": "90f359758f26cc028c4ea52ed99e30c629512b3efb6e53dfd18bb6b669c36f35",
+    "output_manifest_root": "82150d2bac89c31bee0b18cfd30be4feaa0fcfcaa87e2b4189958457dc5775e5",
+    "pinned_source_transformed": true,
+    "standalone_reference_verifier_accepted": true
+  },
+  "qualifications": [
+    "This is one small external correctness workload, not a performance or production benchmark.",
+    "The signed input is a validation candidate, not a final, production, commercial, or generally supported release.",
+    "The independent oracle checks the fixed mathematical result; the standalone verifier separately authenticates MFENX formats and store objects.",
+    "No biological classification or inference is performed."
+  ],
+  "schema": "mfenx.external-workload-run.v1",
+  "signed_candidate": {
+    "allowed_signers_sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+    "executor_artifact_bound": true,
+    "manifest_sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+    "reference_verifier_artifact_bound": true,
+    "release_class": "validation_candidate",
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "release_key_fingerprint": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc",
+    "signature_namespace": "mfenx-validation-candidate",
+    "signature_sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
+    "signature_verified": true,
+    "signer_principal": "mfenx-release"
+  },
+  "source": {
+    "archive_sha256": "d11fe30213d36434a0879aab7cb00ce3c812eb7ba2495874438abff7b7b762e9",
+    "archive_url": "https://archive.ics.uci.edu/static/public/53/iris.zip",
+    "doi": "10.24432/C56C76",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "member_sha256": "0fed2a99db77ec533a62dc66894d3ec6df3b58b6a8f3cf4a6b47e4086b7f97dc",
+    "oracle_document_sha256": "bf171968b1883ecc3f54d218d132711cacc902ac288c1da9041a82516159bb13",
+    "publisher": "UCI Machine Learning Repository",
+    "workload_contract_sha256": "163817c4305c69fe150fac20b4064d50e62f4fd884800a4bd603ee562f57ab77"
+  },
+  "standalone_verifier": {
+    "path": "/home/lexluger/rarcomp_mfenx/release/mfenx-local-v2-validation-candidate-20260822-a1/bin/mfenx-contract-v1-verifier",
+    "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+    "size_bytes": 998760
+  },
+  "started_at": "2026-08-22T11:39:58Z",
+  "status": "PASS",
+  "workload_id": "uci-iris-feature-gram-i32-v1"
+}

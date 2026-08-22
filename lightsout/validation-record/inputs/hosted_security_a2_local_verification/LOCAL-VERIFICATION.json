@@ -1,0 +1,89 @@
+{
+  "schema": "mfenx.local-hosted-artifact-closure.v1",
+  "kind": "automated_security_evidence_a2_closure",
+  "created_at": "2026-08-22T15:05:00Z",
+  "remote": {
+    "repository": "JROChub/power_house",
+    "workflow_run_id": "32579252384",
+    "workflow_run_attempt": "1",
+    "workflow_run_url": "https://github.com/JROChub/power_house/actions/runs/32579252384",
+    "job_id": "97046051231",
+    "commit": "0b147086aabc2b4f2281c75e32f0b2d7943966fb",
+    "conclusion": "failure",
+    "retried": false
+  },
+  "candidate": {
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f"
+  },
+  "remote_artifact": {
+    "id": 9477633553,
+    "name": "step3-security-evidence",
+    "size_bytes": 344043,
+    "expires_at": "2026-11-20T14:37:45Z",
+    "api_digest": "sha256:7577b5a047e4cd1eb0c80a33abd8adb2fb5655f9b501f241656979c92aeb370f",
+    "zip_sha256": "7577b5a047e4cd1eb0c80a33abd8adb2fb5655f9b501f241656979c92aeb370f",
+    "inner_tar_gz_sha256": "4416afdeb4f238bfff91d996741f07c44ddc26c1084e8e7e60391bb779f3416b"
+  },
+  "retained_evidence": {
+    "inner_sha256sums_sha256": "de0018d9bdbe08bee9aa75175db15f7d142c099bc4274f333d976f8abd446651",
+    "summary_sha256": "1655224dde5568903be38637780fe689c0f3c6f1110f8d7555a28e14197e3efb",
+    "overlay_inventory_sha256": "ab4983beafc1379f0ea32263dafde28c375dbc15248525a1fe2f96141404d8a2",
+    "codeql_sarif_sha256": "9a08b91c1776a626e5db8cb90f220cbd7306f609a1f602903feb2bf5d3e95726",
+    "static_policy_sha256": "8811542680746904c09701f33b5395aaeeae2c0b11a6a6231a7fa327f619b83f",
+    "raw_job_log_sha256": "b82111dd5c4b63ef0111488174f6a08ad80d52057513478290e3e04e6a6d75e4",
+    "attestation_bundle_sha256": "cd6f9e8d15043f8481b4361297bf7e21a343937ba2e5ed3f36bd83fcbd092d90",
+    "attestation_verification_sha256": "ef48e2ee7b0e986d12aec1065d6a102f4d0259a92c424efa9b60e91d4d436bc4"
+  },
+  "result": {
+    "automated_evidence_status": "fail",
+    "independent_code_or_security_review_complete": false,
+    "independent_human_review_status": "not_performed",
+    "required_automated_tool_outcomes": 17,
+    "successful_required_automated_tool_outcomes": 17,
+    "unwaived_codeql_result_count": 1,
+    "codeql_sarif_retained": true,
+    "decisive_failure": {
+      "tool": "CodeQL",
+      "rule_id": "rust/cleartext-logging",
+      "message": "This operation writes [... .certified_managed_peak_bytes](1) to a log file.",
+      "path": "crates/rarecomp-mfenx-local/src/main.rs",
+      "start_line": 466,
+      "start_column": 5
+    }
+  },
+  "successful_automated_evidence": [
+    "candidate input and namespace-restricted SSH signature verification",
+    "signed-source inventory and recorded four-crate analysis overlay",
+    "CodeQL initialization and analysis with Rust build-mode none",
+    "cargo audit",
+    "cargo deny",
+    "rustfmt",
+    "strict Clippy",
+    "full candidate workspace tests",
+    "contract-control bounded fuzz campaign",
+    "tensor-manifest bounded fuzz campaign",
+    "fuzz corpus and crash-artifact collection",
+    "static policy",
+    "attestation creation and workflow-produced verification",
+    "unfiltered artifact upload"
+  ],
+  "local_checks": {
+    "github_artifact_zip_digest_matches_api": true,
+    "zip_inventory_is_safe": true,
+    "inner_archive_sidecar_matches": true,
+    "tar_inventory_is_safe": true,
+    "inner_sha256sums_verify": true,
+    "workflow_attestation_verification_record_retained": true,
+    "local_attestation_reverification": {
+      "status": "not_performed",
+      "reason": "Installed GitHub CLI 2.46.0 has no gh attestation command; the successful workflow-produced verification JSON is retained verbatim."
+    }
+  },
+  "local_diagnostic": {
+    "full_four_crate_test": "interrupted",
+    "reason": "Stopped as a redundant non-product diagnostic after the remote full candidate workspace test became authoritative; interruption was publicly recorded and is not represented as a pass.",
+    "record_url": "https://github.com/JROChub/power_house/pull/115#issuecomment-5381029570"
+  }
+}

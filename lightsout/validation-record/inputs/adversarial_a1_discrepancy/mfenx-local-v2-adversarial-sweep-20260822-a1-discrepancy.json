@@ -1,0 +1,30 @@
+{
+  "a1_closure": {
+    "file_count": 2142,
+    "path": "mfenx-local-v2-adversarial-sweep-20260822-a1/SHA256SUMS",
+    "sha256": "a9d957c14d2411a8f51a87301544599c1e164207a5ccf3f7c2d076e85ddad365"
+  },
+  "a1_frozen_validator": {
+    "failed": 64,
+    "passed": 150,
+    "report_path": "mfenx-local-v2-adversarial-sweep-20260822-a1/independent-validation.json",
+    "report_sha256": "b7dcd184553cad123ed834243c69a513f31280e363a061a76d14b565469ff84f"
+  },
+  "disposition": "Both readings are retained. A1 remains failed and superseded under either validator and none of its outcomes may be reused.",
+  "reason_for_count_difference": {
+    "cases_reclassified_by_the_stricter_a2_validator": [
+      "M182-publication-namespace-or-output-preexisting-result-sentinel",
+      "M183-publication-namespace-or-output-result-path-symlink",
+      "M184-publication-namespace-or-output-result-path-directory",
+      "M192-publication-result-commit-rerun-must-not-replace-existing-result"
+    ],
+    "explanation": "A2 requires retained pre/post protected-namespace snapshots. Those records did not exist in the already-frozen A1 schema, so the stricter validator correctly refuses to promote the four A1 self-reports.",
+    "raw_transcript_absences": "A1 driver exceptions also left the relevant mutation.transcript.json, killed.command.json, or independent-verify.command.json absent. The A2 completion gate requires the exact case-appropriate transcript population before sealing."
+  },
+  "revised_a2_validator_revalidation": {
+    "failed": 68,
+    "passed": 146,
+    "source": "independent security audit after A1 sealing"
+  },
+  "schema": "mfenx-local-adversarial-validator-discrepancy/v1"
+}

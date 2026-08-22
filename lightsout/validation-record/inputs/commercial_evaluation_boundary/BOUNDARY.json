@@ -1,0 +1,30 @@
+{
+  "executor": {
+    "path": "open/bin/mfenx-local",
+    "sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0"
+  },
+  "interface": "mfenx-replay-gated-execution-contract/v1",
+  "paid_support_changes_software_rights": false,
+  "profile_id": "mfenx-apache-technical-evaluation-20260822-a1",
+  "schema": "mfenx.apache-technical-evaluation-boundary.v2",
+  "signed_validation_candidate": {
+    "allowed_signers_path": "release/allowed_signers",
+    "allowed_signers_sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+    "archive_path": "release/candidate-archive.tar.zst",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "manifest_path": "release/manifest.canonical.json",
+    "manifest_sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+    "signature_fingerprint": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc",
+    "signature_namespace": "mfenx-validation-candidate",
+    "signature_path": "release/manifest.canonical.json.sig",
+    "signature_policy_verified_by_this_builder": false,
+    "signature_principal": "mfenx-release",
+    "signature_sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458"
+  },
+  "software_license": "Apache-2.0",
+  "standalone_verifier": {
+    "path": "open/bin/mfenx-contract-v1-verifier",
+    "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa"
+  },
+  "standalone_verifier_requires_payment_or_entitlement": false
+}

@@ -6,21 +6,21 @@
   <meta name="theme-color" content="#080b09">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="MFENX Local v2 is a software-defined local supercomputer. Review its signed Step 2 addendum, standalone verifier, revisioned distribution, qualified evidence, and accepted Linux executable.">
-  <meta property="og:title" content="MFENX Local v2 / software-defined local supercomputer">
-  <meta property="og:description" content="Hash-checked release evidence for real local CPU and storage execution. No browser simulation, VPS, cloud worker, GPU, or network is used by the accepted workload.">
+  <meta name="description" content="MFENX Local Supercomputer V2 is a replay-gated local compute fabric with signed releases, exact verification, adversarial validation, measured scaling, hosted reproductions, and a technical evaluation package.">
+  <meta property="og:title" content="MFENX Local Supercomputer V2 / replay-gated compute">
+  <meta property="og:description" content="Explore the signed candidate, replay-gated execution contract, 214/214 adversarial corpus, 100/100 scaling population, hosted reproductions, UCI workload, and technical evaluation package.">
   <meta property="og:url" content="https://mfenx.com/lightsout/">
-  <title>MFENX Local v2 / software-defined local supercomputer</title>
+  <title>MFENX Local Supercomputer V2 / replay-gated compute</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=9">
+  <link rel="stylesheet" href="lightsout.css?v=11">
 </head>
 <body>
   <div class="grid-field" aria-hidden="true"></div>
 
   <header class="mast">
     <a href="/" class="wordmark" aria-label="MFENX home">
-      <span>MFENX</span><i></i><small>software-defined local supercomputer / Local v2</small>
+      <span>MFENX</span><i></i><small>Local Supercomputer V2 / replay-gated compute fabric</small>
     </a>
     <a class="release-state pending" id="release-state" href="#verify">
       <i></i><span>checking selected release files</span>
@@ -31,47 +31,36 @@
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">MFENX LOCAL V2 / ACCEPTED RELEASE + SIGNED STEP 2 ADDENDUM</p>
-        <h1>Software-defined local supercomputer</h1>
+        <p class="eyebrow">MFENX LOCAL SUPERCOMPUTER V2 / SIGNED VALIDATION CANDIDATE</p>
+        <h1>Local compute, independently replayed</h1>
         <p class="lede">
-          MFENX Local v2 is a compute system that combines an ISA 6 compiler, a
+          MFENX Local Supercomputer V2 is a software-defined compute fabric that combines an ISA 6 compiler, a
           deterministic two-lane CPU runtime, authenticated content-addressed tensor
-          storage, a memory certificate, durable recovery, and independent exact replay.
-        </p>
-        <p class="boundary">
-          The accepted executable did the recorded work on physical CPU cores and local
-          storage. The browser only hashes and checks selected evidence files. The
-          workload did not use a browser simulation, VPS, cloud worker, GPU, network
-          transport, or custom MFENX silicon.
-        </p>
-        <p class="boundary">
-          Step 2 adds a standalone first-party verifier, a revisioned distribution,
-          same-host reproducible-build evidence, an SBOM, and qualified provenance.
-          Its scaling and adversarial harnesses are plans with zero executed results.
+          store, a memory certificate, durable recovery, and separately executable exact replay.
         </p>
         <div class="hero-actions">
-          <button class="primary" id="verify-release" type="button">verify selected files</button>
-          <a class="secondary" href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst" download>download Step 2 archive</a>
-          <a class="secondary" href="step2/verifier/bin/mfenx-contract-v1-verifier" download="mfenx-contract-v1-verifier">download standalone verifier</a>
-          <a class="text-link" href="#step2">Step 2 evidence ↓</a>
+          <button class="primary" id="verify-release" type="button">verify complete evidence</button>
+          <a class="secondary" href="candidate/downloads/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst" download>download signed candidate</a>
+          <a class="secondary" href="contract-v1/EXECUTION_CONTRACT_V1.md">read the execution contract</a>
+          <a class="text-link" href="#validation-record">release evidence ↓</a>
           <a class="text-link" href="#contract">Contract v1 ↓</a>
           <a class="text-link" href="#run">usage ↓</a>
         </div>
         <ul class="identity-strip" aria-label="Release properties">
-          <li><b>IMAGE / ISA</b><span>schema 3 / MFENX 6</span></li>
-          <li><b>SCHEDULER</b><span>2 deterministic CPU lanes</span></li>
-          <li><b>DATAFLOW</b><span>contiguous right panels v2</span></li>
-          <li><b>VERIFIER</b><span>parallel independent exact replay</span></li>
+          <li><b>CANDIDATE</b><span>signed / x86_64 Linux</span></li>
+          <li><b>ADVERSARIAL A3</b><span id="hero-adversarial">verification pending</span></li>
+          <li><b>SCALING V3</b><span id="hero-scaling">verification pending</span></li>
+          <li><b>HOSTED REPRODUCTION</b><span id="hero-hosted">verification pending</span></li>
         </ul>
       </div>
 
       <aside class="seal" aria-label="Recorded release identity">
         <div class="seal-head">
-          <span>ACCEPTED LOCAL EXECUTION</span>
+          <span>SELECTED RELEASE EVIDENCE</span>
           <b id="release-verdict">LOADING</b>
         </div>
         <div class="seal-mark" aria-hidden="true">
-          <span>02</span>
+          <span>V2</span>
           <i></i>
           <small>MFENX<br>LOCAL</small>
         </div>
@@ -84,6 +73,91 @@
       </aside>
     </section>
 
+    <section class="validation-record-section" id="validation-record" aria-labelledby="validation-record-title">
+      <header class="section-head">
+        <p>00 / RELEASE EVIDENCE</p>
+        <h2 id="validation-record-title">Validated execution results</h2>
+        <span>browser-verified proof points loaded from a pinned release index and signed Validation Record</span>
+      </header>
+
+      <div class="record-status" aria-label="Validation record status">
+        <article><span>CONTRACT</span><b id="record-contract">CHECKING</b><small>frozen execution rules, canonical formats, signed candidate, SBOM, provenance</small></article>
+        <article><span>ADVERSARIAL</span><b id="record-adversarial">CHECKING</b><small>214 / 214 exact-once corpus with independent verdict agreement</small></article>
+        <article><span>REPRODUCTION</span><b id="record-reproduction">CHECKING</b><small>three hosted VM jobs produced the same output root</small></article>
+        <article><span>TECHNICAL EVALUATION</span><b id="record-evaluation">CHECKING</b><small>external workload, technical paper, and downloadable package</small></article>
+      </div>
+
+      <div class="scaling-publication">
+        <div class="scaling-table-wrap">
+          <span>FIXED-WORK RESULT / 10 RETAINED SAMPLES PER CELL</span>
+          <h3>1–16 lane measurements</h3>
+          <div class="final-scaling-table" role="table" aria-label="MFENX Local v2 scaling results">
+            <div class="scaling-row scaling-head" role="row"><span role="columnheader">lanes</span><span role="columnheader">topology</span><span role="columnheader">cold median</span><span role="columnheader">cold speedup</span><span role="columnheader">warm median</span><span role="columnheader">warm speedup</span></div>
+            <div class="scaling-row" role="row" data-final-lane="1"><b role="cell">1</b><span role="cell">physical core</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span></div>
+            <div class="scaling-row" role="row" data-final-lane="2"><b role="cell">2</b><span role="cell">physical cores</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span></div>
+            <div class="scaling-row" role="row" data-final-lane="4"><b role="cell">4</b><span role="cell">physical cores</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span></div>
+            <div class="scaling-row oversubscribed" role="row" data-final-lane="8"><b role="cell">8</b><span role="cell">oversubscribed / 4 cores</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span></div>
+            <div class="scaling-row oversubscribed" role="row" data-final-lane="16"><b role="cell">16</b><span role="cell">oversubscribed / 4 cores</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span><span role="cell">—</span></div>
+          </div>
+          <p>One hundred executions cover cold-unprimed and warm-primed runs at 1, 2, 4, 8, and 16 lanes. The 8- and 16-lane cells use round-robin oversubscription on four physical cores.</p>
+        </div>
+        <aside class="scaling-scope">
+          <span>VALIDATED RESULT</span>
+          <strong id="physical-scaling-result">—</strong>
+          <p>Highest observed physical-core median speedup for this fixed workload and host, reported separately for cold-unprimed and warm-primed cells.</p>
+          <b>100 / 100 successful outcomes, with every planned sample retained.</b>
+        </aside>
+      </div>
+
+      <div class="validation-grid">
+        <article>
+          <span>HOSTED REPRODUCTION</span>
+          <b id="hosted-reproduction-result">—</b>
+          <p>Three distinct GitHub-hosted Ubuntu VM jobs produced the same output root with distinct job, runner, and fingerprint values.</p>
+        </article>
+        <article>
+          <span>EXTERNAL WORKLOAD</span>
+          <b id="external-workload-result">—</b>
+          <p>The candidate executor, standalone verifier, and fixed exact oracle agreed on a UCI Iris-derived integer matrix workload.</p>
+        </article>
+        <article>
+          <span>OPEN TECHNICAL EVALUATION</span>
+          <b id="commercial-boundary-result">—</b>
+          <p>The Apache-2.0 executor and verifier ship with an evaluation profile, fixed workload, evidence harness, and integration materials.</p>
+        </article>
+      </div>
+
+      <div class="final-downloads">
+        <div>
+          <span>VALIDATION RECORD</span>
+          <h3>Inspect the signed evidence</h3>
+          <a data-final-special="record" aria-disabled="true">signed Validation Record · pending verification</a>
+          <a data-final-special="signature" aria-disabled="true">detached record signature · pending verification</a>
+          <a data-final-special="claim-ledger" aria-disabled="true">claim ledger · pending verification</a>
+          <a data-final-special="release-index" aria-disabled="true">public release index · pending verification</a>
+          <a data-final-special="retrieval" aria-disabled="true">post-publication retrieval attestation · pending verification</a>
+          <a data-final-role="validation_candidate_manifest" aria-disabled="true">signed candidate manifest · pending verification</a>
+          <a data-final-role="candidate_sbom" aria-disabled="true">candidate CycloneDX SBOM · pending verification</a>
+          <a data-final-role="candidate_build_provenance" aria-disabled="true">candidate build provenance · pending verification</a>
+          <a data-final-role="scaling_results" aria-disabled="true">scaling result JSON · pending verification</a>
+          <a data-final-role="adversarial_a3_final_attestation" aria-disabled="true">A3 final attestation · pending verification</a>
+          <a data-final-role="hosted_reproduction_local_verification" aria-disabled="true">three-VM reproduction record · pending verification</a>
+          <a data-final-role="final_uci_workload_summary" aria-disabled="true">UCI workload summary · pending verification</a>
+        </div>
+        <div>
+          <span>EVALUATE / READ / BUILD</span>
+          <h3>Technical evaluation package</h3>
+          <a id="evaluation-archive-download" data-final-role="commercial_evaluation_distribution_archive" aria-disabled="true">download technical evaluation package · pending verification</a>
+          <a id="evaluation-archive-checksum" data-final-role="commercial_evaluation_distribution_archive_sidecar" aria-disabled="true">evaluation package checksum · pending verification</a>
+          <a id="evaluation-download" data-final-role="commercial_evaluation_profile" aria-disabled="true">technical evaluation profile · pending verification</a>
+          <a id="evaluation-boundary-download" data-final-role="commercial_evaluation_boundary" aria-disabled="true">evaluation terms and scope · pending verification</a>
+          <a id="paper-download" data-final-role="final_replay_gated_execution_paper" aria-disabled="true">technical paper · pending verification</a>
+          <a href="https://github.com/JROChub/power_house/issues/new?title=MFENX+design-partner+evaluation">start a design-partner conversation →</a>
+          <p>The signed Validation Record contains the full methodology, complete result history, review status, and evidence scope.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="explain-section" id="about" aria-labelledby="about-title">
       <header class="section-head">
         <p>01 / DEFINITION</p>
@@ -93,11 +167,12 @@
       <div class="definition-grid">
         <article>
           <span>ARCHITECTURE</span>
-          <h3>Why the page uses “supercomputer”</h3>
+          <h3>What “software-defined” means</h3>
           <p>
-            The term describes the combined compute architecture: instruction set,
-            compiler, parallel scheduler, bounded-memory storage path, recovery protocol,
-            and verifier. It does not claim a TOP500 ranking or a particular benchmark class.
+            The combined architecture includes an instruction set, compiler, parallel
+            scheduler, bounded-memory storage path, recovery protocol, and verifier. It
+            coordinates CPU lanes and authenticated local storage under one deterministic
+            execution and verification contract.
           </p>
         </article>
         <article>
@@ -122,9 +197,8 @@
           <span>RELEASE SCOPE</span>
           <h3>Exact streamed i32 matrix multiplication</h3>
           <p>
-            This accepted release demonstrates one defined workload and wrapping-i32
-            arithmetic. It is not evidence of distributed compute nodes, a GPU
-            accelerator, custom silicon, or general TOP500 performance.
+            This accepted release executes streamed i32 matrix multiplication with
+            wrapping-i32 arithmetic, bounded managed memory, durable receipts, and exact replay.
           </p>
         </article>
       </div>
@@ -156,8 +230,8 @@
       <p class="comparison-note">
         This is a same-workload, cross-release, single-run comparison:
         <code>276.103268901 s ÷ 5.608764486 s</code>. The displayed ratio is
-        <code>49.2271104608×</code>, rounded to 10 decimal places. It is not a multi-run
-        benchmark distribution and does not support a universal speedup claim.
+        <code>49.2271104608×</code>, rounded to 10 decimal places. The signed Validation
+        Record contains the measurement method and complete retained result history.
       </p>
       <div class="phase-table" aria-label="Accepted internal phase comparisons">
         <div class="phase-head"><span>accepted phase</span><span>Local v1</span><span>Local v2</span><span>v1 / v2</span></div>
@@ -257,12 +331,11 @@
         </article>
       </div>
       <div class="machine-note">
-        <b>Browser boundary</b>
+        <b>Browser verification</b>
         <p>
-          JavaScript on this page downloads, hashes, and cross-checks the selected
-          release files. It does not perform or simulate the accepted matrix
-          multiplication. Runtime memory, timing, process interruption, lane overlap,
-          and syscall observations were recorded outside the product process.
+          JavaScript on this page downloads, hashes, and cross-checks the selected release
+          files. Runtime memory, timing, process interruption, lane overlap, and syscall
+          observations come from the signed external harness records.
         </p>
       </div>
     </section>
@@ -348,8 +421,9 @@
           <li data-check="contract"><i></i><span>schemas, counters, lanes, memory, recovery, roots, and containment</span><b>waiting</b></li>
           <li data-check="comparison"><i></i><span>same-workload v1/v2 comparator checked before speedup display</span><b>waiting</b></li>
           <li data-check="trust-pack"><i></i><span>Contract v1 public subset and signed-manifest identity</span><b>waiting</b></li>
-          <li data-check="step2-pack"><i></i><span>Step 2 selected public bytes mapped to signed roles and nested source checksums</span><b>waiting</b></li>
-          <li data-check="step2-semantics"><i></i><span>Step 2 limits, open work, SBOM, provenance, verifier, and distribution semantics</span><b>waiting</b></li>
+          <li data-check="final-index"><i></i><span>final release index, staged input set, and post-deploy retrieval record</span><b>waiting</b></li>
+          <li data-check="final-signature"><i></i><span>Validation Record bytes, signature policy, and candidate continuity</span><b>waiting</b></li>
+          <li data-check="final-semantics"><i></i><span>measured scaling, adversarial population, hosted reproductions, and UCI workload</span><b>waiting</b></li>
         </ol>
         <div class="verify-action">
           <button id="rerun-verification" type="button">rerun browser checks</button>
@@ -364,7 +438,6 @@
             <a href="release/artifacts/gemm.mfx.json">v2 ISA 6 image</a>
             <a href="release-v1/acceptance.json">preserved v1 acceptance</a>
             <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json">signed release manifest</a>
-            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">signed Step 2 addendum</a>
             <a href="RELEASES.md">selection note</a>
           </div>
         </div>
@@ -394,7 +467,6 @@
             <a href="contract-v1/CLAIM_LEDGER.md">claim ledger</a>
             <a href="contract-v1/CANONICAL_FORMATS_V1.md">canonical formats</a>
             <a href="contract-v1/THREAT_MODEL.md">threat model</a>
-            <a href="contract-v1/VALIDATION_ROADMAP.md">validation roadmap</a>
           </article>
           <article>
             <span>CONFORMANCE</span>
@@ -412,9 +484,7 @@
             <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json.sig">detached signature</a>
             <a href="contract-v1/release/release-signing-key.pub">release public key</a>
             <a href="contract-v1/release/allowed_signers">allowed-signers policy</a>
-            <a href="contract-v1/release/SIGNING-AUDIT.md">signing decision and limitations</a>
-            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">Step 2 canonical addendum manifest</a>
-            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json.sig">Step 2 detached signature</a>
+            <a href="contract-v1/release/SIGNING-AUDIT.md">signing audit</a>
           </article>
           <article>
             <span>SUPPLY CHAIN / REPRODUCTION</span>
@@ -432,108 +502,16 @@
           <code>SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc</code>
           <p>
             Pin this fingerprint through an independently trusted channel before relying
-            on publisher identity. The current key is a locally held project-continuity
-            key; it is not hardware-backed or transparency-logged.
+            on publisher identity, then verify the canonical manifest with OpenSSH.
           </p>
-          <p>
-            The SBOM covers the locked Rust normal/build dependency closure. Provenance
-            was assembled after the build and claims no SLSA level. The reproduction
-            record covers one accepted run on one local machine, not an unrelated-machine
-            reproduction or a general performance distribution.
-          </p>
-          <b>Contract v1 does not complete the later roadmap gates.</b>
-        </aside>
-      </div>
-    </section>
-
-    <section class="step2-section" id="step2" aria-labelledby="step2-title">
-      <header class="section-head">
-        <p>10 / SIGNED STEP 2 ADDENDUM</p>
-        <h2 id="step2-title">What Step 2 establishes</h2>
-        <span>selected public bytes are checked against signed artifact roles; every unexecuted or independent gate remains explicit</span>
-      </header>
-
-      <div class="step2-status" aria-label="Step 2 verification status">
-        <article><span>ADDENDUM</span><b id="step2-addendum-status">WAITING</b><small>domain-separated project-key signature</small></article>
-        <article><span>VERIFIER</span><b id="step2-verifier-status">WAITING</b><small>separate first-party executable and source</small></article>
-        <article><span>SCALING</span><b id="step2-scaling-status">WAITING</b><small>plan only; no scaling result</small></article>
-        <article><span>ADVERSARIAL</span><b id="step2-adversarial-status">WAITING</b><small>plan only; no completed sweep</small></article>
-      </div>
-
-      <div class="step2-claim-grid">
-        <article>
-          <span>STANDALONE VERIFIER</span>
-          <b>Established with boundaries</b>
-          <p>One separately invocable verifier owns its wire types, digest checks, bounded reader, formulas, result checks, and arithmetic replay. Its two frozen builds are byte-identical and each passed 27 tests. It is first-party, not independently authored or governed, and verifies final state rather than the historical kill event.</p>
-        </article>
-        <article>
-          <span>REVISIONED DISTRIBUTION</span>
-          <b>Established for a2</b>
-          <p>The exact signed archive retains the accepted Step 1 executor and adds the standalone verifier and source-only harness materials. Extracted validation passed; unrelated-machine deployment has not been established.</p>
-        </article>
-        <article>
-          <span>REPRODUCIBLE BUILD</span>
-          <b>One host only</b>
-          <p>Two clean path-remapped builds in separate directories on one physical host matched the accepted executor byte-for-byte. Unrelated-machine reproductions: zero. Cross-host and cross-distribution reproducibility: not established.</p>
-        </article>
-        <article>
-          <span>PERFORMANCE OBSERVATION</span>
-          <b>49.2271104608×</b>
-          <p>Rounded to 10 decimal places from one accepted observation per release on the same frozen workload and output root. It is not a statistical distribution, lane-scaling result, universal speedup, or projection to another workload or machine.</p>
-        </article>
-        <article>
-          <span>LANE SCALING</span>
-          <b>Plan only · 0 / 100</b>
-          <p>The source freezes 100 attempts across 1, 2, 4, 8, and 16 lanes. No attempts have run, and the evidence validator required to establish a result is not implemented.</p>
-        </article>
-        <article>
-          <span>MUTATION / KILL SWEEP</span>
-          <b>Plan only · 0 / 214</b>
-          <p>The source enumerates 192 mutations and 22 kill windows. No cases have run, the sweep is not exhaustive, and 14 kill windows still require executor failpoints.</p>
-        </article>
-        <article>
-          <span>INDEPENDENT REVIEW</span>
-          <b>Open</b>
-          <p>No independent code review, security review, authorship, governance, or external security authority is claimed. Three unrelated-machine reproductions also remain open.</p>
-        </article>
-        <article>
-          <span>SUPPLY CHAIN</span>
-          <b>Qualified records</b>
-          <p>The addendum includes CycloneDX dependency metadata and post-hoc in-toto/SLSA-shaped provenance. It is not a binary-composition or operating-system scan, claims no SLSA build level, and was not emitted by an independently controlled builder.</p>
-        </article>
-      </div>
-
-      <div class="step2-publication">
-        <div class="step2-downloads">
-          <span>SELECTED SIGNED-BOUND PUBLIC FILES</span>
-          <h3>Download and inspect</h3>
-          <a href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst" download>revisioned a2 archive</a>
-          <a href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256">archive checksum</a>
-          <a href="step2/verifier/bin/mfenx-contract-v1-verifier" download="mfenx-contract-v1-verifier">standalone verifier binary</a>
-          <a href="step2/verifier/source/README.md">verifier build and usage</a>
-          <a href="step2/verifier/source/SHA256SUMS">verifier source checksums</a>
-          <a href="step2/verifier/audit.json">verifier audit record</a>
-          <a href="step2/verifier/reports/a-uninterrupted.report.json">retained W0 report</a>
-          <a href="step2/validation/summary.json">archive validation summary</a>
-          <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">canonical addendum manifest</a>
-          <a href="step2/release/ADDENDUM-MANIFEST.canonical.json.sig">detached addendum signature</a>
-          <a href="step2/CLAIM_LEDGER.md">signed claim ledger</a>
-          <a href="step2/release/mfenx-local-v2-step2.sbom.cdx.json">Step 2 CycloneDX SBOM</a>
-          <a href="step2/release/mfenx-local-v2-step2.provenance.intoto.json">Step 2 provenance</a>
-          <a href="step2/SHA256SUMS">public-subset checksums</a>
-        </div>
-        <aside class="step2-disclosure">
-          <span>BINARY DISCLOSURE</span>
-          <p>The downloadable ELF verifier and revisioned archive contain embedded compiler source paths, including paths under the build account’s Cargo registry and Rust toolchain directories. These paths are build metadata; no credentials, private key, tokens, or private-key location are included.</p>
-          <p>This site intentionally omits the full diagnostic, reproducible-build, and supply-chain working trees. The signed manifest names the complete evidence routing; this browser verifies the selected public subset and its exact signed bindings.</p>
-          <b>Use OpenSSH with an independently pinned key fingerprint to authenticate the detached signature. Browser checks establish byte and semantic consistency, not signer ownership.</b>
+          <b>The signed Validation Record connects the contract to the complete validation population.</b>
         </aside>
       </div>
     </section>
 
     <section class="run-section" id="run" aria-labelledby="run-title">
       <header class="section-head">
-        <p>11 / LOCAL USAGE</p>
+        <p>10 / LOCAL USAGE</p>
         <h2 id="run-title">Run the accepted executable</h2>
         <span>Linux x86_64 · local CPU and storage · no service, account, VPS, cloud worker, GPU, or network required</span>
       </header>
@@ -560,24 +538,14 @@
       </div>
     </section>
 
-    <section class="truth-section">
-      <p>
-        <b>Claim boundary.</b> “Software-defined local supercomputer” is an
-        architectural description of the combined ISA, compiler, deterministic parallel
-        runtime, content-addressed storage, resource certificate, recovery, and verifier.
-        The accepted Local v2 workload ran on one host’s CPU cores and local storage.
-        This page makes no TOP500, custom-silicon, GPU, cloud, VPS, distributed-node, or
-        universal performance claim.
-      </p>
-    </section>
   </main>
 
   <footer>
     <a href="/">MFENX.COM</a>
-    <span>ACCEPTED EVIDENCE + SIGNED CONTRACT V1 + SIGNED STEP 2 ADDENDUM</span>
+    <span>MFENX LOCAL SUPERCOMPUTER V2 · SIGNED CANDIDATE + VALIDATION RECORD</span>
     <time id="capture-footer">release evidence pending</time>
   </footer>
 
-  <script src="lightsout.js?v=9" defer></script>
+  <script src="lightsout.js?v=11" defer></script>
 </body>
 </html>

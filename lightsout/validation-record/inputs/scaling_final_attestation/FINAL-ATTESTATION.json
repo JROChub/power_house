@@ -1,0 +1,91 @@
+{
+  "analysis": {
+    "analysis_id": "591634d8c72f11a48469db35127203be5d3f2268d85b470245ba08c8b9534e0d",
+    "analysis_protocol_sha256": "676f212ab3e61df11c0326cb36befa2a1b685b67c5f3f93238229fdf40a78131",
+    "descriptive_analysis_tool_sha256": "8f19daa266e227beaf06fad73a2ce81e1723d7fd10469c70f4538cdf4786349e",
+    "results_json_sha256": "bb1fd8bfe6158f2e68e028b9f3085359fcf7288d09cfd59e74a9083ef4360608",
+    "results_markdown_sha256": "7e88ee2c79d183124f92f20d348569c5ab49a91d84377c46476f67a185d4903b",
+    "sample_filtering_applied": false,
+    "sample_filtering_permitted": false
+  },
+  "attestation_id": "13a471823c4223931f8c400de97997caaea3da867d94b914db35c196ae292d14",
+  "attested_at": "2026-08-22T13:53:14Z",
+  "claim_boundary": {
+    "cold_unprimed": "The label does not claim an operating-system or CPU-cache reset.",
+    "cross_machine": "This evidence is a single-host fixed-work population and makes no cross-machine or inferential performance claim.",
+    "physical_core_scaling": "Only lane counts 1, 2, and 4 are physical-core scaling points on this four-core host.",
+    "supercomputer_designation": "This scaling result is evidence about the signed executor on the measured host; by itself it does not establish a hardware-class or institutional supercomputer designation.",
+    "oversubscribed_scaling": "Lane counts 8 and 16 are deterministic oversubscribed lane configurations on four physical cores, not 8-core or 16-core measurements.",
+    "warm_primed": "The label means the harness primed a fresh measured checkpoint."
+  },
+  "correctness": {
+    "all_output_roots_equal": true,
+    "genuine_affinity_constraint_failure_rows": 0,
+    "informational_current_cpu_transition_rows": 354,
+    "output_root": "63ed4dd0918ee5553c5c473a568b4c2a1c9d0326c1b83e60f9c3dc23ec70d462",
+    "task_sample_rows": 842696
+  },
+  "execution": {
+    "diagnostic_partial_population": false,
+    "ended_at": "2026-08-22T13:36:39Z",
+    "failed": 0,
+    "max_attempts": null,
+    "planned": 100,
+    "retained": 100,
+    "started_at": "2026-08-22T12:56:39Z",
+    "succeeded": 100
+  },
+  "identity": {
+    "allowed_signers_sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+    "archive_root": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "reference_verifier_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+    "release_archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "release_manifest_sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+    "release_manifest_signature_sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
+    "signed_candidate_verified": true
+  },
+  "observed_median_speedups": {
+    "cold_unprimed": {
+      "physical_1_lane": "1.000000",
+      "physical_2_lanes": "1.184454",
+      "physical_4_lanes": "1.315179",
+      "oversubscribed_8_lanes_on_4_cores": "1.223765",
+      "oversubscribed_16_lanes_on_4_cores": "1.136592"
+    },
+    "warm_primed": {
+      "physical_1_lane": "1.000000",
+      "physical_2_lanes": "1.158995",
+      "physical_4_lanes": "1.213926",
+      "oversubscribed_8_lanes_on_4_cores": "1.205077",
+      "oversubscribed_16_lanes_on_4_cores": "1.148946"
+    }
+  },
+  "plan_id": "aa94ea9914aae7d29833e86c313cf5335a2f0ac0d85f7a8eda2ec075965d072e",
+  "run_id": "23c051e7e843d0f22ab93480a439f5d6a4d1ca4fb5329245a6366e2976ba9be7",
+  "schema": "mfenx-local-fixed-work-scaling-final-attestation/v1",
+  "source_hashes": {
+    "execution_end_sha256": "aafc4a8bd646b730ccebe9d4b08608c17620db1c02d42ac69753a932c851d277",
+    "execution_preflight_sha256": "fc8fcb0cfbf384855a32d8d0f85034b688b7305f1fbfbf4a127c871cf02e37bf",
+    "execution_start_sha256": "5583fc3a26097cc6c787501bfc9c57091e106a82c79eef049973c4bfd9d70a74",
+    "independent_validation_preseal_sha256": "8b65fd73306cc0a2992eeb1df3554c67061b2b7a26487fc23714b71f8591d423",
+    "launch_preconditions_sha256": "ae0f9b95915149f3dd58f7430b8d822af4413241db804ab2e16ee2185e640fa7",
+    "plan_sha256": "5be21f85e4b480adddbd3a78ba35995a3198cffac3846aa71fe5bfa97209f2ba",
+    "run_sha256": "3c79a26ca98451745a2bf74be14a82e40016c89a37587c04c66a15553dca04e7",
+    "store_inventory_sha256": "100a3a5c16c8bc9d15d6ceb069ebbf1321cc85399923ce6009cd75fd5745859d"
+  },
+  "validation": {
+    "automatic_exit_status": 0,
+    "complete_for_scaling_claim": true,
+    "deterministic_analysis_reproduction": true,
+    "harness_sha256": "24a3dcba02a98f4c7da7973e90f8cbbb0a860f744b3eadd88647d4eabe3f201e",
+    "independent_preseal_exit_status": 0,
+    "test_count": 16,
+    "test_invocation_error_preserved": true,
+    "test_invocation_error_log_sha256": "5eb8b8f1a9dad17a0ec5d27fc97a81a53283f7a937cb75b71421b14b2bd7d437",
+    "test_log_sha256": "6621d8d8aadfd3d85d651ca3350706134de6aa5e97daf81d0ab78cc1912ec412",
+    "test_source_sha256": "0bb76e338f3335f31c860d139648db710a90589c91d85f0ac85c11e991c34a89",
+    "tests_passed": 16,
+    "validation_id": "c3cf525fffbccf59576381a5be1b7dcb48d641bc27c68004d50c1dcd5efe4d5b"
+  }
+}

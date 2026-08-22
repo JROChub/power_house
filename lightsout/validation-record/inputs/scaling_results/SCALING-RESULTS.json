@@ -1,0 +1,1194 @@
+{
+  "affinity_observer": {
+    "by_lane_and_stage": [
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 1,
+        "stage": "prime_run",
+        "task_sample_rows": 64555
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 1,
+        "stage": "prime_standalone_verify",
+        "task_sample_rows": 292
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 1,
+        "stage": "measured_run",
+        "task_sample_rows": 138014
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 1,
+        "stage": "measured_standalone_verify",
+        "task_sample_rows": 594
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 2,
+        "stage": "prime_run",
+        "task_sample_rows": 59349
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 2,
+        "stage": "prime_standalone_verify",
+        "task_sample_rows": 315
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 2,
+        "stage": "measured_run",
+        "task_sample_rows": 120705
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 2,
+        "stage": "measured_standalone_verify",
+        "task_sample_rows": 631
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 2,
+        "lanes": 4,
+        "stage": "prime_run",
+        "task_sample_rows": 53430
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 4,
+        "stage": "prime_standalone_verify",
+        "task_sample_rows": 409
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 16,
+        "lanes": 4,
+        "stage": "measured_run",
+        "task_sample_rows": 102313
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 4,
+        "stage": "measured_standalone_verify",
+        "task_sample_rows": 824
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 29,
+        "lanes": 8,
+        "stage": "prime_run",
+        "task_sample_rows": 51918
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 8,
+        "stage": "prime_standalone_verify",
+        "task_sample_rows": 501
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 59,
+        "lanes": 8,
+        "stage": "measured_run",
+        "task_sample_rows": 101863
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 8,
+        "stage": "measured_standalone_verify",
+        "task_sample_rows": 1004
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 90,
+        "lanes": 16,
+        "stage": "prime_run",
+        "task_sample_rows": 47044
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 10,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 16,
+        "stage": "prime_standalone_verify",
+        "task_sample_rows": 662
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 158,
+        "lanes": 16,
+        "stage": "measured_run",
+        "task_sample_rows": 96940
+      },
+      {
+        "affinity_constraint_failure_rows": 0,
+        "commands": 20,
+        "current_cpu_transition_rows_informational": 0,
+        "lanes": 16,
+        "stage": "measured_standalone_verify",
+        "task_sample_rows": 1333
+      }
+    ],
+    "commands": 300,
+    "current_cpu_transition_rows_informational": 354,
+    "genuine_affinity_constraint_failures": 0,
+    "success_rule": "sched_setaffinity succeeds and each lane task Cpus_allowed_list equals its one commanded CPU; the proc stat current_cpu field is informational because it reports the CPU on which a sleeping task last executed until rescheduled",
+    "task_sample_rows": 842696
+  },
+  "analysis_id": "591634d8c72f11a48469db35127203be5d3f2268d85b470245ba08c8b9534e0d",
+  "cells": [
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 16401250421,
+        "median_decimal": "14562316443.5",
+        "median_denominator": 2,
+        "median_numerator": 29124632887,
+        "minimum": 13884496396
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 1747547475,
+        "median_decimal": "1658032448.0",
+        "median_denominator": 2,
+        "median_numerator": 3316064896,
+        "minimum": 1593466614
+      },
+      "lane1_median_speedup_decimal": "1.000000",
+      "lanes": 1,
+      "median_useful_integer_operations_per_second_decimal": "129034978.692",
+      "physical_core_count": 1,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 16401250421,
+          "external_standalone_verifier_wall_ns": 1657940086,
+          "sample_id": "r00-o00-cold_unprimed-p00-l01",
+          "sequence": 0,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14196264336,
+          "external_standalone_verifier_wall_ns": 1658124810,
+          "sample_id": "r00-o01-cold_unprimed-p02-l01",
+          "sequence": 12,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 16041423717,
+          "external_standalone_verifier_wall_ns": 1630578190,
+          "sample_id": "r00-o02-cold_unprimed-p04-l01",
+          "sequence": 24,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14946273846,
+          "external_standalone_verifier_wall_ns": 1711967886,
+          "sample_id": "r00-o03-cold_unprimed-p03-l01",
+          "sequence": 33,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14734384794,
+          "external_standalone_verifier_wall_ns": 1680331483,
+          "sample_id": "r00-o04-cold_unprimed-p01-l01",
+          "sequence": 41,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14565781484,
+          "external_standalone_verifier_wall_ns": 1625152867,
+          "sample_id": "r00-o05-cold_unprimed-p04-l01",
+          "sequence": 54,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13884496396,
+          "external_standalone_verifier_wall_ns": 1593466614,
+          "sample_id": "r00-o06-cold_unprimed-p02-l01",
+          "sequence": 62,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14030757112,
+          "external_standalone_verifier_wall_ns": 1747547475,
+          "sample_id": "r00-o07-cold_unprimed-p00-l01",
+          "sequence": 70,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14558851403,
+          "external_standalone_verifier_wall_ns": 1684142129,
+          "sample_id": "r00-o08-cold_unprimed-p01-l01",
+          "sequence": 81,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14323165823,
+          "external_standalone_verifier_wall_ns": 1642876943,
+          "sample_id": "r00-o09-cold_unprimed-p03-l01",
+          "sequence": 93,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "cold_unprimed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 21140852135,
+        "median_decimal": "12294541476.0",
+        "median_denominator": 2,
+        "median_numerator": 24589082952,
+        "minimum": 11382186423
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 2142350240,
+        "median_decimal": "1759012127.0",
+        "median_denominator": 2,
+        "median_numerator": 3518024254,
+        "minimum": 1702993735
+      },
+      "lane1_median_speedup_decimal": "1.184454",
+      "lanes": 2,
+      "median_useful_integer_operations_per_second_decimal": "152835971.611",
+      "physical_core_count": 2,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 14241927414,
+          "external_standalone_verifier_wall_ns": 1735782703,
+          "sample_id": "r00-o00-cold_unprimed-p01-l02",
+          "sequence": 1,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12924102708,
+          "external_standalone_verifier_wall_ns": 1734532528,
+          "sample_id": "r00-o01-cold_unprimed-p00-l02",
+          "sequence": 10,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12691899727,
+          "external_standalone_verifier_wall_ns": 1721548236,
+          "sample_id": "r00-o02-cold_unprimed-p02-l02",
+          "sequence": 22,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12529788992,
+          "external_standalone_verifier_wall_ns": 1778942603,
+          "sample_id": "r00-o03-cold_unprimed-p04-l02",
+          "sequence": 34,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11620533532,
+          "external_standalone_verifier_wall_ns": 1946420928,
+          "sample_id": "r00-o04-cold_unprimed-p03-l02",
+          "sequence": 43,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11382186423,
+          "external_standalone_verifier_wall_ns": 1842378432,
+          "sample_id": "r00-o05-cold_unprimed-p03-l02",
+          "sequence": 53,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 21140852135,
+          "external_standalone_verifier_wall_ns": 1739081651,
+          "sample_id": "r00-o06-cold_unprimed-p04-l02",
+          "sequence": 64,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11862990382,
+          "external_standalone_verifier_wall_ns": 2142350240,
+          "sample_id": "r00-o07-cold_unprimed-p02-l02",
+          "sequence": 72,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12059293960,
+          "external_standalone_verifier_wall_ns": 1791288296,
+          "sample_id": "r00-o08-cold_unprimed-p00-l02",
+          "sequence": 80,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12038285247,
+          "external_standalone_verifier_wall_ns": 1702993735,
+          "sample_id": "r00-o09-cold_unprimed-p01-l02",
+          "sequence": 91,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "cold_unprimed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 14886771131,
+        "median_decimal": "11072497582.0",
+        "median_denominator": 2,
+        "median_numerator": 22144995164,
+        "minimum": 10180914169
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 2464440070,
+        "median_decimal": "2281307642.5",
+        "median_denominator": 2,
+        "median_numerator": 4562615285,
+        "minimum": 2193553962
+      },
+      "lane1_median_speedup_decimal": "1.315179",
+      "lanes": 4,
+      "median_useful_integer_operations_per_second_decimal": "169704095.944",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 12884359072,
+          "external_standalone_verifier_wall_ns": 2464440070,
+          "sample_id": "r00-o00-cold_unprimed-p03-l04",
+          "sequence": 3,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10180914169,
+          "external_standalone_verifier_wall_ns": 2305358482,
+          "sample_id": "r00-o01-cold_unprimed-p01-l04",
+          "sequence": 11,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11649005248,
+          "external_standalone_verifier_wall_ns": 2328653887,
+          "sample_id": "r00-o02-cold_unprimed-p00-l04",
+          "sequence": 20,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11271792559,
+          "external_standalone_verifier_wall_ns": 2194843467,
+          "sample_id": "r00-o03-cold_unprimed-p02-l04",
+          "sequence": 32,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11177271515,
+          "external_standalone_verifier_wall_ns": 2298703105,
+          "sample_id": "r00-o04-cold_unprimed-p04-l04",
+          "sequence": 44,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10593566093,
+          "external_standalone_verifier_wall_ns": 2263912180,
+          "sample_id": "r00-o05-cold_unprimed-p01-l04",
+          "sequence": 51,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10777458784,
+          "external_standalone_verifier_wall_ns": 2193553962,
+          "sample_id": "r00-o06-cold_unprimed-p03-l04",
+          "sequence": 63,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14886771131,
+          "external_standalone_verifier_wall_ns": 2196498714,
+          "sample_id": "r00-o07-cold_unprimed-p04-l04",
+          "sequence": 74,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10435958392,
+          "external_standalone_verifier_wall_ns": 2299151969,
+          "sample_id": "r00-o08-cold_unprimed-p02-l04",
+          "sequence": 82,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10967723649,
+          "external_standalone_verifier_wall_ns": 2237261649,
+          "sample_id": "r00-o09-cold_unprimed-p00-l04",
+          "sequence": 90,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "cold_unprimed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 16014500124,
+        "median_decimal": "11899606585.0",
+        "median_denominator": 2,
+        "median_numerator": 23799213170,
+        "minimum": 10831479153
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 2891933062,
+        "median_decimal": "2701233722.0",
+        "median_denominator": 2,
+        "median_numerator": 5402467444,
+        "minimum": 2611393994
+      },
+      "lane1_median_speedup_decimal": "1.223765",
+      "lanes": 8,
+      "median_useful_integer_operations_per_second_decimal": "157908429.878",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 14378588997,
+          "external_standalone_verifier_wall_ns": 2672889231,
+          "sample_id": "r00-o00-cold_unprimed-p04-l08",
+          "sequence": 4,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 16014500124,
+          "external_standalone_verifier_wall_ns": 2705560542,
+          "sample_id": "r00-o01-cold_unprimed-p03-l08",
+          "sequence": 13,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11436092268,
+          "external_standalone_verifier_wall_ns": 2611393994,
+          "sample_id": "r00-o02-cold_unprimed-p01-l08",
+          "sequence": 21,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13882022140,
+          "external_standalone_verifier_wall_ns": 2664136627,
+          "sample_id": "r00-o03-cold_unprimed-p00-l08",
+          "sequence": 30,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11170283249,
+          "external_standalone_verifier_wall_ns": 2704703650,
+          "sample_id": "r00-o04-cold_unprimed-p02-l08",
+          "sequence": 42,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13296511332,
+          "external_standalone_verifier_wall_ns": 2617358115,
+          "sample_id": "r00-o05-cold_unprimed-p00-l08",
+          "sequence": 50,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12363120902,
+          "external_standalone_verifier_wall_ns": 2705512212,
+          "sample_id": "r00-o06-cold_unprimed-p01-l08",
+          "sequence": 61,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10831479153,
+          "external_standalone_verifier_wall_ns": 2792322079,
+          "sample_id": "r00-o07-cold_unprimed-p03-l08",
+          "sequence": 73,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10992238584,
+          "external_standalone_verifier_wall_ns": 2891933062,
+          "sample_id": "r00-o08-cold_unprimed-p04-l08",
+          "sequence": 84,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11356118048,
+          "external_standalone_verifier_wall_ns": 2697763794,
+          "sample_id": "r00-o09-cold_unprimed-p02-l08",
+          "sequence": 92,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "cold_unprimed",
+      "topology_class": "oversubscribed_round_robin",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 13637228381,
+        "median_decimal": "12812258960.5",
+        "median_denominator": 2,
+        "median_numerator": 25624517921,
+        "minimum": 11854668058
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 3632256505,
+        "median_decimal": "3514867919.0",
+        "median_denominator": 2,
+        "median_numerator": 7029735838,
+        "minimum": 3473248101
+      },
+      "lane1_median_speedup_decimal": "1.136592",
+      "lanes": 16,
+      "median_useful_integer_operations_per_second_decimal": "146660178.958",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 13011732116,
+          "external_standalone_verifier_wall_ns": 3473248101,
+          "sample_id": "r00-o00-cold_unprimed-p02-l16",
+          "sequence": 2,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12814747424,
+          "external_standalone_verifier_wall_ns": 3511138415,
+          "sample_id": "r00-o01-cold_unprimed-p04-l16",
+          "sequence": 14,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12809770497,
+          "external_standalone_verifier_wall_ns": 3632256505,
+          "sample_id": "r00-o02-cold_unprimed-p03-l16",
+          "sequence": 23,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11854668058,
+          "external_standalone_verifier_wall_ns": 3513881319,
+          "sample_id": "r00-o03-cold_unprimed-p01-l16",
+          "sequence": 31,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12569073785,
+          "external_standalone_verifier_wall_ns": 3515854519,
+          "sample_id": "r00-o04-cold_unprimed-p00-l16",
+          "sequence": 40,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12930193762,
+          "external_standalone_verifier_wall_ns": 3625786467,
+          "sample_id": "r00-o05-cold_unprimed-p02-l16",
+          "sequence": 52,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13637228381,
+          "external_standalone_verifier_wall_ns": 3601415811,
+          "sample_id": "r00-o06-cold_unprimed-p00-l16",
+          "sequence": 60,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12146667609,
+          "external_standalone_verifier_wall_ns": 3506406605,
+          "sample_id": "r00-o07-cold_unprimed-p01-l16",
+          "sequence": 71,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12925349876,
+          "external_standalone_verifier_wall_ns": 3528943856,
+          "sample_id": "r00-o08-cold_unprimed-p03-l16",
+          "sequence": 83,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12396928415,
+          "external_standalone_verifier_wall_ns": 3503335661,
+          "sample_id": "r00-o09-cold_unprimed-p04-l16",
+          "sequence": 94,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "cold_unprimed",
+      "topology_class": "oversubscribed_round_robin",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 16598901497,
+        "median_decimal": "14017605601.0",
+        "median_denominator": 2,
+        "median_numerator": 28035211202,
+        "minimum": 13045829593
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 1963625376,
+        "median_decimal": "1657743210.0",
+        "median_denominator": 2,
+        "median_numerator": 3315486420,
+        "minimum": 1540052076
+      },
+      "lane1_median_speedup_decimal": "1.000000",
+      "lanes": 1,
+      "median_useful_integer_operations_per_second_decimal": "134049155.433",
+      "physical_core_count": 1,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 14486502293,
+          "external_standalone_verifier_wall_ns": 1798488186,
+          "sample_id": "r00-o00-warm_primed-p00-l01",
+          "sequence": 5,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13900251116,
+          "external_standalone_verifier_wall_ns": 1641958209,
+          "sample_id": "r00-o01-warm_primed-p02-l01",
+          "sequence": 17,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13456959315,
+          "external_standalone_verifier_wall_ns": 1963625376,
+          "sample_id": "r00-o02-warm_primed-p04-l01",
+          "sequence": 29,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 15248384539,
+          "external_standalone_verifier_wall_ns": 1673528211,
+          "sample_id": "r00-o03-warm_primed-p03-l01",
+          "sequence": 38,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13304857564,
+          "external_standalone_verifier_wall_ns": 1621110865,
+          "sample_id": "r00-o04-warm_primed-p01-l01",
+          "sequence": 46,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13260570198,
+          "external_standalone_verifier_wall_ns": 1615547615,
+          "sample_id": "r00-o05-warm_primed-p04-l01",
+          "sequence": 59,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13045829593,
+          "external_standalone_verifier_wall_ns": 1720135652,
+          "sample_id": "r00-o06-warm_primed-p02-l01",
+          "sequence": 67,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14220689588,
+          "external_standalone_verifier_wall_ns": 1540052076,
+          "sample_id": "r00-o07-warm_primed-p00-l01",
+          "sequence": 75,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14134960086,
+          "external_standalone_verifier_wall_ns": 1542969224,
+          "sample_id": "r00-o08-warm_primed-p01-l01",
+          "sequence": 86,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 16598901497,
+          "external_standalone_verifier_wall_ns": 1720082125,
+          "sample_id": "r00-o09-warm_primed-p03-l01",
+          "sequence": 98,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "warm_primed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 16564567325,
+        "median_decimal": "12094623824.0",
+        "median_denominator": 2,
+        "median_numerator": 24189247648,
+        "minimum": 11313154935
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 1828237113,
+        "median_decimal": "1734700395.0",
+        "median_denominator": 2,
+        "median_numerator": 3469400790,
+        "minimum": 1696930534
+      },
+      "lane1_median_speedup_decimal": "1.158995",
+      "lanes": 2,
+      "median_useful_integer_operations_per_second_decimal": "155362268.339",
+      "physical_core_count": 2,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 11313154935,
+          "external_standalone_verifier_wall_ns": 1696930534,
+          "sample_id": "r00-o00-warm_primed-p01-l02",
+          "sequence": 6,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12295921202,
+          "external_standalone_verifier_wall_ns": 1729962837,
+          "sample_id": "r00-o01-warm_primed-p00-l02",
+          "sequence": 15,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13622344203,
+          "external_standalone_verifier_wall_ns": 1807954295,
+          "sample_id": "r00-o02-warm_primed-p02-l02",
+          "sequence": 27,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 14803929896,
+          "external_standalone_verifier_wall_ns": 1770079792,
+          "sample_id": "r00-o03-warm_primed-p04-l02",
+          "sequence": 39,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13227966827,
+          "external_standalone_verifier_wall_ns": 1715570885,
+          "sample_id": "r00-o04-warm_primed-p03-l02",
+          "sequence": 48,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11893326446,
+          "external_standalone_verifier_wall_ns": 1736613256,
+          "sample_id": "r00-o05-warm_primed-p03-l02",
+          "sequence": 58,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11569697832,
+          "external_standalone_verifier_wall_ns": 1729346849,
+          "sample_id": "r00-o06-warm_primed-p04-l02",
+          "sequence": 69,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11854127518,
+          "external_standalone_verifier_wall_ns": 1736755746,
+          "sample_id": "r00-o07-warm_primed-p02-l02",
+          "sequence": 77,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11321684353,
+          "external_standalone_verifier_wall_ns": 1732787534,
+          "sample_id": "r00-o08-warm_primed-p00-l02",
+          "sequence": 85,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 16564567325,
+          "external_standalone_verifier_wall_ns": 1828237113,
+          "sample_id": "r00-o09-warm_primed-p01-l02",
+          "sequence": 96,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "warm_primed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 13331508117,
+        "median_decimal": "11547331715.5",
+        "median_denominator": 2,
+        "median_numerator": 23094663431,
+        "minimum": 10664450867
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 2350274125,
+        "median_decimal": "2247010245.5",
+        "median_denominator": 2,
+        "median_numerator": 4494020491,
+        "minimum": 2175859711
+      },
+      "lane1_median_speedup_decimal": "1.213926",
+      "lanes": 4,
+      "median_useful_integer_operations_per_second_decimal": "162725748.103",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 11995206687,
+          "external_standalone_verifier_wall_ns": 2175859711,
+          "sample_id": "r00-o00-warm_primed-p03-l04",
+          "sequence": 8,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11941678434,
+          "external_standalone_verifier_wall_ns": 2191166444,
+          "sample_id": "r00-o01-warm_primed-p01-l04",
+          "sequence": 16,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11661604329,
+          "external_standalone_verifier_wall_ns": 2325775764,
+          "sample_id": "r00-o02-warm_primed-p00-l04",
+          "sequence": 25,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11619012311,
+          "external_standalone_verifier_wall_ns": 2272073558,
+          "sample_id": "r00-o03-warm_primed-p02-l04",
+          "sequence": 37,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11475651120,
+          "external_standalone_verifier_wall_ns": 2298210486,
+          "sample_id": "r00-o04-warm_primed-p04-l04",
+          "sequence": 49,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11083694536,
+          "external_standalone_verifier_wall_ns": 2203931964,
+          "sample_id": "r00-o05-warm_primed-p01-l04",
+          "sequence": 56,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10990876192,
+          "external_standalone_verifier_wall_ns": 2259760920,
+          "sample_id": "r00-o06-warm_primed-p03-l04",
+          "sequence": 68,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 10664450867,
+          "external_standalone_verifier_wall_ns": 2222218978,
+          "sample_id": "r00-o07-warm_primed-p04-l04",
+          "sequence": 79,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11064192342,
+          "external_standalone_verifier_wall_ns": 2350274125,
+          "sample_id": "r00-o08-warm_primed-p02-l04",
+          "sequence": 87,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13331508117,
+          "external_standalone_verifier_wall_ns": 2234259571,
+          "sample_id": "r00-o09-warm_primed-p00-l04",
+          "sequence": 95,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "warm_primed",
+      "topology_class": "distinct_physical_cores",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 12811844826,
+        "median_decimal": "11632124791.5",
+        "median_denominator": 2,
+        "median_numerator": 23264249583,
+        "minimum": 11119307636
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 2896673377,
+        "median_decimal": "2701210515.5",
+        "median_denominator": 2,
+        "median_numerator": 5402421031,
+        "minimum": 2625823400
+      },
+      "lane1_median_speedup_decimal": "1.205077",
+      "lanes": 8,
+      "median_useful_integer_operations_per_second_decimal": "161539548.937",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 11307767262,
+          "external_standalone_verifier_wall_ns": 2691741778,
+          "sample_id": "r00-o00-warm_primed-p04-l08",
+          "sequence": 9,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11758604585,
+          "external_standalone_verifier_wall_ns": 2710679253,
+          "sample_id": "r00-o01-warm_primed-p03-l08",
+          "sequence": 18,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11505644998,
+          "external_standalone_verifier_wall_ns": 2625823400,
+          "sample_id": "r00-o02-warm_primed-p01-l08",
+          "sequence": 26,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11119307636,
+          "external_standalone_verifier_wall_ns": 2723472961,
+          "sample_id": "r00-o03-warm_primed-p00-l08",
+          "sequence": 35,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11906121052,
+          "external_standalone_verifier_wall_ns": 2734406653,
+          "sample_id": "r00-o04-warm_primed-p02-l08",
+          "sequence": 47,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12422512671,
+          "external_standalone_verifier_wall_ns": 2896673377,
+          "sample_id": "r00-o05-warm_primed-p00-l08",
+          "sequence": 55,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11290846429,
+          "external_standalone_verifier_wall_ns": 2648119362,
+          "sample_id": "r00-o06-warm_primed-p01-l08",
+          "sequence": 66,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12119112671,
+          "external_standalone_verifier_wall_ns": 2652279597,
+          "sample_id": "r00-o07-warm_primed-p03-l08",
+          "sequence": 78,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11465817960,
+          "external_standalone_verifier_wall_ns": 2728731753,
+          "sample_id": "r00-o08-warm_primed-p04-l08",
+          "sequence": 89,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12811844826,
+          "external_standalone_verifier_wall_ns": 2661222082,
+          "sample_id": "r00-o09-warm_primed-p02-l08",
+          "sequence": 97,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "warm_primed",
+      "topology_class": "oversubscribed_round_robin",
+      "validated_success_count": 10
+    },
+    {
+      "complete": true,
+      "external_executor_wall_ns": {
+        "maximum": 18584176073,
+        "median_decimal": "12200400739.0",
+        "median_denominator": 2,
+        "median_numerator": 24400801478,
+        "minimum": 11684234052
+      },
+      "external_standalone_verifier_wall_ns": {
+        "maximum": 4071791268,
+        "median_decimal": "3536852778.5",
+        "median_denominator": 2,
+        "median_numerator": 7073705557,
+        "minimum": 3445138074
+      },
+      "lane1_median_speedup_decimal": "1.148946",
+      "lanes": 16,
+      "median_useful_integer_operations_per_second_decimal": "154015284.596",
+      "physical_core_count": 4,
+      "planned_count": 10,
+      "sample_filtering_applied": false,
+      "samples_in_frozen_sequence_order": [
+        {
+          "external_executor_wall_ns": 12758698033,
+          "external_standalone_verifier_wall_ns": 3565526794,
+          "sample_id": "r00-o00-warm_primed-p02-l16",
+          "sequence": 7,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 18584176073,
+          "external_standalone_verifier_wall_ns": 3815928627,
+          "sample_id": "r00-o01-warm_primed-p04-l16",
+          "sequence": 19,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11706618600,
+          "external_standalone_verifier_wall_ns": 4071791268,
+          "sample_id": "r00-o02-warm_primed-p03-l16",
+          "sequence": 28,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12201725196,
+          "external_standalone_verifier_wall_ns": 3513524799,
+          "sample_id": "r00-o03-warm_primed-p01-l16",
+          "sequence": 36,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13034487767,
+          "external_standalone_verifier_wall_ns": 3525098262,
+          "sample_id": "r00-o04-warm_primed-p00-l16",
+          "sequence": 45,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11785325554,
+          "external_standalone_verifier_wall_ns": 3554398469,
+          "sample_id": "r00-o05-warm_primed-p02-l16",
+          "sequence": 57,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11796444832,
+          "external_standalone_verifier_wall_ns": 3486813977,
+          "sample_id": "r00-o06-warm_primed-p00-l16",
+          "sequence": 65,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 12199076282,
+          "external_standalone_verifier_wall_ns": 3472729870,
+          "sample_id": "r00-o07-warm_primed-p01-l16",
+          "sequence": 76,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 13661852978,
+          "external_standalone_verifier_wall_ns": 3548607295,
+          "sample_id": "r00-o08-warm_primed-p03-l16",
+          "sequence": 88,
+          "status": "succeeded"
+        },
+        {
+          "external_executor_wall_ns": 11684234052,
+          "external_standalone_verifier_wall_ns": 3445138074,
+          "sample_id": "r00-o09-warm_primed-p04-l16",
+          "sequence": 99,
+          "status": "succeeded"
+        }
+      ],
+      "temperature_label": "warm_primed",
+      "topology_class": "oversubscribed_round_robin",
+      "validated_success_count": 10
+    }
+  ],
+  "complete": true,
+  "conclusions": {
+    "correctness": "All 100 planned attempts validated and produced the same exact output root.",
+    "oversubscribed_scope": "Lane counts 8 and 16 are deterministic oversubscribed lane configurations on four physical cores, not 8-core or 16-core measurements.",
+    "physical_core_scope": "Only lane counts 1, 2, and 4 are physical-core scaling points on this host.",
+    "statistics_scope": "Results are preregistered descriptive statistics over ten retained attempts per lane/temperature cell; no inferential or cross-machine claim is made.",
+    "temperature_scope": "cold_unprimed does not claim an operating-system or CPU-cache reset; warm_primed means the harness primed a fresh measured checkpoint."
+  },
+  "fixed_work": {
+    "median_definition": "sort all ten planned cell values; arithmetic mean of positions five and six",
+    "primary_metric": "result_gates.external_executor_wall_ns",
+    "secondary_metric": "result_gates.external_standalone_verifier_wall_ns",
+    "speedup_definition": "within each temperature label, lane-1 median external executor wall time divided by the compared lane median",
+    "throughput_definition": "1879048192 useful integer operations divided by median external executor wall seconds",
+    "useful_integer_operations_per_attempt": 1879048192
+  },
+  "population": {
+    "all_output_roots_equal": true,
+    "output_roots": [
+      "63ed4dd0918ee5553c5c473a568b4c2a1c9d0326c1b83e60f9c3dc23ec70d462"
+    ],
+    "planned_attempts": 100,
+    "retained_outcomes": 100,
+    "sample_filtering_applied": false,
+    "sample_filtering_permitted": false,
+    "status_counts": {
+      "succeeded": 100
+    }
+  },
+  "schema": "mfenx-local-fixed-work-scaling-descriptive-analysis/v1",
+  "source": {
+    "analysis_protocol_sha256": "676f212ab3e61df11c0326cb36befa2a1b685b67c5f3f93238229fdf40a78131",
+    "independent_validation_preseal_sha256": "8b65fd73306cc0a2992eeb1df3554c67061b2b7a26487fc23714b71f8591d423",
+    "plan_id": "aa94ea9914aae7d29833e86c313cf5335a2f0ac0d85f7a8eda2ec075965d072e",
+    "plan_sha256": "5be21f85e4b480adddbd3a78ba35995a3198cffac3846aa71fe5bfa97209f2ba",
+    "run_id": "23c051e7e843d0f22ab93480a439f5d6a4d1ca4fb5329245a6366e2976ba9be7",
+    "run_path_basename": "mfenx-local-scaling-v3-a3-signed-20260822-a1",
+    "run_sha256": "3c79a26ca98451745a2bf74be14a82e40016c89a37587c04c66a15553dca04e7",
+    "validation_id": "c3cf525fffbccf59576381a5be1b7dcb48d641bc27c68004d50c1dcd5efe4d5b"
+  }
+}

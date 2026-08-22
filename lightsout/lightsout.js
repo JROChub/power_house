@@ -90,50 +90,35 @@ const CONTRACT_V1 = Object.freeze({
   ])
 });
 
-const STEP2 = Object.freeze({
-  root: "step2/",
-  transportManifestSha256: "5e04d45c3854b660df3893c114472cabd9bc4e5f908ed760569bee61b472d3ca",
-  addendumManifestSha256: "3b9daa2fd3105e503b109f612b27707c591b13c3e435262c153c0dd6ffd22221",
-  addendumSignatureSha256: "159672f9c03cf834bc062392b4a8ef3948a0035e162a4a17d4360d03535c85d6",
+// Filled only after the record is signed and the independent post-deploy
+// retrieval record exists. Invalid placeholders make final claims fail closed
+// during publication preparation; they are never treated as optional.
+const VALIDATION_RECORD = Object.freeze({
+  root: "validation-record/",
+  releaseIndexSha256: "59bd2b4d78724abf57486fb42343bea7a14e4f1ba9c53a5eda3ec684297bb954",
+  prepublicationVerificationSha256: "108bdf285a0e309931f3d6870725502817bab3a412ee0c263b4e857dff4984c6",
+  recordSha256: "175174d0f049fdf88895909dd6f71f40f80073c206c3f05eaff0283c0b68a715",
+  recordSignatureSha256: "24a962a1bc62739a8a3074092efe2e003fb74476ee4d644a3e262d229da04a40",
+  claimLedgerSha256: "3b6f39020bfec3f2c57cd78cc98a23c7af8ee57981a6b2d215b8319ee96de5d8",
+  allowedSignersSha256: "a89d2cfd0df61f218abbfddb67c47ab92b951b918d415be2acaff26a0fcc8ced",
+  publicKeySha256: "06a51526f40a1e9b71bb08a91746187a5e31e6a2cd7c5b63f060546719f21244",
+  retrievalAttestationSha256: "PENDING_POST_PUBLICATION_RETRIEVAL_SHA256",
+  releaseId: "mfenx-local-v2-validation-candidate-20260822-a1",
+  recordId: "mfenx-local-v2-validation-record-20260822-a1",
+  recordNamespace: "mfenx-validation-record",
+  principal: "mfenx-release",
   publicKeyFingerprint: CONTRACT_V1.publicKeyFingerprint,
-  archiveName: "rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst",
-  files: Object.freeze([
-    "ADDENDUM-MANIFEST.schema.json",
-    "CLAIM_LEDGER.md",
-    "README.md",
-    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst",
-    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256",
-    "release/ADDENDUM-MANIFEST.canonical.json",
-    "release/ADDENDUM-MANIFEST.canonical.json.sig",
-    "release/SIGNING-AUDIT.md",
-    "release/SIGNING.md",
-    "release/allowed_signers",
-    "release/mfenx-local-v2-step2.provenance.intoto.json",
-    "release/mfenx-local-v2-step2.sbom.cdx.json",
-    "release/release-signing-key.pub",
-    "validation/SHA256SUMS",
-    "validation/summary.json",
-    "verifier/audit.json",
-    "verifier/bin/mfenx-contract-v1-verifier",
-    "verifier/build-record.json",
-    "verifier/reports/a-uninterrupted.report.json",
-    "verifier/source/Cargo.lock",
-    "verifier/source/Cargo.toml",
-    "verifier/source/LICENSE",
-    "verifier/source/README.md",
-    "verifier/source/SHA256SUMS",
-    "verifier/source/rust-toolchain.toml",
-    "verifier/source/src/lib.rs",
-    "verifier/source/src/main.rs"
-  ]),
-  sourceFiles: Object.freeze([
-    "Cargo.lock",
-    "Cargo.toml",
-    "LICENSE",
-    "README.md",
-    "rust-toolchain.toml",
-    "src/lib.rs",
-    "src/main.rs"
+  selectedRoles: Object.freeze([
+    "adversarial_a3_final_attestation",
+    "commercial_evaluation_boundary",
+    "commercial_evaluation_profile",
+    "final_replay_gated_execution_paper",
+    "final_uci_workload_summary",
+    "hosted_reproduction_local_verification",
+    "hosted_security_a2_local_verification",
+    "procedurally_separate_code_security_review_report",
+    "scaling_results",
+    "scaling_v2_failure_attestation"
   ])
 });
 
@@ -201,7 +186,7 @@ const EXPECTED = Object.freeze({
 
 const CHECKPOINT_ROOT = "checkpoints/killed-and-resumed/";
 const CHECKPOINT_PLAN_PATH = CHECKPOINT_ROOT + "plan.json";
-const state = { loading: false, ready: false, v2: null, v1: null, step2: null };
+const state = { loading: false, ready: false, v2: null, v1: null, validationRecord: null };
 const byId = (id) => document.getElementById(id);
 
 function assert(condition, message) {
@@ -307,6 +292,254 @@ async function fetchBytes(root, path, maxBytes = 4 * 1024 * 1024) {
   return bytes;
 }
 
+function validationIndexedLocalUrl(publicPath) {
+  assert(typeof publicPath === "string" && publicPath.length > 0 && !publicPath.includes("\\"), "validation index contains an unsafe public path");
+  const normal = /^inputs\/[a-z0-9][a-z0-9_]{1,95}\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(publicPath);
+  const existingCandidate = /^\.\.\/candidate\/(?:release|downloads)\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(publicPath);
+  assert(normal || existingCandidate, "validation index contains a path outside its bounded publication routes");
+  return new URL(publicPath, new URL(VALIDATION_RECORD.root, location.href));
+}
+
+async function fetchFinalIndexed(entry, maxBytes = 2 * 1024 * 1024) {
+  assert(isRecord(entry) && typeof entry.role === "string", "validation indexed artifact record is malformed");
+  assertDigest(entry.sha256, "validation indexed artifact digest is malformed: " + entry.role);
+  assertSafeInteger(entry.size_bytes, "validation indexed artifact size is malformed: " + entry.role);
+  assert(typeof entry.public_url === "string" && entry.public_url.startsWith("https://mfenx.com/lightsout/"), "validation indexed artifact URL is outside the publication origin");
+  const localUrl = validationIndexedLocalUrl(entry.public_path);
+  const plannedUrl = new URL(entry.public_url);
+  assert(localUrl.pathname === plannedUrl.pathname, "validation indexed local and planned paths disagree: " + entry.role);
+  assert(entry.size_bytes <= maxBytes, "validation indexed artifact exceeds its selected byte limit: " + entry.role);
+  const response = await fetch(localUrl.href, { cache: "no-store", redirect: "error" });
+  assert(response.ok, entry.public_path + " returned HTTP " + response.status);
+  assert(new URL(response.url).origin === location.origin, entry.public_path + " left this origin");
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  assert(bytes.byteLength === entry.size_bytes, "validation indexed artifact size changed: " + entry.role);
+  assert(await sha256(bytes) === entry.sha256, "validation indexed artifact failed SHA-256: " + entry.role);
+  return bytes;
+}
+
+function validateFinalReleaseIndex(index) {
+  assert(isRecord(index) && index.schema === "mfenx.public-release-index.v1", "validation release-index schema changed");
+  assert(index.status === "publication_ready" && index.release_id === VALIDATION_RECORD.releaseId && index.record_id === VALIDATION_RECORD.recordId, "validation release-index identity changed");
+  assert(index.validation_record_publication_state === "not_yet_published" && index.validation_record_live_retrieval_claimed === false, "prepublication release-index lifecycle was rewritten");
+  assert(index.all_input_evidence_staged_and_locally_verified === true && index.all_input_evidence_live_http_retrieval_claimed === false, "prepublication input-evidence boundary changed");
+  assert(index.input_evidence_live_http_retrieval_claimed === false && index.input_evidence_verification_kind === "local_source_to_staged_publication_tree_byte_verification", "release index promoted staging into live retrieval");
+  assert(index.post_publication_retrieval_attestation_required === true && index.successes_and_failures_unfiltered === true, "validation publication or unfiltered-history boundary changed");
+  assert(index.planned_validation_record_url === "https://mfenx.com/lightsout/validation-record/release/VALIDATION-RECORD.canonical.json", "planned validation-record URL changed");
+  assert(index.planned_signature_url === index.planned_validation_record_url + ".sig", "planned validation-record signature URL changed");
+  assert(Array.isArray(index.artifacts) && index.artifacts.length >= 50 && index.artifact_count === index.artifacts.length, "validation release-index artifact population changed");
+  assert(Array.isArray(index.public_input_evidence_urls) && index.public_input_evidence_url_count === index.artifacts.length && equalArray(index.public_input_evidence_urls, index.artifacts.map((entry) => entry.public_url)), "validation release-index URL routing changed");
+  assert(new Set(index.public_input_evidence_urls).size === index.public_input_evidence_urls.length, "validation release index contains duplicate URLs");
+
+  const byRole = new Map();
+  for (const entry of index.artifacts) {
+    assert(isRecord(entry) && /^[a-z0-9][a-z0-9_]{1,95}$/.test(entry.role), "validation release-index role is malformed");
+    assert(!byRole.has(entry.role), "validation release-index role is duplicated: " + entry.role);
+    assertDigest(entry.sha256, "validation release-index digest is malformed: " + entry.role);
+    assertSafeInteger(entry.size_bytes, "validation release-index size is malformed: " + entry.role);
+    validationIndexedLocalUrl(entry.public_path);
+    byRole.set(entry.role, entry);
+  }
+  for (const role of VALIDATION_RECORD.selectedRoles) assert(byRole.has(role), "validation release index omits selected role " + role);
+  assert(isRecord(index.web_summary) && index.web_summary.role === "public_validation_status", "validation web-summary route changed");
+  assertDigest(index.web_summary.sha256, "validation web-summary digest is malformed");
+  assertSafeInteger(index.web_summary.size_bytes, "validation web-summary size is malformed");
+  return byRole;
+}
+
+function validatePrepublicationVerification(record, index, indexBytes) {
+  assert(record.schema === "mfenx.prepublication-input-retrieval-verification.v1" && record.status === "publication_ready" && record.lifecycle === "prepublication_only", "prepublication verification identity changed");
+  assert(record.release_id === VALIDATION_RECORD.releaseId && record.validation_record_publication_state === "not_yet_published" && record.validation_record_live_retrieval_claimed === false, "prepublication verification lifecycle changed");
+  assert(record.all_input_evidence_staged_and_locally_verified === true && record.all_input_evidence_live_http_retrieval_claimed === false, "prepublication local-staging boundary changed");
+  assert(record.live_http_retrieval_performed === false && record.live_http_retrieval_claimed === false && record.verification_kind === "local_source_to_staged_publication_tree_byte_verification", "prepublication record was promoted into a live retrieval claim");
+  assert(record.post_publication_retrieval_attestation_required === true && record.planned_validation_record_url === index.planned_validation_record_url && record.planned_signature_url === index.planned_signature_url, "prepublication planned routes changed");
+  assert(record.release_index.sha256 === VALIDATION_RECORD.releaseIndexSha256 && record.release_index.size_bytes === indexBytes.byteLength && record.release_index.role === "public_release_index", "prepublication release-index binding changed");
+  assert(Array.isArray(record.checks) && record.checks.length >= 50 && record.check_count === record.checks.length && record.passed === record.checks.length && record.failed === 0, "prepublication local verification population changed");
+  assert(record.checks.every((row) => row.status === "pass" && row.verification_transport === "local_filesystem" && row.expected_sha256 === row.observed_sha256 && row.expected_size_bytes === row.observed_size_bytes), "prepublication local verification contains a mismatch or nonlocal transport");
+  assert(equalArray(record.public_input_evidence_urls, index.public_input_evidence_urls), "prepublication URL list changed");
+}
+
+async function validateFinalSigningPolicy(raw) {
+  const signatureText = decodeUtf8(raw.signature, "Validation Record detached signature").trim();
+  assert(signatureText.startsWith("-----BEGIN SSH SIGNATURE-----") && signatureText.endsWith("-----END SSH SIGNATURE-----"), "Validation Record detached signature armor changed");
+  const publicKeyText = decodeUtf8(raw.publicKey, "Validation Record public key").trim();
+  const publicKeyFields = publicKeyText.split(/\s+/);
+  assert(publicKeyFields.length >= 2 && publicKeyFields[0] === "ssh-ed25519", "Validation Record public key is not OpenSSH Ed25519");
+  const publicKeyBlob = decodeBase64(publicKeyFields[1], "Validation Record public key");
+  const publicKeyDigest = new Uint8Array(await crypto.subtle.digest("SHA-256", publicKeyBlob));
+  assert("SHA256:" + base64WithoutPadding(publicKeyDigest) === VALIDATION_RECORD.publicKeyFingerprint, "Validation Record public-key fingerprint changed");
+  const allowed = decodeUtf8(raw.allowedSigners, "Validation Record allowed signers").trim().split(/\s+/);
+  assert(allowed[0] === VALIDATION_RECORD.principal && allowed[1] === 'namespaces="' + VALIDATION_RECORD.recordNamespace + '"' && allowed[2] === "ssh-ed25519" && allowed[3] === publicKeyFields[1], "Validation Record allowed-signers policy changed");
+}
+
+function validateFinalStatus(status) {
+  assert(status.schema === "mfenx.public-validation-status.v1" && status.status === "publication_ready" && status.release_id === VALIDATION_RECORD.releaseId, "validation web-summary identity changed");
+  assert(equalJson(status.validation, {
+    execution_contract: "complete",
+    reference_verification: "complete",
+    measured_reproduction: "complete",
+    technical_evaluation: "release_ready"
+  }), "validation component states changed");
+  assert(status.candidate.signature_verified === true && status.candidate.executor_sha256 === "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0" && status.candidate.verifier_sha256 === "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa", "final candidate identity changed");
+  assert(equalJson(status.adversarial.a1, { status: "failed_retained", frozen_passed: 150, frozen_failed: 64 }), "A1 adversarial history changed");
+  assert(status.adversarial.a2.status === "failed_retained" && status.adversarial.a2.driver_passed === 214 && status.adversarial.a2.driver_failed === 0 && status.adversarial.a2.independent_passed === 210 && status.adversarial.a2.independent_failed === 4, "A2 adversarial history changed");
+  assert(status.adversarial.a3.status === "complete" && status.adversarial.a3.attempted_exactly_once === 214 && status.adversarial.a3.driver_passed === 214 && status.adversarial.a3.driver_failed === 0 && status.adversarial.a3.independent_passed === 214 && status.adversarial.a3.independent_failed === 0 && status.adversarial.a3.mutation_cases === 192 && status.adversarial.a3.restart_cases === 22, "A3 adversarial result changed");
+  assert(status.scaling.v2.status === "failed_retained" && status.scaling.v2.success === 52 && status.scaling.v2.failure === 48, "scaling v2 failed history changed");
+  assert(status.scaling.v3.status === "complete" && status.scaling.v3.success === 100 && status.scaling.v3.failure === 0 && status.scaling.v3.sample_filtering_applied === false, "scaling v3 population changed");
+  assert(status.hosted_reproduction.github_hosted_vm_jobs === 3 && status.hosted_reproduction.physical_host_attestation === false && status.hosted_reproduction.administrative_domains === 1 && status.hosted_reproduction.source_to_binary_reproducibility === false, "hosted reproduction boundary changed");
+  assert(status.security.hosted_a1 === "failed_retained_unfiltered" && status.security.hosted_a2.status === "failed_retained_unfiltered" && status.security.hosted_a2.required_tool_outcomes === 17 && status.security.hosted_a2.successful_tool_outcomes === 17 && status.security.hosted_a2.unwaived_codeql_results === 1, "hosted security history changed");
+  const review = status.security.procedurally_separate_ai_review;
+  assert(review.disposition === "pass_with_findings" && review.critical === 0 && review.high === 0 && review.medium === 0 && review.low === 1 && review.informational === 1 && review.human === false && review.organizationally_independent === false, "bounded review disposition changed");
+  const human = status.security.independent_human_review;
+  assert(human.status === "not_performed" && human.open === true && human.completion_claimed === false && human.request_url === "https://github.com/JROChub/power_house/issues/117", "human-review boundary changed");
+  assert(status.external_workload.name === "UCI Iris" && status.external_workload.status === "complete" && status.external_workload.executor_accepted === true && status.external_workload.standalone_verifier_accepted === true && status.external_workload.independent_exact_oracle_accepted === true, "external-workload result changed");
+  assert(status.commercial_boundary.software_license === "Apache-2.0" && status.commercial_boundary.open_executor === true && status.commercial_boundary.open_verifier === true && status.commercial_boundary.proprietary_executor_claimed === false && status.commercial_boundary.paid_design_partner_count === 0 && status.commercial_boundary.customer_claimed === false && status.commercial_boundary.payment_claimed === false && status.commercial_boundary.sla_claimed === false && status.commercial_boundary.design_partner_intake_status === "intake_open", "open/commercial boundary changed");
+  assert(status.paper.contribution === "replay-gated execution contract" && status.paper.status === "final" && status.paper.peer_reviewed === false, "technical-paper boundary changed");
+  assert(status.claim_boundary.software_not_hardware === true && status.claim_boundary.supercomputer_hardware_claimed === false && status.claim_boundary.top500_claimed === false && status.claim_boundary.universal_performance_claimed === false && status.claim_boundary.security_certification_claimed === false && status.claim_boundary.production_fitness_claimed === false, "final hardware/performance claim boundary changed");
+}
+
+function validateScalingResults(result) {
+  assert(result.schema === "mfenx-local-fixed-work-scaling-descriptive-analysis/v1" && result.complete === true && result.analysis_id === "591634d8c72f11a48469db35127203be5d3f2268d85b470245ba08c8b9534e0d", "scaling analysis identity changed");
+  assert(result.source.run_id === "23c051e7e843d0f22ab93480a439f5d6a4d1ca4fb5329245a6366e2976ba9be7" && result.source.validation_id === "c3cf525fffbccf59576381a5be1b7dcb48d641bc27c68004d50c1dcd5efe4d5b", "scaling run or validation identity changed");
+  assert(result.population.planned_attempts === 100 && result.population.retained_outcomes === 100 && result.population.status_counts.succeeded === 100 && result.population.sample_filtering_applied === false && result.population.sample_filtering_permitted === false && result.population.all_output_roots_equal === true, "scaling population changed");
+  assert(Array.isArray(result.cells) && result.cells.length === 10, "scaling cell population changed");
+  const expected = {
+    "cold_unprimed/1": ["14562316443.5", "1.000000", "distinct_physical_cores"],
+    "cold_unprimed/2": ["12294541476.0", "1.184454", "distinct_physical_cores"],
+    "cold_unprimed/4": ["11072497582.0", "1.315179", "distinct_physical_cores"],
+    "cold_unprimed/8": ["11899606585.0", "1.223765", "oversubscribed_round_robin"],
+    "cold_unprimed/16": ["12812258960.5", "1.136592", "oversubscribed_round_robin"],
+    "warm_primed/1": ["14017605601.0", "1.000000", "distinct_physical_cores"],
+    "warm_primed/2": ["12094623824.0", "1.158995", "distinct_physical_cores"],
+    "warm_primed/4": ["11547331715.5", "1.213926", "distinct_physical_cores"],
+    "warm_primed/8": ["11632124791.5", "1.205077", "oversubscribed_round_robin"],
+    "warm_primed/16": ["12200400739.0", "1.148946", "oversubscribed_round_robin"]
+  };
+  const byCell = new Map();
+  for (const cell of result.cells) {
+    const key = cell.temperature_label + "/" + cell.lanes;
+    assert(!byCell.has(key) && Object.hasOwn(expected, key), "scaling cell identity changed");
+    const [median, speedup, topology] = expected[key];
+    assert(cell.complete === true && cell.planned_count === 10 && cell.validated_success_count === 10 && cell.sample_filtering_applied === false && cell.samples_in_frozen_sequence_order.length === 10, "scaling cell population changed: " + key);
+    assert(cell.external_executor_wall_ns.median_decimal === median && cell.lane1_median_speedup_decimal === speedup && cell.topology_class === topology, "scaling cell result changed: " + key);
+    byCell.set(key, cell);
+  }
+  assert(byCell.size === 10 && result.affinity_observer.genuine_affinity_constraint_failures === 0, "scaling result is incomplete or affinity gate changed");
+  return byCell;
+}
+
+function validateFinalSelected(selected) {
+  const adversarial = selected.adversarial_a3_final_attestation;
+  assert(adversarial.schema === "mfenx-local-adversarial-sweep-final-attestation/v1" && adversarial.status === "complete" && adversarial.counts.planned === 214 && adversarial.counts.attempted_exactly_once === 214 && adversarial.counts.driver_passed === 214 && adversarial.counts.driver_failed === 0 && adversarial.counts.independent_passed === 214 && adversarial.counts.independent_failed === 0 && adversarial.counts.mutation_cases === 192 && adversarial.counts.restart_cases === 22 && adversarial.launch.attempts_reused === 0 && adversarial.launch.outcomes_reused === 0, "A3 final attestation changed");
+  const failedV2 = selected.scaling_v2_failure_attestation;
+  assert(failedV2.schema === "mfenx-local-fixed-work-scaling-v2-failure-attestation/v1" && failedV2.execution.attempted_exactly_once === 100 && failedV2.frozen_original_result.succeeded === 52 && failedV2.frozen_original_result.failed === 48 && failedV2.frozen_original_result.complete_for_scaling_claim === false && failedV2.frozen_original_result.original_outcomes_changed === false && failedV2.observer_reanalysis.diagnostic_only_not_a_replacement_verdict === true, "scaling v2 failure history changed");
+  const hosted = selected.hosted_reproduction_local_verification;
+  assert(hosted.schema === "mfenx.local-hosted-artifact-closure.v1" && hosted.result.status === "complete" && hosted.result.claim_eligible === true && hosted.result.host_count === 3 && hosted.remote.workflow_run_id === "32571937955" && hosted.limitations.some((item) => item.includes("not three administrative domains")), "hosted reproduction result changed");
+  const security = selected.hosted_security_a2_local_verification;
+  assert(security.schema === "mfenx.local-hosted-artifact-closure.v1" && security.remote.conclusion === "failure" && security.remote.retried === false && security.result.required_automated_tool_outcomes === 17 && security.result.successful_required_automated_tool_outcomes === 17 && security.result.unwaived_codeql_result_count === 1 && security.result.independent_code_or_security_review_complete === false, "hosted security A2 history changed");
+  const review = selected.procedurally_separate_code_security_review_report;
+  assert(review.schema === "mfenx.procedurally-separate-ai-code-security-review.v1" && review.status === "complete" && review.disposition === "pass_with_findings" && review.finding_counts.critical === 0 && review.finding_counts.high === 0 && review.finding_counts.medium === 0 && review.finding_counts.low === 1 && review.finding_counts.informational === 1 && review.review_boundary.human_reviewer === false && review.review_boundary.organizationally_independent === false && review.review_boundary.same_execution_environment === true, "bounded code/security review changed");
+  const workload = selected.final_uci_workload_summary;
+  assert(workload.schema === "mfenx.external-workload-run.v1" && workload.status === "PASS" && workload.gates.executor_exact_replay_accepted === true && workload.gates.standalone_reference_verifier_accepted === true && workload.gates.fixed_external_oracle_accepted === true && workload.signed_candidate.signature_verified === true && workload.executor.sha256 === "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0" && workload.standalone_verifier.sha256 === "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa", "external workload result changed");
+  const profile = selected.commercial_evaluation_profile;
+  assert(profile.schema === "mfenx.apache-technical-evaluation-profile.v2" && profile.status === "release_ready" && profile.software_license === "Apache-2.0" && profile.status_disclosures.paid_customer_exists === false && profile.status_disclosures.partner_exists === false && profile.status_disclosures.payment_received === false && profile.status_disclosures.proprietary_executor_exists === false && profile.status_disclosures.sla_exists === false, "commercial evaluation profile changed");
+  const boundary = selected.commercial_evaluation_boundary;
+  assert(boundary.schema === "mfenx.apache-technical-evaluation-boundary.v2" && boundary.software_license === "Apache-2.0" && boundary.paid_support_changes_software_rights === false && boundary.standalone_verifier_requires_payment_or_entitlement === false && boundary.executor.sha256 === "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0" && boundary.standalone_verifier.sha256 === "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa", "commercial boundary changed");
+  const paperText = selected.final_replay_gated_execution_paper;
+  assert(typeof paperText === "string" && paperText.includes("replay-gated execution contract") && paperText.includes("not peer reviewed"), "technical paper contribution or peer-review boundary changed");
+  return validateScalingResults(selected.scaling_results);
+}
+
+function validateFinalRecord(manifest, index, prepublication) {
+  assert(manifest.schema === "mfenx.validation-record.v1" && manifest.record_id === VALIDATION_RECORD.recordId, "Validation Record identity changed");
+  assert(manifest.release_identity.release_id === VALIDATION_RECORD.releaseId && manifest.release_identity.executor_sha256 === "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0", "Validation Record candidate changed");
+  assert(manifest.signature.algorithm === "ssh-ed25519" && manifest.signature.format === "openssh-sshsig" && manifest.signature.namespace === VALIDATION_RECORD.recordNamespace && manifest.signature.signer_identity === VALIDATION_RECORD.principal && manifest.signature.public_key_fingerprint === VALIDATION_RECORD.publicKeyFingerprint, "Validation Record signature domain changed");
+  assert(manifest.publication.status === "publication_ready" && manifest.publication.validation_record_publication_state === "not_yet_published" && manifest.publication.validation_record_live_retrieval_claimed === false && manifest.publication.all_input_evidence_staged_and_locally_verified === true && manifest.publication.all_input_evidence_live_http_retrieval_claimed === false && manifest.publication.post_publication_retrieval_attestation_required === true, "Validation Record publication lifecycle changed");
+  assert(manifest.publication.release_index.sha256 === VALIDATION_RECORD.releaseIndexSha256 && manifest.publication.prepublication_input_retrieval_verification.sha256 === VALIDATION_RECORD.prepublicationVerificationSha256, "Validation Record publication inputs changed");
+  assert(Array.isArray(manifest.claims) && manifest.claims.length === 11 && equalArray(manifest.claims.map((claim) => claim.claim_id).sort(), Array.from({ length: 11 }, (_, index) => "MVR-CL-" + String(index + 1).padStart(3, "0"))), "Validation Record claim set changed");
+  const claims = new Map(manifest.claims.map((claim) => [claim.claim_id, claim]));
+  assert(claims.get("MVR-CL-001").metrics.attempted_exactly_once === 214 && claims.get("MVR-CL-001").metrics.independent_passed === 214, "Validation Record adversarial claim changed");
+  assert(claims.get("MVR-CL-005").metrics.successful_outcomes === 100 && claims.get("MVR-CL-005").metrics.prior_v2_failed_outcomes === 48, "Validation Record scaling claim changed");
+  assert(claims.get("MVR-CL-006").metrics.successful_jobs === 3 && claims.get("MVR-CL-006").metrics.physical_host_attestation === false, "Validation Record hosted claim changed");
+  assert(claims.get("MVR-CL-007").metrics.low_findings === 1 && claims.get("MVR-CL-007").metrics.human_reviewer === false && claims.get("MVR-CL-007").metrics.independent_human_review_status === "not_performed", "Validation Record review claim changed");
+  assert(claims.get("MVR-CL-009").metrics.open_verifier === true && claims.get("MVR-CL-009").metrics.open_executor === true && claims.get("MVR-CL-009").metrics.paid_design_partner_count === 0, "Validation Record commercial boundary changed");
+  assert(claims.get("MVR-CL-010").metrics.peer_reviewed === false, "Validation Record paper boundary changed");
+  assert(claims.get("MVR-CL-011").metrics.all_input_evidence_live_http_retrieval_claimed === false && claims.get("MVR-CL-011").metrics.post_publication_retrieval_attestation_required === true, "Validation Record publication claim changed");
+
+  assert(Array.isArray(manifest.artifacts) && manifest.artifact_count === manifest.artifacts.length, "Validation Record artifact inventory changed");
+  const manifestRoles = new Map(manifest.artifacts.map((entry) => [entry.role, entry]));
+  assert(manifestRoles.size === manifest.artifacts.length, "Validation Record artifact role is duplicated");
+  for (const entry of index.artifacts) {
+    const bound = manifestRoles.get(entry.role);
+    assert(bound && bound.sha256 === entry.sha256 && bound.size_bytes === entry.size_bytes && bound.media_type === entry.media_type, "public index differs from signed artifact role " + entry.role);
+  }
+  assert(manifestRoles.get("public_release_index").sha256 === VALIDATION_RECORD.releaseIndexSha256 && manifestRoles.get("prepublication_input_retrieval_verification").sha256 === VALIDATION_RECORD.prepublicationVerificationSha256, "signed publication artifacts changed");
+  assert(manifestRoles.get("claim_ledger").sha256 === VALIDATION_RECORD.claimLedgerSha256 && manifestRoles.get("validation_record_allowed_signers").sha256 === VALIDATION_RECORD.allowedSignersSha256 && manifestRoles.get("release_public_key").sha256 === VALIDATION_RECORD.publicKeySha256, "signed Validation Record policy artifacts changed");
+  assert(prepublication.release_index.sha256 === VALIDATION_RECORD.releaseIndexSha256, "prepublication record and record disagree");
+}
+
+function validatePostPublicationRetrieval(record, pack) {
+  assert(record.schema === "mfenx.post-publication-retrieval-attestation.v1" && record.status === "PASS", "post-publication retrieval attestation identity changed");
+  assert(record.live_http_retrieval_performed === true && record.live_http_retrieval_claimed === true && record.successes_and_failures_unfiltered === true, "post-publication HTTP retrieval boundary changed");
+  assert(record.release_id === VALIDATION_RECORD.releaseId && record.record_id === VALIDATION_RECORD.recordId, "post-publication retrieval subject changed");
+  assert(record.record.sha256 === VALIDATION_RECORD.recordSha256 && record.signature.sha256 === VALIDATION_RECORD.recordSignatureSha256 && record.release_index.sha256 === VALIDATION_RECORD.releaseIndexSha256, "post-publication retrieval identities changed");
+  assert(Array.isArray(record.checks) && record.checks.length >= pack.index.artifact_count + 4 && record.checks.every((row) => row.status === "pass" && row.transport === "https" && row.expected_sha256 === row.observed_sha256 && row.expected_size_bytes === row.observed_size_bytes), "post-publication retrieval population changed or contains a failure");
+}
+
+async function loadValidationRecordPack() {
+  for (const digest of [VALIDATION_RECORD.releaseIndexSha256, VALIDATION_RECORD.prepublicationVerificationSha256, VALIDATION_RECORD.recordSha256, VALIDATION_RECORD.recordSignatureSha256, VALIDATION_RECORD.claimLedgerSha256, VALIDATION_RECORD.allowedSignersSha256, VALIDATION_RECORD.publicKeySha256, VALIDATION_RECORD.retrievalAttestationSha256]) {
+    assertDigest(digest, "Validation Record pinned digest is unresolved or malformed");
+  }
+  const indexBytes = await fetchBytes(VALIDATION_RECORD.root, "release-index.json", 1024 * 1024);
+  assert(await sha256(indexBytes) === VALIDATION_RECORD.releaseIndexSha256, "validation release index digest changed");
+  const index = parseJson(indexBytes, "validation release index");
+  const byRole = validateFinalReleaseIndex(index);
+
+  const prepublicationBytes = await fetchBytes(VALIDATION_RECORD.root, "prepublication-input-retrieval-verification.json", 1024 * 1024);
+  assert(await sha256(prepublicationBytes) === VALIDATION_RECORD.prepublicationVerificationSha256, "prepublication verification digest changed");
+  const prepublication = parseJson(prepublicationBytes, "prepublication verification");
+  validatePrepublicationVerification(prepublication, index, indexBytes);
+
+  const summaryBytesPromise = fetchFinalIndexed(index.web_summary, 256 * 1024);
+  const selectedBytes = Object.create(null);
+  await Promise.all(VALIDATION_RECORD.selectedRoles.map(async (role) => {
+    selectedBytes[role] = await fetchFinalIndexed(byRole.get(role));
+  }));
+  const summary = parseJson(await summaryBytesPromise, "validation web summary");
+  validateFinalStatus(summary);
+
+  const selected = Object.create(null);
+  for (const role of VALIDATION_RECORD.selectedRoles) {
+    const bytes = selectedBytes[role];
+    selected[role] = role === "final_replay_gated_execution_paper"
+      ? decodeUtf8(bytes, role)
+      : parseJson(bytes, role);
+  }
+  const scalingCells = validateFinalSelected(selected);
+
+  const [recordBytes, signature, claimLedger, allowedSigners, publicKey, retrievalBytes] = await Promise.all([
+    fetchBytes(VALIDATION_RECORD.root, "release/VALIDATION-RECORD.canonical.json", 2 * 1024 * 1024),
+    fetchBytes(VALIDATION_RECORD.root, "release/VALIDATION-RECORD.canonical.json.sig", 4 * 1024),
+    fetchBytes(VALIDATION_RECORD.root, "release/CLAIM_LEDGER.md", 64 * 1024),
+    fetchBytes(VALIDATION_RECORD.root, "release/allowed_signers", 4 * 1024),
+    fetchBytes(VALIDATION_RECORD.root, "release/release-signing-key.pub", 4 * 1024),
+    fetchBytes(VALIDATION_RECORD.root, "post-publication-retrieval-attestation.json", 2 * 1024 * 1024)
+  ]);
+  assert(await sha256(recordBytes) === VALIDATION_RECORD.recordSha256, "Validation Record digest changed");
+  assert(await sha256(signature) === VALIDATION_RECORD.recordSignatureSha256, "Validation Record signature digest changed");
+  assert(await sha256(claimLedger) === VALIDATION_RECORD.claimLedgerSha256, "Validation Record claim-ledger digest changed");
+  assert(await sha256(allowedSigners) === VALIDATION_RECORD.allowedSignersSha256, "Validation Record allowed-signers digest changed");
+  assert(await sha256(publicKey) === VALIDATION_RECORD.publicKeySha256, "Validation Record public-key digest changed");
+  assert(await sha256(retrievalBytes) === VALIDATION_RECORD.retrievalAttestationSha256, "post-publication retrieval-attestation digest changed");
+  await validateFinalSigningPolicy({ signature, allowedSigners, publicKey });
+  const record = parseJson(recordBytes, "Validation Record");
+  validateFinalRecord(record, index, prepublication);
+  const retrieval = parseJson(retrievalBytes, "post-publication retrieval attestation");
+  const pack = { index, byRole, prepublication, summary, selected, scalingCells, record, retrieval };
+  validatePostPublicationRetrieval(retrieval, pack);
+  return pack;
+}
+
 async function loadSelectedRelease(label, config) {
   assertDigest(config.manifestSha256, label + " manifest constant is invalid");
   const manifestBytes = await fetchBytes(config.root, "SHA256SUMS", 256 * 1024);
@@ -344,27 +577,6 @@ async function loadContractPack() {
   await Promise.all(CONTRACT_V1.files.map(async (path) => {
     const bytes = await fetchBytes(CONTRACT_V1.root, path, 256 * 1024);
     assert(await sha256(bytes) === inventory.get(path), "Contract v1 file failed SHA-256: " + path);
-    raw[path] = bytes;
-  }));
-  return { inventory, raw };
-}
-
-async function loadStep2Pack() {
-  const checksumBytes = await fetchBytes(STEP2.root, "SHA256SUMS", 8 * 1024);
-  assert(
-    await sha256(checksumBytes) === STEP2.transportManifestSha256,
-    "Step 2 public-subset checksum index changed"
-  );
-  const inventory = parseManifest(checksumBytes, "Step 2", STEP2.files.length);
-  assert(
-    equalArray([...inventory.keys()].sort(), [...STEP2.files].sort()),
-    "Step 2 public-subset file set changed"
-  );
-
-  const raw = Object.create(null);
-  await Promise.all(STEP2.files.map(async (path) => {
-    const bytes = await fetchBytes(STEP2.root, path);
-    assert(await sha256(bytes) === inventory.get(path), "Step 2 file failed SHA-256: " + path);
     raw[path] = bytes;
   }));
   return { inventory, raw };
@@ -466,212 +678,6 @@ async function validateContractPack(pack) {
   assert(reproduction.schema === "mfenx.local-reproduction-record.v1" && reproduction.release_id === manifest.release_id && reproduction.status === "PASS", "Contract v1 reproduction identity changed");
   assert(reproduction.scope === "single local release-acceptance reproduction", "Contract v1 reproduction scope changed");
   assert(reproduction.subject.binary_sha256 === provenance.subject[0].digest.sha256, "Contract v1 reproduction/provenance subjects differ");
-}
-
-function validateStep2Manifest(manifest) {
-  assert(isRecord(manifest), "Step 2 addendum manifest is malformed");
-  assert(manifest.schema === "mfenx.release-addendum.v1", "Step 2 addendum schema changed");
-  assert(manifest.addendum_id === "mfenx-local-v2-20260821-a1-step2-addendum-a1", "Step 2 addendum identity changed");
-  assert(manifest.encoding_profile === "mfenx.json.jq-cS-integer.v1", "Step 2 encoding profile changed");
-  assert(Array.isArray(manifest.artifacts) && manifest.artifact_count === 33 && manifest.artifacts.length === 33, "Step 2 signed artifact inventory changed");
-  assert(manifest.product.name === "rarecomp-mfenx-local" && manifest.product.machine_class === V2_CONTRACT.machineClass, "Step 2 product identity changed");
-  assert(manifest.product.target === "x86_64-unknown-linux-gnu" && manifest.product.version === "0.1.0", "Step 2 product target changed");
-  assert(manifest.signature.algorithm === "ssh-ed25519" && manifest.signature.format === "openssh-sshsig", "Step 2 signature algorithm changed");
-  assert(manifest.signature.namespace === "mfenx-step2-addendum" && manifest.signature.signer_identity === "mfenx-release", "Step 2 signature domain changed");
-  assert(manifest.signature.public_key_fingerprint === STEP2.publicKeyFingerprint, "Step 2 manifest key fingerprint changed");
-  assert(manifest.signature.signed_object === "release/mfenx-local-v2-20260821-a1-step2-addendum-a1/ADDENDUM-MANIFEST.canonical.json", "Step 2 signed-object path changed");
-
-  const signedByRole = new Map();
-  const signedPaths = new Set();
-  for (const artifact of manifest.artifacts) {
-    assert(isRecord(artifact) && typeof artifact.path === "string" && typeof artifact.role === "string", "Step 2 signed artifact record is malformed");
-    assertDigest(artifact.sha256, "Step 2 signed artifact digest is malformed");
-    assertSafeInteger(artifact.size_bytes, "Step 2 signed artifact size is malformed", 1);
-    assert(!signedByRole.has(artifact.role), "Step 2 signed artifact role is duplicated");
-    assert(!signedPaths.has(artifact.path), "Step 2 signed artifact path is duplicated");
-    signedByRole.set(artifact.role, artifact);
-    signedPaths.add(artifact.path);
-  }
-
-  const base = manifest.base_release;
-  assert(base.release_id === "mfenx-local-v2-20260821-a1", "Step 2 base release changed");
-  assert(base.manifest.sha256 === CONTRACT_V1.releaseManifestSha256, "Step 2 base manifest changed");
-  assert(base.signature.sha256 === CONTRACT_V1.releaseSignatureSha256, "Step 2 base signature changed");
-  assert(base.sealed_evidence_inventory.sha256 === RELEASES.v2.manifestSha256, "Step 2 base evidence inventory changed");
-  assert(base.accepted_executor.sha256 === "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c", "Step 2 accepted executor changed");
-  assert(base.accepted_output_root.algorithm === "blake3" && base.accepted_output_root.digest === EXPECTED.outputRoot, "Step 2 accepted output root changed");
-
-  assert(Array.isArray(manifest.claims) && manifest.claims.length === 10, "Step 2 claim count changed");
-  const claims = new Map();
-  for (const claim of manifest.claims) {
-    assert(isRecord(claim) && /^S2-CL-\d{3}$/.test(claim.claim_id), "Step 2 claim record is malformed");
-    assert(!claims.has(claim.claim_id), "Step 2 claim ID is duplicated");
-    claims.set(claim.claim_id, claim);
-  }
-  assert(equalArray([...claims.keys()].sort(), Array.from({ length: 10 }, (_, index) => "S2-CL-" + String(index + 1).padStart(3, "0"))), "Step 2 claim IDs changed");
-
-  const verifierTests = claims.get("S2-CL-003");
-  assert(verifierTests.status === "established" && verifierTests.metrics.unit_tests_passed === 27, "Step 2 verifier-test claim changed");
-  assert(verifierTests.metrics.formal_proof === false && verifierTests.metrics.independent_security_review === false, "Step 2 independent-review boundary changed");
-
-  const scaling = claims.get("S2-CL-005");
-  assert(scaling.status === "plan_only", "Step 2 scaling status changed");
-  assert(scaling.metrics.planned_attempts === 100 && scaling.metrics.executed_attempts === 0, "Step 2 scaling population changed");
-  assert(scaling.metrics.evidence_validation_implemented === false && scaling.metrics.scaling_result_established === false, "Step 2 scaling plan was promoted without evidence");
-
-  const adversarial = claims.get("S2-CL-006");
-  assert(adversarial.status === "plan_only", "Step 2 adversarial status changed");
-  assert(adversarial.metrics.planned_cases === 214 && adversarial.metrics.executed_cases === 0, "Step 2 adversarial population changed");
-  assert(adversarial.metrics.planned_mutations === 192 && adversarial.metrics.planned_kill_windows === 22 && adversarial.metrics.failpoint_required_kill_windows === 14, "Step 2 adversarial design changed");
-  assert(adversarial.metrics.evidence_validation_implemented === false && adversarial.metrics.complete_sweep_established === false, "Step 2 adversarial plan was promoted without evidence");
-
-  const reproducible = claims.get("S2-CL-007");
-  assert(reproducible.status === "established_with_scope_limits", "Step 2 reproducible-build status changed");
-  assert(reproducible.metrics.physical_hosts === 1 && reproducible.metrics.unrelated_machine_reproductions === 0, "Step 2 reproduction host scope changed");
-  assert(reproducible.metrics.clean_remapped_builds === 2 && reproducible.metrics.byte_identical_remapped_builds === 2, "Step 2 remapped-build evidence changed");
-  assert(reproducible.metrics.cross_host_reproducibility_established === false, "Step 2 cross-host reproducibility was promoted without evidence");
-
-  const timing = claims.get("S2-CL-009");
-  assert(timing.status === "established_with_scope_limits", "Step 2 timing status changed");
-  assert(timing.metrics.observations_per_release === 1 && timing.metrics.same_output_root === true, "Step 2 timing sample scope changed");
-  assert(timing.metrics.v1_external_wall_ns === EXPECTED.v1ExternalWallNs && timing.metrics.v2_external_wall_ns === EXPECTED.v2ExternalWallNs, "Step 2 timing observations changed");
-  assert(timing.metrics.wall_time_ratio_rounded_10dp === "49.2271104608", "Step 2 rounded wall-time ratio changed");
-  assert((timing.metrics.v1_external_wall_ns / timing.metrics.v2_external_wall_ns).toFixed(10) === timing.metrics.wall_time_ratio_rounded_10dp, "Step 2 rounded wall-time ratio is inconsistent");
-  assert(!Object.hasOwn(timing.metrics, "wall_time_ratio_decimal"), "Step 2 ratio is mislabeled as exact");
-  assert(timing.statement.includes("rounded to 10 decimal places"), "Step 2 ratio qualification changed");
-  assert(timing.metrics.statistical_distribution === false && timing.metrics.universal_speedup_claim === false && timing.metrics.lane_scaling_result === false, "Step 2 timing observation was generalized");
-
-  const supply = claims.get("S2-CL-010");
-  assert(supply.status === "established_with_scope_limits", "Step 2 supply-chain status changed");
-  assert(supply.metrics.clean_generation_runs === 2 && supply.metrics.normalized_outputs_byte_equal === true, "Step 2 supply-chain generation evidence changed");
-  assert(supply.metrics.slsa_build_level_claimed === false, "Step 2 SLSA level was promoted without evidence");
-
-  const expectedOpenWork = [
-    "commercial_evaluation_and_design_partners",
-    "deeper_sampling_profiles_and_further_optimization",
-    "executed_complete_mutation_and_kill_sweep",
-    "full_execution_lifecycle_verification",
-    "independent_code_and_security_review",
-    "measured_lane_scaling_1_through_16",
-    "real_external_workload",
-    "three_unrelated_machine_reproductions"
-  ];
-  assert(Array.isArray(manifest.open_work) && manifest.open_work.length === expectedOpenWork.length, "Step 2 open-work count changed");
-  assert(manifest.open_work.every((item) => item.status === "open"), "Step 2 open work was promoted");
-  assert(equalArray(manifest.open_work.map((item) => item.category).sort(), expectedOpenWork), "Step 2 open-work categories changed");
-
-  return { signedByRole, claims };
-}
-
-async function validateStep2Pack(pack) {
-  const manifestPath = "release/ADDENDUM-MANIFEST.canonical.json";
-  const signaturePath = "release/ADDENDUM-MANIFEST.canonical.json.sig";
-  assert(pack.inventory.get(manifestPath) === STEP2.addendumManifestSha256, "Step 2 addendum-manifest identity changed");
-  assert(pack.inventory.get(signaturePath) === STEP2.addendumSignatureSha256, "Step 2 detached-signature identity changed");
-  const manifest = parseJson(pack.raw[manifestPath], "Step 2 signed addendum manifest");
-  const validated = validateStep2Manifest(manifest);
-
-  const publicToRole = Object.freeze({
-    "ADDENDUM-MANIFEST.schema.json": "addendum_manifest_schema",
-    "CLAIM_LEDGER.md": "addendum_claim_ledger",
-    "README.md": "addendum_readme",
-    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst": "revisioned_distribution_archive",
-    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256": "revisioned_distribution_checksum",
-    "release/SIGNING-AUDIT.md": "addendum_signing_decision_record",
-    "release/SIGNING.md": "addendum_signing_doc",
-    "release/allowed_signers": "signature_verification_policy",
-    "release/mfenx-local-v2-step2.provenance.intoto.json": "step2_provenance",
-    "release/mfenx-local-v2-step2.sbom.cdx.json": "step2_sbom",
-    "release/release-signing-key.pub": "release_public_key",
-    "validation/SHA256SUMS": "revisioned_distribution_validation_inventory",
-    "validation/summary.json": "revisioned_distribution_validation",
-    "verifier/audit.json": "reference_verifier_audit_report",
-    "verifier/bin/mfenx-contract-v1-verifier": "reference_verifier_binary",
-    "verifier/build-record.json": "reference_verifier_build_record",
-    "verifier/reports/a-uninterrupted.report.json": "reference_verifier_w0_report",
-    "verifier/source/SHA256SUMS": "reference_verifier_source_inventory"
-  });
-  for (const [publicPath, role] of Object.entries(publicToRole)) {
-    const artifact = validated.signedByRole.get(role);
-    assert(artifact, "Step 2 signed manifest omits role " + role);
-    assert(pack.inventory.get(publicPath) === artifact.sha256, "Step 2 public copy differs from signed role " + role);
-    assert(pack.raw[publicPath].byteLength === artifact.size_bytes, "Step 2 public copy size differs from signed role " + role);
-  }
-
-  const signatureText = decodeUtf8(pack.raw[signaturePath], "Step 2 detached signature").trim();
-  assert(signatureText.startsWith("-----BEGIN SSH SIGNATURE-----") && signatureText.endsWith("-----END SSH SIGNATURE-----"), "Step 2 detached signature armor changed");
-  const publicKeyText = decodeUtf8(pack.raw["release/release-signing-key.pub"], "Step 2 public key").trim();
-  const publicKeyFields = publicKeyText.split(/\s+/);
-  assert(publicKeyFields.length >= 2 && publicKeyFields[0] === "ssh-ed25519", "Step 2 public key is not OpenSSH Ed25519");
-  const publicKeyBlob = decodeBase64(publicKeyFields[1], "Step 2 public key");
-  const publicKeyDigest = new Uint8Array(await crypto.subtle.digest("SHA-256", publicKeyBlob));
-  assert("SHA256:" + base64WithoutPadding(publicKeyDigest) === STEP2.publicKeyFingerprint, "Step 2 public-key fingerprint changed");
-  const allowedSignerFields = decodeUtf8(pack.raw["release/allowed_signers"], "Step 2 allowed-signers policy").trim().split(/\s+/);
-  assert(
-    allowedSignerFields[0] === "mfenx-release"
-      && allowedSignerFields[1] === "namespaces=\"mfenx-step2-addendum\""
-      && allowedSignerFields[2] === publicKeyFields[0]
-      && allowedSignerFields[3] === publicKeyFields[1],
-    "Step 2 allowed-signers policy does not bind the key and namespace"
-  );
-
-  const sourceInventory = parseManifest(pack.raw["verifier/source/SHA256SUMS"], "Step 2 verifier source", STEP2.sourceFiles.length);
-  assert(equalArray([...sourceInventory.keys()].sort(), [...STEP2.sourceFiles].sort()), "Step 2 verifier source file set changed");
-  for (const sourcePath of STEP2.sourceFiles) {
-    const publicPath = "verifier/source/" + sourcePath;
-    assert(pack.inventory.get(publicPath) === sourceInventory.get(sourcePath), "Step 2 verifier source binding changed: " + sourcePath);
-  }
-
-  const archivePath = "downloads/" + STEP2.archiveName;
-  const archiveChecksumPath = archivePath + ".sha256";
-  assert(
-    parseChecksumRecord(pack.raw[archiveChecksumPath], "Step 2 archive checksum", STEP2.archiveName) === pack.inventory.get(archivePath),
-    "Step 2 archive checksum disagrees with the archive"
-  );
-
-  const schema = parseJson(pack.raw["ADDENDUM-MANIFEST.schema.json"], "Step 2 addendum schema");
-  assert(schema.properties.claims.minItems === 10 && schema.properties.claims.maxItems === 10, "Step 2 schema claim cardinality changed");
-
-  const build = parseJson(pack.raw["verifier/build-record.json"], "Step 2 verifier build record");
-  assert(build.schema === "mfenx.verifier-build-record.v1" && Array.isArray(build.builds) && build.builds.length === 2, "Step 2 verifier build record changed");
-  assert(build.builds.every((item) => item.exit_status === 0 && item.sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier") && item.size_bytes === pack.raw["verifier/bin/mfenx-contract-v1-verifier"].byteLength), "Step 2 verifier builds do not bind the public binary");
-
-  const audit = parseJson(pack.raw["verifier/audit.json"], "Step 2 verifier audit");
-  assert(audit.schema === "mfenx.verifier-audit.v1" && audit.status === "PASS", "Step 2 verifier audit did not pass");
-  assert(audit.canonical_binary.sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier") && audit.canonical_binary.two_clean_builds_byte_identical === true, "Step 2 verifier audit binary changed");
-  assert(audit.validation.release_tests.build_a_passed === 27 && audit.validation.release_tests.build_b_passed === 27 && audit.validation.release_tests.failed === 0, "Step 2 verifier test record changed");
-  assert(audit.scope_limits.includes("not independently governed or externally security certified") && audit.scope_limits.includes("two-build record is same-host, not cross-host"), "Step 2 verifier audit limits changed");
-
-  const w0 = parseJson(pack.raw["verifier/reports/a-uninterrupted.report.json"], "Step 2 verifier W0 report");
-  assert(w0.accepted === true && w0.contract === "mfenx-replay-gated-execution-contract/v1", "Step 2 W0 report was not accepted");
-  assert(w0.identities.output_manifest_root === EXPECTED.outputRoot && w0.arithmetic.values_checked === 3145728 && w0.arithmetic.integer_operations === EXPECTED.usefulOperations, "Step 2 W0 replay scope changed");
-  assert(Object.values(w0.checks).every((value) => value === true), "Step 2 W0 report contains a failed check");
-
-  const validation = parseJson(pack.raw["validation/summary.json"], "Step 2 archive validation");
-  assert(validation.schema === "mfenx.step2-archive-validation.v1" && validation.status === "PASS", "Step 2 archive validation did not pass");
-  assert(validation.archive_name === STEP2.archiveName && validation.archive_sha256 === pack.inventory.get(archivePath), "Step 2 archive validation identity changed");
-  assert(validation.executor_sha256 === manifest.base_release.accepted_executor.sha256 && validation.verifier_sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 archive contents changed");
-  assert(Object.values(validation.checks).every((value) => value === true), "Step 2 archive validation contains a failed check");
-  assert(validation.experiment_claims.scaling_attempts_executed === 0 && validation.experiment_claims.adversarial_cases_executed === 0, "Step 2 archive validation promoted an unexecuted experiment");
-
-  const sbom = parseJson(pack.raw["release/mfenx-local-v2-step2.sbom.cdx.json"], "Step 2 SBOM");
-  assert(sbom.bomFormat === "CycloneDX" && sbom.specVersion === "1.5", "Step 2 SBOM format changed");
-  assert(sbom.metadata.component.name === "mfenx-local-v2-step2-addendum" && sbom.components.length === 25 && sbom.dependencies.length === 26, "Step 2 SBOM scope changed");
-  const sbomProperties = new Map(sbom.metadata.properties.map((item) => [item.name, item.value]));
-  assert(sbomProperties.get("mfenx:step2:scaling:executed-attempts") === "0" && sbomProperties.get("mfenx:step2:adversarial-sweep:executed-cases") === "0", "Step 2 SBOM experiment scope changed");
-  assert(sbomProperties.get("mfenx:step2:archive:sha256") === pack.inventory.get(archivePath) && sbomProperties.get("mfenx:step2:verifier:sha256") === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 SBOM subjects changed");
-
-  const provenance = parseJson(pack.raw["release/mfenx-local-v2-step2.provenance.intoto.json"], "Step 2 provenance");
-  assert(provenance._type === "https://in-toto.io/Statement/v1" && provenance.predicateType === "https://slsa.dev/provenance/v1", "Step 2 provenance envelope changed");
-  const provenanceSubjects = new Map(provenance.subject.map((item) => [item.annotations["mfenx:role"], item.digest.sha256]));
-  assert(provenanceSubjects.get("accepted_executor") === manifest.base_release.accepted_executor.sha256, "Step 2 provenance executor changed");
-  assert(provenanceSubjects.get("distribution_archive") === pack.inventory.get(archivePath) && provenanceSubjects.get("standalone_verifier") === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 provenance subjects changed");
-  const limitations = provenance.predicate.buildDefinition.externalParameters.limitations;
-  assert(limitations.scalingExecuted === false && limitations.adversarialSweepExecuted === false, "Step 2 provenance promoted unexecuted experiments");
-  assert(limitations.crossHostReproducibilityEstablished === false && limitations.independentAuthorship === false && limitations.independentSecurityAuthority === false, "Step 2 provenance independence limits changed");
-  assert(limitations.slsaBuildLevelClaimed === false && limitations.recordKind === "post-hoc project record", "Step 2 provenance SLSA qualification changed");
-
-  return { manifest, claims: validated.claims, validation, audit };
 }
 
 function setCheck(name, status, text) {
@@ -1141,24 +1147,90 @@ function displayComparison(v1, v2) {
   }
 }
 
-function clearStep2(status = "WAITING") {
-  for (const id of ["step2-addendum-status", "step2-verifier-status", "step2-scaling-status", "step2-adversarial-status"]) {
+function disableFinalLinks() {
+  document.querySelectorAll("[data-final-role], [data-final-special]").forEach((link) => {
+    link.removeAttribute("href");
+    link.setAttribute("aria-disabled", "true");
+    if (!link.textContent.includes("pending verification")) link.textContent += " · pending verification";
+  });
+}
+
+function enableFinalLinks(pack) {
+  document.querySelectorAll("[data-final-role]").forEach((link) => {
+    const role = link.dataset.finalRole;
+    const entry = pack.byRole.get(role);
+    assert(entry, "download link names an unindexed final role " + role);
+    link.href = VALIDATION_RECORD.root + entry.public_path;
+    link.removeAttribute("aria-disabled");
+    link.textContent = link.textContent.replace(" · pending verification", "");
+  });
+  const special = {
+    record: VALIDATION_RECORD.root + "release/VALIDATION-RECORD.canonical.json",
+    signature: VALIDATION_RECORD.root + "release/VALIDATION-RECORD.canonical.json.sig",
+    "claim-ledger": VALIDATION_RECORD.root + "release/CLAIM_LEDGER.md",
+    "release-index": VALIDATION_RECORD.root + "release-index.json",
+    retrieval: VALIDATION_RECORD.root + "post-publication-retrieval-attestation.json"
+  };
+  document.querySelectorAll("[data-final-special]").forEach((link) => {
+    link.href = special[link.dataset.finalSpecial];
+    link.removeAttribute("aria-disabled");
+    link.textContent = link.textContent.replace(" · pending verification", "");
+  });
+}
+
+function clearValidationRecord(status = "CHECKING") {
+  for (const id of ["record-contract", "record-adversarial", "record-reproduction", "record-evaluation"]) {
     const node = byId(id);
     node.textContent = status;
     node.className = status === "REJECTED" ? "fail" : "";
   }
+  for (const id of ["physical-scaling-result", "hosted-reproduction-result", "external-workload-result", "commercial-boundary-result"]) {
+    byId(id).textContent = "—";
+    byId(id).className = "";
+  }
+  byId("hero-adversarial").textContent = "verification pending";
+  byId("hero-scaling").textContent = "verification pending";
+  byId("hero-hosted").textContent = "verification pending";
+  for (const row of document.querySelectorAll("[data-final-lane]")) {
+    for (const cell of Array.from(row.children).slice(2)) cell.textContent = "—";
+  }
+  disableFinalLinks();
 }
 
-function displayStep2(validated) {
-  const scaling = validated.claims.get("S2-CL-005").metrics;
-  const adversarial = validated.claims.get("S2-CL-006").metrics;
-  byId("step2-addendum-status").textContent = "SIGNED";
-  byId("step2-verifier-status").textContent = "PUBLISHED";
-  byId("step2-scaling-status").textContent = scaling.executed_attempts + " / " + scaling.planned_attempts;
-  byId("step2-adversarial-status").textContent = adversarial.executed_cases + " / " + adversarial.planned_cases;
-  for (const id of ["step2-addendum-status", "step2-verifier-status", "step2-scaling-status", "step2-adversarial-status"]) {
-    byId(id).className = "pass";
+function displayValidationRecord(pack) {
+  const recordStates = [
+    ["record-contract", "FROZEN / SIGNED", "pass"],
+    ["record-adversarial", "214 / 214", "pass"],
+    ["record-reproduction", "3 / 3 VM JOBS", "pass"],
+    ["record-evaluation", "RELEASE READY", "pass"]
+  ];
+  for (const [id, label, className] of recordStates) {
+    byId(id).textContent = label;
+    byId(id).className = className;
   }
+
+  byId("hero-adversarial").textContent = "214 / 214 validated";
+  byId("hero-scaling").textContent = "100 / 100 retained";
+  byId("hero-hosted").textContent = "3 / 3 VM jobs";
+  for (const lanes of [1, 2, 4, 8, 16]) {
+    const cold = pack.scalingCells.get("cold_unprimed/" + lanes);
+    const warm = pack.scalingCells.get("warm_primed/" + lanes);
+    const row = document.querySelector("[data-final-lane='" + lanes + "']");
+    const cells = row.children;
+    cells[2].textContent = (Number(cold.external_executor_wall_ns.median_decimal) / 1e9).toFixed(3) + " s";
+    cells[3].textContent = cold.lane1_median_speedup_decimal + "×";
+    cells[4].textContent = (Number(warm.external_executor_wall_ns.median_decimal) / 1e9).toFixed(3) + " s";
+    cells[5].textContent = warm.lane1_median_speedup_decimal + "×";
+  }
+  byId("physical-scaling-result").textContent = "1.315× cold / 1.214× warm";
+
+  byId("hosted-reproduction-result").textContent = "3 / 3 VM JOBS · SAME ROOT";
+  byId("hosted-reproduction-result").className = "pass";
+  byId("external-workload-result").textContent = "UCI IRIS · 3-WAY EXACT AGREEMENT";
+  byId("external-workload-result").className = "pass";
+  byId("commercial-boundary-result").textContent = "APACHE-2.0 · RELEASE READY";
+  byId("commercial-boundary-result").className = "pass";
+  enableFinalLinks(pack);
 }
 
 function displayIo(prefix, counter) {
@@ -1235,18 +1307,18 @@ async function loadAndValidate() {
   state.loading = true;
   state.ready = false;
   clearComparison();
-  clearStep2();
-  releaseState("pending", "hashing releases, Contract v1, and Step 2 public files");
+  clearValidationRecord();
+  releaseState("pending", "hashing releases, Contract v1, and Validation Record files");
   byId("rerun-verification").disabled = true;
   byId("rerun-verification").textContent = "checking…";
-  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison", "trust-pack", "step2-pack", "step2-semantics"]) setCheck(name, "", "checking");
+  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison", "trust-pack", "final-index", "final-signature", "final-semantics"]) setCheck(name, "", "checking");
 
   try {
-    const [v2Release, v1Release, trustPack, step2Pack] = await Promise.all([
+    const [v2Release, v1Release, trustPack, validationRecord] = await Promise.all([
       loadSelectedRelease("v2", RELEASES.v2),
       loadSelectedRelease("v1", RELEASES.v1),
       loadContractPack(),
-      loadStep2Pack()
+      loadValidationRecordPack()
     ]);
     setCheck("v2-manifest", "pass", RELEASES.v2.manifestEntries.toLocaleString() + " full-capture entries");
     setCheck("v2-pack", "pass", RELEASES.v2.files.length + " / " + RELEASES.v2.files.length + " selected files");
@@ -1259,33 +1331,42 @@ async function loadAndValidate() {
     setCheck("comparison", "pass", "same workload / roots / observer");
     await validateContractPack(trustPack);
     setCheck("trust-pack", "pass", CONTRACT_V1.files.length + " signed-bound/public files");
-    setCheck("step2-pack", "pass", STEP2.files.length + " / " + STEP2.files.length + " selected files");
-    const step2 = await validateStep2Pack(step2Pack);
-    setCheck("step2-semantics", "pass", "10 claims / limits enforced");
+    setCheck("final-index", "pass", validationRecord.index.artifact_count + " staged inputs / live retrieval attested");
+    setCheck("final-signature", "pass", "11 signed record entries / domain policy checked");
+    setCheck("final-semantics", "pass", "adversarial + scaling + reproduction + workload verified");
 
     state.v2 = { release: v2Release, validated: v2 };
     state.v1 = { release: v1Release, validated: v1 };
-    state.step2 = { pack: step2Pack, validated: step2 };
+    state.validationRecord = validationRecord;
     state.ready = true;
     displayV2(v2);
     displayComparison(v1, v2);
-    displayStep2(step2);
-    byId("verification-copy").textContent = "The selected v2/v1 evidence, Contract v1 subset, and Step 2 subset match pinned SHA-256 inventories and signed-role bindings; cross-file and negative-claim semantics passed. The browser checks signature bytes, namespace policy, and the release-key fingerprint. Use OpenSSH with an independently pinned fingerprint to authenticate signer ownership.";
-    releaseState("pass", "release + Contract v1 + Step 2 files verified");
+    displayValidationRecord(validationRecord);
+    byId("verification-copy").textContent = "The selected v2/v1 evidence, Contract v1, and Validation Record files match pinned SHA-256 identities and signed-role bindings. Measured scaling, adversarial, reproduction, workload, publication-lifecycle, and post-deploy retrieval semantics passed. Use OpenSSH with an independently pinned fingerprint to authenticate signer ownership.";
+    releaseState("pass", "signed candidate + Validation Record verified");
   } catch (error) {
+    const publicationPending = error instanceof Error
+      && error.message === "Validation Record pinned digest is unresolved or malformed";
     state.ready = false;
     state.v2 = null;
     state.v1 = null;
-    state.step2 = null;
+    state.validationRecord = null;
     clearComparison();
-    clearStep2("REJECTED");
-    byId("release-verdict").textContent = "REJECTED";
-    byId("release-verdict").className = "fail";
+    clearValidationRecord(publicationPending ? "PENDING" : "REJECTED");
+    byId("release-verdict").textContent = publicationPending ? "PENDING" : "REJECTED";
+    byId("release-verdict").className = publicationPending ? "" : "fail";
+    if (publicationPending) {
+      for (const name of ["contract", "comparison", "trust-pack", "final-index", "final-signature", "final-semantics"]) setCheck(name, "", "publication pending");
+      byId("verification-copy").textContent = "The signed Validation Record publication binding is being finalized. Evidence downloads remain disabled until every pinned digest and live-retrieval check is present.";
+      releaseState("pending", "Validation Record publication binding pending");
+      return;
+    }
     setCheck("contract", "fail", "rejected");
     setCheck("comparison", "fail", "not displayed");
     setCheck("trust-pack", "fail", "rejected");
-    setCheck("step2-pack", "fail", "rejected");
-    setCheck("step2-semantics", "fail", "rejected");
+    setCheck("final-index", "fail", "rejected");
+    setCheck("final-signature", "fail", "rejected");
+    setCheck("final-semantics", "fail", "not displayed");
     byId("verification-copy").textContent = error.message;
     releaseState("fail", "selected release evidence rejected");
     throw error;
@@ -1314,7 +1395,18 @@ byId("verify-release").addEventListener("click", () => {
 byId("rerun-verification").addEventListener("click", () => loadAndValidate().catch(() => {}));
 byId("copy-commands").addEventListener("click", copyCommands);
 
-window.__MFENX_TEST__ = Object.freeze({ validateV2, validateV1, validateComparison, validateStep2Manifest });
+window.__MFENX_TEST__ = Object.freeze({
+  validateV2,
+  validateV1,
+  validateComparison,
+  validateFinalReleaseIndex,
+  validatePrepublicationVerification,
+  validateFinalStatus,
+  validateScalingResults,
+  validateFinalSelected,
+  validateFinalRecord,
+  validatePostPublicationRetrieval
+});
 updateClock();
 window.setInterval(updateClock, 1000);
 loadAndValidate().catch(() => {});

@@ -1,0 +1,75 @@
+{
+  "schema": "mfenx.local-hosted-artifact-closure.v1",
+  "kind": "automated_security_evidence_a1_closure",
+  "created_at": "2026-08-22T14:17:03Z",
+  "remote": {
+    "repository": "JROChub/power_house",
+    "workflow_run_id": "32571939106",
+    "workflow_run_attempt": "1",
+    "workflow_run_url": "https://github.com/JROChub/power_house/actions/runs/32571939106",
+    "job_id": "97028499929",
+    "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+    "conclusion": "failure",
+    "retried": false
+  },
+  "candidate": {
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f"
+  },
+  "remote_artifact": {
+    "id": 9475603196,
+    "name": "step3-security-evidence",
+    "size_bytes": 34007,
+    "zip_sha256": "d492bf4c87220f4768c6ac049ee8c543739026bc17a3d7ab616ce56d86cbea94",
+    "inner_tar_gz_sha256": "9b20e1d656d33659109e48ee189abe203c53089671713c97f0052981357de285"
+  },
+  "retained_evidence": {
+    "inner_sha256sums_sha256": "52061c6fffe0bde359eb2d069b014972a39aa1a77ddf1f9e48c690aa019337bd",
+    "summary_sha256": "4d46bcfce0970daefbe8aa2690ce5f8031555c8fd9c4d25e3e2e2e0bbb9c92be",
+    "raw_job_log_sha256": "15b4ac9bc94d5e6c6a0418728b9457801007d1def3a9114dfa618b24d5e7779b",
+    "attestation_bundle_sha256": "effcc71f755e3ec5a7d4b27020acee96b23d47a24154ac7657cabd1c1716db7e",
+    "attestation_verification_sha256": "7598257d9c58553ec266d43f11e09567c4b63212fa625d559be2bd0ad62ed21d"
+  },
+  "result": {
+    "automated_evidence_status": "fail",
+    "independent_code_or_security_review_complete": false,
+    "independent_human_review_status": "not_performed",
+    "unwaived_codeql_result_count": 0,
+    "codeql_sarif_retained": false
+  },
+  "root_failures": [
+    {
+      "tool": "codeql-init",
+      "failure": "Rust does not support CodeQL manual build mode; the supported mode reported by CodeQL is none.",
+      "raw_job_log_line": 1190
+    },
+    {
+      "tool": "fuzz-harness-setup",
+      "failure": "The workflow tried to create candidate-source/packaging/review inside the read-only signed-source copy and received Permission denied.",
+      "raw_job_log_line": 294
+    },
+    {
+      "tool": "cargo-workspace",
+      "failure": "The signed local-source Cargo.toml lists workspace members not included in that archive subdirectory; the first missing member is crates/rarecomp_mfenx. This caused codeql-build, cargo-deny, rustfmt, clippy, and unit-tests to fail."
+    }
+  ],
+  "consequential_failures": [
+    "codeql-analyze failed and no SARIF was retained",
+    "fuzz-contract-control outcome missing",
+    "fuzz-tensor-manifest outcome missing",
+    "static-policy outcome missing"
+  ],
+  "local_checks": {
+    "github_artifact_zip_digest_matches_api": true,
+    "zip_inventory_is_safe": true,
+    "inner_archive_sidecar_matches": true,
+    "tar_inventory_is_safe": true,
+    "inner_sha256sums_verify": true,
+    "workflow_attestation_verification_record_retained": true,
+    "local_attestation_reverification": {
+      "status": "not_performed",
+      "reason": "Installed GitHub CLI 2.46.0 has no gh attestation command; the successful workflow-produced verification JSON is retained verbatim."
+    }
+  }
+}

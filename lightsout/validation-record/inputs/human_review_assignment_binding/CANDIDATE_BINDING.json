@@ -1,0 +1,33 @@
+{
+  "automated_evidence": {
+    "directory": "mfenx-step3-security-review-20260822-a1",
+    "manifest": "SHA256SUMS",
+    "manifest_sha256": "df18ef4a31ae9581e058ffe7e48913b0d09767348d2c5147e48f256be2917a0f",
+    "summary_sha256": "a7431e2f6f56521c3a5062d4aeeafdee72b0c7ceafa085a915d9b976961550f1",
+    "quality_review_sha256": "24caf31235b12385e6faa583f5715cc3ebf5e588a118ac30a605f61381588e72"
+  },
+  "candidate": {
+    "candidate_manifest_sha256": "75c8b077991a181a326ccb93ce5e83b4935ad64ed27cf5bb30b8c9db6a4bd615",
+    "candidate_sha256sums_sha256": "264e783efe2fb6e34c90e2b38effefa357fff77600bee28cb44527f7c1c2eaee",
+    "candidate_source_inventory_sha256": "affd7fa0da3f1fae9adc75e0e7be52da752a6cc6dcbde3c4c10497de9f4d7e0d",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "executor_source_inventory_sha256": "f9d2cf4c7d19c1faf5c77021e25d90d07217448db285f5f49fc27e50e6f10f3c",
+    "name": "mfenx-local-v2-adversarial-candidate-20260822-a1",
+    "plan_id": "99708d8d3959f835625864186e7056d8198a26d91684073ded82a3f90c298063"
+  },
+  "created_at": "2026-08-22T09:36:00Z",
+  "human_review": {
+    "independence_checked": false,
+    "report": null,
+    "reviewer": null,
+    "signature": null,
+    "status": "not_performed"
+  },
+  "human_review_schema_binding": {
+    "candidate_commit": null,
+    "current_schema_requires_40_hex_commit": true,
+    "status": "blocked_missing_commit_binding"
+  },
+  "kind": "human_review_assignment_binding",
+  "schema": "mfenx.human-review-assignment-binding.v1"
+}
