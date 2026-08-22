@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import pathlib
 import re
 import shutil
@@ -32,7 +31,9 @@ LOCAL_CRATES = (
 )
 VERIFIER_CRATE = "mfenx-contract-v1-verifier"
 WORKSPACE_MEMBERS = tuple(f"crates/{name}" for name in (*LOCAL_CRATES, VERIFIER_CRATE))
-LOCAL_SUPPORT_FILES = ("Cargo.lock", "LICENSE", "rust-toolchain.toml")
+LOCAL_SUPPORT_FILES = ("LICENSE", "rust-toolchain.toml")
+SIGNED_LOCK_FILE = "Cargo.lock"
+ADAPTER_LOCK_FILE = pathlib.PurePosixPath("workspace-adapter/Cargo.lock")
 
 
 class OverlayError(RuntimeError):
@@ -103,7 +104,7 @@ def load_identity(path: pathlib.Path) -> dict[str, object]:
 
 
 def check_candidate_layout(candidate_source: pathlib.Path, verifier_source: pathlib.Path) -> None:
-    for relative in ("Cargo.toml", *LOCAL_SUPPORT_FILES):
+    for relative in ("Cargo.toml", SIGNED_LOCK_FILE, *LOCAL_SUPPORT_FILES):
         path = candidate_source / relative
         if not path.is_file() or path.is_symlink():
             raise OverlayError(f"signed local source is missing regular file {relative}")
@@ -157,6 +158,8 @@ def make_owner_writable(root: pathlib.Path) -> None:
 def classify_overlay_path(relative: str) -> str:
     if relative == "Cargo.toml":
         return "generated_workspace_adapter"
+    if relative == SIGNED_LOCK_FILE:
+        return "commit_bound_workspace_adapter"
     if relative.startswith(f"crates/{VERIFIER_CRATE}/"):
         return "signed_verifier_source"
     if relative.startswith("crates/") or relative in LOCAL_SUPPORT_FILES:
@@ -179,6 +182,9 @@ def create(args: argparse.Namespace) -> int:
 
     identity_record = load_identity(args.identity.resolve())
     check_candidate_layout(candidate_source, verifier_source)
+    adapter_lock = review_harness / ADAPTER_LOCK_FILE
+    if not adapter_lock.is_file() or adapter_lock.is_symlink():
+        raise OverlayError(f"commit-bound adapter lock is missing: {ADAPTER_LOCK_FILE}")
     signed_local = inventory_report(candidate_source)
     signed_verifier = inventory_report(verifier_source)
     committed_harness = inventory_report(review_harness)
@@ -186,6 +192,7 @@ def create(args: argparse.Namespace) -> int:
     output.mkdir(parents=True)
     for relative in LOCAL_SUPPORT_FILES:
         shutil.copy2(candidate_source / relative, output / relative)
+    shutil.copy2(adapter_lock, output / SIGNED_LOCK_FILE)
     (output / "crates").mkdir()
     for crate in LOCAL_CRATES:
         copy_tree(candidate_source / "crates" / crate, output / "crates" / crate)
@@ -221,6 +228,8 @@ def create(args: argparse.Namespace) -> int:
             "members": list(WORKSPACE_MEMBERS),
             "original_manifest_sha256": sha256_file(candidate_source / "Cargo.toml"),
             "generated_manifest_sha256": sha256_file(output / "Cargo.toml"),
+            "original_lock_sha256": sha256_file(candidate_source / SIGNED_LOCK_FILE),
+            "commit_bound_lock_sha256": sha256_file(output / SIGNED_LOCK_FILE),
         },
         "overlay": {
             "file_count": len(overlay_files),

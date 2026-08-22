@@ -133,10 +133,16 @@ jobs:
             > "${RUNNER_TEMP}/security-evidence/candidate-input-verification/verify.stdout.log" \
             2> "${RUNNER_TEMP}/security-evidence/candidate-input-verification/verify.stderr.log"
           source_root="${RUNNER_TEMP}/candidate-extract/${ARCHIVE_ROOT}/${SOURCE_SUBDIR}"
+          verifier_source="${RUNNER_TEMP}/candidate-extract/${ARCHIVE_ROOT}/source/mfenx-contract-v1-verifier"
           test -f "${source_root}/Cargo.toml"
           test -f "${source_root}/Cargo.lock"
+          test -f "${verifier_source}/Cargo.toml"
+          test -f "${verifier_source}/Cargo.lock"
           cp -a -- "${source_root}" "${GITHUB_WORKSPACE}/candidate-source"
-          find "${GITHUB_WORKSPACE}/candidate-source" ! -type f ! -type d -print -quit \
+          cp -a -- "${verifier_source}" "${GITHUB_WORKSPACE}/candidate-verifier-source"
+          find "${GITHUB_WORKSPACE}/candidate-source" \
+            "${GITHUB_WORKSPACE}/candidate-verifier-source" \
+            ! -type f ! -type d -print -quit \
             | grep -q . && exit 1 || true
 
       - name: Record candidate-input verification without hiding failures
@@ -155,7 +161,7 @@ jobs:
             --artifacts "${RUNNER_TEMP}/security-evidence/candidate-input-verification" \
             --note 'Pinned hashes, namespace-restricted SSH signature, archive binding, inventory, and source extraction'
 
-      - name: Inventory the exact signed source before injecting review harnesses
+      - name: Inventory the exact signed local source before creating an analysis overlay
         id: source_inventory
         if: always()
         continue-on-error: true
@@ -164,17 +170,29 @@ jobs:
             --root "${RUNNER_TEMP}/security-evidence" \
             --source "${GITHUB_WORKSPACE}/candidate-source"
 
-      - name: Install the commit-bound fuzz harness into the staged source
+      - name: Create the recorded four-crate analysis overlay and fuzz harness
         id: fuzz_harness_setup
         if: always()
         continue-on-error: true
         run: |
           set -euxo pipefail
-          mkdir -p "${GITHUB_WORKSPACE}/candidate-source/packaging" \
-            "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup"
-          cp -a packaging/review "${GITHUB_WORKSPACE}/candidate-source/packaging/review"
-          find packaging/review -type f -print0 | sort -z | xargs -0 sha256sum \
-            > "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup/inventory.sha256"
+          python3 packaging/step3-review-overlay.py create \
+            --identity packaging/step3-candidate-identity.json \
+            --candidate-source "${GITHUB_WORKSPACE}/candidate-source" \
+            --verifier-source "${GITHUB_WORKSPACE}/candidate-verifier-source" \
+            --review-harness "${GITHUB_WORKSPACE}/packaging/review" \
+            --output "${GITHUB_WORKSPACE}/candidate-review-source" \
+            --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
+          python3 packaging/step3-review-overlay.py check \
+            --output "${GITHUB_WORKSPACE}/candidate-review-source" \
+            --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
+          cargo metadata \
+            --manifest-path "${GITHUB_WORKSPACE}/candidate-review-source/Cargo.toml" \
+            --format-version 1 --locked --no-deps \
+            > "${RUNNER_TEMP}/security-evidence/review-overlay/cargo-metadata.json"
+          python3 packaging/step3-review-overlay.py check \
+            --output "${GITHUB_WORKSPACE}/candidate-review-source" \
+            --record "${RUNNER_TEMP}/security-evidence/review-overlay/overlay.json"
 
       - name: Record fuzz-harness setup
         if: always()
@@ -184,8 +202,8 @@ jobs:
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-harness-setup \
             --status "${{ steps.fuzz_harness_setup.outcome }}" \
-            --artifacts "${RUNNER_TEMP}/security-evidence/fuzz-harness-setup" \
-            --note 'Review harness copied only after the signed candidate-source inventory was frozen'
+            --artifacts "${RUNNER_TEMP}/security-evidence/review-overlay" \
+            --note 'Analysis-only four-crate overlay and review harness created after signed-source inventory; release bytes were not mutated'
 
       - name: Retain exact toolchain and analyzer versions
         id: toolchain_context
@@ -204,9 +222,9 @@ jobs:
         uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
           languages: rust
-          build-mode: manual
+          build-mode: none
           queries: security-extended
-          source-root: candidate-source
+          source-root: candidate-review-source
 
       - name: Record CodeQL initialization outcome
         if: always()
@@ -218,17 +236,16 @@ jobs:
             --status "${{ steps.codeql_init.outcome }}" \
             --note 'GitHub CodeQL Rust initialization for the extracted signed candidate source'
 
-      - name: Build the candidate workspace under CodeQL tracing
+      - name: Record CodeQL build-mode none without a manual build
         id: codeql_build
         if: always()
         continue-on-error: true
         run: |
-          python3 packaging/step3-security-review-evidence.py run \
+          python3 packaging/step3-security-review-evidence.py record-external \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool codeql-build \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
-            --timeout-seconds 3600 -- \
-            cargo build --workspace --all-targets --locked
+            --status "${{ steps.codeql_init.outcome }}" \
+            --note 'No manual build: CodeQL Rust build-mode none analyzes the recorded source overlay'
 
       - name: Analyze and retain CodeQL SARIF
         id: codeql_analyze
@@ -259,7 +276,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool cargo-audit \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
             cargo audit --json
 
       - name: Cargo license, source, ban, and advisory policy
@@ -270,7 +287,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool cargo-deny \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
             cargo deny --config "${GITHUB_WORKSPACE}/packaging/review/deny.toml" check
 
       - name: Rust formatting static check
@@ -281,7 +298,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool rustfmt \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" -- \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source" -- \
             cargo fmt --all -- --check
 
       - name: Strict Clippy static analysis
@@ -292,7 +309,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool clippy \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source" \
             --timeout-seconds 3600 -- \
             cargo clippy --workspace --all-targets --locked -- -D warnings
 
@@ -304,7 +321,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool unit-tests \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source" \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source" \
             --timeout-seconds 3600 -- \
             cargo test --workspace --all-targets --locked
 
@@ -322,7 +339,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-contract-control \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz" \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source/packaging/review/fuzz" \
             --timeout-seconds 180 -- \
             cargo +nightly-2026-07-10 fuzz run --fuzz-dir . contract-control -- \
               -max_total_time=120 -timeout=5 -max_len=1048576 -rss_limit_mb=2048 \
@@ -336,7 +353,7 @@ jobs:
           python3 packaging/step3-security-review-evidence.py run \
             --root "${RUNNER_TEMP}/security-evidence" \
             --tool fuzz-tensor-manifest \
-            --cwd "${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz" \
+            --cwd "${GITHUB_WORKSPACE}/candidate-review-source/packaging/review/fuzz" \
             --timeout-seconds 180 -- \
             cargo +nightly-2026-07-10 fuzz run --fuzz-dir . tensor-manifest -- \
               -max_total_time=120 -timeout=5 -max_len=4194304 -rss_limit_mb=2048 \
@@ -350,7 +367,7 @@ jobs:
           set -euxo pipefail
           destination="${RUNNER_TEMP}/security-evidence/fuzz-corpus"
           mkdir -p "${destination}"
-          source="${GITHUB_WORKSPACE}/candidate-source/packaging/review/fuzz/corpus"
+          source="${GITHUB_WORKSPACE}/candidate-review-source/packaging/review/fuzz/corpus"
           if test -d "${source}"; then
             cp -a -- "${source}/." "${destination}/"
           fi
@@ -376,7 +393,7 @@ jobs:
         run: |
           python3 packaging/step3-security-review-evidence.py static-policy \
             --root "${RUNNER_TEMP}/security-evidence" \
-            --repository "${GITHUB_WORKSPACE}/candidate-source" \
+            --repository "${GITHUB_WORKSPACE}/candidate-review-source" \
             --policy-repository "${GITHUB_WORKSPACE}"
 
       - name: Finalize automated evidence while leaving human review open

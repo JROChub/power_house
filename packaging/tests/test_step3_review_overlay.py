@@ -69,6 +69,7 @@ rust-version = "1.85"
         harness = root / "review"
         write(harness / "deny.toml", "[advisories]\nversion = 2\n")
         write(harness / "fuzz/Cargo.toml", "[workspace]\n")
+        write(harness / "workspace-adapter/Cargo.lock", "version = 4\n")
 
         identity = root / "identity.json"
         identity.write_text(
@@ -118,6 +119,7 @@ rust-version = "1.85"
                 {item["provenance"] for item in record["overlay"]["files"]},
                 {
                     "generated_workspace_adapter",
+                    "commit_bound_workspace_adapter",
                     "signed_local_source",
                     "signed_verifier_source",
                     "commit_bound_review_harness",
