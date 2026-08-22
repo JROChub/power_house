@@ -1,0 +1,209 @@
+{
+  "artifacts": [
+    {
+      "archive": "step3-host-1/host-1.tar.gz",
+      "archive_sha256": "828ba7f529ff607d9a51da7eba18e177708fdd3bbd476babef88c3b5f2b1b828",
+      "attestation_bundle_sha256": "4a9abe14b7842b3f11d05cd90d666235f511ce87253bd4892f1aff8fe999f254",
+      "attestation_verification_sha256": "54e01247bfca94a1b626b9242096c8eddbdf103b009a22767071f854b3c1ba97",
+      "slot": "host-1"
+    },
+    {
+      "archive": "step3-host-2/host-2.tar.gz",
+      "archive_sha256": "9eb57648e7800ee27dea60ba63fa8737bd47ef6bf8558d1c46cca77187af07fe",
+      "attestation_bundle_sha256": "295475c9fcabc741ee22c78157b2501e3f1be8fffc7c5b05c5d831b5dea9bff9",
+      "attestation_verification_sha256": "f0e07bfbf5275056ed1225241d35dc4c65ff11c2b4dcb4974ee6d43aaaf098ac",
+      "slot": "host-2"
+    },
+    {
+      "archive": "step3-host-3/host-3.tar.gz",
+      "archive_sha256": "64d4173fd571ec8802ff1bdbd2b450d88e27ccb3bf465bcd39c08bb94fb73ae9",
+      "attestation_bundle_sha256": "1be047e0b2e745ad57bcbc868dccf1426e702e10d548a5e54ffe9c0f7cd8b7c9",
+      "attestation_verification_sha256": "0dd89324d6ac89acd738299ffef22007a47edc42acfe684762d9fcaa24e7de2a",
+      "slot": "host-3"
+    }
+  ],
+  "claim": null,
+  "claim_eligible": false,
+  "created_at": "2026-08-22T12:04:12Z",
+  "failures": [],
+  "host_gate_eligible": true,
+  "hosts": [
+    {
+      "capture": {
+        "accepted_binary_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+        "candidate_identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+        "candidate_release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+        "checksum_manifest_sha256": "464416afed54efacee8c2c00edb307e68e47fc63ddd2a399a16484e796701fa8",
+        "hosted_release_workload_gate_passed": true,
+        "path": "reproduction-capture",
+        "record_schema": "mfenx.step3-hosted-release-run.v1"
+      },
+      "claim_policy": {
+        "individual_record_establishes_three_host_reproduction": false,
+        "requires_signed_aggregate": true,
+        "requires_three_distinct_host_fingerprints": true,
+        "requires_three_distinct_runner_ids": true
+      },
+      "created_at": "2026-08-22T12:03:38Z",
+      "failures": [],
+      "github": {
+        "actions_job_id": 97028508979,
+        "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+        "job_name": "Reproduce host-1",
+        "labels": [
+          "ubuntu-24.04"
+        ],
+        "repository": "JROChub/power_house",
+        "run_attempt": "1",
+        "run_id": "32571937955",
+        "runner_environment": "github-hosted",
+        "runner_id": 1000007421,
+        "runner_name": "GitHub Actions 1000007421"
+      },
+      "host": {
+        "component_hashes": {
+          "actions_job_id": "ad1602a195d227c5d37729d237446b9e247ecded6d030a5e08a52d96ec035211",
+          "boot_id": "d96f0a41c0601df90120ecd91c426353ea1ea2336121567673b83d66f3642ad3",
+          "hostname": "b0ab998e07f2356346435e9b40d98a4d3e57e465fbe5f64d60e6541468506b29",
+          "machine_id": "7f4cba9edf4a550b03cf4b2bde1d55bce5e9b4b37b497b56b5ffd8a6b22db84a",
+          "runner_id": "07a437a062db2c9d9eee1f7a482d4762b7697f7aea6327d1c9b7ec0db0b85f4e",
+          "runner_name": "d457484a886be64791670cb67b3a89082fc0b3bb31b48b7dbcf4dc240664c3e8"
+        },
+        "fingerprint": "7079a6232e7ecc5363e955815001dd601276fcab2a95034e151a4cc7076408e9",
+        "raw_host_identifiers_withheld": true
+      },
+      "kind": "host_reproduction",
+      "schema": "mfenx.step3-reproduction.v1",
+      "slot": "host-1",
+      "status": "succeeded"
+    },
+    {
+      "capture": {
+        "accepted_binary_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+        "candidate_identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+        "candidate_release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+        "checksum_manifest_sha256": "04cd70dfa1ebdd33f0c0c6c75ae1ab5bea1d6572082b1008eeceacff677102f3",
+        "hosted_release_workload_gate_passed": true,
+        "path": "reproduction-capture",
+        "record_schema": "mfenx.step3-hosted-release-run.v1"
+      },
+      "claim_policy": {
+        "individual_record_establishes_three_host_reproduction": false,
+        "requires_signed_aggregate": true,
+        "requires_three_distinct_host_fingerprints": true,
+        "requires_three_distinct_runner_ids": true
+      },
+      "created_at": "2026-08-22T12:03:49Z",
+      "failures": [],
+      "github": {
+        "actions_job_id": 97028508983,
+        "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+        "job_name": "Reproduce host-2",
+        "labels": [
+          "ubuntu-24.04"
+        ],
+        "repository": "JROChub/power_house",
+        "run_attempt": "1",
+        "run_id": "32571937955",
+        "runner_environment": "github-hosted",
+        "runner_id": 1000007422,
+        "runner_name": "GitHub Actions 1000007422"
+      },
+      "host": {
+        "component_hashes": {
+          "actions_job_id": "bdfd4b40148f084fde0a218fabd1a231b1ab0c0e202a3292d4beec4de09741d0",
+          "boot_id": "928c7ff2da939ee320b1c135cfce072bbb8cc5d412232ac33259ebb88a981b6c",
+          "hostname": "b0ab998e07f2356346435e9b40d98a4d3e57e465fbe5f64d60e6541468506b29",
+          "machine_id": "7f4cba9edf4a550b03cf4b2bde1d55bce5e9b4b37b497b56b5ffd8a6b22db84a",
+          "runner_id": "6159ed56fd5e9684055a1f1a5eb33cc078de319a986dde6ed437841370b2ed9d",
+          "runner_name": "c22de316e39d83a8b9c7ae82aec9ff1658b121c10a6179ed829cb1ca813afa7b"
+        },
+        "fingerprint": "fb60f081625a8765ff32f3bffc3618ca5e1b935b886ce6ccf87b69dd16e81023",
+        "raw_host_identifiers_withheld": true
+      },
+      "kind": "host_reproduction",
+      "schema": "mfenx.step3-reproduction.v1",
+      "slot": "host-2",
+      "status": "succeeded"
+    },
+    {
+      "capture": {
+        "accepted_binary_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+        "candidate_identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+        "candidate_release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+        "checksum_manifest_sha256": "fa7a96e93e1f55be2fc12b23cfdba6c8f6485881b7495e0ab2090c5b65d96a39",
+        "hosted_release_workload_gate_passed": true,
+        "path": "reproduction-capture",
+        "record_schema": "mfenx.step3-hosted-release-run.v1"
+      },
+      "claim_policy": {
+        "individual_record_establishes_three_host_reproduction": false,
+        "requires_signed_aggregate": true,
+        "requires_three_distinct_host_fingerprints": true,
+        "requires_three_distinct_runner_ids": true
+      },
+      "created_at": "2026-08-22T12:03:34Z",
+      "failures": [],
+      "github": {
+        "actions_job_id": 97028509057,
+        "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+        "job_name": "Reproduce host-3",
+        "labels": [
+          "ubuntu-24.04"
+        ],
+        "repository": "JROChub/power_house",
+        "run_attempt": "1",
+        "run_id": "32571937955",
+        "runner_environment": "github-hosted",
+        "runner_id": 1000007423,
+        "runner_name": "GitHub Actions 1000007423"
+      },
+      "host": {
+        "component_hashes": {
+          "actions_job_id": "3905e57245c80f5428e9a583976117237ccb304447770fce83edd17bef02fc70",
+          "boot_id": "33a8012d8343aa81b04c8e9227025dad42bd1f0429e1902e3f24256e86b7e509",
+          "hostname": "b0ab998e07f2356346435e9b40d98a4d3e57e465fbe5f64d60e6541468506b29",
+          "machine_id": "7f4cba9edf4a550b03cf4b2bde1d55bce5e9b4b37b497b56b5ffd8a6b22db84a",
+          "runner_id": "e9bdbfad09c71a34cd3dcf04e65fed6852795f52318cb440ebb4e9b527255594",
+          "runner_name": "42a60462bed0dba9f2f780b089b6a2f85dd26d664e0a5bffe19cc5fd51402ec9"
+        },
+        "fingerprint": "9f78317c8752b6c7c1cbee5ae7b315158af651df281db7eed3189cb90cb7ffba",
+        "raw_host_identifiers_withheld": true
+      },
+      "kind": "host_reproduction",
+      "schema": "mfenx.step3-reproduction.v1",
+      "slot": "host-3",
+      "status": "succeeded"
+    }
+  ],
+  "kind": "three_host_aggregate",
+  "limitations": [
+    "GitHub OIDC/Sigstore authenticates workflow provenance, not a third-party audit conclusion.",
+    "Host fingerprints are hashes of ephemeral runner components and are not hardware attestation.",
+    "All three reproductions use ephemeral virtual machines from the same GitHub-hosted Ubuntu image family.",
+    "This is release/workload reproduction, not source-to-binary reproducible-build evidence.",
+    "A complete aggregate must itself receive and retain its workflow attestation before publication."
+  ],
+  "required_gates": {
+    "accepted_binary_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "all_host_archives_sigstore_verified": true,
+    "all_host_captures_checksum_closed": true,
+    "candidate_identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "candidate_release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "distinct_actions_job_ids": true,
+    "distinct_host_fingerprints": true,
+    "distinct_positive_runner_ids": true,
+    "host_count": 3,
+    "same_repository_commit_run_attempt": true,
+    "self_hosted_runners_forbidden": true,
+    "signed_aggregate_required_before_public_claim": true
+  },
+  "schema": "mfenx.step3-reproduction.v1",
+  "source": {
+    "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+    "repository": "JROChub/power_house",
+    "run_attempt": "1",
+    "run_id": "32571937955"
+  },
+  "status": "host_gate_complete"
+}

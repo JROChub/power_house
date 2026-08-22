@@ -1,0 +1,83 @@
+{
+  "schema": "mfenx-local-adversarial-sweep-final-attestation/v1",
+  "created_at": "2026-08-22T10:18:32Z",
+  "status": "complete",
+  "run": {
+    "path": "/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a3",
+    "run_id": "0a6c20659ecdb74853375be0b91d115741ed0188895e45d521bb78434e5f238d",
+    "sha256s_file_count": 2989,
+    "sha256s_sha256": "455c7408b1099174bdfe20d0a193cc04075e137ea6873cb172bd8b271b44228a",
+    "root_mode": "0500",
+    "writable_entries": 0
+  },
+  "launch": {
+    "command_recorded_at": "2026-08-22T10:05:33Z",
+    "first_attempt_started_at": "2026-08-22T10:05:59Z",
+    "launch_record_sha256": "31f37571b3b6cc93398113b8f50f9b66b429561c0008294f56734dd6f0119142",
+    "attempts_before_launch": 0,
+    "outcomes_before_launch": 0,
+    "attempts_reused": 0,
+    "outcomes_reused": 0
+  },
+  "identity": {
+    "candidate_sha256s_sha256": "2b349a2a71854325aeb8bfad8058817277f062f2af4ecab4a81ba44811f5041b",
+    "candidate_json_sha256": "2110fbaf2b2484b210fbc6cdb439e84c356aa5f611270ceb05219d8a9c10b743",
+    "candidate_source_inventory_sha256": "13dd27f4e837c1fc8f2f7de75dfd005968c8929d0bfaaa34d3b2b18f3fc29c34",
+    "candidate_payload_inventory_sha256": "8c89e8d733433a0559ac29b08810c2790490c17370949d37aff1b7a7b5522731",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "executor_source_inventory_sha256": "f9d2cf4c7d19c1faf5c77021e25d90d07217448db285f5f49fc27e50e6f10f3c",
+    "plan_id": "fad9031c3a35349fe0dcc09b92ccbf4a8988e895f6eddded81ed54c4f710d1db",
+    "plan_sha256": "f9a3fe935a6022f6079812bd0ef98cac95da1531d94c93d690cced1d703e7a98",
+    "baseline_inventory_sha256": "129854a23d856649518751fe73f78230ae316de95b112f4f426185a853f8a3a6",
+    "accepted_output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c"
+  },
+  "counts": {
+    "planned": 214,
+    "attempted_exactly_once": 214,
+    "driver_passed": 214,
+    "driver_failed": 0,
+    "independent_passed": 214,
+    "independent_failed": 0,
+    "mutation_cases": 192,
+    "restart_cases": 22,
+    "precise_internal_failpoint_events": 14,
+    "independent_verify_commands": 26,
+    "mutation_transcripts": 192,
+    "killed_commands": 22,
+    "observers": 22,
+    "pre_and_post_protected_snapshot_pairs": 10
+  },
+  "pre_seal_validation": {
+    "sha256": "8f3525807fb5688eb3b80389d00fe34f0b3e6f471837cc48173c849c6d79e219",
+    "validation_id": "ed7ff34ce167b69fc01f32bfffce9e39b1d8e0b19408c2e17913fac5f8cce0bc",
+    "independent_passed": 214,
+    "independent_failed": 0,
+    "raw_evidence_gate_complete": true,
+    "sealed_evidence_gate_complete": false,
+    "complete_sweep_evidence": false,
+    "only_incomplete_reason": "SHA256SUMS closure not yet present"
+  },
+  "post_seal_validation": {
+    "path": "/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a3-post-seal-validation.json",
+    "sha256": "ab3b2d369f8acc4fc681815ef21fe08ecca98be3b601b5a8b719254441b42fe9",
+    "validation_id": "beb2615dd86c0c999e9f722a6af035f1742d113fbb3ef45e4c67da1a9509e790",
+    "independent_passed": 214,
+    "independent_failed": 0,
+    "raw_evidence_gate_complete": true,
+    "sealed_evidence_gate_complete": true,
+    "complete_sweep_evidence": true
+  },
+  "pre_post_comparison": {
+    "status_and_raw_gate_fields_stable": true,
+    "case_attempt_outcome_status_and_derived_oracle_records_stable": true,
+    "only_transition": "sealed_evidence_gate false to true; complete_sweep_evidence false to true"
+  },
+  "a2_preservation": {
+    "failed_run_sha256s_sha256": "b393b7cd49b5c1f6bcfb9950da43fa06b7313824847de0ba34934d076a0ce971",
+    "failed_post_seal_validation_sha256": "0d1f9ac0d09663929066ad54d008c7f315060b7e5eefce732b5ff63ca53feb43",
+    "supersession_record_sha256": "72589c6d0cecda3f11d4a8847845c060e60c04dfd0c11d20fd315a41df436126",
+    "independent_passed": 210,
+    "independent_failed": 4,
+    "raw_outcomes_altered": false
+  }
+}

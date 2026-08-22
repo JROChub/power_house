@@ -1,0 +1,86 @@
+{
+  "schema": "mfenx.local-hosted-artifact-closure.v1",
+  "kind": "three_host_reproduction_a1_closure",
+  "created_at": "2026-08-22T14:17:03Z",
+  "remote": {
+    "repository": "JROChub/power_house",
+    "workflow_run_id": "32571937955",
+    "workflow_run_attempt": "1",
+    "workflow_run_url": "https://github.com/JROChub/power_house/actions/runs/32571937955",
+    "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+    "conclusion": "success"
+  },
+  "candidate": {
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0"
+  },
+  "result": {
+    "status": "complete",
+    "claim_eligible": true,
+    "host_count": 3,
+    "hosted_release_workload_gate_passed_on_every_host": true,
+    "reference_replay_accepted_on_every_host": true,
+    "output_manifest_root_on_every_host": "c4620971a11a6873de7f45f79a93a277fd2cf3f58a89ed4600e6167afed40606"
+  },
+  "remote_artifacts": [
+    {
+      "id": 9475534632,
+      "name": "step3-host-1",
+      "size_bytes": 2719690,
+      "zip_sha256": "464bdfd08c91b0ec3e0ee6e4e9f7b31d79b2d4d447b864b66aadb1228f7a31c9"
+    },
+    {
+      "id": 9475537285,
+      "name": "step3-host-2",
+      "size_bytes": 2719519,
+      "zip_sha256": "39ef3c17c014451917209aa938080aa2c6a0a1cf265ccf28438167e90db7aa74"
+    },
+    {
+      "id": 9475534249,
+      "name": "step3-host-3",
+      "size_bytes": 2719613,
+      "zip_sha256": "0a7f9f8e8d55fc290ed1ab1eff563ce995b6c222d0952d439698d5f56bf6adf8"
+    },
+    {
+      "id": 9475542212,
+      "name": "step3-three-host-aggregate",
+      "size_bytes": 46960,
+      "zip_sha256": "d4754b6e7778ca6f1c37ea860c05d833b19d4c1cee1c76de17dcc1e05a8d2855"
+    }
+  ],
+  "inner_archives": {
+    "host_1_tar_gz_sha256": "828ba7f529ff607d9a51da7eba18e177708fdd3bbd476babef88c3b5f2b1b828",
+    "host_2_tar_gz_sha256": "9eb57648e7800ee27dea60ba63fa8737bd47ef6bf8558d1c46cca77187af07fe",
+    "host_3_tar_gz_sha256": "64d4173fd571ec8802ff1bdbd2b450d88e27ccb3bf465bcd39c08bb94fb73ae9",
+    "aggregate_tar_gz_sha256": "1d59c4c3548b48eab1648a77a65ed214d75ca8d2f67703c6c27b668dbf3e58db"
+  },
+  "aggregate": {
+    "summary_sha256": "002c939f8e6c68c1c528a076832e45f45d8c20c7f6a68901f9a0b95d10ab6964",
+    "claim_sha256": "b303ee37e26735046f47f9f66d7e9c47655138b2d92744ef1048010a5fffaade",
+    "archive_attestation_bundle_sha256": "751d1788b1cbff6a2bf5f6931261c97956ad064df5ba2125d0cc77de1960976e",
+    "archive_attestation_verification_sha256": "b7ff0a6cb9ea2be96b0f0423a96ea27dcf1bf7351c85385865434c872d26cda9",
+    "claim_attestation_bundle_sha256": "b61a6410279326b58e6ec1c00df77d5e215d6fc6bb3e0985ed0b1ce4e0cfb508",
+    "claim_attestation_verification_sha256": "9efce5f624826760e6aa92dc4249e3e169e25a4e514e0e98bfe7b8178cdbd8d8"
+  },
+  "local_checks": {
+    "github_artifact_zip_digests_match_api": true,
+    "zip_inventory_is_safe": true,
+    "inner_archive_sidecars_match": true,
+    "tar_inventory_is_safe": true,
+    "all_inner_sha256sums_verify": true,
+    "all_three_host_records_pass_check_host": true,
+    "workflow_attestation_verification_records_retained": true,
+    "local_attestation_reverification": {
+      "status": "not_performed",
+      "reason": "Installed GitHub CLI 2.46.0 has no gh attestation command; the successful workflow-produced verification JSON is retained verbatim."
+    }
+  },
+  "limitations": [
+    "The three executions used ephemeral GitHub-hosted Ubuntu 24.04 VM jobs from one runner image family, not three administrative domains.",
+    "Distinct runner and job identifiers are reuse checks, not hardware attestation.",
+    "This is release/workload reproduction, not source-to-binary reproducibility or a performance result.",
+    "Automated workflow evidence is not an independent human code or security review."
+  ]
+}

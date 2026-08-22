@@ -1,0 +1,3685 @@
+{
+  "all_cases_attempted_exactly_once": true,
+  "all_independent_oracles_passed": false,
+  "claim": "none; completion remains false until all 214 cases execute exactly once and independently pass",
+  "complete_sweep_evidence": false,
+  "development_unbound_binary": false,
+  "evidence_validation_implemented": true,
+  "live_binary_and_baseline_valid": true,
+  "live_input_failures": [],
+  "missing_evidence_validators": [],
+  "plan_id": "99708d8d3959f835625864186e7056d8198a26d91684073ded82a3f90c298063",
+  "planned_cases": 214,
+  "population_self_reports_all_passed": false,
+  "records": [
+    {
+      "attempt_id": "c4039b7ee25fdc701301b852e00d458c6974b9f1642d2cbd2a65e1b42872c645",
+      "case_id": "M001-canonical-formats-stored-tensor-manifest-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "ac4fdf587a66e6f1fed9a221cfda0aaf2c7df2cc33a31a60931046ec00cab0d7",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M001-canonical-formats-stored-tensor-manifest-invalid-utf8/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M001-canonical-formats-stored-tensor-manifest-invalid-utf8/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "a6dc84bcc20d472cb2600deee18d6bca45c4817bd8aaba59f79684167af10b04",
+      "case_id": "M002-canonical-formats-stored-tensor-manifest-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "248602bb6dbd81a1d09c120871caecfeb67829314169dff1c34cfa80aa6ccd7b",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M002-canonical-formats-stored-tensor-manifest-truncated-json/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M002-canonical-formats-stored-tensor-manifest-truncated-json/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "9bcaef0f8e400bc8c9129af2a9b70d90b6fd62264df66eefdc0f2eb307123113",
+      "case_id": "M003-canonical-formats-stored-tensor-manifest-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "8f0f68254283d6ea70d1e3dbc4dff2565bf10e5587d9646576066035b56df49e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M003-canonical-formats-stored-tensor-manifest-top-level-array/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M003-canonical-formats-stored-tensor-manifest-top-level-array/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "e437a7d2677a7fca8d73240add9e38a437f510639453d377621086b1eb30fb23",
+      "case_id": "M004-canonical-formats-stored-tensor-manifest-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "cedcfc1a7aab59f5c31af4b6d1058932b47e67ffc87fc39b5a129ac754f6c68b",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M004-canonical-formats-stored-tensor-manifest-duplicate-member/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M004-canonical-formats-stored-tensor-manifest-duplicate-member/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "09a60467a1659604b442beea78b08f8b6d2d570a3135e4b7004852d6972d66f9",
+      "case_id": "M005-canonical-formats-stored-tensor-manifest-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "44530e8831b484fcf563b5bb2d0dc5f71248d6b39ca916293091142b72c3cbe8",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M005-canonical-formats-stored-tensor-manifest-unknown-member/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M005-canonical-formats-stored-tensor-manifest-unknown-member/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "1a95c8a7ea69357c5bb7c28b3771e81a07a8a538c1adfb385b43aaa466295ac0",
+      "case_id": "M006-canonical-formats-stored-tensor-manifest-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "879be996f6dc77dfd6e64202016cddcbbb97e4252eb12195827988a8b914aa7e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M006-canonical-formats-stored-tensor-manifest-missing-required-member/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M006-canonical-formats-stored-tensor-manifest-missing-required-member/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "f86348597e80e2a1159e12f072b53eeababf0abe2ba2666693d6e0d93127b358",
+      "case_id": "M007-canonical-formats-stored-tensor-manifest-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "0b419d56501c6d613e76c0c65f74acc9435ef0aa8d16fd66ca56a09b44d61ac8",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M007-canonical-formats-stored-tensor-manifest-null-for-required-value/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M007-canonical-formats-stored-tensor-manifest-null-for-required-value/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "e94983cb55accf18cc9136b53491de1b593df949398cec16000c3c17da7d7078",
+      "case_id": "M008-canonical-formats-stored-tensor-manifest-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "47778281442e15db2589e0450fb00627bf7e29df857cccd85ac3194a8e309ee5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M008-canonical-formats-stored-tensor-manifest-wrong-scalar-type/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M008-canonical-formats-stored-tensor-manifest-wrong-scalar-type/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "4607a22ce42458b04091d1c100eaa66d11b3c47df029fd01d9884e9d66fe37b5",
+      "case_id": "M009-canonical-formats-stored-tensor-manifest-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "0bcda582da9836fcddb168292f4112e4bab9583bf0f2a3969bc36f5bf79517a8",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M009-canonical-formats-stored-tensor-manifest-integer-as-fraction/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M009-canonical-formats-stored-tensor-manifest-integer-as-fraction/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "f9bb1fac87011cc602ded3bae2b4d5987ba3894cdfd969c60b7535a930f5b9a2",
+      "case_id": "M010-canonical-formats-stored-tensor-manifest-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "44fe74bdea981e10c4a5aa731fbb4085e1d96fbfbc33a361113df10f8c7e3a7e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M010-canonical-formats-stored-tensor-manifest-integer-as-exponent/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M010-canonical-formats-stored-tensor-manifest-integer-as-exponent/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "93dd5640917f51dc564ecbba929d96237999b70ee27e17ad7bbab742d70a4da2",
+      "case_id": "M011-canonical-formats-stored-tensor-manifest-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "87c57e63c73dcedc31fa0fdeb86b308ef452f82e711326d9c3755756dd115ee1",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M011-canonical-formats-stored-tensor-manifest-uppercase-enum/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M011-canonical-formats-stored-tensor-manifest-uppercase-enum/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "4cabd050c67bd59797110fbc1f33e5a96d22c168edcf167e1d1853373bfea1b1",
+      "case_id": "M012-canonical-formats-stored-tensor-manifest-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "a6e1197849ed15f3b5007d6a31bed0c0c77adf2c77447bf68d68213e026d749c",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M012-canonical-formats-stored-tensor-manifest-digest-nonhex/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M012-canonical-formats-stored-tensor-manifest-digest-nonhex/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "1634901cce27850239ba99a2f107ea60fc660e845d3849b1b380a74b446fbecb",
+      "case_id": "M013-canonical-formats-stored-tensor-manifest-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "24cd3d625285360c899492d13b5f7c3bed312f0f1560cb2c57a0001f65a3e404",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M013-canonical-formats-stored-tensor-manifest-digest-wrong-length/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M013-canonical-formats-stored-tensor-manifest-digest-wrong-length/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "71d7ff98bd31ee210958108f9a78760b982ebd65bbaa4125805147f9e8f63d7c",
+      "case_id": "M014-canonical-formats-machine-image-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "97fc965474c4ec295c417b0a004ba2a1f87d710bf5a8c2f922a510032dc31311",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "923c88da3cfb1a86ae0639ab53503dd90178da9980d7956746c925f1bfdcaed7",
+      "case_id": "M015-canonical-formats-machine-image-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "f976f6426315761701c3a12af004db7ffff1f0bee2fe10a32ce533c01a594813",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f94e8863f3e8bbd1003794ab093339e06fb0d5a62cf7ee2aad87575166e1a2dc",
+      "case_id": "M016-canonical-formats-machine-image-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c249725e3762e9c177e06e8e894176311caacd0f5dc716cf82ad7f039ea37f54",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7988347a55d8ac46aa7993791629a27e68cffea18c7179b87fa177de79d61fd5",
+      "case_id": "M017-canonical-formats-machine-image-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9eb3b9856888b6c2dcfddb87b70e210a66050ae8d590ada5f716bd51ee731ad6",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4b1ce275872cfed10634bcf8f22d367a8347d6fb1131825605c639c9d9eb8df7",
+      "case_id": "M018-canonical-formats-machine-image-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c3008791f380c219e2493e800343c8d307c55b3ae4baa238e8f492b3bf39c8be",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f324d1eefa9a1fc63e32bc52a9a6fd98bac84ac7d6ab0a46f9d59c0ba01e0e6d",
+      "case_id": "M019-canonical-formats-machine-image-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "1dc209cbc2da0724dbf7bcf733d84a8002d3a86222e8b8c6ee10fd2a1269ca92",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8c8d859a0da1eebec9d76479a3cef4b41ec37cae22848a3200a04c552b60d712",
+      "case_id": "M020-canonical-formats-machine-image-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "eefbc5016c24cfe0ec5c75cdc9d4cc5ec880c15c58b0caf741692dcb603d59d0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "02f3eddd9bc2c31d85646bd7fc8a910ac082819b76011f115e1563a828d852b5",
+      "case_id": "M021-canonical-formats-machine-image-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b301716a90ef83bedfd59a049d65ba9f85d97b60ac910a27480a5d568e32b0c4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "02aecabb51366e4847dcf02e1909c772a86ff0f5febfffc4ef0b9bb4cb404a82",
+      "case_id": "M022-canonical-formats-machine-image-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "7697ca5c013129a39cfa69954d6a48a54f5aa75c5daa2597cff36d23572922d3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "588e17882226c85e08daaa82eb7c1bbc63f35cfa736187cd82be5bfc8e0fd470",
+      "case_id": "M023-canonical-formats-machine-image-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "e155bae465c2372a4529f888826838896f66ea88e8b63cdb2780241eb78acf38",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "85e0546b51e6db3e1efb87321dc8ac302095df79958da9a33a2fb1931a868350",
+      "case_id": "M024-canonical-formats-machine-image-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "241ad8307cc3e3fd7025029202a78560c652e03880d704b7912f075207dd368d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "12b76ca01114403a7577a035fb6187ab18f0e5fc517045d121278f2a385b33fa",
+      "case_id": "M025-canonical-formats-machine-image-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "f66c1dc4c52a2ffa65e95921346a249999661c49f8e1de19001d25ea5199fa3f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b4d58f06d93e4f12da7012c4948dc927da860e6a8214eebc8730c576fb718229",
+      "case_id": "M026-canonical-formats-machine-image-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "41fda085fb7472b22d7cc96d7eba22df297e17dfd104277ab34ce2ce3ee31b39",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "472bcebb5959185cba49af5c51a72cd68167dbe5545ab0eafb8c7560535f1e36",
+      "case_id": "M027-canonical-formats-checkpoint-plan-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "eedb1d895ac97147d4590ffcd32685bca95d359ba0fdc07ce7d95dcd804ca64f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "da15732dae57d879ea463bfca256a8f54267c5a52469172dcaff1d524ecf00a6",
+      "case_id": "M028-canonical-formats-checkpoint-plan-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "8c8dabcf54962e07a86ac79ebf61518c78b46257af6ad97a382c0bfe34ca26a7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e5e29da86e37481191ada1142b235d4c05d1740251940f6835cf5b97aea94a19",
+      "case_id": "M029-canonical-formats-checkpoint-plan-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "fa7c199f05cc74a8d04637c84b5ef00aa20f7a85999a5c812b6e8910991131e9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f730fd7cd896abe34773a420b6db1a9103727f0b9f2e48490fc69e03b727b594",
+      "case_id": "M030-canonical-formats-checkpoint-plan-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4b443b3d54a95ce5fbdb0afb7dfbc36b34399ecfd56b4832fafc343faa41d3c3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "446fcef341cddebd3bf807da56dac2ba2d754a9e3ba19c8a31c5d395978efa03",
+      "case_id": "M031-canonical-formats-checkpoint-plan-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2a6a525b31b9857f4315b3de2c72e2fb5d8ed6049f0dba838edb77ff9a52efd7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6a146b0322723a739dfaed4c5efa4712d23fa06849186ccf5b270714a57a9176",
+      "case_id": "M032-canonical-formats-checkpoint-plan-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "11f4137de0010256bf75bb0c89e80ac42bc7f09f73b2629e9bd109417ecd181d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e296c029e445dbd31900ad04fd18d64124bc2c8c0ba4369c9c5f1af3d53ae04b",
+      "case_id": "M033-canonical-formats-checkpoint-plan-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "65f9fc2861dcf45309ac3b3660b132361a112438ac46ab71b3ca9c57a1b83a6e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2003c96de9ea21426e40460f808e26814496aec0e86b2e2f208527d99a9f896c",
+      "case_id": "M034-canonical-formats-checkpoint-plan-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "bd6ac889f5eb2b447fc181bf685583a9c9d4fa2e3048442e8a2852a39560dce4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f8d03a36df9f738a4c70cfa00a87493354ab303e66ce9e752c67b47143ace6d6",
+      "case_id": "M035-canonical-formats-checkpoint-plan-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4228e6eedb8629f3752825440a7a13fcaeefe019aae120c43dc292eeb7411630",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "aa52b929bf503b4209a836ed35b15dd2455f1af79aa5c767d5cb36eb518ab09b",
+      "case_id": "M036-canonical-formats-checkpoint-plan-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3b450c9bc429891f4c11a8105d2246dfc3fea9a4517a226f6621a302d0cf6b30",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6ed468d7a6fd025555dba35caa1720cc9d30a53875881d097ee4225a28fe89c5",
+      "case_id": "M037-canonical-formats-checkpoint-plan-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "76bde8e524bf006fc7c4ee36e5d7ea32f457468b37c6898862f1dab8e9db9a57",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "689ddca9bf9d0dfa232747ed45375cbf90ef8d2d4628184b7de438c4c429472d",
+      "case_id": "M038-canonical-formats-checkpoint-plan-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "002f2d88b625de17608418bc8df70367ad3d40695ddbf1ffe2cd6abc567fe579",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "88529b6f7a904c9730778d63e04eebb401daf5158ade708414a779d8ca5fee1a",
+      "case_id": "M039-canonical-formats-checkpoint-plan-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "5f7f009a5c294fbb4db3f6fb210e1b7b710f726cad9e11a94717a59af57e4faf",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "472316f9e65832b6b92410ab8baa909588c3b49bb6db79a98ba49bd19d840a57",
+      "case_id": "M040-canonical-formats-piece-receipt-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9b49c035d46840576b911061c0a06a4a2c79e32ac73ec1c01ef8f06da7bf5825",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c1e621337168a50200d0fa12d8607d8bc4013659f40576201cce8b0b6f1c9dfe",
+      "case_id": "M041-canonical-formats-piece-receipt-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "a08ea8916648cc364190eef5e4c01cad9c699da26e2f1515ceb7238444e1c4f3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c95c5f83ed03e07db199f9c3c749266266e86d5e3238231be9ca5590fe41d576",
+      "case_id": "M042-canonical-formats-piece-receipt-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d143edd5e645791cfa04f228f7d1d627d8b8b505243cffb02e192a839dbcd540",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1776aeeffbe558ba70b4f0bd5df55f852c103519fb2a495d6ae480f33f9bbccd",
+      "case_id": "M043-canonical-formats-piece-receipt-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c19983dca921ffc9def0858ed39e4720c97c96631c02caf2004849b5a66391c5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "bfe41d7ef8b81486a9a3b76e92d938f94c5bf7d49383fe609ee444e3b94e429d",
+      "case_id": "M044-canonical-formats-piece-receipt-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "25fa3f1aa48e524841c8323b3adcb3b9a88523826ca54c9c31a490dbbe2f49cb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "91db07dcbb70e9300411bff1cffa66e0f30a02481ee58294059e030b3d8b4a14",
+      "case_id": "M045-canonical-formats-piece-receipt-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "86ccc5cfdbb6d4520b89fb105c8481a3f8fd49a3c561a7d0a931f22a2d7c21e2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "167833837706e640eede1d57da4226e31cfe354b6c027b97e35b72ab1a86cfd1",
+      "case_id": "M046-canonical-formats-piece-receipt-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4bff16ecfdf7e81fd7d1a99b3b476512fbca55d2fbe585b0d6af73f2e79f98a7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "811bf0c9a645ad176c37649c728c4f60a4322c55906af57a653e4a2ada0a5241",
+      "case_id": "M047-canonical-formats-piece-receipt-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "728027d2bdcff089039a335ab1461942405c1e845e994a45ede62ed9e7bacf89",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c9b88ad9300ed5cee4c810e7f4f571827fcb234e99cf53f0fb01c70c7ffeb36f",
+      "case_id": "M048-canonical-formats-piece-receipt-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "fdd14215aed023de4e6d48706d6d6e568d02d57cd0aa9baebe5fbd32c600f8de",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b3dca0bfb1f7650c1a18ab9ca33acf961f7924025ccfc93141bd3bab4bfb6808",
+      "case_id": "M049-canonical-formats-piece-receipt-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "ffea2757c86d186856bbc33f7f4309c30c1f2581cda98c7c03d77c527c248f84",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0395f82e19961d7bf57cb8152290c015a705dff7cb704b348c89ff14b7cc42f8",
+      "case_id": "M050-canonical-formats-piece-receipt-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "1f4f31dec33388590915d0856363c1a15d0c125b5689067d22fe4665c56c25d3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4ff0dc0778dcadbd1289a186b92f2617696100c5209205122a9902d20688601e",
+      "case_id": "M051-canonical-formats-piece-receipt-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "322a3c27f798398717a2a3fedb19dd12ddee229220887acb53cb6f638c15bd7d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "50c5f1fb648e25829b5f7c4e7c7f2b8b7beb4281807e10bcd70f6d7b66856cc6",
+      "case_id": "M052-canonical-formats-piece-receipt-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d22c54f5a8428e0600f850d2310826f6a3c9d2cd78d15a64c92e0ccdabedddc2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "95a5e625b16eed07c6764d4901e7f2843f1cf9f215c5bfa91801c9abf6ede3f7",
+      "case_id": "M053-canonical-formats-execution-result-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "a66413497d23d0b31c0ee2d53dbccf13f8c91dd79f6c1945a3403c5f906208b1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1198ca2cf7ba7a014d9ba8e47271d342e4ecadc0f4679f06d71befeeba312b60",
+      "case_id": "M054-canonical-formats-execution-result-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "af229a038308b8c4a323b3bedc7ad4542a73bd296f5e79f80e9c4b08eea3138c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "28d8cd07d49b78c670e374f3336d722f3d642ab0273ae6d764c9da728654c4d0",
+      "case_id": "M055-canonical-formats-execution-result-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d93681b26f94872372cbd56312cb577d77df80e9e1f5804ad2377f92556eceed",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b80fba3e7feb714f220e2b4d99a275925487d387b476bb8037ae24bcd93ecab6",
+      "case_id": "M056-canonical-formats-execution-result-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c28e80eefa1d8b3cdddaa9b5729939d45d2b9c3afe3b22f4234398d05480f47f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4161dd7bae96dbf455ab8a93653bf48eaf1d0f29f0b94474c0eb676170b8c757",
+      "case_id": "M057-canonical-formats-execution-result-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b8f133fff2d7335d80a4640015d9763472179e86de154cbe068a6e4711acfedf",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "84bdc18007fa987d84308cbbd015e33932dfa97655b35c47be43473cf23e6c7e",
+      "case_id": "M058-canonical-formats-execution-result-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3cb8e4fa9e0e880a7240a6b6481c7b88b7c322471eca1e19e895503c94d4c97b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "91026af98b9c3a2f905d8f3f1d3924b303555f4e346a2c51610246f97dc9f9a2",
+      "case_id": "M059-canonical-formats-execution-result-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4ca6a327b84895637a9984197459cf677f8106da09a916ea1ebfc430641fafe7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c196c041b2c4d9e35bfff0fe3ef2f92ca183392fe31ccfa8936bcd76694f2d0d",
+      "case_id": "M060-canonical-formats-execution-result-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "64ba7c10effa1ae6d6efd2132949332b7ef57bb9d4cf1b2e362866a14e996fdb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "44fccbcef3d2a95d0d54519e3096be0942ad6b27e680b94a8db9c20eec585462",
+      "case_id": "M061-canonical-formats-execution-result-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b9acb0f4c46c596717f0e6945fb6cd6e511ecec8a7fcd721d72ac929a8a28e8f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c0c10e4b0596b7b929059d1ba3fca770483bc0899cf08fb3e2b3f691ec442466",
+      "case_id": "M062-canonical-formats-execution-result-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "fea9196cdafae27fa17cad1b7bba7424663b64f92d0158a61310dbb747874889",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "345b68ac510b526782c12d70cddb4734e16e0e1818263739892fbd5c1353a6c3",
+      "case_id": "M063-canonical-formats-execution-result-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9560d4abffa9b609a794f40bb644dfdd2b03d953e49dbd0d426ede21830322fb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "654602b36d29ffaf4dd88be6f9d585ca1f80ab03ecca021e0e60a5bd52ede5a0",
+      "case_id": "M064-canonical-formats-execution-result-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "5fe9eb038e535bf1ce2db9a66edfd5dc7d813e8d06f6d39dcc49ffc9b2d5ae1e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2a8478bfec89bb9ab796fcf2923d23da732526f092e2540a1e43342942649dc2",
+      "case_id": "M065-canonical-formats-execution-result-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "cfdf7d6a166bd6ff23882f192663471af0975e0244a4c1d8f157ac4c9129483b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6d08d0c0bbd36f644b9026b37eca9dad9a03d44fd2d9680feff987879e28c818",
+      "case_id": "M066-canonical-formats-stored-tensor-manifest-leading-whitespace",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "473174c2867c20a630e562c38c1408b00a92632d517789c7e834289b55b26580",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M066-canonical-formats-stored-tensor-manifest-leading-whitespace/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M066-canonical-formats-stored-tensor-manifest-leading-whitespace/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "572f36113482374b0943d096537bc162dc4ccd11dac15c119720b56975eff7d2",
+      "case_id": "M067-canonical-formats-stored-tensor-manifest-member-reordering",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2dea6e47546bb3a2cf4d50591b50a4b5a4d399c2c1f85021c53506b0fce2f89e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M067-canonical-formats-stored-tensor-manifest-member-reordering/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M067-canonical-formats-stored-tensor-manifest-member-reordering/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "03d55d7a1fe039fd7ed75023b95090b43072687638f9e0d506ae54cd4f2751d9",
+      "case_id": "M068-canonical-formats-stored-tensor-manifest-pretty-printed",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "85f956aa2219994323a91da08e06c36a951a38b06ed46993edb1a75954825aca",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M068-canonical-formats-stored-tensor-manifest-pretty-printed/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M068-canonical-formats-stored-tensor-manifest-pretty-printed/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "dd1ca33c27962e41e6c44c4e20995348127341a8453a7b70021b407ceaf5bdec",
+      "case_id": "M069-canonical-formats-stored-tensor-manifest-trailing-newline",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d692551be7ba87478261cda040c3becc765239aef8590d299e9cd94901852cce",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M069-canonical-formats-stored-tensor-manifest-trailing-newline/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M069-canonical-formats-stored-tensor-manifest-trailing-newline/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "651afe441e00c10bc3a46b69323305b2d3ada24561a8f3238cacd92c9a5f13b0",
+      "case_id": "M070-canonical-formats-stored-tensor-manifest-canonical-bytes-but-content-root-wrong",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "15aea24c28c329473f4bca260dacfe8376970da699d38434992996c07f623b9d",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M070-canonical-formats-stored-tensor-manifest-canonical-bytes-but-content-root-wrong/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M070-canonical-formats-stored-tensor-manifest-canonical-bytes-but-content-root-wrong/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "baa4fcb7eed056c5d126b1138484789b5f2e929d27d539eb7829d7076e3cd696",
+      "case_id": "M071-canonical-formats-stored-tensor-manifest-chunk-array-reordered",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d13babaf619e68526e08cb636c45bb33e4229fd9c87d10994c16d63f6e3c319a",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M071-canonical-formats-stored-tensor-manifest-chunk-array-reordered/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M071-canonical-formats-stored-tensor-manifest-chunk-array-reordered/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "ea8f05f24c9119914479db2e079977cfe711642f64c2285ba1759e3d0f40a04a",
+      "case_id": "M072-canonical-formats-stored-tensor-manifest-chunk-offset-noncanonical",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "107f774a52ccf56392030555b1b72e9fd97e335ebaaa85a6bbf7971650867f5c",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M072-canonical-formats-stored-tensor-manifest-chunk-offset-noncanonical/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M072-canonical-formats-stored-tensor-manifest-chunk-offset-noncanonical/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "24edc118431b65e8159e57a1c4711883f7646dbe9cbfe5bc602706dcbb67c21e",
+      "case_id": "M073-canonical-formats-stored-tensor-manifest-final-chunk-length-wrong",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "ac46af8b6e2c8898b1137f60576c976ca370b72222e19bd7f3d7b5936377d1d1",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M073-canonical-formats-stored-tensor-manifest-final-chunk-length-wrong/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M073-canonical-formats-stored-tensor-manifest-final-chunk-length-wrong/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "d16078d1db53b54c1d6966c28017dd7abc11804b162cd031907e738b777ced94",
+      "case_id": "M074-canonical-formats-stored-tensor-manifest-content-length-overflow",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "0885249b5292481efe65075b370210450b044b5052a3b83cd80945c8e749a308",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M074-canonical-formats-stored-tensor-manifest-content-length-overflow/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M074-canonical-formats-stored-tensor-manifest-content-length-overflow/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "e671cbf5f0684b89f5a782d61288f3ca394a166f1e5a5490028dfca83e6336d9",
+      "case_id": "M075-chunks-authenticated-input-chunk-payload-bit-flip",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "4e4d0f3debbe500b7448635d6e39c7345b674f263874cf2e54f57a457650b165",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M075-chunks-authenticated-input-chunk-payload-bit-flip/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M075-chunks-authenticated-input-chunk-payload-bit-flip/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "36aad7eaba4ffd62f178070feccf1530306ec49188ff72d7424f4958c13e6fd7",
+      "case_id": "M076-chunks-authenticated-input-chunk-truncate-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "98627ea891503054e7d08890af1b9760f7729ebda5ad38ba2d1e8f4fd0a25a3e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M076-chunks-authenticated-input-chunk-truncate-one-byte/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M076-chunks-authenticated-input-chunk-truncate-one-byte/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "7ea4151fa52d86a3d8699aaaa3322b09c74c8742d13dc64a6b3819e2753a638a",
+      "case_id": "M077-chunks-authenticated-input-chunk-append-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "8207011fbec78326f62f96b1a4c910feeb2dfcfc33de7aeba45fc1f5424c271c",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M077-chunks-authenticated-input-chunk-append-one-byte/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M077-chunks-authenticated-input-chunk-append-one-byte/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "3d660175ef9afa2f7273e3b88ddd3ad90eb097ea9b305bec0afaa06009531d54",
+      "case_id": "M078-chunks-authenticated-input-chunk-missing-chunk",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "d748e0408b97fed5b706f0fe0fbaa1735a23818bd7e31addf656e7ae792de035",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M078-chunks-authenticated-input-chunk-missing-chunk/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M078-chunks-authenticated-input-chunk-missing-chunk/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "34092339f398f229202cc090cf7d9a9e740a6eb6100054dcfbbda6c5d67d0c30",
+      "case_id": "M079-chunks-authenticated-input-chunk-digest-named-file-contains-other-chunk",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "7fe59942e2a1d4855e07792553ffae64b270a1172ae76d93945cc49d35e01c93",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M079-chunks-authenticated-input-chunk-digest-named-file-contains-other-chunk/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M079-chunks-authenticated-input-chunk-digest-named-file-contains-other-chunk/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "bd26483508779a8a11011f74312374c611e2b23478a9f699979348ac325922b9",
+      "case_id": "M080-chunks-authenticated-input-chunk-swap-equal-length-chunks",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "0f16759d5dd13d8e5b0a249e89afa1c7f09bbb5f20ff4663da34b8353eda046d",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M080-chunks-authenticated-input-chunk-swap-equal-length-chunks/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M080-chunks-authenticated-input-chunk-swap-equal-length-chunks/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "15775a250bef4172a7b28c43f2109dcd401be5512a757f3eb4e4b6392e0a4223",
+      "case_id": "M081-chunks-authenticated-input-chunk-chunk-path-is-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "43214c0a3e7dc23588f74bdae1677f5d5e98ae171af08cb488e8f1d975ba2499",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M081-chunks-authenticated-input-chunk-chunk-path-is-symlink/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M081-chunks-authenticated-input-chunk-chunk-path-is-symlink/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "e4f4371171c07a384a7b1bb8e1bd9cd36cf16ef51478a3de0bde3758956ce39e",
+      "case_id": "M082-chunks-authenticated-input-chunk-chunk-path-is-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "1e1abd46a7a1779fdb181fcdef8c90953b17954b0fee282c175928c0ed008d69",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M082-chunks-authenticated-input-chunk-chunk-path-is-directory/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M082-chunks-authenticated-input-chunk-chunk-path-is-directory/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "6a8d68b66f70bfc784815bdeb59e13373f11e6e01e53137be6bc232064c2f9a7",
+      "case_id": "M083-chunks-authenticated-input-chunk-unexpected-chunk-encoding",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "622a19453e84ab4037ade333cb84294df30a41a01d35d5379bba31c1d98fe41e",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M083-chunks-authenticated-input-chunk-unexpected-chunk-encoding/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M083-chunks-authenticated-input-chunk-unexpected-chunk-encoding/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "f058da4e32280a56c024d57c55a76153888345d8297ece3ca6bcff4cf06e8010",
+      "case_id": "M084-image-machine-image-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "f2d118dae28f0f86283f0fb5637d81801d32f0b4632708735de82b8a05b817d2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "edae4b8505d2aff3b2ef5e707286d0dd3f059cedb28b60ee8a9cd2c35a9bfd3e",
+      "case_id": "M085-image-machine-image-alter-isa-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "c828bf2951be835e90883c8f52b9435ec0de18066d6a98481febee7de3895fb2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6f3546f74b614cbb5143e3d5cc6ac37c02f0bf32057a54634df28d45bedf5eed",
+      "case_id": "M086-image-machine-image-alter-machine-class",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "45bf213e1acab38cbcd485a10d17f06df106a3f0714af2730585ea693a7e555e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "74e9aca1929d78628342a9c37293c578a06379e1dadd0c8373fa6e4a1a741bc7",
+      "case_id": "M087-image-machine-image-alter-backend",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "4b796b2887fcf211c08e5db4d8596df86a179830562973d04809ed904e7def3c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8d7e9d8691fcd03e339f64999f6d88e55424653600f3aa0b820c29fe9fd77d1c",
+      "case_id": "M088-image-machine-image-alter-execution-dataflow",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "1984e4960620e90739b14522de1276923842c710e39e25bfb553427f4641e9a4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b259fa7bab1b39cdddafb07015e4cda60aa0c69552fb99fc953b95fcd7124428",
+      "case_id": "M089-image-machine-image-alter-program-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "16beaeda61fc6f13154fadaa3da0be4798c203e5a0de100796031afe441dc9eb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "66cd915284838031ffc72be24cbcfc1335a5913af049898cbfce7c2f1c1dfeee",
+      "case_id": "M090-image-machine-image-alter-program-body",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "ad1243b6d838af864698d15f15ccc8d594da7372fc253e8b62ac8ef6a64780e4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e981fdadb550f85481983f6d60cf1ccb249416e856ad8f37e883775cecf52dc4",
+      "case_id": "M091-image-machine-image-alter-input-manifest-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "7c085d7a3bbfa5a0a6e593c275f262a3bd9487f7277457d4093e69284b6b4bde",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d375bf27101242604f128df5f2ce57f5df1dfe12339718c6e258f725132dddf3",
+      "case_id": "M092-image-machine-image-alter-instruction-opcode",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "d85f5d05a9997c68669b61b17f01ee28d01203c6f0a3311bde755cd715e33006",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e0c8f970abed21613df68c979aaa04fe2cc000d454cb0fb99248f14da4a77a74",
+      "case_id": "M093-image-machine-image-alter-output-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "b153d724d13746c97ccf6baf834771ef938299551bd9313a23f78c318bfb5c95",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "97769ed5eb589a5155b8b886937bd4c7cc55073e1e7c5c58caa711002ad4ac56",
+      "case_id": "M094-image-machine-image-alter-schedule-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "cc47947e837e3ebadd5833f476851e243fa875d315cdc34445f052de527d6cf5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5580e6dc1b41193a15c15e6a3350f66987a2a73a53ca889a378fa548e1ca87a3",
+      "case_id": "M095-image-machine-image-alter-schedule-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "17f47fa892e42a0812e83043b78c1c7ae8f6a6ba5620598588f8c2a5ed1191f7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d3f9be707d43c57730f4efc6a16a3d6d8972d7eb968bedcd6e0b6596f978240f",
+      "case_id": "M096-image-machine-image-alter-schedule-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "2e598c932a045651f254a43ddf4fec8a96079ced06f08ec3f9b58e29e9869f03",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "247513545dccd04c4fdf6c3357ab778adde05f8185234c046566e91f61357073",
+      "case_id": "M097-image-machine-image-alter-schedule-instruction-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "e8b20cd1850e53a6c12fb9cdd74aed008382f773c8da5f273db00630626f0ef5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4fc6500023a9acc982f479b376cd9e04ae8b19f5e5d767a670d16653716f92ad",
+      "case_id": "M098-image-machine-image-alter-verification-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "0d0de2e8b0771935cdcffeab6d4075394ec8b4fe09bab50a7a7630ac96ffc7d8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5ad6bbd177f5c54f2870d2c542e1a2e783fb45356bd285bf84472ebf75d356f2",
+      "case_id": "M099-certificate-embedded-resource-certificate-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "5b8b8b917c77ec4d32bc523d4e202fb5bc8d47bd40fa5edc52aa811b4010189e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ee17d195314c4202a5a41e29948466a8f4e96abe066defb37c33a5576d82d123",
+      "case_id": "M100-certificate-embedded-resource-certificate-alter-max-managed-bytes-minus-one",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "7d0755b68ce030158655e0ae8612e1ecec52fa7c31048b944e6d79dc7f84b210",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "80016c733a2b9f77edb79b6e8bf2bb0ff3243bc07ef5bfc9b99e3a20b9a92bd2",
+      "case_id": "M101-certificate-embedded-resource-certificate-alter-max-io-bytes-minus-one",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "5160a73c7dd44fad99939aef73f87f0cbd6807343db0c8a7790fac6b0ac180e4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5ceaa2cae03b7e31967b56bdd3db7510e964d91c94d34982177f465358113f0a",
+      "case_id": "M102-certificate-embedded-resource-certificate-alter-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "e80d40d5718f58eb9616314af754c5d0f46f5717f7daf5fd843999b71558fd44",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c5e24fc1a14302aef7e5e72e0c9b75a38bdfdcc3aefd28986c1b2a6738c86f7c",
+      "case_id": "M103-certificate-embedded-resource-certificate-alter-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "ef573bacd967b582faa6cf473dbb863125df36de84378edebf35b71cdf8a50e0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b478568d2b7037aa8e59717bdd978bfe0570bd30314506185f97e721b5bc3165",
+      "case_id": "M104-certificate-embedded-resource-certificate-alter-rows-per-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "3708aeeb85af56c8a19502ea6e94ea0d0541ed76c9183d5d8c2a22d50b086572",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f72d2f399fb6a6a6ac7911ec5a9a57637f6719e9a1e64bbe9d553fa28c1f6516",
+      "case_id": "M105-certificate-embedded-resource-certificate-alter-panel-elements",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "2e4e25c39db23ea9212bc8a08929e83a87b936bf7b7e840d962f536831a4ca55",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ae16fe3066c49cae7c10df34aa767dca4e24dab9f46ce93ba22fc285ec2c9ca9",
+      "case_id": "M106-certificate-embedded-resource-certificate-alter-managed-bytes-per-lane",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "d4d87ecfa01644078ef75c23261c4647f1a8e0b0519a2b5fefb97330341843d0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ef1e3176b8545ddf43b62158a6fb1d0b1da47fe4b54619a848b208eb3be38467",
+      "case_id": "M107-certificate-embedded-resource-certificate-alter-aggregate-execution-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "7712b0e9d0ff74a94b3ee358fa20de2fbf122f6e217c119723ea293655734edd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "91def0f41ed44093d598c67811c653a2041ca2207dbf536e4d1a8e33f7ff5ec0",
+      "case_id": "M108-certificate-embedded-resource-certificate-alter-finalization-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "d431813367aae9425827c778c0a01ddbdd1e1fdf1b961190925dd27ccf1ec5e2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d79a8c704c3d63297cca22997ab0a244804d52caf0c262a3ef55bbfb1638743a",
+      "case_id": "M109-certificate-embedded-resource-certificate-alter-verification-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "3caaeaf057ad89281f3e815231427fa755ca97ada1a1ead479dbac4870cfd9e9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "53075fa24c51e1312aa8a56e23fb612e05b26dd46aac09bcb8f93e94d848bf31",
+      "case_id": "M110-certificate-embedded-resource-certificate-alter-certified-managed-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "5f4edeffa37b29f28b179b1c3694a4a33c13217b014428d9d4ee5156f554ebc6",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a38874c49e14286cfea7e19a518685cb3f806e152bb3025c1a71a98c595c25ac",
+      "case_id": "M111-certificate-embedded-resource-certificate-alter-primary-requested-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "4a459c63e517dd4d72604fbb3e0c529b9536deda94d5d6f44bc8322800eb6146",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "36a5b47f168e52cba8bdc2ac1c28b20c967568247b8fbbf4327ab0ffa2d048de",
+      "case_id": "M112-certificate-embedded-resource-certificate-alter-primary-authenticated-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "46551d9a0d9e85c73ca4c503e42a054d83d0d488a657d06a662b485ff03d425a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e99de25be8294455510a53d7f0155edc94f458634a4ad7a0d157dd412c91db17",
+      "case_id": "M113-certificate-embedded-resource-certificate-alter-verification-requested-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "aeedd76a204d691beea40bcb00f5563efa2f00fc79f2d06633b88ab166d8d828",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6eaf5da4c457386f1cd294d072d07a9d23d82cd43870e0abf476057b1335f7fe",
+      "case_id": "M114-certificate-embedded-resource-certificate-alter-verification-authenticated-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "f722865333d07b210421494526b15acca658b35d16f7e8ddc340cf6afaa4443c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c73e1433d23327a13b00c1a5b4d28859383d8defefb1ceec7d841edce2b90105",
+      "case_id": "M115-certificate-embedded-resource-certificate-alter-verification-requested-output-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "056822bda7889c09b175eb72f53735f7d14414a2a2e50d67737072a917c5314e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d1832043c39f78d88ac1df3a682ee132123757457675bd21b1ec9e4246b12e06",
+      "case_id": "M116-certificate-embedded-resource-certificate-alter-retained-input-storage-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "ca1da5b6c3be1e0d75a5e4392ae819eeb762e7a37d75cd3dbb653e341319a02c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "aa28d61187a949ea2ca6b49d57ce285298e7b2b506685c3d3bc08f2fe78f1572",
+      "case_id": "M117-certificate-embedded-resource-certificate-alter-retained-output-storage-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "640f8c17d9599349ff4e1db34dab26d7bf17e8fbc4cdb7f7df432e3ed2797e24",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "aee1c76859b3d1ccc8c386a6460514b741e6af6429b9fd38b14de42db5f0d875",
+      "case_id": "M118-certificate-embedded-resource-certificate-alter-checkpoint-temporary-piece-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "7e7f8ba8ddc7d30611023f9fac19d70c221887189486f576cb33ed4ba50c1e26",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ea52ae49a574704092b9c56bec0afb109a20a8e14b135206ecfc64a3e6961f2f",
+      "case_id": "M119-certificate-embedded-resource-certificate-alter-checkpoint-temporary-json-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "57ac16ee01eb2552e8fb2760fdf7ec6aaff1a6fefd434f08ed171576ced00f0f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1e514768641c1957a377f99d6e40557f272546254eca831fcd6cfb1ce80e3da2",
+      "case_id": "M120-certificate-embedded-resource-certificate-alter-retained-checkpoint-storage-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "eef5788d0f7026aa5c9b11d1fd13d83b53333760eadce2846e3d292b2b8b864f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "26b159cb71bb125e1d98da50372f91ae530ad50c4f0b5c66ce2fcf2de896d2c6",
+      "case_id": "M121-result-execution-result-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "8784953dcfe8d61cd253d26a5af4ae046ddbdcfba5746f376134d13bdab5dd29",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "91fe352e207fd5785e5f97384b77219a815d7b8b5114fdc3f942f8974b585ca0",
+      "case_id": "M122-result-execution-result-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "aa7a0f0c3f40a7b62e812612acbe4c80828bfc32d2dddb5a327e9cf69162be11",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "20bf3d90f17033395a7e93ab1c3bb34e55cdeb9eae46d167bc9d50f0384c378a",
+      "case_id": "M123-result-execution-result-alter-machine-class",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "eb41656aa940d1d351ca560eea099bb016002bf6b37180c87ab0e7d5677a5833",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "585e61cd6f33c60da6febaf1575981926070884523405411e4d4e22d0ceace64",
+      "case_id": "M124-result-execution-result-alter-backend",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "e28437ca22adbcc16c02fbdc56ecf8087525984a3bef15bf6de68fac569b3df0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ace60e7f4b2e3bcfc71d150c8163c17b574df53d25feeb1ffaaf655b5d53bd4d",
+      "case_id": "M125-result-execution-result-alter-resource-certificate-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "ad3cb741cb008f9558cf9b2dcd5df34ea935d4100b1945bd36076edaab23a254",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cc312007ab164da131c7322cf68d5154511db8347c0b9a05872da2677c0eb637",
+      "case_id": "M126-result-execution-result-alter-output-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "13f69aadaf98f5df622e398cb5ab55431d39da92bbdfab1078d800959d808b65",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "71e3b350a2fc83f0bb432d628c6536a625d47cf82edbd5c55472085cdd7f2a56",
+      "case_id": "M127-result-execution-result-alter-output-manifest-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "d640aa5249a461233fe9f6db556da160fedaa3b184c1af5e339d7435889fb52d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "670290fa940d821f372f4ec273d8992735890bb7bf361c7a2e663dc19bcafca9",
+      "case_id": "M128-result-execution-result-alter-useful-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "05da67e9ea7978e8a79bd0dc4a7178cc37ae633c27c8adeb4f4c8ca4559abe46",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "da3f4c8a5da516e7b21371394a89af2836e6935eee0198315e912d1671e2fde5",
+      "case_id": "M129-result-execution-result-alter-executed-primary-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "845cb02f018b230ae1aa084b912da1c577ba225dcad7d4cd10247b7a540a26e7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5bea8733c72ecff9c5a6cad23635e2360a2520428eee120cf4a895efb8853723",
+      "case_id": "M130-result-execution-result-alter-physical-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "bcda2b12ed1ea36c0f7f81c4f8f3813019ce479c721314de82a8a8ed340aae4d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9a2651deddc801fd55c5373dbd6e459e61aecefcad211e143f0fed4177984769",
+      "case_id": "M131-result-execution-result-alter-primary-io-counter",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "49fdd3792e365a45fa95705c16291d54d9374beac2e0c6b228853909d772c15e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d0f102c814f0c7e3b96afbae0870fef4281ea20a5cf9111ba32ad55b45d5d744",
+      "case_id": "M132-result-execution-result-alter-total-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "b2d4b0b0ab883beb790aacae060901724b7928aee5a251eee9dc622a39c929a0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b41b3684a62a293b5ad7f4a4437e535493ed3f79d2566369e5e2b0eacc27d0e2",
+      "case_id": "M133-result-execution-result-alter-reused-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "692c377d03c4a006b662aa3e0e9e9cd9dd8969a01616848c260eeb7f4089405c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "dca2377add5792155816c967b39cae2e19465a0f787ec5c8077ae4d664d11687",
+      "case_id": "M134-result-execution-result-alter-executed-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "498267d3e36ec6194ae9fadfa617e1011594f7047de76f2d541c04c6079ceedb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4f99628ba5fa5bdbb6a31ee41828acfbae72bac3450e341df7a32d2a91dd51e8",
+      "case_id": "M135-result-execution-result-alter-assignment-lane",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "291b77094600b09f1c7590bb61b3458843c56d9ed4cf060c572ebd1de2705fed",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4a3483a701294a8a737ba6c4b811f8dd8867bb25067c3e91fb7983c6b51e993e",
+      "case_id": "M136-result-execution-result-alter-assignment-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "ae92121b73a3458cc39b55576544a595ca7e5a9f6038ec2cddd084f6e92d7c37",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "20f90170da00a27bd3813c91938aee8527e85817ae27553974e280e6a06215d1",
+      "case_id": "M137-result-execution-result-alter-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "4b7abed9feb8a26dc29e0eb379b5d0c9d3a25317d7003e52a0a5bdbb9d9658b7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d51b067a83f3ed3ca2924aecbb64c0630dc0bd33b76025241b0a91c15fc2bf9e",
+      "case_id": "M138-result-execution-result-alter-certified-managed-peak",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "49f9259e024d700534adb32414ac227b86e4cccaec3e49f8c38c49aca90b5c2c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5d459b7d0c4ae1da4dec7a87e68d5759ed3753a24f2a2e7c6786fa48dce541b5",
+      "case_id": "M139-result-execution-result-alter-retained-storage",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "70585b8d9b100a3bb601ac96322ff4b78181abcdb77a76fc0f073a8cd4016da2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4604bd885d81ed578663ce8481ba4f65dea869041a5a0c37cb6c1cf6b245c7d1",
+      "case_id": "M140-result-execution-result-alter-gpu-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "7f3a5fd0f3d520e3048d2359cfbd9cd4a1eea7eef1728c5315ac240fb9b5ffe1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e3bccc690116c65b8ea3a66376e8466ddfb52833752bdb73b80ba5b5be569687",
+      "case_id": "M141-result-execution-result-alter-network-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "97692f973dce4cbacc09bd0b72a2a58ef4a46c54c81d30677bcfeeebf1864d2d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cc56c4eeb5061aa9a52188901838fb1da73617f15d72c231123e225227b16d99",
+      "case_id": "M142-result-execution-result-alter-verification-method",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "483b2bd3d20f75581ed611d52981f0731af62062686743af5f7f2d21bfb18a05",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "26ee936b800f0bf312d2461e5107132221ada783d16f3daf11c5d47ba6b5ead6",
+      "case_id": "M143-result-execution-result-alter-verification-boolean",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "2e4448848dfde7732fb5c2a42544aed828329b36d28497a18075140f3e0c7f81",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0be843a719702442ae1f525cd25f111e09ba2915e7c36fb818f99c56970c599b",
+      "case_id": "M144-result-execution-result-alter-verification-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "8a3f7cd6edf890abc17767f13ac3cbfaa08b109ce866ed9749fd421396881c88",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "09c35787a82b99a508be2f2f233dc6bb62d3244d12b1376b81242ba6b3cd65b7",
+      "case_id": "M145-result-execution-result-alter-verification-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "6758df389c209d8d80f28108c8c0a6a018da1ff2e64590d59dc84a7fd88e48a5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "db3234012ee447c0cc470344bba475fd2587fd4180864a2f5e01c2ec6b4ff243",
+      "case_id": "M146-result-execution-result-alter-verification-io-counter",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "ca5e0746412e2cbd4d4703070817a69e7b423080d8c0660e65befa88290d7631",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "38595bf3bdaeb0b0e22ea14a0664b2c601da41c6f370fabad0bf2bedeeb2c73f",
+      "case_id": "M147-plan-checkpoint-plan-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "76e08d621d62cadd2f842b29da94e3e8126decac61c2b5bcb44672f5aae72bbf",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1bf5e3ace47f40ad2ced1a2c0f62f71e0cc554d72141c500cd91a73f06dc7a2f",
+      "case_id": "M148-plan-checkpoint-plan-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "1c2f3593d521972174998046a5cbb02521bf3974fe6a40ef2f1f62dbd49e671a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "418e6d60d2615d7fd27d91564bf6d9e4363e2cf3ccca99c0660e13eaf1312e46",
+      "case_id": "M149-plan-checkpoint-plan-alter-output-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "cefc849d627461345197ecadf5d42626dfc74ef7bef5c5b1c7fa3a8121a5980e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8ccd2542e448d58c7aa3b393af785ae6d8a25acd2b661d63b87afdb97af78dc3",
+      "case_id": "M150-plan-checkpoint-plan-alter-schedule-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "4e7d849e2535197763bcc891edb347e0fc3dc2996847e7205e8d5cc8eba63568",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "48dab1fd836bc6b7d778fdf68aa648af8afd6e4c2d2dbfd8d045a472af5b86c7",
+      "case_id": "M151-plan-checkpoint-plan-alter-schedule-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "cee9911fd9ce74029dc541eb490c52928be269dc18100b8eed6c93a24f2f1c81",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "04bf45da8dea044bb21967f13f67dff87646508305aeba75eb48dd5a9c026341",
+      "case_id": "M152-plan-checkpoint-plan-alter-schedule-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "34cdcbe37ddfee51cce4d8a3aeb3be4e4565f293f03fe514f40dec3bc79bf611",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "423962eb9f97a2f0cdeefd179bc48286329aaa5debadda3cb14cf38c9aad1dfa",
+      "case_id": "M153-plan-checkpoint-plan-alter-rows-per-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "85c189225db8974f436c3b692fdb44cd82d99e056aac916dc7872f9151de1d11",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "76ab9acfda2f18652ff0df1427cd0e5a7e72bf8234b26634a1eef103115a6999",
+      "case_id": "M154-plan-checkpoint-plan-alter-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "fbc086e3a9a8e76c2ddb86230d7c97afe55c0c2aa5753f880cffffcc38a2ade8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "bdc3911fa57e39fd9f59175e6535a044f98be9862894e8642c27e7d912dd10d8",
+      "case_id": "M155-plan-checkpoint-plan-alter-replace-with-other-image-plan",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "0a233b746c409566ad87fab01ac09c7a39e394faa9f4d7cc0a7929d1744a1d0b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3c00164b0292732200b15bba0c18c5b74f2f72ecdbd6901220b54c1e91bd7893",
+      "case_id": "M156-plan-checkpoint-plan-plan-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "e5a940c5c9a8844c0683deeeb03b8728577e934316ee616bfd15d821e80c00ff",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cde0d9aef130a41ca17fcdb303a08aeaed16c60e80e3bc8f3001193c0508860f",
+      "case_id": "M157-plan-checkpoint-plan-plan-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "f2fbcac6f93a6a4fd1c400b3dab10c31933c07551c70f8519a598d8aec573550",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4a7b90b5838dba4ac5d1667cceb22d520453064e3208e3944c9bfbfae20d33b1",
+      "case_id": "M158-plan-checkpoint-plan-alter-plan-removed-after-partial-commit",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": false,
+        "output_root_matches_baseline": false,
+        "raw_observation_retained": false,
+        "resume_succeeds": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "0da24fc4a12aa336afb7f6d294ce98607d078716bb4457a49716c3c47ab844ce",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M158-plan-checkpoint-plan-alter-plan-removed-after-partial-commit/independent-verify.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M158-plan-checkpoint-plan-alter-plan-removed-after-partial-commit/independent-verify.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "8c86259ec737a05534eee1936ea0c4cb65b7bde811f0f3ebb02a061ce337d1f5",
+      "case_id": "M159-piece-checkpoint-piece-payload-bit-flip",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "f43dce5a7c89024e9814376c309fade5b82af3b48ec35ecce7349421bf019002",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e3b1d23c16169cd0f80a9950940adca3a80c7e679f5b09f08bdd16aeb21fae58",
+      "case_id": "M160-piece-checkpoint-piece-truncate-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "ac11e6a89cce409200505bb3a703cabec4916b714e0548415ec53c17ad72d737",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e4c5d7eeaa2b84b1523a1ed146b9b19d670a9b3123c4c8ebe317b5e6e56105fe",
+      "case_id": "M161-piece-checkpoint-piece-append-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "23414a26f370dd36f2afab93dacd1ade5e0f57c13e0c61756249a97143f5629f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a9d04a9afe7e148eaf3bc3c3de4e495bf2449f7975745737a88802dbb42eb792",
+      "case_id": "M162-piece-checkpoint-piece-remove-with-receipt-present",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "37018d02c2887e3acd2fc6ddf2ff1d575e5ce6835fa8e35ef5e9ca8a2735f14d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fd1b31c463b842666a90d14b0ff8a78e37a3c8bb2f90c5952ad913c75c7c14ab",
+      "case_id": "M163-piece-checkpoint-piece-replace-with-other-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "f77ec2345235f51678eb6aac3b6e59d65f54d192f9bd9a91369bbd256fce7205",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e787d7b13154e637e8517396e93018b41e693cdf1497d239c602a6adab9cf878",
+      "case_id": "M164-piece-checkpoint-piece-piece-filename-index-changed",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "2d43b295a41928bf992b95b6cd0a2ed09e3987e2e6ac94e7dfa8e9e68d820fce",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1319914c2520ac1d424c55e95533109f6dcac00c8931023fcb855ad45f002730",
+      "case_id": "M165-piece-checkpoint-piece-piece-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "45d04a2becb2b3c69ced62dd497bc11d50cae80951753951d778341cccb51b27",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f62def6eddbef19b350471f3096ada3d469c96f365dabde2ef17b974b759d959",
+      "case_id": "M166-piece-checkpoint-piece-piece-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "f9d178155ebc43cf6285f1eadd79e28e96ee6caec71552d1b4a1f257d37f26fd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "43f99cb4e1bd86ee14f68e1eb6942dc8327f7408d3c2079c5db2e1516e19b021",
+      "case_id": "M167-piece-checkpoint-piece-durable-piece-without-receipt",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": false,
+        "output_root_matches_baseline": false,
+        "raw_observation_retained": false,
+        "resume_succeeds": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "1ec78950b9f640138c53d45c8d3f146f1dae26d27d3994596796bad53c77b9fc",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M167-piece-checkpoint-piece-durable-piece-without-receipt/independent-verify.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M167-piece-checkpoint-piece-durable-piece-without-receipt/independent-verify.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "2ba8f66dfad47d993777addaecd889f1c4fa5575966f8bb93c3a9150369fdbcb",
+      "case_id": "M168-receipt-piece-receipt-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "9466486c9dc85e9248fd34d2d99c6ddfc2b394eba6deee5d196f23f8a22229f1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1fe5dc2bb052387c825c630386c704c7fd38ec79073c7f1b31da22ca4f6fab45",
+      "case_id": "M169-receipt-piece-receipt-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "5fce012ee918b6eead30d94cf541d710f27643730179989365b1c528f32f7cab",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6164d9dbb741df56d566b81e7e6da6e46e4954af2ed4347b645fa5100f3d5d72",
+      "case_id": "M170-receipt-piece-receipt-alter-filename-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "3ae766e13565d012efb5c31dda4cffc5f7e9d12da6dddffc359781b2c3b7bdec",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9071161ef7c1f2cbcc7d4465aee1dcf16e05de5aac1e3afba1bf493be86d15ff",
+      "case_id": "M171-receipt-piece-receipt-alter-body-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "e6b755bf41e2778d75586007d5a2082611aa6e6d83451e48b383107b57cc4537",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fa88971a43899d2aab1b7f62db1ad516e1f2d3a3467607fa678f9835b8a87ca6",
+      "case_id": "M172-receipt-piece-receipt-alter-lane-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "b6ae9cadae5124e788cf9f2c214fda9bf49def1d2110e6a01b250f3250639b3f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2f28d4045a3a0b5118e18886c6cfd120e5138aaa25d2d58e311b18d85f55a994",
+      "case_id": "M173-receipt-piece-receipt-alter-row-start",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "223f5a3e7546d60b64f40ac354a9642bca30c0880fe2477a6df84a8006d0f332",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "60b160b0e8b2ed253502aedef85ab493779bf38068465379448894870ba8eeea",
+      "case_id": "M174-receipt-piece-receipt-alter-row-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "d54230e3c837e9c3287964d00532baf5a23cb28ad8cd571407db8381618fd304",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c2662b09805129f8e74ffe8291581f4e12993e52a9a7c445707c95499e419f38",
+      "case_id": "M175-receipt-piece-receipt-alter-byte-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "9cccfef482bc50f114a3ec0192a87e88ed4d6bc898664833ee5a487d0cb427c1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1298a66b351aebd795722c6159991fa5b8bc9888eee8f492bf709cc853bf94fa",
+      "case_id": "M176-receipt-piece-receipt-alter-content-blake3",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "cd85c42718a76b0a85911fde1517169f9ca8c71996c9fa3fba86e3b94b475f38",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "05ec1c828ec901d273d4bcac026d16a2fefdbe42176ce2b37d53564db05d5460",
+      "case_id": "M177-receipt-piece-receipt-receipt-without-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "6896903f58443f46d7d2f8f2a6d593a67dace13ca4ff7ab50d3694eb77c07c87",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9297641a753c410e37dae80da13744902b78b1f3818abb54edb5cbeae470650e",
+      "case_id": "M178-receipt-piece-receipt-receipt-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "06c6dedd566af7535271bfa195bb9f0c6be54446fc3e7c8d44f66c77a1f5366d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "367f6f666b75eaca2012fbb6035ebd9be9b6e59710da18ac9f5a92c9a87b07d3",
+      "case_id": "M179-receipt-piece-receipt-receipt-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "ba68fdee94bfa65d2016f9e000826a24a88fbaf8867a5a010b5c930008485e88",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a4231d814f6659e4694c310d7522f4d78a3cb9699c50e8816c1f3117c227ce16",
+      "case_id": "M180-receipt-piece-receipt-alter-replace-with-other-piece-receipt",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "bf469a1740a5003ff34bfa3551b7963ec9b9c24ed2f550c9a105eb30cbccbad7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1e4837470ca47dd5b36678484b25e151c070f2855be0614da1479fac1981e249",
+      "case_id": "M181-receipt-piece-receipt-missing-receipt-with-durable-piece",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": false,
+        "output_root_matches_baseline": false,
+        "raw_observation_retained": false,
+        "resume_succeeds": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "f63823a20d064965991e43d79f42dab3bdcb7e664d4db9d71ba3644ab03d2efb",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M181-receipt-piece-receipt-missing-receipt-with-durable-piece/independent-verify.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M181-receipt-piece-receipt-missing-receipt-with-durable-piece/independent-verify.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "a7a6612182b57c10d63399d01a787a84c04f292cd19277e27a48d948cc821880",
+      "case_id": "M182-publication-namespace-or-output-preexisting-result-sentinel",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "da288d22c485ec0d98af80547adb809b0a01147bda83fba8fab4eeea93e0c64a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8147366de9701864d1c3f1e9d209bace10b054e8dd380f436ce3a72c27be206f",
+      "case_id": "M183-publication-namespace-or-output-result-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "0cfdc9f0eaba0c383b47590cffb8f91efac0cecc93a0cbf0d2b93e903408617c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5da0c323e7443c079ee1c197d0bb6232c8769a10b59ea07d7a2648332a398687",
+      "case_id": "M184-publication-namespace-or-output-result-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "09f88f9108c51fca5edda8eb46d0a7b2c599f49e70ac9d809722bff88225be3a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0d1e60d35eba09ab322bdd6036c17d8685e32277be8c124b0f9e4a13b3cd03d2",
+      "case_id": "M185-publication-namespace-or-output-result-inside-checkpoint",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "fe36b2a3483edb499e2864e6825527cfade386fc79beecf62b06425ededd6f54",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0ac483bbcfdc07cfd265689c58f3d16e04c1a16eca4ed2cbc99d74e8492a0ec1",
+      "case_id": "M186-publication-namespace-or-output-checkpoint-inside-store",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "e392a49c93337fd2bd521d65dbf82d79890f8e87e282eaa8339a0a375cf02077",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "192a992e92075d7902e2088e6e46356ca3435bfdb8e42c21b50906f2b85688f5",
+      "case_id": "M187-publication-namespace-or-output-store-inside-checkpoint",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "f63c9ec464270ad32d71cb3fff16b14de88e26bb4cb5e41d9d1a51c0049585f5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M187-publication-namespace-or-output-store-inside-checkpoint/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M187-publication-namespace-or-output-store-inside-checkpoint/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "0568efde214cdbe41d012be7925b184672f2092966aab4c6c03d4651a6bdab43",
+      "case_id": "M188-publication-namespace-or-output-checkpoint-root-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "7744b15981ee56cdb9f6c0598bbe7d3a26954dc2e1359d7f582f047cb009faab",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9232d937a2c1fbc5c09eb0bba122c98560d1b22738ded2e0fa5e589654ba5802",
+      "case_id": "M189-publication-namespace-or-output-unexpected-checkpoint-entry",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "16ad227696f35da7f6e2276360d5a5052d29c0d55adaec530d12cda762378535",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2e4060243c9647fd308cf15b3157772d2e18c7851e5ef5fa53174c88831c17ec",
+      "case_id": "M190-publication-namespace-or-output-second-coordinator-lock",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": false,
+        "preexisting_bytes_unchanged": false,
+        "raw_failure_retained": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "527676c7ce98c6b659d63eb3d1966e86a8ef1f2d12842ea2e22f7c2cad291286",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M190-publication-namespace-or-output-second-coordinator-lock/mutation.transcript.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M190-publication-namespace-or-output-second-coordinator-lock/mutation.transcript.json'"
+      ]
+    },
+    {
+      "attempt_id": "57d0ea349d8bdeb00111e14c49c02c9fe365d6b137f17fab8cbbd08479452afb",
+      "case_id": "M191-publication-result-commit-orphan-final-tensor-without-result",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": false,
+        "output_root_matches_baseline": false,
+        "raw_observation_retained": false,
+        "resume_succeeds": false
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "2d086b1b731f13994427c31328079ad25ef46e2f793fe57ff1e36923c49ab3b1",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M191-publication-result-commit-orphan-final-tensor-without-result/independent-verify.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/M191-publication-result-commit-orphan-final-tensor-without-result/independent-verify.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "fdf7e83a30d0bfa4a4fc8cd2c99fda363bca5a74e1e9205eadc58d1faa3e2112",
+      "case_id": "M192-publication-result-commit-rerun-must-not-replace-existing-result",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "8b370d914838e30b754982154f3089c7b89bf82b0cf339e3b9f193675f59745a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ee75c7bd89c979472171d16e0dfba899d86b15af93cb1aef4e1ade50066d3839",
+      "case_id": "K001-process-spawned-before-checkpoint-lock",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "eaecb1c4cf34c1b45e5cd6f7bcbac6ac7c949ad67e753dbfffbfab080503e907",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K001-process-spawned-before-checkpoint-lock/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K001-process-spawned-before-checkpoint-lock/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "0d952a4eb6e8b36135c2fe3ed0e0de7815ff48386aa72c2621bec070692ddd9c",
+      "case_id": "K002-checkpoint-lock-held-before-plan",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "ffc4a0a6083670b4c3d640d63abdda5e26fb7dcf7f0e1a7f6b0909922e728074",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K002-checkpoint-lock-held-before-plan/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K002-checkpoint-lock-held-before-plan/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "df76592ac0ae1ebc984c7a9953e4dcedbe586dfd0bbf8c6b07495b44f84f6ccc",
+      "case_id": "K003-plan-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "a3a307b0fbe632bfd84c43ac36fd8cad9e4d4a9427f9c2b5a635590ceaa7dbb3",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K003-plan-temp-written-before-file-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K003-plan-temp-written-before-file-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "ed5bd89d811790c4da5362df64a23905af8e94872848142894075573858e3f60",
+      "case_id": "K004-plan-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "93c67f7769d99f438ddeb279f9c7ba98feb2db07f8c5eeee04e24ceedf8df2eb",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K004-plan-destination-hard-linked-before-staging-unlink/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K004-plan-destination-hard-linked-before-staging-unlink/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "a212c2ed270593533778149ac01c8e2e7c4c29caeebcda30d648e958d42e4e84",
+      "case_id": "K005-plan-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "1c6f13f0d3a9b27325174b7b0b6c1d66f3dc67932db6d4e95ffb94abc548f217",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K005-plan-staging-unlinked-before-directory-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K005-plan-staging-unlinked-before-directory-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "7c9dd285d256c9e1e1bf45ff60e7c9fe7dcb6a19a085fbe59563ba390d21b1f0",
+      "case_id": "K006-plan-durable-before-piece-work",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "46702d45480e8f0ae5bd39f9ad351b58e4236a6ce105ea44752f64aa8e877fe5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K006-plan-durable-before-piece-work/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K006-plan-durable-before-piece-work/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "7fd8f5ed38db41ce190ef089c1298edbb7b03fd6c77d56b128b8ea2739e9d0ae",
+      "case_id": "K007-piece-temp-created-before-complete-write",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "82c39d5b5013498cd7fd627005c61cf363d4b81358c47c2afa48baa70a72157b",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K007-piece-temp-created-before-complete-write/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K007-piece-temp-created-before-complete-write/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "b48590320bf7ace8c658780ebb82214e55170db07d5b63017f447461e5e18951",
+      "case_id": "K008-piece-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "f9bba6d055b13caa92dc60fdde16679871c5a194a277caef86de1de713128973",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K008-piece-temp-written-before-file-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K008-piece-temp-written-before-file-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "9c4715cb3ce6c2a4f628c87eb2cd3aa82dcae6707839ea707ff64c530d4b3664",
+      "case_id": "K009-piece-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "b795a6e32ee1ebc05597c7641287df03f113bc5679149e2025f33ab59002c35c",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K009-piece-destination-hard-linked-before-staging-unlink/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K009-piece-destination-hard-linked-before-staging-unlink/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "882f8e713b8e82b96a8fc5c4d1fa9491fd10679a9e97c151a4f7887f3bcea0cc",
+      "case_id": "K010-piece-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "4c5cf8b9db25e4b384212e181b07b61c720eb71c586e8fc67b7cc26f400ac30a",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K010-piece-staging-unlinked-before-directory-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K010-piece-staging-unlinked-before-directory-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "c4b3adbb85edf82fe8f6f355f33ae56967457285757e717f5503f5e5abdd2676",
+      "case_id": "K011-durable-orphan-piece-before-receipt",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "78f7d3482bd4d544cdd3179cfa7e5f808d64cfaebdc11aeb8813d837645494a3",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K011-durable-orphan-piece-before-receipt/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K011-durable-orphan-piece-before-receipt/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "4f415f26287971e7b82bec782e65282df9f8cdd6bd512ef355fb72899526ac34",
+      "case_id": "K012-receipt-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "08d2d62ee36999f853c85bf5de84cb68711a75e985720edc21a6f95ef43107fc",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K012-receipt-temp-written-before-file-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K012-receipt-temp-written-before-file-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "c8126d0296e79a8c26f92609f15a18925f4143cd799cfd26335a2bf003481b26",
+      "case_id": "K013-receipt-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "6fe4f972ddaae272ebdf1e819258f805b489549bd8fad264c439a97299cb5549",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K013-receipt-destination-hard-linked-before-staging-unlink/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K013-receipt-destination-hard-linked-before-staging-unlink/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "d3793ccfff2b33bde19f18dda1d7cf3085aa1ba6b0e489b749fa05874fedab2e",
+      "case_id": "K014-receipt-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "bd403a3c0d9c808cd54f2d7a4fc7ea57201e97529ba150884e8da8db1dbf6f15",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K014-receipt-staging-unlinked-before-directory-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K014-receipt-staging-unlinked-before-directory-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "59699710e32903da9dc68d756ebe3bb112f472aeddbfdc0812676f025d037f3f",
+      "case_id": "K015-one-or-more-partial-receipts-durable",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "82d7d14146a3899c8bbea276a41cdc1036c2b0e5754280aad3ca7109e6c7fa6c",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K015-one-or-more-partial-receipts-durable/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K015-one-or-more-partial-receipts-durable/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "c2420bb953fd91662547a9a8420d753738097255e73c5c8cc808ff8348df8958",
+      "case_id": "K016-all-receipts-durable-before-finalization",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "e1f94aabe4f26a2c7e7da6370b835f7955d800e487aa36ffd793623c508923d5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K016-all-receipts-durable-before-finalization/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K016-all-receipts-durable-before-finalization/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "6bae691f241c8bb5912e8edcfecad4713a40790c98f792fe6596ec6fe4c5cb79",
+      "case_id": "K017-output-chunk-published-before-manifest",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "abdc609ab50d159c3d90cb0666a8aba26448a8042f30e6cc74c1487f5c4f3b5f",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K017-output-chunk-published-before-manifest/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K017-output-chunk-published-before-manifest/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "2804bb18ce2aa9ca77ee9da0e830eab8da366131948fe09362841ef41bff2371",
+      "case_id": "K018-output-manifest-published-before-result-temp",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "f2e0306aa023671edd55de4917576dbc0862357453ef0b98cf9a072ea48e64d3",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K018-output-manifest-published-before-result-temp/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K018-output-manifest-published-before-result-temp/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "45e1b66856a390272a9be142844441b943df7c3690632813a8291cf207ce6148",
+      "case_id": "K019-result-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "684834de72149a424081859fde82afed35e84ab07352d583b0505c416a30fe25",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K019-result-temp-written-before-file-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K019-result-temp-written-before-file-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "306b94b332a2ff652c3dc54f0b6eafc1a3a09d33e7834d403f75bc5e511e1674",
+      "case_id": "K020-result-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "4f7645420a3d5a1c8d892c411808509e0cd34ff4726fca297f5c24c48c713ae5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K020-result-destination-hard-linked-before-staging-unlink/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K020-result-destination-hard-linked-before-staging-unlink/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "d7df62b9fd3d1efe378ff0290038780e170f40669f7369d6c85c756eceed7a68",
+      "case_id": "K021-result-staging-unlinked-before-parent-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "4809fbbefdea2b0f22de4312a1ae854faa6c1bf9d5a8fbfb6f435d38fd33cdc5",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K021-result-staging-unlinked-before-parent-directory-sync/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K021-result-staging-unlinked-before-parent-directory-sync/killed.command.json'"
+      ]
+    },
+    {
+      "attempt_id": "e16526e7c072bb4f8f6c098c6eb929ecf6390ef0090cdaa55e8c189347570d3b",
+      "case_id": "K022-result-durable-before-normal-exit",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": false,
+        "durable_pre_kill_receipts_reused_only_if_valid": false,
+        "exact_verify_accepts": false,
+        "no_partial_result_accepted": false,
+        "output_root_matches_uninterrupted_baseline": false,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": false,
+        "signal_delivery_and_wait_status_137_retained": false
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "a97db6df6a68f89c4cdd11c21c502e6c816f1c8ed90c2fe5419c0c661ce9b52b",
+      "status": "failed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "evidence parser rejected artifacts: cannot read strict JSON /home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K022-result-durable-before-normal-exit/killed.command.json: [Errno 2] No such file or directory: '/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a1/cases/K022-result-durable-before-normal-exit/killed.command.json'"
+      ]
+    }
+  ],
+  "release_and_accepted_output_bound": true,
+  "release_binary_match": true,
+  "run_id": "2226cea97ec8a0d5e858f06eab4fc6d5721ce7f4a9699937fdf21c671f2748e9",
+  "schema": "mfenx-local-adversarial-sweep-validation/v1",
+  "status_counts": {
+    "failed": 64,
+    "passed": 150
+  },
+  "validated_status_counts": {
+    "failed": 64,
+    "passed": 150
+  },
+  "validation_id": "3bc80dae2f40ad0c25ef76267370c71c1d60afd6ad889c4fafb63f042ff385a4"
+}

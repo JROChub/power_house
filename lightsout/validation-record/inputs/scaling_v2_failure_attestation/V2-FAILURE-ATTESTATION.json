@@ -1,0 +1,71 @@
+{
+  "schema": "mfenx-local-fixed-work-scaling-v2-failure-attestation/v1",
+  "run_id": "ae7e2690ea50654ac7dadd45d6475ca680e88a2a9d29d373ecaf2c6a571be356",
+  "plan_id": "3057dfc74a06553aadde9ccf98d6dd791f42a67aa694487a855d6f0665d8c1ea",
+  "execution": {
+    "started_at": "2026-08-22T11:59:48Z",
+    "ended_at": "2026-08-22T12:30:54Z",
+    "elapsed_seconds": 1866,
+    "planned_attempts": 100,
+    "attempted_exactly_once": 100,
+    "remaining_missing": 0,
+    "max_attempts": null,
+    "diagnostic_partial_population": false,
+    "sample_filtering_permitted": false
+  },
+  "frozen_original_result": {
+    "succeeded": 52,
+    "failed": 48,
+    "blocked": 0,
+    "unavailable": 0,
+    "execution_population_closed": true,
+    "all_success_output_roots_equal": true,
+    "success_output_root": "63ed4dd0918ee5553c5c473a568b4c2a1c9d0326c1b83e60f9c3dc23ec70d462",
+    "complete_for_scaling_claim": false,
+    "physical_core_scaling_claim_established": false,
+    "lane_configuration_scaling_claim_established": false,
+    "original_outcomes_changed": false
+  },
+  "status_by_lane_and_temperature": [
+    {"temperature_label": "cold_unprimed", "lanes": 1, "succeeded": 10, "failed": 0},
+    {"temperature_label": "cold_unprimed", "lanes": 2, "succeeded": 10, "failed": 0},
+    {"temperature_label": "cold_unprimed", "lanes": 4, "succeeded": 8, "failed": 2},
+    {"temperature_label": "cold_unprimed", "lanes": 8, "succeeded": 1, "failed": 9},
+    {"temperature_label": "cold_unprimed", "lanes": 16, "succeeded": 0, "failed": 10},
+    {"temperature_label": "warm_primed", "lanes": 1, "succeeded": 10, "failed": 0},
+    {"temperature_label": "warm_primed", "lanes": 2, "succeeded": 9, "failed": 1},
+    {"temperature_label": "warm_primed", "lanes": 4, "succeeded": 4, "failed": 6},
+    {"temperature_label": "warm_primed", "lanes": 8, "succeeded": 0, "failed": 10},
+    {"temperature_label": "warm_primed", "lanes": 16, "succeeded": 0, "failed": 10}
+  ],
+  "independent_validation": {
+    "path": "INDEPENDENT-VALIDATION-PRESEAL.json",
+    "sha256": "c2d9ea3cde8b253bf4f0544468538b6f5b9e3eb69d16afc470967a6ce3183ba3",
+    "validation_id": "b21318d4c15f4748e46f325ca8366340e5975426631d1577d273a1088b0bd59b",
+    "identity_checks_all_pass": true,
+    "setup_and_store_validation_pass": true
+  },
+  "observer_reanalysis": {
+    "path": "OBSERVER-REANALYSIS.json",
+    "sha256": "3139e63d3ceffb5bd6936d3d7c0fe04bd94cd6cc326e2c31c943dddfc8de8327",
+    "reanalysis_id": "b01ad1ebb5872a987b8dcc56197a96a971a8d03181c80ae76121d12722c2ad50",
+    "failed_outcomes_with_only_v2_observer_false_checks": 48,
+    "current_cpu_transient_rows": 237,
+    "transient_rows_later_observed_on_commanded_cpu": 237,
+    "transient_rows_unresolved": 0,
+    "genuine_affinity_syscall_or_allowed_mask_failures": 0,
+    "diagnostic_only_not_a_replacement_verdict": true
+  },
+  "frozen_inputs": {
+    "plan_sha256": "aba48c57518ac1dbd67fa7a3085249205331ce59fc073349dac62cf8f2d6b70b",
+    "run_sha256": "e10b2238c2fe17d8f91ede2d223a22f70ac0fc1168e3bc5be87672d512ee8aed",
+    "execution_start_sha256": "e0b40d75135e078252c2315ab87ffbc890306b608c44910581f486c112c9d712",
+    "execution_end_sha256": "2f05278c19e593ea1ac5299574d63eaed36e75a200744c705c55c5c47457c8ac",
+    "v2_harness_sha256": "e8e06bc9ed9de237893a48aeb2a703260dde4e28d52aea21addef07166a15554",
+    "v2_harness_tests_sha256": "291f8b6e0def5eaa155a1fece4c18051652507ba1bc2110bc20baa9670a43453",
+    "signed_archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "reference_verifier_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa"
+  },
+  "disposition": "preserved_failed_population_requires_new_v3_plan_and_run"
+}

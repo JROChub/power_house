@@ -1,0 +1,191 @@
+{
+  "automated_evidence_is_independent_human_review": false,
+  "candidate": {
+    "candidate_payload_inventory_sha256": "3d8099f29dae05abf0d29b8b55502b6eec0ae15a5d380a406504933582af4487",
+    "candidate_source_inventory_sha256": "affd7fa0da3f1fae9adc75e0e7be52da752a6cc6dcbde3c4c10497de9f4d7e0d",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "executor_source_inventory_sha256": "f9d2cf4c7d19c1faf5c77021e25d90d07217448db285f5f49fc27e50e6f10f3c",
+    "name": "mfenx-local-v2-adversarial-candidate-20260822-a1",
+    "plan_id": "99708d8d3959f835625864186e7056d8198a26d91684073ded82a3f90c298063"
+  },
+  "created_at": "2026-08-22T09:34:00Z",
+  "disposition": "fail_closed_evidence_incomplete",
+  "findings": [
+    {
+      "affected_claims": [
+        "standalone source build",
+        "unrelated-machine reproduction",
+        "reproducible build"
+      ],
+      "category": "release_reproducibility",
+      "evidence": [
+        "outcomes/candidate-source-cargo-metadata.json",
+        "logs/candidate-source-cargo-metadata.stderr.log",
+        "candidate/source/Cargo.toml"
+      ],
+      "id": "QR-001",
+      "severity": "high",
+      "status": "open",
+      "title": "Frozen source snapshot is not standalone-buildable"
+    },
+    {
+      "affected_claims": [
+        "path-independent reproducibility",
+        "builder privacy"
+      ],
+      "category": "artifact_hygiene",
+      "evidence": [
+        "outcomes/candidate-binary-private-path-policy.json",
+        "logs/candidate-binary-private-path-policy.stdout.log",
+        "outcomes/candidate-binary-elf-surface.json"
+      ],
+      "id": "QR-002",
+      "severity": "medium",
+      "status": "open",
+      "title": "Binary embeds private absolute build paths"
+    },
+    {
+      "affected_claims": [
+        "complete automated static-analysis gate"
+      ],
+      "category": "evidence_gap",
+      "evidence": [
+        "outcomes/codeql-init.json",
+        "outcomes/codeql-build.json",
+        "outcomes/codeql-analyze.json"
+      ],
+      "id": "QR-003",
+      "severity": "high",
+      "status": "open",
+      "title": "CodeQL unavailable and no SARIF retained"
+    },
+    {
+      "affected_claims": [
+        "complete 214-case mutation and kill sweep"
+      ],
+      "category": "evidence_gap",
+      "evidence": [
+        "outcomes/malformed-artifact-corpus.json",
+        "malformed-corpus-validation.json"
+      ],
+      "id": "QR-004",
+      "severity": "high",
+      "status": "open",
+      "title": "Retained adversarial A1 run has 68 validated failures"
+    },
+    {
+      "affected_claims": [
+        "candidate-bound independent human review"
+      ],
+      "category": "external_review_gate",
+      "evidence": [
+        "run-context.json",
+        "review-materials/human-review-report.schema.json",
+        "review-materials/STEP3_HUMAN_REVIEW_BRIEF.md"
+      ],
+      "id": "QR-005",
+      "severity": "medium",
+      "status": "open",
+      "title": "Human-review schema requires a commit that this candidate lacks"
+    },
+    {
+      "affected_claims": [
+        "long tensor-manifest fuzz campaign"
+      ],
+      "category": "evidence_gap",
+      "evidence": [
+        "outcomes/fuzz-tensor-manifest.json",
+        "outcomes/fuzz-tensor-manifest-bounded-smoke.json"
+      ],
+      "id": "QR-006",
+      "severity": "medium",
+      "status": "open",
+      "title": "Requested tensor fuzz endurance count was not completed"
+    },
+    {
+      "affected_claims": [
+        "dependency policy cleanliness"
+      ],
+      "category": "configuration_hygiene",
+      "evidence": [
+        "outcomes/cargo-deny-candidate.json",
+        "logs/cargo-deny-candidate.stderr.log"
+      ],
+      "id": "QR-007",
+      "severity": "low",
+      "status": "open",
+      "title": "Three unmatched license allowances remain"
+    },
+    {
+      "affected_claims": [
+        "diagnostic provenance clarity"
+      ],
+      "category": "review_process",
+      "evidence": [
+        "outcomes/source-unsafe-scan.json",
+        "outcomes/source-unsafe-scan-retry.json",
+        "outcomes/candidate-binary-hardening-policy.json",
+        "outcomes/candidate-binary-hardening-policy-retry.json"
+      ],
+      "id": "QR-008",
+      "severity": "informational",
+      "status": "retained_with_corrected_retry",
+      "title": "Initial diagnostic command defects are preserved"
+    }
+  ],
+  "human_review_performed": false,
+  "kind": "automated_defensive_quality_review",
+  "product_code_modified": false,
+  "results": {
+    "adversarial_a1": {
+      "attempted_exactly_once": 214,
+      "failed": 68,
+      "passed": 146,
+      "status": "failed"
+    },
+    "binary_hardening": {
+      "bind_now": true,
+      "gnu_relro": true,
+      "non_executable_stack": true,
+      "pie": true,
+      "status": "passed_on_corrected_retry"
+    },
+    "candidate_identity": "passed",
+    "dependency_audit": {
+      "cargo_audit_known_vulnerabilities": 0,
+      "cargo_audit_lockfile_packages": 277,
+      "cargo_deny_errors": 0,
+      "cargo_deny_warnings": 3,
+      "status": "passed_with_warnings"
+    },
+    "format": "passed",
+    "fuzz": {
+      "contract_control": {
+        "completed_executions": 262144,
+        "crash_artifacts": 0,
+        "status": "passed"
+      },
+      "tensor_manifest_bounded_smoke": {
+        "completed_executions": 512,
+        "crash_artifacts": 0,
+        "status": "passed"
+      },
+      "tensor_manifest_requested_endurance": {
+        "executions_before_interruption": 1666,
+        "requested_executions": 262144,
+        "status": "failed_incomplete"
+      }
+    },
+    "lint": "passed",
+    "python_ast": "passed",
+    "static_policy": "passed_bounded",
+    "tests": {
+      "adversarial_harness_failed": 0,
+      "adversarial_harness_passed": 8,
+      "optimized_rust_failed": 0,
+      "optimized_rust_passed": 37,
+      "status": "passed"
+    }
+  },
+  "schema": "mfenx.candidate-quality-review.v1"
+}

@@ -1,0 +1,1582 @@
+{
+  "all_output_roots_equal": true,
+  "claim_boundaries": [
+    "physical-core scaling includes only distinct_physical_cores points",
+    "oversubscribed_round_robin points are lane-configuration observations",
+    "no 8-core or 16-core claim follows from a four-core cpuset",
+    "raw attempt population is published without favorable-sample filtering"
+  ],
+  "complete_for_scaling_claim": false,
+  "development_unbound_binary": false,
+  "evidence_validation_implemented": true,
+  "execution_population_closed": true,
+  "execution_preflight": {
+    "reason": null,
+    "status": "passed"
+  },
+  "identity_checks": {
+    "accepted_executor_sha256": true,
+    "accepted_reference_verifier_sha256": true,
+    "accepted_signed_archive_sha256_and_members": true,
+    "development_unbound_binary": false,
+    "legacy_diagnostic_identity": false,
+    "production_candidate_identity": true,
+    "release_toolchain_bound": true
+  },
+  "lane_configuration_scaling": {
+    "complete": false,
+    "conclusion": "not established",
+    "lane_counts": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "oversubscribed_lane_counts": [
+      8,
+      16
+    ]
+  },
+  "output_roots": [
+    "63ed4dd0918ee5553c5c473a568b4c2a1c9d0326c1b83e60f9c3dc23ec70d462"
+  ],
+  "physical_core_scaling": {
+    "complete": false,
+    "conclusion": "not established",
+    "lane_counts": [
+      1,
+      2,
+      4
+    ]
+  },
+  "plan_id": "3057dfc74a06553aadde9ccf98d6dd791f42a67aa694487a855d6f0665d8c1ea",
+  "planned_attempts": 100,
+  "records": [
+    {
+      "lanes": 1,
+      "outcome_record_id": "e8866e538217cc9c56f3d7c27b4237aaf7c842be2f950f86a4ef2032634ea1f3",
+      "physical_core_count": 1,
+      "sample_id": "r00-o00-cold_unprimed-p00-l01",
+      "sequence": 0,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 15415760322,
+        "external_standalone_verifier_wall_ns": 1596650919,
+        "internal_embedded_verification_ns": 4240061373,
+        "internal_end_to_end_ns": 15172319021,
+        "internal_execution_ns": 2208185969,
+        "internal_finalization_ns": 8485652131,
+        "standalone_reference_replay_ns": 1464819653
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "28c4acbdae2401cea43d0c9f896139ee933aa3ed0812f8d0d4f511336fca1924",
+      "physical_core_count": 2,
+      "sample_id": "r00-o00-cold_unprimed-p01-l02",
+      "sequence": 1,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12237608188,
+        "external_standalone_verifier_wall_ns": 1712573504,
+        "internal_embedded_verification_ns": 2432410334,
+        "internal_end_to_end_ns": 11996767537,
+        "internal_execution_ns": 1705043540,
+        "internal_finalization_ns": 7608043990,
+        "standalone_reference_replay_ns": 1559205538
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "957afaa15f7540076dad28d0d9a6b7172c85117a45429a28fa1bce067933a5d7",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-cold_unprimed-p02-l16",
+      "sequence": 2,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "caed63e83c5b13560ac2c5c76fca86e41d9e2e3e42bc31751c5d7b8a85759977",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-cold_unprimed-p03-l04",
+      "sequence": 3,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "514df628ac66a601ecf148ec3a5c6e8e105891de88869bee41442271d94fc914",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-cold_unprimed-p04-l08",
+      "sequence": 4,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "a05087d01468aa8da116f85fea7268160774be05c43e56db3231a147d5fceca2",
+      "physical_core_count": 1,
+      "sample_id": "r00-o00-warm_primed-p00-l01",
+      "sequence": 5,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 24194590001,
+        "external_standalone_verifier_wall_ns": 1686222840,
+        "internal_embedded_verification_ns": 4263793305,
+        "internal_end_to_end_ns": 23928152691,
+        "internal_execution_ns": 8001629927,
+        "internal_finalization_ns": 9224652022,
+        "standalone_reference_replay_ns": 1514384225
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "83a0adcc9c47e528b1497db5733da4c0022818207e68d997a9fcd375705613c8",
+      "physical_core_count": 2,
+      "sample_id": "r00-o00-warm_primed-p01-l02",
+      "sequence": 6,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 20860457001,
+        "external_standalone_verifier_wall_ns": 1698967648,
+        "internal_embedded_verification_ns": 2839995036,
+        "internal_end_to_end_ns": 20567004232,
+        "internal_execution_ns": 8665049817,
+        "internal_finalization_ns": 8571791577,
+        "standalone_reference_replay_ns": 1573629429
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "d2c902680bbf931b81c75db94dcb59199aa00532e416bfb9a60b2047982ffc42",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-warm_primed-p02-l16",
+      "sequence": 7,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "cf146d9c17f51057bb823fa1b9aec58b15c77ddd0b110b68e5f61463164a9641",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-warm_primed-p03-l04",
+      "sequence": 8,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "7e930f47245d2c3aca7470fddceffdb93797446b1292afadb1e413f52b5c5b4f",
+      "physical_core_count": 4,
+      "sample_id": "r00-o00-warm_primed-p04-l08",
+      "sequence": 9,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "8136d08df68995afc01ae9aa204b2635d202e3503aa91c166cbd095470dc4ef7",
+      "physical_core_count": 2,
+      "sample_id": "r00-o01-cold_unprimed-p00-l02",
+      "sequence": 10,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13880513629,
+        "external_standalone_verifier_wall_ns": 1883525552,
+        "internal_embedded_verification_ns": 2898340471,
+        "internal_end_to_end_ns": 13570125788,
+        "internal_execution_ns": 2001270162,
+        "internal_finalization_ns": 8442411940,
+        "standalone_reference_replay_ns": 1718393791
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "ddb836cdd76f9374f41596ce3a2c400d71882d3e443117f6a16c1146c9c67d69",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-cold_unprimed-p01-l04",
+      "sequence": 11,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11157119337,
+        "external_standalone_verifier_wall_ns": 2262284811,
+        "internal_embedded_verification_ns": 1799628843,
+        "internal_end_to_end_ns": 10832895009,
+        "internal_execution_ns": 1745764994,
+        "internal_finalization_ns": 6950572329,
+        "standalone_reference_replay_ns": 2066419436
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "7c4ade62437e71f987f77c4053fafa3058215f1734f4f4e8fc99b29bbc488d03",
+      "physical_core_count": 1,
+      "sample_id": "r00-o01-cold_unprimed-p02-l01",
+      "sequence": 12,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 15268485484,
+        "external_standalone_verifier_wall_ns": 1675831281,
+        "internal_embedded_verification_ns": 4386892390,
+        "internal_end_to_end_ns": 14797863591,
+        "internal_execution_ns": 2395744932,
+        "internal_finalization_ns": 7747477427,
+        "standalone_reference_replay_ns": 1495438083
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "0b6e971e74080bf2002175e4d37596fcb37b564cb759429b499bcad771218f16",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-cold_unprimed-p03-l08",
+      "sequence": 13,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "c8cde7a5b17395564de6c1d88b05596e1c0c36b37cf29ceaf5ca7cd15478bf6a",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-cold_unprimed-p04-l16",
+      "sequence": 14,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "ef6a10a10dd64a9791cc2f43de5fa1df525e025a30a83d3d3a73317991caabaa",
+      "physical_core_count": 2,
+      "sample_id": "r00-o01-warm_primed-p00-l02",
+      "sequence": 15,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11781940972,
+        "external_standalone_verifier_wall_ns": 1698461627,
+        "internal_embedded_verification_ns": 2525882494,
+        "internal_end_to_end_ns": 11558699147,
+        "internal_execution_ns": 1773670336,
+        "internal_finalization_ns": 7023404204,
+        "standalone_reference_replay_ns": 1559878019
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "1bee426ba3273cda82e06d5a9f0e021233264bf5f8145c3a5466b2212c43f409",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-warm_primed-p01-l04",
+      "sequence": 16,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "c45a2142d6858a5f221cda73be1598eb2f4fe38ba1c8a2ee4e876d8ebc42c27e",
+      "physical_core_count": 1,
+      "sample_id": "r00-o01-warm_primed-p02-l01",
+      "sequence": 17,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14653863912,
+        "external_standalone_verifier_wall_ns": 1594315978,
+        "internal_embedded_verification_ns": 4536107141,
+        "internal_end_to_end_ns": 14202107051,
+        "internal_execution_ns": 2051187128,
+        "internal_finalization_ns": 7389520238,
+        "standalone_reference_replay_ns": 1458671584
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "8b97673d4b3c4af420c86cd2636c3eb8574e7d4bfae29cb7708af0e3f1885295",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-warm_primed-p03-l08",
+      "sequence": 18,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "2db138a02ecbf0fb8a377d702e7af4dd3f5375ff7fc13eb7ed3a27a29974f191",
+      "physical_core_count": 4,
+      "sample_id": "r00-o01-warm_primed-p04-l16",
+      "sequence": 19,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "9f424d60c61b190ffc3c19508378a4bee5ad46a6338b92c84a8acd523344655b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-cold_unprimed-p00-l04",
+      "sequence": 20,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12983869628,
+        "external_standalone_verifier_wall_ns": 2590807157,
+        "internal_embedded_verification_ns": 1893053309,
+        "internal_end_to_end_ns": 12645462346,
+        "internal_execution_ns": 1727868803,
+        "internal_finalization_ns": 8778267949,
+        "standalone_reference_replay_ns": 2244009366
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "aadfd6adaad0e035b0e46d8d7be4042942d4494bee5c3fa06ee4fa736180f3f1",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-cold_unprimed-p01-l08",
+      "sequence": 21,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11543535681,
+        "external_standalone_verifier_wall_ns": 2697183555,
+        "internal_embedded_verification_ns": 2106120412,
+        "internal_end_to_end_ns": 11303043587,
+        "internal_execution_ns": 2079050499,
+        "internal_finalization_ns": 6894358956,
+        "standalone_reference_replay_ns": 2505912053
+      },
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "8aab2e6248f1c8869b21002df9fc44a502bc25e8206a9cee3b8f1a91c5f6a50f",
+      "physical_core_count": 2,
+      "sample_id": "r00-o02-cold_unprimed-p02-l02",
+      "sequence": 22,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12336817296,
+        "external_standalone_verifier_wall_ns": 1756279754,
+        "internal_embedded_verification_ns": 2668810536,
+        "internal_end_to_end_ns": 12095609824,
+        "internal_execution_ns": 1754663514,
+        "internal_finalization_ns": 7439569315,
+        "standalone_reference_replay_ns": 1605866586
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "d989876619f4c94df84d9c8d463353c13b096a773a9c0d19cfd8438ca48230c7",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-cold_unprimed-p03-l16",
+      "sequence": 23,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "5d742f6062938f09b03fdfdaec6f378eee1bdc29ed57a6ba4c00495e080b2a5a",
+      "physical_core_count": 1,
+      "sample_id": "r00-o02-cold_unprimed-p04-l01",
+      "sequence": 24,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13060388583,
+        "external_standalone_verifier_wall_ns": 2095243018,
+        "internal_embedded_verification_ns": 4284991214,
+        "internal_end_to_end_ns": 12820518170,
+        "internal_execution_ns": 1762795508,
+        "internal_finalization_ns": 6544198510,
+        "standalone_reference_replay_ns": 1489907187
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "6767a18de6f2ee973ddc8e77803aafc2c64cf8c9e635a9bc2696adbfe6d3c6ac",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-warm_primed-p00-l04",
+      "sequence": 25,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "899f8344bb511bac8995a421839a798db014f98d620954ae0b88bc6b7335aa7c",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-warm_primed-p01-l08",
+      "sequence": 26,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "6bf64c59e2e683aa8cf43e38bf5849bbc60312cab86728dada615da0aa61b889",
+      "physical_core_count": 2,
+      "sample_id": "r00-o02-warm_primed-p02-l02",
+      "sequence": 27,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11033550409,
+        "external_standalone_verifier_wall_ns": 1824166054,
+        "internal_embedded_verification_ns": 2396620278,
+        "internal_end_to_end_ns": 10664936161,
+        "internal_execution_ns": 1584980159,
+        "internal_finalization_ns": 6465432693,
+        "standalone_reference_replay_ns": 1556312437
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "def89d332cd3f8f8e29990ebc66bbc79a08f504f743745d4b4ef90ead08f37f8",
+      "physical_core_count": 4,
+      "sample_id": "r00-o02-warm_primed-p03-l16",
+      "sequence": 28,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "a4ffc88b0493f913f119847013e92801d450bfbc9969e96c9d9d3c6e9fd5e6a0",
+      "physical_core_count": 1,
+      "sample_id": "r00-o02-warm_primed-p04-l01",
+      "sequence": 29,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 15727724292,
+        "external_standalone_verifier_wall_ns": 1804424868,
+        "internal_embedded_verification_ns": 4467460594,
+        "internal_end_to_end_ns": 15340790668,
+        "internal_execution_ns": 1838270735,
+        "internal_finalization_ns": 8818354997,
+        "standalone_reference_replay_ns": 1608763436
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "3ba350a4ccd77ca45591e1f495a8ac820fe8d12f648804f3f10a8b9e513a06c9",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-cold_unprimed-p00-l08",
+      "sequence": 30,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "d7e3bd98250098fd5bd7e2da5e76a5c4327c585efdc62e7632caa34e0d883340",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-cold_unprimed-p01-l16",
+      "sequence": 31,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "bd14d7ff8ef82e2bb071eb417cb96eed0436546945b675eb8d17c68906e70f8d",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-cold_unprimed-p02-l04",
+      "sequence": 32,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11192784911,
+        "external_standalone_verifier_wall_ns": 2263531025,
+        "internal_embedded_verification_ns": 1973417750,
+        "internal_end_to_end_ns": 10749742704,
+        "internal_execution_ns": 1579313287,
+        "internal_finalization_ns": 6521647703,
+        "standalone_reference_replay_ns": 2104414750
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "6a4e5ffae35040680dd1b6b2411429da05d5f6613787f1232abed3490fbd9d6b",
+      "physical_core_count": 1,
+      "sample_id": "r00-o03-cold_unprimed-p03-l01",
+      "sequence": 33,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14273481837,
+        "external_standalone_verifier_wall_ns": 1678367619,
+        "internal_embedded_verification_ns": 4256297044,
+        "internal_end_to_end_ns": 14039799630,
+        "internal_execution_ns": 1833159828,
+        "internal_finalization_ns": 7724749012,
+        "standalone_reference_replay_ns": 1478628790
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "548ebe0b258f4b0609ac57243bea6072dff59cf65a1ea43eff1b8a09298575f2",
+      "physical_core_count": 2,
+      "sample_id": "r00-o03-cold_unprimed-p04-l02",
+      "sequence": 34,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12275923943,
+        "external_standalone_verifier_wall_ns": 1727431106,
+        "internal_embedded_verification_ns": 2775481300,
+        "internal_end_to_end_ns": 12009331404,
+        "internal_execution_ns": 1675522286,
+        "internal_finalization_ns": 7316432076,
+        "standalone_reference_replay_ns": 1579568401
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "7c043e2a5f7c3e3536f6f4bb48938aaeb4e20641ebd1b11c7a92e032184a17b2",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-warm_primed-p00-l08",
+      "sequence": 35,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "36b8285c83edbc4e31de770877227efc4483d83b0a6556009d8be0c1c652f3f1",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-warm_primed-p01-l16",
+      "sequence": 36,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "fdb9a9efcc68bda0bd7ae2111e1a532940aca7f59340cfc650c968608b4ca808",
+      "physical_core_count": 4,
+      "sample_id": "r00-o03-warm_primed-p02-l04",
+      "sequence": 37,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 10805150608,
+        "external_standalone_verifier_wall_ns": 2251014942,
+        "internal_embedded_verification_ns": 2070125355,
+        "internal_end_to_end_ns": 10592825050,
+        "internal_execution_ns": 1987830479,
+        "internal_finalization_ns": 6297742559,
+        "standalone_reference_replay_ns": 2096896318
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "5cce9a7028a25d7b058f02588e227653b52af64674ee22a1b8a36f352ee59a10",
+      "physical_core_count": 1,
+      "sample_id": "r00-o03-warm_primed-p03-l01",
+      "sequence": 38,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13037219492,
+        "external_standalone_verifier_wall_ns": 1670309507,
+        "internal_embedded_verification_ns": 4230160995,
+        "internal_end_to_end_ns": 12795108139,
+        "internal_execution_ns": 1802868056,
+        "internal_finalization_ns": 6538358232,
+        "standalone_reference_replay_ns": 1466834978
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "e0d8eacda9c0ac4a555641aa55505710d865043247857a7923cd500357248c0c",
+      "physical_core_count": 2,
+      "sample_id": "r00-o03-warm_primed-p04-l02",
+      "sequence": 39,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11843296474,
+        "external_standalone_verifier_wall_ns": 1726270685,
+        "internal_embedded_verification_ns": 2637458930,
+        "internal_end_to_end_ns": 11582056460,
+        "internal_execution_ns": 1577027753,
+        "internal_finalization_ns": 7140104160,
+        "standalone_reference_replay_ns": 1576296779
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "1841195e891592a179fdfd139bd4dcd3bb1a61ea0b7caf21aa0773c276348c47",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-cold_unprimed-p00-l16",
+      "sequence": 40,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "410f23c1ccd6392c79a639341665755e71910519484b09d6d8573bc3e1a27d04",
+      "physical_core_count": 1,
+      "sample_id": "r00-o04-cold_unprimed-p01-l01",
+      "sequence": 41,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13200613374,
+        "external_standalone_verifier_wall_ns": 1583768235,
+        "internal_embedded_verification_ns": 4269613737,
+        "internal_end_to_end_ns": 12973618868,
+        "internal_execution_ns": 1836412974,
+        "internal_finalization_ns": 6660284761,
+        "standalone_reference_replay_ns": 1442788379
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "59ece7b0c460e15490768b2adbb85046fe141e2f9abe5ee70b805cb232855a8f",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-cold_unprimed-p02-l08",
+      "sequence": 42,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "f093009a415d566aa1bde28895d49af20eeaa8d88c77058134c1d50ab6a1f79f",
+      "physical_core_count": 2,
+      "sample_id": "r00-o04-cold_unprimed-p03-l02",
+      "sequence": 43,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11711377415,
+        "external_standalone_verifier_wall_ns": 1698655667,
+        "internal_embedded_verification_ns": 2422216909,
+        "internal_end_to_end_ns": 11493754136,
+        "internal_execution_ns": 2285303566,
+        "internal_finalization_ns": 6495763999,
+        "standalone_reference_replay_ns": 1586339785
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "067d17a89a530ead49cec53c07aee835c3ef86116312e25d928e4e56e1c9dcc3",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-cold_unprimed-p04-l04",
+      "sequence": 44,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13417023289,
+        "external_standalone_verifier_wall_ns": 2380081338,
+        "internal_embedded_verification_ns": 2128064039,
+        "internal_end_to_end_ns": 13032992945,
+        "internal_execution_ns": 1561660890,
+        "internal_finalization_ns": 9010020710,
+        "standalone_reference_replay_ns": 2176884000
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "1b467fcb75c76a6c85f42ac3ba0480f088ad2205112e1b40044bdaaa7ea76f77",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-warm_primed-p00-l16",
+      "sequence": 45,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "793211405ef41673a937e6f2e1b49702a3221ce7f5b5e40214b2319909a19675",
+      "physical_core_count": 1,
+      "sample_id": "r00-o04-warm_primed-p01-l01",
+      "sequence": 46,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14896150257,
+        "external_standalone_verifier_wall_ns": 1603116417,
+        "internal_embedded_verification_ns": 4276040233,
+        "internal_end_to_end_ns": 14658480846,
+        "internal_execution_ns": 2127141671,
+        "internal_finalization_ns": 8015676309,
+        "standalone_reference_replay_ns": 1460386640
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "0bd3b19a199856c1db8a0a32b1758d4e8773dbf70bd7b1e3d0d35b40514755f6",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-warm_primed-p02-l08",
+      "sequence": 47,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "ffa24d1523ad14de6582f0d105f5a8e5e34e987ac47af730df277dca3ebcebc6",
+      "physical_core_count": 2,
+      "sample_id": "r00-o04-warm_primed-p03-l02",
+      "sequence": 48,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13179936503,
+        "external_standalone_verifier_wall_ns": 1695364435,
+        "internal_embedded_verification_ns": 2424558585,
+        "internal_end_to_end_ns": 12940896487,
+        "internal_execution_ns": 1877044632,
+        "internal_finalization_ns": 8382767412,
+        "standalone_reference_replay_ns": 1553551547
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "1b5481d5d37f29d6ba818d424fc0cbf57135127b7d1e5127847cc18db77dc653",
+      "physical_core_count": 4,
+      "sample_id": "r00-o04-warm_primed-p04-l04",
+      "sequence": 49,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "a250269fce1929a147b8ade94635a857fe0cb077fd12829b432446022de57497",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-cold_unprimed-p00-l08",
+      "sequence": 50,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "e415ca8199e115502b070f8ed6581b2ae2cbe7f21febfa4aab22d9414b930a1c",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-cold_unprimed-p01-l04",
+      "sequence": 51,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11362767785,
+        "external_standalone_verifier_wall_ns": 2295465131,
+        "internal_embedded_verification_ns": 1954060448,
+        "internal_end_to_end_ns": 11086534895,
+        "internal_execution_ns": 1636515657,
+        "internal_finalization_ns": 7270526214,
+        "standalone_reference_replay_ns": 2045807631
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "282fc6fccb466adfb6875ac879d94e1055dbecec864dc1266d53eb8052a71190",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-cold_unprimed-p02-l16",
+      "sequence": 52,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "905b319727b540e11ee88da6710870c95d249d353742f3f0e4414ad571fa677e",
+      "physical_core_count": 2,
+      "sample_id": "r00-o05-cold_unprimed-p03-l02",
+      "sequence": 53,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12817907803,
+        "external_standalone_verifier_wall_ns": 1698701672,
+        "internal_embedded_verification_ns": 2713129978,
+        "internal_end_to_end_ns": 12519732047,
+        "internal_execution_ns": 1866150351,
+        "internal_finalization_ns": 7710667600,
+        "standalone_reference_replay_ns": 1551468317
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "b1c3a92a2cee55d03e68046dccd5d0b18396b14af0f3cdbf0bd6f554cdb6c3b3",
+      "physical_core_count": 1,
+      "sample_id": "r00-o05-cold_unprimed-p04-l01",
+      "sequence": 54,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13487685911,
+        "external_standalone_verifier_wall_ns": 1601791157,
+        "internal_embedded_verification_ns": 4564686843,
+        "internal_end_to_end_ns": 13273654948,
+        "internal_execution_ns": 1875417859,
+        "internal_finalization_ns": 6607115843,
+        "standalone_reference_replay_ns": 1464293164
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "f91a39b2a3b6174fc9ff4758f5d76ad206afbeffbbb68957b53d79c35a49b68b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-warm_primed-p00-l08",
+      "sequence": 55,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "85cf54038b3d025765382654ceee55315519e3e9367a7da260905506572cb52b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-warm_primed-p01-l04",
+      "sequence": 56,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "11473fc4b1f80752939817d384a9cc30a85802e910360e5e805f31a8fb18dc45",
+      "physical_core_count": 4,
+      "sample_id": "r00-o05-warm_primed-p02-l16",
+      "sequence": 57,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "aeaf3d926f327b10860df72ff1355bfaf14a92af8006439cd555890a5ab5d371",
+      "physical_core_count": 2,
+      "sample_id": "r00-o05-warm_primed-p03-l02",
+      "sequence": 58,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 10697315806,
+        "external_standalone_verifier_wall_ns": 1756768420,
+        "internal_embedded_verification_ns": 2385794638,
+        "internal_end_to_end_ns": 10476205232,
+        "internal_execution_ns": 1693146194,
+        "internal_finalization_ns": 6170512194,
+        "standalone_reference_replay_ns": 1598459710
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "cc232b3e8142d49e412a02747a54eeede025aaf6a51921bc65dbcdbf186bf280",
+      "physical_core_count": 1,
+      "sample_id": "r00-o05-warm_primed-p04-l01",
+      "sequence": 59,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14044923116,
+        "external_standalone_verifier_wall_ns": 1858321322,
+        "internal_embedded_verification_ns": 4235095576,
+        "internal_end_to_end_ns": 13764209096,
+        "internal_execution_ns": 1744584758,
+        "internal_finalization_ns": 7504605628,
+        "standalone_reference_replay_ns": 1679124989
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "4abf2f6e2100eb59852bab17787fb005a26f3fcc1ab726edde285a72e0b39227",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-cold_unprimed-p00-l16",
+      "sequence": 60,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "3d77156eb3913a775848f614211f624a728472c353fceccb641d4d75645e1d77",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-cold_unprimed-p01-l08",
+      "sequence": 61,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "9a595b196ae917dd12bc0223c2f636f773a7933b7e558e11646c7e418bd977b4",
+      "physical_core_count": 1,
+      "sample_id": "r00-o06-cold_unprimed-p02-l01",
+      "sequence": 62,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13905271393,
+        "external_standalone_verifier_wall_ns": 1625459370,
+        "internal_embedded_verification_ns": 4305961261,
+        "internal_end_to_end_ns": 13622119988,
+        "internal_execution_ns": 1821382175,
+        "internal_finalization_ns": 7271414547,
+        "standalone_reference_replay_ns": 1464002951
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "e5f9818f58f5d032ff23762bbd7b96d978515239f975c8e4c93b1effbd38bf30",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-cold_unprimed-p03-l04",
+      "sequence": 63,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "744a5b3ff3f3255454604c4114cfae84ae6b1b9071616ea587a902ed4482beec",
+      "physical_core_count": 2,
+      "sample_id": "r00-o06-cold_unprimed-p04-l02",
+      "sequence": 64,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 17053396962,
+        "external_standalone_verifier_wall_ns": 1735445245,
+        "internal_embedded_verification_ns": 2462562004,
+        "internal_end_to_end_ns": 16809335094,
+        "internal_execution_ns": 1994799254,
+        "internal_finalization_ns": 12047762163,
+        "standalone_reference_replay_ns": 1559409239
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "1e9f847c1882ed60061402de683a00ed9bb8aa7240e346a1010eef99e52ad293",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-warm_primed-p00-l16",
+      "sequence": 65,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "03d74cf22034061a5d517d060bd76de26fcbb678086c8fae4691d61ad4b84937",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-warm_primed-p01-l08",
+      "sequence": 66,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "f4d29016476f95571122bf35b5ffe5a86defa4990e7185f202bc9626ca32def5",
+      "physical_core_count": 1,
+      "sample_id": "r00-o06-warm_primed-p02-l01",
+      "sequence": 67,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14013942871,
+        "external_standalone_verifier_wall_ns": 1669840678,
+        "internal_embedded_verification_ns": 4297018500,
+        "internal_end_to_end_ns": 13768422720,
+        "internal_execution_ns": 1817822767,
+        "internal_finalization_ns": 7387957309,
+        "standalone_reference_replay_ns": 1484101007
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "b7328e4127663c4b76f186d5188230cb2b1cfa155395a7e7cb15f3831093a6c7",
+      "physical_core_count": 4,
+      "sample_id": "r00-o06-warm_primed-p03-l04",
+      "sequence": 68,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 10823991758,
+        "external_standalone_verifier_wall_ns": 2202849978,
+        "internal_embedded_verification_ns": 1957120733,
+        "internal_end_to_end_ns": 10578446464,
+        "internal_execution_ns": 1594907397,
+        "internal_finalization_ns": 6792367453,
+        "standalone_reference_replay_ns": 2044306362
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "c3e9c3cd891608672053dd08e92790792464f951063ba15ed201ac9aab011fcd",
+      "physical_core_count": 2,
+      "sample_id": "r00-o06-warm_primed-p04-l02",
+      "sequence": 69,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "ba99661d2b2fb779b45f831eb75a8f4094311f0c9d5c4cb9c192ed2ada8bb4d6",
+      "physical_core_count": 1,
+      "sample_id": "r00-o07-cold_unprimed-p00-l01",
+      "sequence": 70,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 21896070501,
+        "external_standalone_verifier_wall_ns": 2038218495,
+        "internal_embedded_verification_ns": 4208715413,
+        "internal_end_to_end_ns": 21641045593,
+        "internal_execution_ns": 1861096507,
+        "internal_finalization_ns": 15342130192,
+        "standalone_reference_replay_ns": 1467658939
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "cfcc2cc5c0ed6294aef36ee41713246f4a99360406c207396c174ff285389279",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-cold_unprimed-p01-l16",
+      "sequence": 71,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "216cefd33716ed83b78ee1ce041d5c29d8186e490aae3e7fbd8d16b3069b0841",
+      "physical_core_count": 2,
+      "sample_id": "r00-o07-cold_unprimed-p02-l02",
+      "sequence": 72,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11762675676,
+        "external_standalone_verifier_wall_ns": 1755545026,
+        "internal_embedded_verification_ns": 2407273084,
+        "internal_end_to_end_ns": 11528918608,
+        "internal_execution_ns": 1809797962,
+        "internal_finalization_ns": 7089690967,
+        "standalone_reference_replay_ns": 1567850085
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "7ec3e8878ed98a0812590753709fcb5993c0f214d63d09733466cd6e43869721",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-cold_unprimed-p03-l08",
+      "sequence": 73,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "056b96304b1420103a8140cac6745f3978eabb79d6e25badcf6c73d926662571",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-cold_unprimed-p04-l04",
+      "sequence": 74,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11095633398,
+        "external_standalone_verifier_wall_ns": 2253722535,
+        "internal_embedded_verification_ns": 1928408688,
+        "internal_end_to_end_ns": 10591790995,
+        "internal_execution_ns": 1671640297,
+        "internal_finalization_ns": 6756228254,
+        "standalone_reference_replay_ns": 2124537473
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "1b9ed5cd1487f4f4f4fe93e8b301556fd9e24c6883d4e475ce73167316ea5065",
+      "physical_core_count": 1,
+      "sample_id": "r00-o07-warm_primed-p00-l01",
+      "sequence": 75,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13058683029,
+        "external_standalone_verifier_wall_ns": 1697001352,
+        "internal_embedded_verification_ns": 4367440776,
+        "internal_end_to_end_ns": 12837481570,
+        "internal_execution_ns": 1777001202,
+        "internal_finalization_ns": 6475454729,
+        "standalone_reference_replay_ns": 1482696974
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "c9b789477912290249af6425e95e2970b7d05b11a8bb6d9765dcbf9f4929cf0b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-warm_primed-p01-l16",
+      "sequence": 76,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "6d77c47d2a9b7d142a8aa07147704362dce78f0e9f61b90e1070236af19e5d87",
+      "physical_core_count": 2,
+      "sample_id": "r00-o07-warm_primed-p02-l02",
+      "sequence": 77,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13681023424,
+        "external_standalone_verifier_wall_ns": 1741955233,
+        "internal_embedded_verification_ns": 2580169957,
+        "internal_end_to_end_ns": 13429085053,
+        "internal_execution_ns": 2814191854,
+        "internal_finalization_ns": 7801135722,
+        "standalone_reference_replay_ns": 1552797623
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "15ee3db57605c48c5e55b849e482ebffbe58cdc95854fe5450f25966b2529f2b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-warm_primed-p03-l08",
+      "sequence": 78,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "6797757eb29f38b6690db0d5344de40f19587639bee335b8ba239e1027f74d57",
+      "physical_core_count": 4,
+      "sample_id": "r00-o07-warm_primed-p04-l04",
+      "sequence": 79,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12252983593,
+        "external_standalone_verifier_wall_ns": 2670090594,
+        "internal_embedded_verification_ns": 1736795977,
+        "internal_end_to_end_ns": 11844861802,
+        "internal_execution_ns": 1653999259,
+        "internal_finalization_ns": 8227692014,
+        "standalone_reference_replay_ns": 2187129531
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "877ff4f1af09024bf5138444bcff57e80b437c31da941d83c6a6b45a1a5c8884",
+      "physical_core_count": 2,
+      "sample_id": "r00-o08-cold_unprimed-p00-l02",
+      "sequence": 80,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11607547671,
+        "external_standalone_verifier_wall_ns": 1729464204,
+        "internal_embedded_verification_ns": 2408864462,
+        "internal_end_to_end_ns": 11259543641,
+        "internal_execution_ns": 1821441723,
+        "internal_finalization_ns": 6803908295,
+        "standalone_reference_replay_ns": 1549341089
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "9ab54be38afc9112232a540fd1eac9349258ea7c1c29d7bd091aae983cc30671",
+      "physical_core_count": 1,
+      "sample_id": "r00-o08-cold_unprimed-p01-l01",
+      "sequence": 81,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13801348001,
+        "external_standalone_verifier_wall_ns": 1716205156,
+        "internal_embedded_verification_ns": 4251208531,
+        "internal_end_to_end_ns": 13579596914,
+        "internal_execution_ns": 1804651650,
+        "internal_finalization_ns": 7222086532,
+        "standalone_reference_replay_ns": 1553399414
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "9cac72f04cda0b3b61d701c14e8e7cca9f05e30dd5eaadde99ec8bc01c1622ed",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-cold_unprimed-p02-l04",
+      "sequence": 82,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12313049392,
+        "external_standalone_verifier_wall_ns": 2239045965,
+        "internal_embedded_verification_ns": 2040860724,
+        "internal_end_to_end_ns": 12004445297,
+        "internal_execution_ns": 2208496499,
+        "internal_finalization_ns": 7520545059,
+        "standalone_reference_replay_ns": 2055624939
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "a6e58085549a89ce1f01c71ad531ddaca17a654158cce22157a6c855519106f8",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-cold_unprimed-p03-l16",
+      "sequence": 83,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "41236b23ebd818c01c68a66e88ac794b058528b2ffdb420e20cff3560d1f8e67",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-cold_unprimed-p04-l08",
+      "sequence": 84,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "5e3dba20ee00e269c3edaf7d645ee0b2381e5cbb845e5ca5634bdca1000411e5",
+      "physical_core_count": 2,
+      "sample_id": "r00-o08-warm_primed-p00-l02",
+      "sequence": 85,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13088549328,
+        "external_standalone_verifier_wall_ns": 1738867595,
+        "internal_embedded_verification_ns": 3042526215,
+        "internal_end_to_end_ns": 12815949491,
+        "internal_execution_ns": 1838032348,
+        "internal_finalization_ns": 7709619983,
+        "standalone_reference_replay_ns": 1558007052
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "1ab94530b91e4a64e3331be9b4d07539e96b542c61adfa43adfec54bbb5e2f2b",
+      "physical_core_count": 1,
+      "sample_id": "r00-o08-warm_primed-p01-l01",
+      "sequence": 86,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13953606731,
+        "external_standalone_verifier_wall_ns": 1846399428,
+        "internal_embedded_verification_ns": 4224328920,
+        "internal_end_to_end_ns": 13348318613,
+        "internal_execution_ns": 1850044069,
+        "internal_finalization_ns": 6896072760,
+        "standalone_reference_replay_ns": 1462042996
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "c2d508f2be3f78d9d6d4eb0b5b68af5fd394c6f863b379554d167f484b3ac70b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-warm_primed-p02-l04",
+      "sequence": 87,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 11019569672,
+        "external_standalone_verifier_wall_ns": 2190761093,
+        "internal_embedded_verification_ns": 1968923688,
+        "internal_end_to_end_ns": 10771476407,
+        "internal_execution_ns": 1738051046,
+        "internal_finalization_ns": 6825739335,
+        "standalone_reference_replay_ns": 2023028405
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "dc6ee7b4db670c161eef61e133fa77df5c01b9f552b7f21c0639e6e04f5d8655",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-warm_primed-p03-l16",
+      "sequence": 88,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "4b9b992f291b48ba044a1058f5efa8b1c4435b96a5403f402bd35cbc252ab18b",
+      "physical_core_count": 4,
+      "sample_id": "r00-o08-warm_primed-p04-l08",
+      "sequence": 89,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "21946a8cb9264bf976bc6b51c5e98e546228825df3d9b17ddf092c812802532a",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-cold_unprimed-p00-l04",
+      "sequence": 90,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 10672462780,
+        "external_standalone_verifier_wall_ns": 2234047644,
+        "internal_embedded_verification_ns": 1772823155,
+        "internal_end_to_end_ns": 10429526956,
+        "internal_execution_ns": 1595592825,
+        "internal_finalization_ns": 6764066306,
+        "standalone_reference_replay_ns": 2066916483
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "a6760ec24cd99bc3c2d292d55f3128d60aa45ae57cc16a3de0abe0f6a3d91b69",
+      "physical_core_count": 2,
+      "sample_id": "r00-o09-cold_unprimed-p01-l02",
+      "sequence": 91,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12127098564,
+        "external_standalone_verifier_wall_ns": 1726377679,
+        "internal_embedded_verification_ns": 2792675294,
+        "internal_end_to_end_ns": 11821843263,
+        "internal_execution_ns": 1998488900,
+        "internal_finalization_ns": 6811732622,
+        "standalone_reference_replay_ns": 1578045913
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "dc0948a8a9b6608a39f58807bafa0ac3de16a4594eed6a0c0f0e2fa55290e979",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-cold_unprimed-p02-l08",
+      "sequence": 92,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "1dfd1bc7a0828a7fe9b939711fd6606f113374c5233c34d89072520219e80d01",
+      "physical_core_count": 1,
+      "sample_id": "r00-o09-cold_unprimed-p03-l01",
+      "sequence": 93,
+      "status": "succeeded",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": {
+        "external_executor_wall_ns": 14691960568,
+        "external_standalone_verifier_wall_ns": 1651095843,
+        "internal_embedded_verification_ns": 4245455340,
+        "internal_end_to_end_ns": 14463665260,
+        "internal_execution_ns": 1880667790,
+        "internal_finalization_ns": 8085771091,
+        "standalone_reference_replay_ns": 1497630719
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "4d06f5bbc0ec5912082e51d39188a0fa138365a2adffd4c08f87e8031154fc58",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-cold_unprimed-p04-l16",
+      "sequence": 94,
+      "status": "failed",
+      "temperature_label": "cold_unprimed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 4,
+      "outcome_record_id": "eb0f514b27b0974673ce7e1ab8e29bd7e96c4cf2c3f547116b0588fe830a5022",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-warm_primed-p00-l04",
+      "sequence": 95,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 2,
+      "outcome_record_id": "8164f384d44d862157f96095e73b1477371cf595cabb4c41962cb6acbe28cafc",
+      "physical_core_count": 2,
+      "sample_id": "r00-o09-warm_primed-p01-l02",
+      "sequence": 96,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 12119026248,
+        "external_standalone_verifier_wall_ns": 1782331921,
+        "internal_embedded_verification_ns": 2924885208,
+        "internal_end_to_end_ns": 11895662662,
+        "internal_execution_ns": 1738426305,
+        "internal_finalization_ns": 7011701248,
+        "standalone_reference_replay_ns": 1584573353
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 8,
+      "outcome_record_id": "65f43e6679710781552c5dbe66c31da3d29177aea8281cfd26aa0e6c3c09f9bc",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-warm_primed-p02-l08",
+      "sequence": 97,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    },
+    {
+      "lanes": 1,
+      "outcome_record_id": "2dc4bada341ead8e4c4fb0cec2d999238183b2d71388bb9359312e1c53d9f2ed",
+      "physical_core_count": 1,
+      "sample_id": "r00-o09-warm_primed-p03-l01",
+      "sequence": 98,
+      "status": "succeeded",
+      "temperature_label": "warm_primed",
+      "timings_ns": {
+        "external_executor_wall_ns": 13418642973,
+        "external_standalone_verifier_wall_ns": 1657891891,
+        "internal_embedded_verification_ns": 4259672426,
+        "internal_end_to_end_ns": 12837051222,
+        "internal_execution_ns": 1909096836,
+        "internal_finalization_ns": 6406504117,
+        "standalone_reference_replay_ns": 1461059554
+      },
+      "topology_class": "distinct_physical_cores"
+    },
+    {
+      "lanes": 16,
+      "outcome_record_id": "d024d97cc235dc709bcd7a79f31d384566c2eb86bd1df64f80a1fd7b0da87b96",
+      "physical_core_count": 4,
+      "sample_id": "r00-o09-warm_primed-p04-l16",
+      "sequence": 99,
+      "status": "failed",
+      "temperature_label": "warm_primed",
+      "timings_ns": null,
+      "topology_class": "oversubscribed_round_robin"
+    }
+  ],
+  "run_id": "ae7e2690ea50654ac7dadd45d6475ca680e88a2a9d29d373ecaf2c6a571be356",
+  "schema": "mfenx-local-fixed-work-scaling-validation/v2",
+  "setup_evidence_valid": true,
+  "status_counts": {
+    "failed": 48,
+    "succeeded": 52
+  },
+  "store_hash_closure_valid": true,
+  "validation_id": "b21318d4c15f4748e46f325ca8366340e5975426631d1577d273a1088b0bd59b"
+}

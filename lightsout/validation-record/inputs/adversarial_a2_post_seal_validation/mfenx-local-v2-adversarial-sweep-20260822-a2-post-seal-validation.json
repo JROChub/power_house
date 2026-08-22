@@ -1,0 +1,3625 @@
+{
+  "all_cases_attempted_exactly_once": true,
+  "all_independent_oracles_passed": false,
+  "claim": "none; completion remains false until all 214 cases execute exactly once and independently pass",
+  "complete_sweep_evidence": false,
+  "development_unbound_binary": false,
+  "evidence_validation_implemented": true,
+  "live_binary_and_baseline_valid": true,
+  "live_input_failures": [],
+  "missing_evidence_validators": [],
+  "plan_id": "fad9031c3a35349fe0dcc09b92ccbf4a8988e895f6eddded81ed54c4f710d1db",
+  "planned_cases": 214,
+  "population_self_reports_all_passed": true,
+  "raw_evidence_gate": {
+    "complete": true,
+    "failures": [],
+    "observed_counts": {
+      "attempt.json": 214,
+      "case.command.json": 192,
+      "case.stderr": 192,
+      "case.stdout": 192,
+      "driver-evidence.json": 214,
+      "failpoint-event.json": 14,
+      "independent-verify.command.json": 26,
+      "independent-verify.stderr": 26,
+      "independent-verify.stdout": 26,
+      "killed.command.json": 22,
+      "killed.stderr": 22,
+      "killed.stdout": 22,
+      "mutation.mutated.bin": 192,
+      "mutation.original.bin": 192,
+      "mutation.transcript.json": 192,
+      "observer.json": 22,
+      "outcome.json": 214,
+      "post-command.checkpoint.json": 192,
+      "post-command.protected.json": 10,
+      "post-resume-checkpoint": 22,
+      "post-resume.checkpoint.json": 22,
+      "pre-command.checkpoint.json": 192,
+      "pre-command.protected.json": 10,
+      "pre-kill-checkpoint": 22,
+      "pre-kill-output-staging": 22,
+      "pre-kill.checkpoint.json": 22,
+      "pre-kill.output-staging.json": 22,
+      "recovery.result.json": 26,
+      "resume.command.json": 22,
+      "resume.stderr": 22,
+      "resume.stdout": 22
+    },
+    "required_population_counts": {
+      "case.command.json": 192,
+      "independent-verify.command.json": 26,
+      "killed.command.json": 22,
+      "mutation.transcript.json": 192,
+      "observer.json": 22,
+      "post-command.protected.json": 10,
+      "pre-command.protected.json": 10
+    }
+  },
+  "records": [
+    {
+      "attempt_id": "586175542b6cde251d6e7536082f2592b59070b9b5f394ab28c70f29212f299b",
+      "case_id": "M001-canonical-formats-stored-tensor-manifest-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "903fc16850a5f9516cba1806859d43268cc98b07986f791940a80b676a8c42b6",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "94107efcd966ad0a393c63794540bf6fbc33961fc4f5798658a9ced6f6271261",
+      "case_id": "M002-canonical-formats-stored-tensor-manifest-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "87fd018238f0165baea32b9ce7b0fe78491e7bc4fc235505c5715897f8b7ff17",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b0cb40cb1d02845b0b923c5dc6948dce3c088969dd64c6469dbdb2a567a32214",
+      "case_id": "M003-canonical-formats-stored-tensor-manifest-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "38294f51b87a08fd592aecedf749c11c8a21bfbbfb7ed018e76245f2c8f2d898",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5d6f7bd2e42a6eae1d1069420500f2ed86e6f1df7e3cc3c6bca01ff70b853d98",
+      "case_id": "M004-canonical-formats-stored-tensor-manifest-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4b162f3b1837e5f1f5d2a53564ec538bbae9ba6162d50019758abe2f33e31c04",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "26e1b50031fac15fae6e12ffc325ce966e05e4a56765ffe29d005acb831e8604",
+      "case_id": "M005-canonical-formats-stored-tensor-manifest-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3b1218ba84f8218e60bc1292beaa9bc75f0100ee6db5022c1834b469e5611f1d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7ac62d3e3f93b8900da7a7c8fbafd2fef87783917622f69b0c851894ab236f3a",
+      "case_id": "M006-canonical-formats-stored-tensor-manifest-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3b755c7c58712d214c362fbd8b686d5e01b932ced833d8fa33951cb94e38ffdd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1510308c05d2798be75e2910a69aceb69104991d7d810d9d9814ae63da5b94cb",
+      "case_id": "M007-canonical-formats-stored-tensor-manifest-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "21bd6cb4e11dfa7f4adb09a12335e80a363a90c883978f3e251fdd8b1f53187d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1af96bf442413dd40413e01e4bb6954e14b941e3baf93581c0fd0a2190414334",
+      "case_id": "M008-canonical-formats-stored-tensor-manifest-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6783d6182af9e5f565231d4bb04714067eb2a1a8a138a954f1cfc8bc768412c7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b207e974b08d76b258074b7830188549079adc8dc71ab099413284e82a1f2700",
+      "case_id": "M009-canonical-formats-stored-tensor-manifest-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4b011b9c794753434da2dcc3fdb86786254f3e54193f355b9f0122dfddd54e91",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "10d7471d4c8cd8e4622a372393455fa9440e0002c94d16287c0b7ae4dd002ac6",
+      "case_id": "M010-canonical-formats-stored-tensor-manifest-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "40d4a6647ce6cdabf5009be00ad9e50399692c1a1bfb6b18f733fe006cc3a16f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "11828976806bca9cc2bd2c4cd0914a61faede83e41ac6461a9694d551d213616",
+      "case_id": "M011-canonical-formats-stored-tensor-manifest-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "cd442535d7f42758cd30a46b0ade189ade85774d07b9130682d6e93f871ae2c9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "14a6e3134eb6af884bebba52f5792d82019b44a38800afdd7e0ea84cda385a4f",
+      "case_id": "M012-canonical-formats-stored-tensor-manifest-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "93c316197e34aca021b16892df4001a7e63b790b9c8bed7f378701f5282890e4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "06403d9e6d6287dd9335568f3c9b0ec698a4c7ae5af70874b1904c2c457c2951",
+      "case_id": "M013-canonical-formats-stored-tensor-manifest-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c06d6e4274428d561a187dd8995edaf1f54ea28e85f2cc5830dbe06785c0bf99",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1eb589c5063d3e79673780f9338037950e01f8f9849b68a0ff90042cbf47aa11",
+      "case_id": "M014-canonical-formats-machine-image-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9c8b26f8bc3cc04086e5d9521eaefcab3f522eea360d23c04dbf204f90aa24fa",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "bae845d3d7d77f9b1def2b20193a535476d522d578190bf18aa6e1ae456c3f7f",
+      "case_id": "M015-canonical-formats-machine-image-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3d11d7f0012e62d62bf987c62a4460dabe303652bb7b26626af3f5e65b767bd2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "306b508ac9e09fcefc6fb88bddf34b76403ff9ed11603adb56eb0ec5305e718c",
+      "case_id": "M016-canonical-formats-machine-image-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d97a15bbd8a84f03e0676ab13271f7c5e654c37122e9208a57efe5b83bb629bc",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3e9cea5b7601524004377540d237ce2ac94e329a90c62dd6521c61c6bb79f93b",
+      "case_id": "M017-canonical-formats-machine-image-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "e7a9ee3d13bf1bcf16e74cad9e364a2c4c6b95093d93187c114dfa69f49f9a5b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "befca847c8ab3149516e05bf2da0859d353653ef7bb4526c003e7db888891f97",
+      "case_id": "M018-canonical-formats-machine-image-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b8fca12eaeccf1e12e72dc0b75cab993308fcd6e813a9d029cd0527a7b0e876c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cd8b122a74eb3d07e6fa40eacaf102934b1b7901b5f2739bacae1b6b03b68470",
+      "case_id": "M019-canonical-formats-machine-image-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "838410672458d462596ac76952e77d29a62de988d25b835b4af93dccb3cfa55d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3b37d5f6710a2c9ec4ad7ce40b28285a738123c5687e8ff0b92ad67d535dc1c2",
+      "case_id": "M020-canonical-formats-machine-image-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "f8d38debafcb8b45a970fe8b2c1bce3b50c9affada75d30591a890d0662ddac3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "487d7dd7e53b50804b3b15a1fdca9cbeeea848136e42ae0b453c5f395214b826",
+      "case_id": "M021-canonical-formats-machine-image-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9ec00ae568a4f7eb199c979349da912d4878e30ce3bddedcfae9a2f0592f33d9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "715a65bff423a335e532ca460481f020537adb94c408821bb4e47b75feac9c6b",
+      "case_id": "M022-canonical-formats-machine-image-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6424d60a77e3b3e52abc2d3e05016940fa5748427608c7d92884e5043f25916b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "51f1237862fcf42bd86a334a634fa43549a91b3fc3c22f9b692c3e72cc069548",
+      "case_id": "M023-canonical-formats-machine-image-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "32ee96e6091f8ccdda40c4ee9228bcba3c50d0f46393782d23ce9ffbd9f0968f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9458f1fed89ab1c6e034732b9cbf693cdb1b4bcdfa27157dd2f610099285917c",
+      "case_id": "M024-canonical-formats-machine-image-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "a37a7c572cc906f267fee5db6e9db2c9f587c7475b2dc29a096e8381b65a0413",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fa47dce0d01139d0d4432b7ef3c95a507b7f426331d73d78e2393c2c18943b59",
+      "case_id": "M025-canonical-formats-machine-image-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "259ae8c5f3640a869dfa72a1ebffad669304d531413a73f8fcf247a953277245",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8b49b1a8f0477e0eff82b07deb8b2ec521ab4fe81feb8ac5a414396c4a2504dc",
+      "case_id": "M026-canonical-formats-machine-image-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3772df86b01afdb04b185f09072d4186d676226081aa842578920d38a1f76804",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f89ec570754d4db8b1571e14d834c152a3cff58d4d5e759034696b776a682e98",
+      "case_id": "M027-canonical-formats-checkpoint-plan-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "ec6d3f3df56c0c339cf9ba3266725990599ccec253a6151bde0f76f02ad92c82",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5f9d765ae0b59e9f187b18d9c8cc55019016a808b8510fe945431343ef645388",
+      "case_id": "M028-canonical-formats-checkpoint-plan-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "ef50f69bb92c8e21ada68661036fc9c37eba42e58edd610d2cc86c01b95cbcde",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fc6696ce845d5f4d95568252b08fa1461c0becfdd9e12cabb710da0d3d7df1d9",
+      "case_id": "M029-canonical-formats-checkpoint-plan-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "8819c5f15b768c127e3abfa53d82c06ab695fe8630faa27474f7c0367f093d6e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5e483b8c59775640f8ef669e1e54cdb31678820974d344213fa57508c01f0721",
+      "case_id": "M030-canonical-formats-checkpoint-plan-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "534d1d36bbf65acf241f2d697d2cbb24933db996e662340747c20a62433895ed",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e9fbcb0bcb619f43436e44eb5099eee30c13abbdea8abf2c854fadddef5b9f1b",
+      "case_id": "M031-canonical-formats-checkpoint-plan-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6843e40a524d4072efe992761c46bef013eaf4139b47ef1ebea23f3b3109eb9f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c6f4261650a0025427544561f1077586bb0b9c56c68e92466b76b247976fb1b2",
+      "case_id": "M032-canonical-formats-checkpoint-plan-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6223285ea376b8ab2cf755b7606ba91d75e178176afd7c710d09f6e9f3a8cb05",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a3f8805924805ce107edfa01e3f2e3488a2118f9eedbe2e4ac55f7b37a9150c7",
+      "case_id": "M033-canonical-formats-checkpoint-plan-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "e34ea4d970d99629568b5122fa0ef0a3de72c38fb72801eaaa070e5a81825171",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ca25429703c8d26c96d9f35de01155e352779d043425eec71081a04bc39db98e",
+      "case_id": "M034-canonical-formats-checkpoint-plan-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "559123f9ea4979e840a3bb1caa60a2c988c31915d6ab1aa482a571b9101de397",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8fddc2f2517d176ac10fe089d7348b53a7180ff414c138659d59c3fccb2196d8",
+      "case_id": "M035-canonical-formats-checkpoint-plan-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "7ba8ce66387c12b7cc776ac727e5906d7852d9c1be7ea71ed42b627139459a5e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "59e0ac411d4af69d4e68d7fb1df56ce1970db2e502b8cf8b35b8b7f2812db502",
+      "case_id": "M036-canonical-formats-checkpoint-plan-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "610272ed18898297ade5e863fe09b699e19843f24ff93b2ad48ba0e11218bba3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "15a1f2661b967ddb88ca9cee095acfc389a218b1d23b2eed37bc62a131256532",
+      "case_id": "M037-canonical-formats-checkpoint-plan-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "8009682a4efe52f9b42f6c500d99129e37a5cab887cd98cf02ba05ed71556a64",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d62a6e227a982d36724cbed215c1c769a2641fdef8aedd2fa8fa9f17261e85b1",
+      "case_id": "M038-canonical-formats-checkpoint-plan-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "853ee04089854bc769d5a8075efadaaac440f44adb4f1186dec94a323170cc75",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b9ddbd7f10ad1ce4fb75ab1c74fd9d69285e604cf73dec5cfa8016bedd8b69f5",
+      "case_id": "M039-canonical-formats-checkpoint-plan-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c062786db4994a9351c2aa8599fa58810279e24b0cb5bd7caa6377fee63b3957",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "59ba48813448ee20c596143ec8d7d0eba22f83b6e809d4186959e16ab0258f72",
+      "case_id": "M040-canonical-formats-piece-receipt-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "7fc1044b829a2a2ed394c9fbbc4fc0055a713bb6c8c4ef902a6f50bec0a1707e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "72ee8f827469210657c21df025d6d021e8960bbd648fa8280a9d5118f432f066",
+      "case_id": "M041-canonical-formats-piece-receipt-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "0c43b4c4f8a04fae525fe073d5674eef5358ae2365157c0c8e9708f57cd81236",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0ccf19b3a4783b419606e8b31f66f8c10b70ae404c65bb99ad69e0c64b93e2ed",
+      "case_id": "M042-canonical-formats-piece-receipt-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "7f5f377f4b1234d8359d59def5389278d25882fd6154aa65d4268dc1cab5d4ff",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fc0bb1e8dfacdfcd56be9ad453370129bb913a2ba4c1ab855aa61d692c6f2613",
+      "case_id": "M043-canonical-formats-piece-receipt-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "c0b335c52e90f22c710ff47ffe3ce2024736144552ac2155aab52a4eb1893b1d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d889e13501befe8860766c832c1212fa3abe20d59193887e576470b839b6d4a3",
+      "case_id": "M044-canonical-formats-piece-receipt-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "4bc20bd3a562a165c1b99824920475a3a047610676d72bad464549347273a3d5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "dc6521da1cdad435c790c315b0575cd573953f8177acf0d124762c25284596b5",
+      "case_id": "M045-canonical-formats-piece-receipt-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "aa7fdc7f657e3034e1646e08ebe0ce6e2bce4a0e9629491da88eb702731cbb64",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "985fb54ff92660fcc60dcab3b402d37488b6d0dc548bfc2e72248a1da44749b2",
+      "case_id": "M046-canonical-formats-piece-receipt-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "78aa9873f82d8a227070f21905432c43a82858719b5121ddc3c55a95f5cc3c8e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f4f97c0ca7cf9c91463c05bc13a66ec0abdb0903607309d8cb3b8d1c6540013c",
+      "case_id": "M047-canonical-formats-piece-receipt-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2b9e7c198272ed0d65981015a1ea7d59d24118b819b92006ab1e61706011516a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "224ef008f5a50fba435fd547bd31a0d21ee74746c7970c140837837ec744fa36",
+      "case_id": "M048-canonical-formats-piece-receipt-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "117f6e25ba5e7ee36019fbc972eb5afed54028f326c58c1949abb100d0eabafb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "684832a29b81c7b7fc10648275b3e9dc33ea7b315da1b1db154d038a4a8eb4b6",
+      "case_id": "M049-canonical-formats-piece-receipt-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "63e169f97329e134afd9366685014a56a8e6941f386ea90b5bac978dc268ce29",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7baf7c889d3978cd7bcf442bf6717bd8618f1a41cdea62f658278ace488aa0be",
+      "case_id": "M050-canonical-formats-piece-receipt-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "68908a08ae46cf970f86349d15526c2d1356783eb9fc61e26b39dbc00e3688bd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d4363a5b63d19f794f5c2334a1c15674f4ed49226ea1ff6dc74dbd57abe3e48f",
+      "case_id": "M051-canonical-formats-piece-receipt-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b38bd997325757487f667a865236df65404720dc43895be8acbfd33250ef31c2",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fcc56e20e112e8c948bcedaad8293bcc2f1ae5251f4298b26379cf13165a03f2",
+      "case_id": "M052-canonical-formats-piece-receipt-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2aaeb9e30afe6e7b28ea395197fc1dd9220c967f36cdaee697b13ac898654549",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "58a4e3554fc57b8127ec326c292bfbf74c3347ace9f5fca1100ba3fa5be67c0e",
+      "case_id": "M053-canonical-formats-execution-result-invalid-utf8",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b230e8fc4d40fd22da4262b352dc0f5e82cd71b8629dc6e4501a2219a5c9a499",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f61b38874171dbc4941900c12080c97859a41ea1614f06e83354ddb03b3b3b4d",
+      "case_id": "M054-canonical-formats-execution-result-truncated-json",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d9bbfaa71031ffb20696dec3b1e4bbda3ac17d74dd1206145298abf33e8f4cdb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b645c3373b8a38ee8d6116b7a4e192190d14c090978007fa6fb83557e48a716f",
+      "case_id": "M055-canonical-formats-execution-result-top-level-array",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "797540f0c0f8adb48242cbac5a3b1bf59f0f2194f8cf83b8762b9b78eb4ee458",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3c50c16c3e73f94e76eeda815f1fba34f6638f814b4c6f2567b2640977ed9e49",
+      "case_id": "M056-canonical-formats-execution-result-duplicate-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "9c8c9a97466e32a2cce3c6f05396555fa02a145f3ade1c0b2bd834810f172088",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d9e6629fd740c761b360bdeac087dee92c57aea558858084c5a146e3c542339d",
+      "case_id": "M057-canonical-formats-execution-result-unknown-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "3a6714af47290fa46c81531140ee674b01541c4b7319fd87c7fc769bf121127c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "de7da31a786a746ba62571b2ebe91394fa470d601d94bc1e9ad8967ac77375ca",
+      "case_id": "M058-canonical-formats-execution-result-missing-required-member",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "fcbf7c62a14d73c5291922742309522469b7b069240b6a8156b28393b053ab13",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0fbafcd42345d990a05e500101436356baaf192868e96e549c91f882bec10a70",
+      "case_id": "M059-canonical-formats-execution-result-null-for-required-value",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "af8afb747ea736ca260493d6507160826c43a5c786cbd51f36eb24011a8b9e8d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2585487c40783418179ff354ffbac6b072807ac63aa5ecc98e7ffcaf7157a9fa",
+      "case_id": "M060-canonical-formats-execution-result-wrong-scalar-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "d75cfeff951ef93f8d7b2a9468f5834e31dce54fcad9871429f373a68326cafd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c83fe9dd1421a9b3469971e04c1ad20c3c8a2f60adeb8b88d1e4eb43d5a5a2f0",
+      "case_id": "M061-canonical-formats-execution-result-integer-as-fraction",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "5a96b7e2cfbc795284f57eacac666bf1d6d1915dacff3068b8c6caeca173cc6b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b3c47628a2946902766833194afa443862b895cd46c3d74d752bf3557655f336",
+      "case_id": "M062-canonical-formats-execution-result-integer-as-exponent",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "0a464d539ed0a376400556cc3fe0d1983a2b165a5a6e8743bd59f8f282de34ab",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e7cea161b8223b292c11ce64f896ae706091f7dfb6d5af7ae1fb784ff1ef67e3",
+      "case_id": "M063-canonical-formats-execution-result-uppercase-enum",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "e0759ddb9a9b0b6f11f310f3739c90abb0c21a8b8fade0ab98ab4aacf3512a84",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7d3d28ebd14b80aa6be17e6747d1def93ed9cb6daf5aac9103261ab6b487afc7",
+      "case_id": "M064-canonical-formats-execution-result-digest-nonhex",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6afd7f4ac9961053c0216919664bac7ba4b7bc1a1d7f99caab72ad35adee630d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6ab238a10f70110c374169b3ac10ea76911c8139d2cca78fe60d1a0cdbffb4b3",
+      "case_id": "M065-canonical-formats-execution-result-digest-wrong-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "baac61db5b96d408930e841467b4cb6f82d13684a045ee2391ee5888929899bc",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a611447982f26400c0adbd61c3f8a6581c828ae017ad15fea2af7b8d8487a3f1",
+      "case_id": "M066-canonical-formats-stored-tensor-manifest-leading-whitespace",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "794bffe6481a705374d38819f1d62882c0558d1c9647843e5f97854c4ee7c269",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c8e129a77ca272fb4ed1e4871c8806ef8606f3574c9d52a02e556da5dc1cd17c",
+      "case_id": "M067-canonical-formats-stored-tensor-manifest-member-reordering",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "568c1012d4c2bc22c64f2acbf4a6d63535513f0ff1ca80ae64e169f904e3ac12",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f3bf4a7586b11ffb41f15c73f8d6be061abf497de476ddb2b2fd03a609af623e",
+      "case_id": "M068-canonical-formats-stored-tensor-manifest-pretty-printed",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "64c8154e4b8aa52e9a678da9cb3dcd1b7032bd28a0c10c36d3b5c1bfccfcfc36",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "df01bcd84a1a6fdea68c82d439d2fd4c048a4e9bd41de8fbae7e176aa2cf20bf",
+      "case_id": "M069-canonical-formats-stored-tensor-manifest-trailing-newline",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "b62ad01e107dfb1018b27e1047b96c66a0fb94996450f6834fd0d2efcd9dfb1b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "df17a2822b34e097e9d70d359836e7118418d47097bf0b1a71700419b241d84c",
+      "case_id": "M070-canonical-formats-stored-tensor-manifest-canonical-bytes-but-content-root-wrong",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2a28842445e07ffb0d0229c8a9cd868353dca14cc8914e20bfa8186125c0141e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "38a765c4806d68bd2da2a8d745817c80bc623533156a198efda059cb9987f855",
+      "case_id": "M071-canonical-formats-stored-tensor-manifest-chunk-array-reordered",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "6140b9ccfc284c24c29b711d952b5f1f3200a494b8d4434cf48599e767ad5f6b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ed6b9d4d1b94adb5417ebd56beb3b538784eaef13ee8c6174b4ccd08db952f20",
+      "case_id": "M072-canonical-formats-stored-tensor-manifest-chunk-offset-noncanonical",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "7682a05f8aefd45a8b8535f72d72adfc786161cfd5c561556c4255d2d6b32009",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cfb40f5d2b5ed73f9c7a66217611c6d301c1a5097a7797d638f8b4b1bd1203c8",
+      "case_id": "M073-canonical-formats-stored-tensor-manifest-final-chunk-length-wrong",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "2e6ac1b209230b9ce05e73c7983d0fef3dfa7ccec2238879bebcb6ecad217938",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "12277e2b2336c5c9574c685bee286618a272a7df314987410e3a176a85346c67",
+      "case_id": "M074-canonical-formats-stored-tensor-manifest-content-length-overflow",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "canonical_formats",
+      "outcome_record_id": "f03f7643f25591d4e71201069697d447133bb2e7ff6edde7c2f002dd6087dd6b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2704d008c4dfd57a56ae667d8082cf8a2c784a55525674745afd8c63628ed10f",
+      "case_id": "M075-chunks-authenticated-input-chunk-payload-bit-flip",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "ec5e84b26d2ca7fbd6ea18275d3937648d3129f6fe4450c7211c433b78310176",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "78c09df33fb638ac4a107bb20649dd4a7be4eb625f9eba39e93f1e827f255f85",
+      "case_id": "M076-chunks-authenticated-input-chunk-truncate-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "6b03d08cbfd9615fa63f9ea42486ff54edef2e14093cea7ea9d3d881693f9ea5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3985f4a5e34a064ba3f6a941b2de5b7287cad2cb40dad4c62f3ce70e993f3ba4",
+      "case_id": "M077-chunks-authenticated-input-chunk-append-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "fd09b00c61154ef23e43e6382a9f454f36cb92523115ffd63d1cd457cddb642d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "92b927a10fb5498c37d5243987f85a0f0aee9c5b82127b67baf7d3cd63265c73",
+      "case_id": "M078-chunks-authenticated-input-chunk-missing-chunk",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "6d8ad443617d55796b1186e306a9050c33b902c7582d6a321e2be72ce4dfd18e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "db9ee60112a4dfd1f6294d93028bec7c5f19dc17097470b0b74ff87454b13cb8",
+      "case_id": "M079-chunks-authenticated-input-chunk-digest-named-file-contains-other-chunk",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "4f895fa204d2f5a33df785101988675034aaa7750051739979815ed8b08c6219",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "beaa10bbf390214861e3a81d66132ebf1dfb7e6c3083045f29ab0a40e7c07055",
+      "case_id": "M080-chunks-authenticated-input-chunk-swap-equal-length-chunks",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "d3da81dc812eda9a1e6bf6b5d479c4879fa4e6f76d2ee06ac8b7bddb591c0753",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "85cc64c104defeb0171916f1e6606655a5294c67ded933a4f55e69c0af6b5958",
+      "case_id": "M081-chunks-authenticated-input-chunk-chunk-path-is-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "fefc245198bc665ca6967fafcf1917843e4b9d128774ceeff55f03bc577314a8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "006d1bed3961c99efca52d44a2039e262bab1fa25df2a67e5ce39b257e6b0221",
+      "case_id": "M082-chunks-authenticated-input-chunk-chunk-path-is-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "f9797a2e003a0ebc514085dc29b84709d3d3c9d9bebffd287e25c997cf47678b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0459f7ea3ce83cedf1312b979a4b934db536209ac6b2bdbef1358a63d5bec121",
+      "case_id": "M083-chunks-authenticated-input-chunk-unexpected-chunk-encoding",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "chunks",
+      "outcome_record_id": "cbca2b551e668a65b066ca90d94c00f64aa12fb15b8922b06c5707cf9151b34d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9cb0e43d755e8ec9721f8d63f3cffed2cf479dee04966cbbd307223175d64a5c",
+      "case_id": "M084-image-machine-image-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "6f58b9462f96e95e31231fc7f25ead306d146c2f82ad5c871c79019371876675",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "55b4dc937f83687ee5c1ecc2af4a7bbdccd4ec42f2f385ace8448dff0be27dbc",
+      "case_id": "M085-image-machine-image-alter-isa-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "8b1a662f7d677cbee61f874c5a127e2d42bba5313ea47420ecbcbeb8ab3b2752",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1e8f805ab66c6ac41a440ab3b523912e4f71138f59cf90291f12d50a1c3817a2",
+      "case_id": "M086-image-machine-image-alter-machine-class",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "ae87ec5ab7130c165a2f366f4e7d34566b07b58db019f8c76585598bae90b096",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f8b36fe30cd4bb58f68291c8ecb3d4c65a659838b102a6139e92bef66aa6a7a1",
+      "case_id": "M087-image-machine-image-alter-backend",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "2a37a613e64051320cb0d01a80469624422b756d4e03b52b293a6fa8a701fd6a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "84a0bcbb2cfbaec0f3eeb38f50653a3b261922d2f36ce608e0348254b964a3e2",
+      "case_id": "M088-image-machine-image-alter-execution-dataflow",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "ba9d4964537ef1b9b635ce03ec83778d8b9dbcab24442333f63400edf851695a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a67a6b2db9789836901aedaf647f4d0cbbf6cacf7d60a4c3814f18049c548616",
+      "case_id": "M089-image-machine-image-alter-program-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "94fe3a8dcdaa32133d5640db6c7891694464d6675063a01e35399b311c1ce809",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "49b123d5ca2b6756d11530150dce28ca3328840af8cedb1026d97f86c15f1731",
+      "case_id": "M090-image-machine-image-alter-program-body",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "b1d32de430df3fa37ef9a675801e289f3e3358a425e01f3845c2b1dd64c19dad",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b6deeadfdce2b48c87187981cfb5e81608e04de17df7173d3f0a662d3d73590d",
+      "case_id": "M091-image-machine-image-alter-input-manifest-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "f839f616fde83d51f1820a603d30aa79230862b25a6f472a898452f403903489",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "43673bc30caaf37c878314b188b06eb8fda9996f095650cfa97e1bf8c973491c",
+      "case_id": "M092-image-machine-image-alter-instruction-opcode",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "85c14e22663312f9f144b7ef68e73acfaea023f11fc211596f2ab03f62952090",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7764b7658693600c3f189599c891ba0e8e04b850257dbddddf47294bd2a151a6",
+      "case_id": "M093-image-machine-image-alter-output-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "d93fda64e4e6ad57771802c8e25d1516c32e1a1bdd40a414b75227bdb1733933",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fad453a9342284503fd0071d7f808aaa5cb394f36a8e330518b2202fb9439cce",
+      "case_id": "M094-image-machine-image-alter-schedule-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "276df5be98ea373cc37ba7383b66972c926593ac33f7ad12cc8aa7fd3559fafc",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d84589f35d536784649d5b730b6b2ff0de62b1842cbf9893fa3a060edf0130af",
+      "case_id": "M095-image-machine-image-alter-schedule-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "b4f852f10e6246a16fe6adbe12c6ee58d05e7ac016893151b02284e558c02e60",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a1e34bdbd79ba6b102bc17548d40970822c3c6a9f5341bafdb4008e9ce076e38",
+      "case_id": "M096-image-machine-image-alter-schedule-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "bc8ba2d3022ec9433ba8c5ec98f04ddda3906a65f92b88528c2438e338f2b6f8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8ec051017f206298f91a21d536ac1e33f13468930a2e21c536aef3f0ee64e260",
+      "case_id": "M097-image-machine-image-alter-schedule-instruction-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "dcbe8efc88fee4212d4956a25c9aac4535c990d6bd340f31e8995c43be12b955",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "293b5b8effe9f5934cde8d8f2a177b2c61baa744257afa7e3c75fdbeeeb90be5",
+      "case_id": "M098-image-machine-image-alter-verification-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "image",
+      "outcome_record_id": "2b5028380ab91b9b0be15e8b4cbe591cf8ab8599ce76af1d4e252507a8cb6374",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3707d7e3fe269884988a8c5f4da5da5d64806f809510f0ff92e9d93a7fd0b4e0",
+      "case_id": "M099-certificate-embedded-resource-certificate-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "eccaad4e503fe7a11e7e68eb68c868a2a3aa08bea7862b024a798613e3954339",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d86c0d9a50f3942c23004faa2500a35c1408865803b1cae8e6034758268ee08b",
+      "case_id": "M100-certificate-embedded-resource-certificate-alter-max-managed-bytes-minus-one",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "4096e983be31a8df5091cc7473b16f0401b2c584dc6cfd9fd782a69d89214123",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "44fbbfd793fdb27ff7d6339109dec156baf7cb9e97733be2722626cab15bf582",
+      "case_id": "M101-certificate-embedded-resource-certificate-alter-max-io-bytes-minus-one",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "cc6274be2468a8808ec54671582e3ef802aa10bc7f34e8362bf2a0819df9ebce",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "152f386280b3a88e15b9854fe0810f913dcfc3a74a66cb0fb2660c21473657e1",
+      "case_id": "M102-certificate-embedded-resource-certificate-alter-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "273b1d81b8ab7896507139692873ce417ec6a90a5f2b4dbd160f38373c60eb30",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "635b59056090547b99cebd10ab31e87ba52fe6e1ef9f17ecc56ebae98338f028",
+      "case_id": "M103-certificate-embedded-resource-certificate-alter-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "3a2626b8064cac28bb473e48f96aa103ce8b0528141f5f0a05f4d013345c4aa9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0aba6bea62017ea0426bd90e5bdd978a251d8cec4185b4b3cced9c67f7998c8a",
+      "case_id": "M104-certificate-embedded-resource-certificate-alter-rows-per-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "90cd443a27520b8e463393f8d91ac6844b2499dae90db6b54bec44f0c7c6290c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "292fbb28d992bab1a79fb37f75993a2af2793daea8cc16326c74990a506a091c",
+      "case_id": "M105-certificate-embedded-resource-certificate-alter-panel-elements",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "ad38c05ce6d9a1c18025161dbabd498fc60d6ab8b334177502e5f1c068b95842",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "52cc811dd120c969cc1b5465b5571f22cfb307e59d459c467eaf236a289b2820",
+      "case_id": "M106-certificate-embedded-resource-certificate-alter-managed-bytes-per-lane",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "41af4e09805e561f54bc3456905bee4a6cfc6d133c0dee63cb3a64e9e31eb326",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ee1aa0ac970ae30a13dfb94eb2ec34b26f0f1aeb1b0f2dfade6ac52a495f2c5a",
+      "case_id": "M107-certificate-embedded-resource-certificate-alter-aggregate-execution-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "14e100732da61443d7765621907b4c7b429449b12356c2c85bda7273d48ffc6b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d056a139b1ce508c63dda32c7bf8d33dfb457bf7651debd90c790f72e17b4320",
+      "case_id": "M108-certificate-embedded-resource-certificate-alter-finalization-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "52665ae2522ff5c49796f618eea36666b2dd38d6ad898bbdf4009da005e5d90d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1f8f4d4241e618ef0bbb9eabe86d17e61886cfe1663fee4080f40e1cec3be4f5",
+      "case_id": "M109-certificate-embedded-resource-certificate-alter-verification-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "dc438b8931329856c63691855eed2f565465a596fc48b845763a2e398fa7b24d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4b73fafae4fb5b85dfd3e62de9dc60814383c0d8ff068d4a6c026869c2820a8c",
+      "case_id": "M110-certificate-embedded-resource-certificate-alter-certified-managed-peak-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "8c43dcbd0420eab9cf8daa04cf4d18cbdd68aa75bc460ad8083677489c67237a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "6f029756e7824da69d6a455e2bc3196797bf835ba2e18d007a3ff1fb81597d46",
+      "case_id": "M111-certificate-embedded-resource-certificate-alter-primary-requested-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "aff4c26a1ac47b0117ee45e507ac23554db9eebfae8e877537797679f815b2cd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "02fbf132b5c6354baa0add2b2c350ba7b28774fa6980fdb38de1d1b2a183f2c8",
+      "case_id": "M112-certificate-embedded-resource-certificate-alter-primary-authenticated-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "00ed909009db5aabac53f1ce69133a6f7f4f14d5de559fbf2809d25c7c307d60",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "de41ba7fc008d041e7a5df2775917becfa0846f178ca3449553031b42867d098",
+      "case_id": "M113-certificate-embedded-resource-certificate-alter-verification-requested-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "0fb664113f1be0fedcca462d131ec12daf9d9b6a095e83a37b312879a5ee3b3b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e65ace88b3cee85eb2020e5c271038848ccf815293fb31f832bce57f41cc5015",
+      "case_id": "M114-certificate-embedded-resource-certificate-alter-verification-authenticated-input-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "d7988120cd350bc95b67fcc31d313b44b608b5a8deb2f8fd1108a6b794e4206c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "31853c49da55f35c39a02ef98b40c19979b41cca22d91f76117667ea127843c6",
+      "case_id": "M115-certificate-embedded-resource-certificate-alter-verification-requested-output-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "14f430d3969ca0bbd49c7c1941035746d0398948bf209a6dba31af027321b56a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5c12926e99f6eaf5f9be0d030b8f173f81e13bc31a9326da1b8e486ac7713eee",
+      "case_id": "M116-certificate-embedded-resource-certificate-alter-retained-input-storage-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "e51351834b76614c77b4f69abc4007b562e71d9c1a6ab3168c18ae1cced44e91",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b687647388b2df34af8381c3dfea977f992e3d78728d6005eeea523ad4c6bd65",
+      "case_id": "M117-certificate-embedded-resource-certificate-alter-retained-output-storage-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "37d0542bbb276c67c676ed6fdf51400b9494dda9894be4c3d85cce4f466b12fd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a0370750c1472698245ed0b4f8ed6e0ac1c1580b4c77d0057a10119151ebdece",
+      "case_id": "M118-certificate-embedded-resource-certificate-alter-checkpoint-temporary-piece-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "cad49f4fe654bccd665877ccd2f235837f5faf523ad9f0911c8699c9118f0c63",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2992e8af09d70262ff9ad4c15557ac884e61c3b150b9c8094c34b6db53209c9e",
+      "case_id": "M119-certificate-embedded-resource-certificate-alter-checkpoint-temporary-json-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "afbfaaebf5fd50701a58d5d5d4a9b24c05c0300c4c80f4fe6f35ca1d69286f7e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "bafa98f2b6aaabbb353d2a67bf4722d1ffb28193a95d5e6dc854f35af94b07a7",
+      "case_id": "M120-certificate-embedded-resource-certificate-alter-retained-checkpoint-storage-bound",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "certificate",
+      "outcome_record_id": "7b132cc43039d3020de36556461445365bd3ecb7d23cfa9088c5d8b8dbe8011f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "97c3512f01c862c8afa6ede0538a10ea3bf892a252af63f47c59261873664056",
+      "case_id": "M121-result-execution-result-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "9560a7cbda4d5b3eaa740b915962370f9f58adf95d8c7b110be58796f8100499",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "754937dc74028df0339bb92da37ea20774b34c6354d57cf385256c26d3b5ffad",
+      "case_id": "M122-result-execution-result-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "11eabe58766325186259b457185c8b59aa1ef001a33e28d6e6f663d32f2ac992",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "443b75b01bd9fa7ecbc61e689337a07262fe0c1f05dcf85665a524080b544b7e",
+      "case_id": "M123-result-execution-result-alter-machine-class",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "12a92354e7591a426ca09abc358590f5012f45c0feb33d026615e06e6bdc13ba",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "acd67396e2a2a6bb9a4c4da58f003ad3293116a63e6760430512804862d30670",
+      "case_id": "M124-result-execution-result-alter-backend",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "7705253593efba40498e47c76d88dbbbb13a326025d71848607959869891f600",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "3c466f4e30bf058e186be4f7123921599ce6f5aa8d753d95ec7dff212f59f557",
+      "case_id": "M125-result-execution-result-alter-resource-certificate-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "6cab175508a8700bb861f0c5f3da9952f12eb806c0fdf20598383be9c47064fb",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0d76bc57031ace7f4d2ddaf0e4ffd415e041dac49152e21e5be756df4b0e8b84",
+      "case_id": "M126-result-execution-result-alter-output-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "d3135587700a468266f11cb69f76126b43a32a454423fdbc1cee0e5d006fadac",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fe4b13dffbe2de9fd7e4dd8f66aa1e5752c3bee0b906f602b48ffe1cbcf5d3db",
+      "case_id": "M127-result-execution-result-alter-output-manifest-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "fb933177dcd96843340d4c9f36b035b0b6ea724fe463c08e79e8179bb907b027",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "89a4609d87807b189b6784504db66e827a178726e892120c2a7ee63b586cce4e",
+      "case_id": "M128-result-execution-result-alter-useful-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "eddcfc3579ea0a26475d40fdbfa795ad20df0815aaa6424c5249d0a3366aa5e3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "efabd3282e6664673950e4bb67dc8669497638d5729dd1f71bda27ae1fd38b69",
+      "case_id": "M129-result-execution-result-alter-executed-primary-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "0516efe244009964309997cb8095aed4e6460fbbe12a615e80d4c91f4f686f08",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "277a60a3138c66c880777daf8b25f02ac958890befb9fb09b0cfb685fe5f360d",
+      "case_id": "M130-result-execution-result-alter-physical-integer-operations",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "28d645657a92cfa63f18404c6a2cbcaac05b27234d2b4981eab07de1a42c188f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9e405d3682f5f1e62887c24f3dc235ba91acb28910dfa71a02eae8b2086de994",
+      "case_id": "M131-result-execution-result-alter-primary-io-counter",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "1b02549d1583e8a15d08ea6405ef93d548538db7ccc592abd245d351fc04a8f9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2276b62eae8c0fffaac4d8a22a72c40fe3ba3ac223bc8451b46b9751006f6b69",
+      "case_id": "M132-result-execution-result-alter-total-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "03137065834600af15e26664c1a7b467dc8caa400c5079a3dac820ee9c9595c3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "97a05a2f3905d664d4dc805a9e342588453f26065e3a57dfd533cc33c2e82046",
+      "case_id": "M133-result-execution-result-alter-reused-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "36cbb9bcaa20c3d0c04d3708cf8ea9494a280ff325f84c8b23d2719e92bace8f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "132b0966dd7342998dff5922d214ebd755668409bebd39e6b3e587ee72a8006f",
+      "case_id": "M134-result-execution-result-alter-executed-pieces",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "a2a13211d872c161f4f1f2b40381ce0c19d831f90c636cb98a25fc4690b7ddc8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9485149ae37fd92c3f5833c916c24145e67537994d57623f5f75f1bbc20e9ceb",
+      "case_id": "M135-result-execution-result-alter-assignment-lane",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "998e329734f6f4e119ce0e5e36a65e14575778b219094730b7dd1ea875b48a00",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "723da3456d8251e4d07d8a168bc0e62d408256139a0001ba61248c032eddfa81",
+      "case_id": "M136-result-execution-result-alter-assignment-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "03880bd5c5b57a9d4c34534175309bbb5c3e5f544fadd60c16df93774dd11081",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1a71d1d8764b6d6b413993cf4ca443f1713e498c004f6dc9236428fb4698e83f",
+      "case_id": "M137-result-execution-result-alter-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "1b8eb6c5ae032618e42df98aabd2f38b53fc7663d6a4a9563e88c639e1fbf122",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "780f8fd463edddb98aec4be2b16f54df61346b8307256224fa6087ae96635f57",
+      "case_id": "M138-result-execution-result-alter-certified-managed-peak",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "2341fee77f62e09e3dad685ad2ee1dd36fe4c182e4ecef9654342dbce9061e4e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f136be77770657ca9fd67538decce21ccd11081bd38f504362713987fda55c37",
+      "case_id": "M139-result-execution-result-alter-retained-storage",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "9d3f30ef67c0b0e36baf63ed7c4842032f617b227445e2b5f30d042a0296294f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d2cc09ab21b14818a2fcf872fd645b601368965703eb6b9a2fb09cdc2b5e1922",
+      "case_id": "M140-result-execution-result-alter-gpu-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "972929d4e7301897019549f2bd27d4bcc47e5a9cb8de4f0aa25d1236abd6572a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0b84c1ba157eadc649e059858be7d385d2b54b7bef332a323f938afd69af780a",
+      "case_id": "M141-result-execution-result-alter-network-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "6405427fe3e039809b180efe10cbe869767f741d4cc75676caff72fa5eb2c30b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "daf55e46ac30e302ed9e6022efc8cd2bf39b578ac1434e6efb91ef5b856b5bca",
+      "case_id": "M142-result-execution-result-alter-verification-method",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "03736dafaf669cd62977776eeab1bfd42b6faf983e8d33502e95e222cbb47d17",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7ca84182c35aa082ba75bd2f531424a8d15ee9ff0676a6d8b605004dc7076232",
+      "case_id": "M143-result-execution-result-alter-verification-boolean",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "39da463451cc3b495bb9ed33d3ef93ed2f0c3840ff8c31c8c7e46a88187bf2e9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5c003df35743820b87ed61be6fac17e57d150af871a21d435442e31e0905a877",
+      "case_id": "M144-result-execution-result-alter-verification-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "c1d2ec67f119024ee93aa0d177a7fd67b132bb987ae4d1fcc87a14c703e626be",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b043eb6cff56187b7c78ef4968bf58fd2e7171f880394d58252ed9f25d914d3d",
+      "case_id": "M145-result-execution-result-alter-verification-bytes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "4d03d01ed22f1d1be0a6018c29df6d920d14ab1da70fa48a6ca8bd58af41b769",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e3043c0e541ffcdc92d35335ed67f63d51ef38d49ee028f7e290ebd69e46ba1b",
+      "case_id": "M146-result-execution-result-alter-verification-io-counter",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "result",
+      "outcome_record_id": "87b22caf81318a23394a2c41e2f3073af478e4e606cb012a89fb0abf4c1404fc",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e529871744e74fcf15cf29854fa8afd97fbddcd3dffabcb1687afb3a3699cf28",
+      "case_id": "M147-plan-checkpoint-plan-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "9df20886f1dcadf203649eb30cbbb8508e1b89b235f524d17208018e7f21d746",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "adaafb2eb8b8833e10fd8cc19c9ddd3e93767bce6d974d04fdf570ece38abd2a",
+      "case_id": "M148-plan-checkpoint-plan-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "2e9dbb4f5c9900251c86230033cd448478f8a4e090156b25ca6d51e6771ed653",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9ae9a5b644539a2059dbdaeb46cfd34cd28708e7391c33ee0922d1547e1fff32",
+      "case_id": "M149-plan-checkpoint-plan-alter-output-type",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "054fdd102c76664221983014c205b17b7b93eea0eed25b44b6d4f54d7b1ce53d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "684b18fa294c84841c4a168e43c552fc22e20bd9d31841e2d2ae3c09888e520b",
+      "case_id": "M150-plan-checkpoint-plan-alter-schedule-policy",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "e46a66358917fa50820da22a0e7a0e6c186ce4d086dc7ade04d37e3fb3bb1c52",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "1138d5e6c92cdb3e1fe647afffca29311f9849b3fbf22ade16b14e523b0c0f60",
+      "case_id": "M151-plan-checkpoint-plan-alter-schedule-lanes",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "0675279f091067f359b3234352dac2aebf05dabc2fcbc1f0c3a977242cc6996c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a1d73d29a884cc18d4dd2c0fe99b859e32e4e83b96fe81c68dfa8a54750ae4a9",
+      "case_id": "M152-plan-checkpoint-plan-alter-schedule-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "949cf8110ee6e78b8574e15a82514ac4c5c5389a3b657778c486e7ee613e1827",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "360075eb068204df45ee4f4e78fdf1023983ad051cc5f44e7ee1cb447b4e667b",
+      "case_id": "M153-plan-checkpoint-plan-alter-rows-per-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "39b59b0a08c2a100f2743200a155103b9e3fe0e3ea87ce07fb5c63f7b202e523",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ba9e90ae5835742f6c48b85539d6e486f6fe4c372332b14a6641df6d22dd4341",
+      "case_id": "M154-plan-checkpoint-plan-alter-piece-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "71cb52fb5efcf43cfcb327174316544f99b62d89f7b30690d736c779f4e22c3e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "774f042bc18d5d136111a5c25525794917eb217fbc0156befea97f16f604a936",
+      "case_id": "M155-plan-checkpoint-plan-alter-replace-with-other-image-plan",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "82d5e786ba9a1964d0e682948e7c63bbd301ea6c7b8b9a19b27db6d15fd98db9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4306782cea181b04a60b347c5b35d95637b3031f686713efd2d896d0401ce81c",
+      "case_id": "M156-plan-checkpoint-plan-plan-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "822f067c58ee3830b2c6c628338d3a63dd02fd1a365cba3f796e06fa193e6355",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "9c79fc73db32d113e130d813b07ff7b35badcf7b3f2535b97a41c492c77c2e66",
+      "case_id": "M157-plan-checkpoint-plan-plan-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "ee5a61015e93326b56b9c2541f33774fa4f18d2a5a5b475525190911d5dd1f88",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "31755f6689e2148b8a19a6a7f8e3c0a807be4e8dc9d2ce5b4d7bc1b4883994dd",
+      "case_id": "M158-plan-checkpoint-plan-alter-plan-removed-after-partial-commit",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": true,
+        "output_root_matches_baseline": true,
+        "raw_observation_retained": true,
+        "resume_succeeds": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "plan",
+      "outcome_record_id": "923f7a87477c53102cbb26d7c04ad9a69d6fd60b6453a0a925b108d7d5f951dd",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "90915abe4da51ad52e6751f6d6a6ca4c3facabac2b2a03467bd0ef197e6b0ab1",
+      "case_id": "M159-piece-checkpoint-piece-payload-bit-flip",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "58cdae9ece9e13c9e28d43e52c2192fe29a1d193961cd26a8278b148a496fc65",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ecf614b72a8b279e46ca2bd3cca4918d23c5d449ba9199d80837601589656fca",
+      "case_id": "M160-piece-checkpoint-piece-truncate-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "b72806f9e755832dade781e480c3065a5bdae51f3c6ee447b402c57993ed86cf",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7fe56938c54aceadc057c54b81c41d8e47ba639b7ee4fbf5f5ac701cf6ee589a",
+      "case_id": "M161-piece-checkpoint-piece-append-one-byte",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "c2783182d40b089d53077613975fd2fe641365b6660670bcaa214f35aef03e90",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "35027b3aa34f9aad8b9c717be45ecb25429afce0fd3e91d67c1a4596bd538f49",
+      "case_id": "M162-piece-checkpoint-piece-remove-with-receipt-present",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "879ecc4791112620e5ba1e8f58d32729123c355784e220f3f20c070cb5fa67e8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "153bdb88bd46934e94edce01ab2885d85de2a51b1bc9c7f48502236c3d550078",
+      "case_id": "M163-piece-checkpoint-piece-replace-with-other-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "988c3f9f64d771d18a519f336fa8e771969acfcca9d74d2281bb4e209fb19ac8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "f6f077aff4903cc72c59df19e973f86e2e5ee12437a8b25345929a34530e59da",
+      "case_id": "M164-piece-checkpoint-piece-piece-filename-index-changed",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "43778e35a0672e008778f12e6720f541f3917edfa97106d912fd98537ce9e01b",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "80c018da6de5d1a5c67fcd86f3f6a1b24acd5a578239544f30bf285853df7249",
+      "case_id": "M165-piece-checkpoint-piece-piece-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "a63e1014487b4f8051c870259f31fad42a40c9efb2ee81e9ac3863ef2c98ef67",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e5fb4e2736986e440df6ee887ff2beb3d01ae58c0c9ed9b71a050de547e91910",
+      "case_id": "M166-piece-checkpoint-piece-piece-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "5c662683459cc7389fa2f473bfb91f7b8713153700687c087207e11015283089",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4685561488fd85c055fc340a9c0a15521493adb17255cabe2dbfd30691bca650",
+      "case_id": "M167-piece-checkpoint-piece-durable-piece-without-receipt",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": true,
+        "output_root_matches_baseline": true,
+        "raw_observation_retained": true,
+        "resume_succeeds": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "piece",
+      "outcome_record_id": "e50117ff764a61e27648b7a08c939ba17196a38b555506fd07737d71f9d0bc7a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "205afc22a8a8f501b146fd00fbeddf267db15739d6711203a85aa4fef7a738cf",
+      "case_id": "M168-receipt-piece-receipt-alter-schema-version",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "33c5c6e874ba2a673e8f299580298d3e695bfdd7c5392b393ea1ffac44494db9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a99392d15c14572edbec38093235936fcdc4da394a74389692613b544d72e1c1",
+      "case_id": "M169-receipt-piece-receipt-alter-image-digest",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "413fd5285a8bdb85fa5cc334c2242ea11ac8cd05676755cea1066cfc4ebbf646",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "ccecc7b849d6c6a739c839abe1483a6f4aa3b1d04dbacafb54d5877b2cee485e",
+      "case_id": "M170-receipt-piece-receipt-alter-filename-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "60b7490a1c136e50f0aa3425e8f93b0f457271040b4b9c86c8148fae16efabef",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "175a006ecfd83ae5a1d3c5a119927ca7a7fd3749b2ba00586664fc7e5b6f01d6",
+      "case_id": "M171-receipt-piece-receipt-alter-body-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "64c527e711361aca3ca0bab4742b69654c640b3ea8ed96d875e1b84250e864aa",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "7bb8ea772be4c7f139fdb117225c7b5ade100155973b0b72777aaaac9ed7db85",
+      "case_id": "M172-receipt-piece-receipt-alter-lane-index",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "1cce36c878f490f977c1e3880d789a86b358ddda429e57358ddb22513f32e37c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e2cbf97d51ea57ced36221f5d31226f13e4d382f17235d56933ac1e7c1f655b9",
+      "case_id": "M173-receipt-piece-receipt-alter-row-start",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "9402b52099e1516b43cd9dc5eed75f78381ecf6e0c36ef84605e74e303d720f1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "0c52573220dd35d3621dacc9d2ad61ab2af43c61d52680f7069b76ab72a1680a",
+      "case_id": "M174-receipt-piece-receipt-alter-row-count",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "2ffe8dc102efe907d172fc399145d9fce03c3a1a70674e76f656ec614e3fdf26",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "8406f3775cd8a48fac37306f2c4ee04e7f565c25619e9365aef0cdf2a36c6b7c",
+      "case_id": "M175-receipt-piece-receipt-alter-byte-length",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "25a6540bb05f00d07765a68812fbfe76c211ef3fb3f4794b5a45d9b2f3ca584d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "78a644a498994c254181a6a98a2da9576e619147cbed250696ade65314fe5cc2",
+      "case_id": "M176-receipt-piece-receipt-alter-content-blake3",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "2542fc577a43b911c0ef80838eea20203cf7b6784a322d6273404830c9bb9701",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "115080a324069393981bef7319989b6fad43f8aea73f8395a44de7deba57c16f",
+      "case_id": "M177-receipt-piece-receipt-receipt-without-piece",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "afc5e655bf83ea2d09a9aac7b98465588f69494600d7194336be09a8e64438b3",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "da4db7d6a9306cb30e7d55d96c79a2da7e5d8239d50a85101760b36510aff53c",
+      "case_id": "M178-receipt-piece-receipt-receipt-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "e6a24b013145b934a93ac2d88d3fc6842c338102b0c0594efe8944a9267ca328",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "dd0f5073cb906508b9c69eff1d016d1ae1ab6e665d3d899cc91bb73f76f8e8a4",
+      "case_id": "M179-receipt-piece-receipt-receipt-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "c41af444d3ca6aad3bd9de898e6a157321a183bd61efc234601e34dd69e41465",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2d3cf5aea939658ac2f12d382fbdd1c82ae79318b5f332513c4d3424df21f834",
+      "case_id": "M180-receipt-piece-receipt-alter-replace-with-other-piece-receipt",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "no_new_result_publication": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "4ace720669819982dfc567a58ba120a7fc0a5e44332570d3cf65fcae4fbf8a7c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "29eb90626106a24e14be59df9e78a6b66cc8b8195a69dad8bf6513fd76e7a7d9",
+      "case_id": "M181-receipt-piece-receipt-missing-receipt-with-durable-piece",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": true,
+        "output_root_matches_baseline": true,
+        "raw_observation_retained": true,
+        "resume_succeeds": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "receipt",
+      "outcome_record_id": "13ad9b9a6569871afa3f4115f657f2c5a35a3e0d875ac83d31ee5f69f62ac4b8",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c5a2a186246626a0f307525f4dcca61ea567117caf8bcc6ddf9068f294f96fcd",
+      "case_id": "M182-publication-namespace-or-output-preexisting-result-sentinel",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "eec383e7add126366fd67c2e23fceaf150063bc977f895be5efaf8ce367378f1",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e0b7a793f96eb55bb68830cd70b6808074f5a815c1203c4a6cab08fa2820ce33",
+      "case_id": "M183-publication-namespace-or-output-result-path-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "bcaf6efc16adfb3b97a4cc3a4ded2d44fa54c87d90fe8411d91da5deec2dbf0e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a2c1dd4c3450fce953ab3f7a59e931cc03881e68784c02a6a89fb21970f852d5",
+      "case_id": "M184-publication-namespace-or-output-result-path-directory",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "435c12b3423a50e7691943b602faad327953354cdc3ccc2ecf256a9eec8d799e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a1be192d1f8a61413670777fb4bde9132482f25de0d0c39b395f0757ee685460",
+      "case_id": "M185-publication-namespace-or-output-result-inside-checkpoint",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "0e8f6b2b944c29fc08b7887548e06dea44452ef6c49b34b2d0a8cab86d12592c",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d79140bfc982b20a706fa9780ea38fd959eb758f81cf4f649949cb5a897290b3",
+      "case_id": "M186-publication-namespace-or-output-checkpoint-inside-store",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "b27df4512cf6c911011997e4b618f99baecb326c6f5bf5e2498df75246027e67",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "d77419abbd24954f189c8f4216c0b89555841bcc63e1ddec93c8a9007db4fe7f",
+      "case_id": "M187-publication-namespace-or-output-store-inside-checkpoint",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "0b2760ded4a46fe04c2ee20656d0ad5e33701f07b3316765b9af368aea73a0f4",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "b9fe69a2415e8f1173fbc39e6fc295a496a4b3c8357b408aff59f1d5ce9575ce",
+      "case_id": "M188-publication-namespace-or-output-checkpoint-root-symlink",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "370ee9a9895f7cc9f814cf52d55c2891621d9c4fa4efa5eaec617282cb808916",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "4309909be56b9472472f56d14f0563ba8d45e9472dee106b05b50c7b0f54c7f1",
+      "case_id": "M189-publication-namespace-or-output-unexpected-checkpoint-entry",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "f4df5b0ff7a713068dc6c91852e757ddbf2b6a97653e8f3178253ae913dd4087",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "bdacd6db4020f327dc4e04448d1953bd8b3a7bf01e99d4c345b5a081ff03efe6",
+      "case_id": "M190-publication-namespace-or-output-second-coordinator-lock",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "b90db48c81ec94a76994b57eca9f23af45c9ecd4e1fde3136e38c6da53b52bd0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "17252d7b7322fc3edeec50c9e45d8cdadc10c5b583bae6b81ca400a481e30ef9",
+      "case_id": "M191-publication-result-commit-orphan-final-tensor-without-result",
+      "derived_oracle_checks": {
+        "exact_verify_accepts": true,
+        "output_root_matches_baseline": true,
+        "raw_observation_retained": true,
+        "resume_succeeds": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "5c8a5ae4a12b45acd9f21795e14db17f4a3bd8ae12462b6cd9ef6accb1e7aebf",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "e013cd12645bcde978de1c88eba878226f59906580e3553f2fc27779f2c40a78",
+      "case_id": "M192-publication-result-commit-rerun-must-not-replace-existing-result",
+      "derived_oracle_checks": {
+        "command_rejected_nonzero": true,
+        "preexisting_bytes_unchanged": true,
+        "raw_failure_retained": true
+      },
+      "driver_capability": "external_case_driver",
+      "kind": "mutation",
+      "layer": "publication",
+      "outcome_record_id": "7e2a3bcef39c3a4a29216ab1fdba3d6d65e7e549ec55c59d9065aac0fd5255a9",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "c62cae9a64416db5da5fdc149a8ebeddde56333eef5e62c0de4a76169cebbc5f",
+      "case_id": "K001-process-spawned-before-checkpoint-lock",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "9a0a5ab28f4180e0e7a6db9ad67ccf1b24c7cbbb4c7bcdb3c2f570dfeb6ff169",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "49549b7d395388b383e3e27acabf3aa6dda184277fdc8799606cb386ce1f2d67",
+      "case_id": "K002-checkpoint-lock-held-before-plan",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "2fcb2895e9c0cfc3baf450f70a3b17961307900fc313f723cd91f47d7693ec62",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "dfad44498882decb9c7631d62110e5c0c280429ee52630043354d4a04537f17b",
+      "case_id": "K003-plan-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "7d77d405dcebf187c97fd1cb749b18a4a6cf544342f29bbc3f998dbb19c0e8da",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "fb43435cf2fc7cdc03db6bca6a5b40037e5cbb3e314f6334a21ef6d2dfa3796e",
+      "case_id": "K004-plan-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "8401833617e0488d79aa09c15c5438e062bb6b6b32fc14379d5f1f53ee3c9889",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "5bb51e68fa67a388aaf26279e7f63fe2f04b088c8c2a6a604dbd45798724fb41",
+      "case_id": "K005-plan-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "4fa3b18b2a7977fb84b14cc86e963b91ced9b5ff0509922da67a3259c00acede",
+      "status": "passed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "retained filesystem snapshot does not establish the failpoint state"
+      ]
+    },
+    {
+      "attempt_id": "df74296b4a2bbd99346f020d7c3fda021dc2833aa0e939bd567184f5a9b77ba2",
+      "case_id": "K006-plan-durable-before-piece-work",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "1126e49d4561a62d83764f2d94b89af3261d9b38e84bb7fe1fac936c218d9321",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "410acbbadc692d6d2d186afa1e81891a83d29a8535a017de2911987d3cce8129",
+      "case_id": "K007-piece-temp-created-before-complete-write",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "8ef44ae0a365db30c7d0bdd4e57efa28bf9ba4199fd376b0b98fbc4a7ccf59e6",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a8b2f2781257547894b3b5d3f054b9ac90e32c3aabd124821cec2e46de45a74c",
+      "case_id": "K008-piece-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "18aea74bb390070e316041c7a5b8f820feb887f9571b7da3b7ec059981e17978",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "68b741cad7f3c1ed2f19ce368c6d909131cd3e0a1f098c8f523ea75bf24a913a",
+      "case_id": "K009-piece-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "fe04157fd61a5bffb6decd4973c0c2581405456edf43a790f88eac0da53c790e",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2b292ef84eed9ce5fb831368c93ad42b4bc355d3cdd0fa52c623e27fe43cda4e",
+      "case_id": "K010-piece-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "cc1e7a485e421fcb273bd2b4630245598e8cadda50b5d06ad5233b4313295332",
+      "status": "passed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "retained filesystem snapshot does not establish the failpoint state"
+      ]
+    },
+    {
+      "attempt_id": "21c67edffe1531a55dd34fef533f33a6e212732c132219d465d3efcae11a532d",
+      "case_id": "K011-durable-orphan-piece-before-receipt",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "0642388c24181ac1a06ea7d57cebc6bcdf057804ce288f06edcfa583b51c72fe",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "56d9ef2e72f271a414745b602ecc794108e3e9df6f35c337a6c77ecb5683e509",
+      "case_id": "K012-receipt-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "af08edeff4c562d9fbae83be471b7693583383abd6843396c857ae5defcdbaa5",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "497a1f020c3b5e8ec99562195769d035c472b31df27ca336290c58a845842900",
+      "case_id": "K013-receipt-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "b27ca9fb24662d62dbfa55eadc40cb88d884354f2add743cdc0a888638b766ee",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "eaecaac4244092f31a1412cb1a02d7d2698c289abd60030937a94c35c63105f2",
+      "case_id": "K014-receipt-staging-unlinked-before-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "bfa3bbea56d18b11c4720955ff312208455c10c040391e39d68f71203be9a183",
+      "status": "passed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "retained filesystem snapshot does not establish the failpoint state"
+      ]
+    },
+    {
+      "attempt_id": "9dda08edaa2ff347b053db6ae23fbe72d5a8ad49a6595d79d16122d89863e836",
+      "case_id": "K015-one-or-more-partial-receipts-durable",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "0780ed7b9afd6f9f7b5eacc6190412b6767061f48078f2d38f5d8f8647ea1c50",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "786e3e4ca3ceadd0fe3f989963b07c54d43cb17f7f682a65a68a41cef2161480",
+      "case_id": "K016-all-receipts-durable-before-finalization",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "f3abd61cff5e599fe37a9888f5e993deb95b1a74ea82f59ed7b7f42f7198542a",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "2a2498c9badc901b420c1ccf90dbff631530acf3b22967501974a6e49b5c648e",
+      "case_id": "K017-output-chunk-published-before-manifest",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "555e58efdf7e547ba24f095fc1a8ddc0105608f1a734138e73f8408df089778f",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "174897257f2c3cdaa0b8fbbf9855b276b858650ad3302170ddda24608eef9004",
+      "case_id": "K018-output-manifest-published-before-result-temp",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "7efd63361b008d5e7e68838423f49e851e742b2b4855183600f5728f0ff02577",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "cf9d6de53bde8359d15b4ff60f848d638ff6a47374a68cb7efd53c76c6a7eb79",
+      "case_id": "K019-result-temp-written-before-file-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "0c75ae721cc035b0cfb3fc0c64377caff83d6585df76408d8b61d4abf496949d",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "a4c3be2aa15e07d1d0040fa23b81c50d10896751a72cb5734a6e768a3e4bdde1",
+      "case_id": "K020-result-destination-hard-linked-before-staging-unlink",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "b8a9d64a6a5aa333d144f6c9bf3544fb5027d3c53609b20d79143c752a35dfa7",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    },
+    {
+      "attempt_id": "06729eaa5a899939664031852585cbda23d0f770003e5d9d4abdaeaac1fa0908",
+      "case_id": "K021-result-staging-unlinked-before-parent-directory-sync",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": false,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "requires_executor_failpoint",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "66b432536335655fbdd59611682f453ad75ba995fd8ecb80907550e4b5f20947",
+      "status": "passed",
+      "validated_status": "failed",
+      "validator_failures": [
+        "retained filesystem snapshot does not establish the failpoint state"
+      ]
+    },
+    {
+      "attempt_id": "f48126005dd2f03590858f07594b3e6fb30e120a4a290152135122713edaca61",
+      "case_id": "K022-result-durable-before-normal-exit",
+      "derived_oracle_checks": {
+        "checkpoint_namespace_valid_or_safely_cleaned": true,
+        "durable_pre_kill_receipts_reused_only_if_valid": true,
+        "exact_verify_accepts": true,
+        "no_partial_result_accepted": true,
+        "output_root_matches_uninterrupted_baseline": true,
+        "raw_pre_kill_and_post_resume_snapshots_retained": true,
+        "resume_succeeds": true,
+        "signal_delivery_and_wait_status_137_retained": true
+      },
+      "driver_capability": "external_observer",
+      "kind": "sigkill_boundary",
+      "layer": "kill_boundary",
+      "outcome_record_id": "e737acd83cf05c86396278a30e5c82e6c1b761ccdff5c20c87021fdc92e817f0",
+      "status": "passed",
+      "validated_status": "passed",
+      "validator_failures": []
+    }
+  ],
+  "release_and_accepted_output_bound": true,
+  "release_binary_match": true,
+  "run_id": "131e1bb797cccef1f270648e33e9bf7810fa65de51969298462c190b1ba7a903",
+  "schema": "mfenx-local-adversarial-sweep-validation/v1",
+  "sealed_evidence_gate": {
+    "complete": true,
+    "failures": [],
+    "post_seal_independent_validation_required": true
+  },
+  "status_counts": {
+    "passed": 214
+  },
+  "validated_status_counts": {
+    "failed": 4,
+    "passed": 210
+  },
+  "validation_id": "e318929d9cf7f9e5dffca17907cff5b9ee0e68be00c188410704ce6075f98c0a"
+}

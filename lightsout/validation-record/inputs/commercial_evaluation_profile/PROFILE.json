@@ -1,0 +1,157 @@
+{
+  "candidate": {
+    "allowed_signers_sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "executor": {
+      "filename": "mfenx-local",
+      "license": "Apache-2.0",
+      "sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0"
+    },
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "release_manifest_sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+    "release_signature_sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
+    "signature_fingerprint": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc",
+    "signature_namespace": "mfenx-validation-candidate",
+    "signature_principal": "mfenx-release",
+    "verifier": {
+      "filename": "mfenx-contract-v1-verifier",
+      "license": "Apache-2.0",
+      "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa"
+    }
+  },
+  "distribution_model": {
+    "paid_boundary": "Optional setup, evidence interpretation, integration, and support services only.",
+    "software_terms": "Apache-2.0",
+    "technical_acceptance": "The standalone verifier decides acceptance under the public replay-gated execution contract.",
+    "usage_restriction_added_by_evaluation": false
+  },
+  "evidence": {
+    "adversarial_sweep": {
+      "final_attestation_path": "evidence/mfenx-local-v2-adversarial-sweep-20260822-a3-final.json",
+      "final_attestation_sha256": "08255a52606665d63bb43f1812afe928aa3f55e2ccea0248b596f190f757c716",
+      "independent_failed": 0,
+      "independent_passed": 214,
+      "inventory_sha256": "455c7408b1099174bdfe20d0a193cc04075e137ea6873cb172bd8b271b44228a",
+      "path": "evidence/mfenx-local-v2-adversarial-sweep-20260822-a3/SHA256SUMS",
+      "planned_cases": 214,
+      "post_seal_validation_path": "evidence/mfenx-local-v2-adversarial-sweep-20260822-a3-post-seal-validation.json",
+      "post_seal_validation_sha256": "ab3b2d369f8acc4fc681815ef21fe08ecca98be3b601b5a8b719254441b42fe9"
+    },
+    "automated_security": {
+      "a1_inventory_path": "evidence/mfenx-step3-security-review-hosted-20260822-a1/SHA256SUMS",
+      "a1_inventory_sha256": "4e5c8f22227835e81fb79d55ae5b8b50973853c61a28658d81480356048e2a29",
+      "a1_status": "fail",
+      "a2_local_verification_path": "evidence/mfenx-step3-security-review-hosted-20260822-a2/LOCAL-VERIFICATION.json",
+      "a2_local_verification_sha256": "ed3e35178afdbfe71b8b474c034f38c20cdab5e75e0c6e44bcf4fb0272ee5d06",
+      "a2_status": "fail_one_unwaived_codeql_result",
+      "a2_summary_path": "evidence/mfenx-step3-security-review-hosted-20260822-a2/inspection/security-evidence/summary.json",
+      "a2_summary_sha256": "1655224dde5568903be38637780fe689c0f3c6f1110f8d7555a28e14197e3efb",
+      "inventory_sha256": "99f003ae694740c6b9a5061b39850bbf6a6aedc6e37b56fe514d560b8f691890",
+      "path": "evidence/mfenx-step3-security-review-hosted-20260822-a2/SHA256SUMS",
+      "required_tool_outcomes": 17,
+      "successful_tool_outcomes": 17,
+      "unwaived_codeql_result_count": 1,
+      "unwaived_codeql_rule_id": "rust/cleartext-logging",
+      "workflow_run_id": "32579252384"
+    },
+    "build_provenance": {
+      "inventory_sha256": "a4314ebbc44113dfc46a5b6aac957bb6afc65d8f6c1c182929376d44241e7971",
+      "path": "evidence/mfenx-validation-candidate-supply-chain-20260822-a1/mfenx-validation-candidate.provenance.intoto.json"
+    },
+    "claim_ledger": {
+      "inventory_sha256": "3b6f39020bfec3f2c57cd78cc98a23c7af8ee57981a6b2d215b8319ee96de5d8",
+      "path": "release/mfenx-local-v2-validation-record-20260822-a1/CLAIM_LEDGER.md"
+    },
+    "external_workload": {
+      "inventory_sha256": "311aafe7b75d8d3a2a5bc5ca553b20e13940cd653f9252cc9dcfa165f6f7ff42",
+      "oracle_i32le_sha256": "90f359758f26cc028c4ea52ed99e30c629512b3efb6e53dfd18bb6b669c36f35",
+      "output_manifest_root": "82150d2bac89c31bee0b18cfd30be4feaa0fcfcaa87e2b4189958457dc5775e5",
+      "path": "evidence/external-workload-uci-iris-final-candidate-20260822-a1/SHA256SUMS",
+      "summary_path": "evidence/external-workload-uci-iris-final-candidate-20260822-a1/summary.json",
+      "summary_sha256": "32b870a07c771199be685464c02df8f0c052d21a582085831047daaa466e5270"
+    },
+    "independent_code_security_review": {
+      "disposition": "pass_with_findings",
+      "human_reviewer": false,
+      "informational_findings": 1,
+      "inventory_sha256": "414956bf0cea315f99e7fa8d1aa3a923aa6edaacfb560b95fcaf0234eae22f23",
+      "low_findings": 1,
+      "organizationally_independent": false,
+      "path": "evidence/mfenx-independent-code-security-review-20260822-a1/SHA256SUMS",
+      "report_path": "evidence/mfenx-independent-code-security-review-20260822-a1/report.json",
+      "report_sha256": "a9e45aa1092bc5b7cc7a7b9e8ed9f765faa70350d101bd342699eb4e995c6275",
+      "reviewer_signature_present": false
+    },
+    "performance_profile": {
+      "inventory_sha256": "0669fd12cd392c6c3877aa642fdf81af2cf5d0dadf0f831926394d87b342cadb",
+      "path": "evidence/mfenx-local-performance-profile-20260822-a1/SHA256SUMS",
+      "report_path": "evidence/mfenx-local-performance-profile-20260822-a1/report.json",
+      "report_sha256": "c6efd7378adbe6328b5baba37ca6cd7062c83a172a956617cc5bbb5562bb5bc0"
+    },
+    "reproducibility_review": {
+      "inventory_sha256": "1cf134446069379f2a5a4b8e3d9a8814ca5e4b600df17d6750ea1d6c4a917e52",
+      "path": "evidence/mfenx-validation-candidate-supply-chain-20260822-a1/records/review-build-inventory.canonical.json"
+    },
+    "sbom": {
+      "inventory_sha256": "a3c23510be8e0ba33ff7e6ef05621a848b093652539bbc69717870f881a3a392",
+      "path": "evidence/mfenx-validation-candidate-supply-chain-20260822-a1/mfenx-validation-candidate.sbom.cdx.json"
+    },
+    "scaling": {
+      "failed_attempts": 0,
+      "final_attestation_path": "evidence/mfenx-local-scaling-v3-a3-signed-20260822-a1/FINAL-ATTESTATION.json",
+      "final_attestation_sha256": "39a9a0f353e6053a65f1f85db7c9dc98b9c9d71529d5ff7b72fb76e37fafa21d",
+      "inventory_sha256": "b69942c3be110cb9c42adbc4c8a88a1d1224101120ad64d3c35090aa107c41fc",
+      "path": "evidence/mfenx-local-scaling-v3-a3-signed-20260822-a1/SHA256SUMS",
+      "planned_attempts": 100,
+      "postseal_validation_path": "evidence/mfenx-local-scaling-v3-a3-signed-20260822-a1-postseal-validation.json",
+      "postseal_validation_sha256": "8b65fd73306cc0a2992eeb1df3554c67061b2b7a26487fc23714b71f8591d423",
+      "results_path": "evidence/mfenx-local-scaling-v3-a3-signed-20260822-a1/SCALING-RESULTS.json",
+      "results_sha256": "bb1fd8bfe6158f2e68e028b9f3085359fcf7288d09cfd59e74a9083ef4360608",
+      "sample_filtering_applied": false,
+      "seal_audit_path": "evidence/mfenx-local-scaling-v3-a3-signed-20260822-a1-seal-audit.json",
+      "seal_audit_sha256": "01970563ecfdf3a45c3e0737393e6202d8edd762dc180dce752e3ba5bbf1e9c6",
+      "succeeded_attempts": 100
+    },
+    "supply_chain": {
+      "inventory_sha256": "6a69c7eb301b054248d32ce09c2036acf387808da5cc3cf1ddf08ed47e4e075f",
+      "path": "evidence/mfenx-validation-candidate-supply-chain-20260822-a1/SHA256SUMS"
+    },
+    "three_host_reproduction": {
+      "host_count": 3,
+      "inventory_sha256": "8bf1dedf91080c5db2d56e44b1cacb343ce214c371961e1a8ac790c6d5d85847",
+      "local_verification_path": "evidence/mfenx-step3-three-host-reproduction-20260822-a1/LOCAL-VERIFICATION.json",
+      "local_verification_sha256": "c12a24a7f3f37f47bfcc2e94231fea9e3578eb6a2441cfb8858fdaadd7d38d73",
+      "path": "evidence/mfenx-step3-three-host-reproduction-20260822-a1/SHA256SUMS",
+      "result_status": "complete",
+      "workflow_run_id": "32571937955"
+    }
+  },
+  "human_review": {
+    "blocking_for_technical_evaluation": false,
+    "completed": false,
+    "request_status": "open",
+    "request_url": "https://github.com/JROChub/power_house/issues/117",
+    "status": "NOT_PERFORMED"
+  },
+  "profile_id": "mfenx-apache-technical-evaluation-20260822-a1",
+  "schema": "mfenx.apache-technical-evaluation-profile.v2",
+  "software_license": "Apache-2.0",
+  "status": "release_ready",
+  "status_disclosures": {
+    "counsel_review_completed": false,
+    "paid_customer_exists": false,
+    "partner_exists": false,
+    "payment_received": false,
+    "proprietary_executor_exists": false,
+    "sla_exists": false
+  },
+  "technical_claims": [
+    "Only claims linked to the exact candidate and checksum-closed evidence records are eligible for inclusion.",
+    "The open standalone verifier remains independently usable under Apache-2.0 without payment, entitlement, or network access.",
+    "The sealed single-host scaling population retained all 100 planned attempts: 100 succeeded, zero failed, and no samples were filtered; 8 and 16 lanes were oversubscribed on four physical cores.",
+    "The three-host result covers three distinct GitHub-hosted Ubuntu VM jobs from one runner-image family; it is not hardware attestation, source-to-binary reproducibility, or three administrative domains.",
+    "The UCI Iris run is one small exact-integer integration workload, not evidence of production suitability, workload generality, or classification quality.",
+    "Automated-security A1 and A2 failures are retained: A2 completed 17 of 17 required tool outcomes but failed its final gate on one unwaived CodeQL result; a separate nonhuman review passed with one low and one informational finding still open.",
+    "A technical evaluation result is not a production guarantee, security certification, SLA, generalized performance claim, or claim that independent human review occurred."
+  ]
+}

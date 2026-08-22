@@ -1,0 +1,32 @@
+{
+  "schema": "mfenx-local-adversarial-supersession/v1",
+  "status": "failed_and_superseded",
+  "superseded_run": {
+    "name": "mfenx-local-v2-adversarial-sweep-20260822-a2",
+    "run_id": "131e1bb797cccef1f270648e33e9bf7810fa65de51969298462c190b1ba7a903",
+    "sha256s_sha256": "b393b7cd49b5c1f6bcfb9950da43fa06b7313824847de0ba34934d076a0ce971",
+    "post_seal_validation_sha256": "0d1f9ac0d09663929066ad54d008c7f315060b7e5eefce732b5ff63ca53feb43",
+    "driver_passed": 214,
+    "driver_failed": 0,
+    "independent_passed": 210,
+    "independent_failed": 4,
+    "complete_sweep_evidence": false
+  },
+  "preserved_failures": [
+    "K005-plan-staging-unlinked-before-directory-sync",
+    "K010-piece-staging-unlinked-before-directory-sync",
+    "K014-receipt-staging-unlinked-before-directory-sync",
+    "K021-result-staging-unlinked-before-parent-directory-sync"
+  ],
+  "root_cause": "The A2 validator represented an absent retained staging name as a nonexistent Path instead of None. The raw snapshots correctly retained the destination and absence of the unlinked staging name; the durability oracle was not changed.",
+  "superseded_by": {
+    "candidate": "mfenx-local-v2-adversarial-candidate-20260822-a3",
+    "candidate_sha256s_sha256": "2b349a2a71854325aeb8bfad8058817277f062f2af4ecab4a81ba44811f5041b",
+    "candidate_source_inventory_sha256": "13dd27f4e837c1fc8f2f7de75dfd005968c8929d0bfaaa34d3b2b18f3fc29c34",
+    "regression_diagnostic_sha256s_sha256": "cd46a40593cc963c130d571a784ce3005695917d08c823c7e182524a41af91e1"
+  },
+  "reuse": {
+    "attempts": 0,
+    "outcomes": 0
+  }
+}

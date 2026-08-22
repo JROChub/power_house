@@ -1,0 +1,29 @@
+{
+  "audit_id": "caa3d131a2fd66a91c456c3829a5fac3b07bc590d5d63624f2b67ab1172f6745",
+  "checked_at": "2026-08-22T14:11:24Z",
+  "closure": {
+    "checksum_command": "sha256sum --quiet -c SHA256SUMS",
+    "checksum_exit_status": 0,
+    "directory_count": 364,
+    "manifest_entry_count": 4491,
+    "sha256sums_sha256": "b69942c3be110cb9c42adbc4c8a88a1d1224101120ad64d3c35090aa107c41fc",
+    "total_file_count": 4492,
+    "writable_directory_count": 0,
+    "writable_file_count": 0
+  },
+  "plan_id": "aa94ea9914aae7d29833e86c313cf5335a2f0ac0d85f7a8eda2ec075965d072e",
+  "postseal_validation": {
+    "complete_for_scaling_claim": true,
+    "exit_status": 0,
+    "path_basename": "mfenx-local-scaling-v3-a3-signed-20260822-a1-postseal-validation.json",
+    "preseal_and_postseal_bytes_equal": true,
+    "sha256": "8b65fd73306cc0a2992eeb1df3554c67061b2b7a26487fc23714b71f8591d423",
+    "status_counts": {
+      "succeeded": 100
+    },
+    "validation_id": "c3cf525fffbccf59576381a5be1b7dcb48d641bc27c68004d50c1dcd5efe4d5b"
+  },
+  "run_id": "23c051e7e843d0f22ab93480a439f5d6a4d1ca4fb5329245a6366e2976ba9be7",
+  "run_path_basename": "mfenx-local-scaling-v3-a3-signed-20260822-a1",
+  "schema": "mfenx-local-fixed-work-scaling-seal-audit/v1"
+}

@@ -1,0 +1,306 @@
+{
+  "schema": "mfenx.procedurally-separate-ai-code-security-review.v1",
+  "status": "complete",
+  "review_id": "mfenx-independent-code-security-review-20260822-a1",
+  "started_at_utc": "2026-08-22T14:20:23Z",
+  "completed_at_utc": "2026-08-22T15:04:30Z",
+  "candidate": {
+    "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "release_class": "validation_candidate",
+    "release_status": "signed_validation_candidate",
+    "release_path": "release/mfenx-local-v2-validation-candidate-20260822-a1",
+    "archive_path": "dist/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst",
+    "archive_sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "archive_size_bytes": 1095873,
+    "archive_sha256_sidecar_sha256": "3cdbf5d25e1dbab32da6e5159d1e12eb511014ef9877348808840ee82fa023ea",
+    "decompressed_tar_sha256": "ec68484541a0bd5fbb086d3d31ee910bdf7241e38b46fb1d49633055a56ca47d",
+    "decompressed_tar_size_bytes": 4945920,
+    "manifest_sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+    "manifest_signature_sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "verifier_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+    "release_file_count": 68,
+    "release_directory_count": 26,
+    "archive_member_count": 94
+  },
+  "review_boundary": {
+    "reviewer": "OpenAI Codex AI assistant",
+    "ai_assisted": true,
+    "human_reviewer": false,
+    "human_signature": false,
+    "cryptographically_signed_review": false,
+    "procedurally_separate_fresh_review": true,
+    "relied_on_other_agents_conclusions": false,
+    "same_repository": true,
+    "same_execution_environment": true,
+    "same_host": true,
+    "same_project_authority": true,
+    "organizationally_independent": false,
+    "independently_developed_verifier": false,
+    "statement": "This was a fresh, procedurally separate AI-assisted code/security review, but it was performed in the same repository, host, execution environment, and project authority. It is not a human review, an organizationally independent audit, an independent security certification, or a human signature."
+  },
+  "disposition": "pass_with_findings",
+  "pass_fail": "PASS",
+  "release_gate": {
+    "validation_candidate_scope": "PASS_WITH_FINDINGS",
+    "final_or_commercial_release_approval": false,
+    "rationale": "No critical, high, or medium issue was found in the signed validation-candidate claim boundary. One low-severity verifier CLI publication issue and one informational documentation-completeness issue remain open."
+  },
+  "finding_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 1,
+    "informational": 1,
+    "total_open": 2
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "status": "open",
+      "severity": "low",
+      "title": "Standalone verifier report publication follows symlinks and permits destructive input overlap",
+      "affected_component": "bin/mfenx-contract-v1-verifier",
+      "affected_source": "source/mfenx-contract-v1-verifier/src/main.rs:69-71",
+      "source_sha256": "8ecac76a97a7ad6067e3261b7a46885654be63b85938d17ea6fb527e900c1fa0",
+      "cwe": [
+        "CWE-59"
+      ],
+      "summary": "The CLI writes a caller-controlled --report path with std::fs::write after successful verification. It truncates existing files, follows existing symlinks, and permits --report to equal --image or --result. An isolated probe replaced the verified result itself and a symlink target while the verifier exited successfully.",
+      "security_effect": "Local integrity/availability footgun and shared-directory symlink hazard; the replay decision itself and stdout mode are unaffected.",
+      "evidence": [
+        "findings/F-001.md",
+        "logs/cli-canonicalization-probe.log",
+        "commands/cli_canonicalization_probe.sh"
+      ],
+      "immediate_mitigation": "Omit --report and redirect stdout to a trusted, new, non-overlapping path in a caller-controlled real directory. Do not place the report in the tensor store and do not run the verifier with elevated privileges in an untrusted working directory.",
+      "next_signed_revision_fix": "Use create-new/no-replace, no-symlink, synchronized publication equivalent to the executor output path; reject existing destinations and any overlap with image, result, or store; add symlink, hard-link, overlap, and interrupted-publication tests.",
+      "public_issue_url": null,
+      "public_issue_note": "No public issue was created; this review had no authorization to publish externally."
+    },
+    {
+      "id": "F-002",
+      "status": "open",
+      "severity": "informational",
+      "title": "Packaged core documentation references normative contract and threat-model documents absent from the signed closure",
+      "affected_component": "signed documentation / claim boundary",
+      "affected_source": "source/mfenx-local-candidate/frozen/docs/MFENX_LOCAL.md:241-242",
+      "source_sha256": "bc718c7671968067f773550e7281284ce8b7235bbdd5f34a912ff0b657794fd2",
+      "summary": "EXECUTION_CONTRACT_V1.md and THREAT_MODEL.md are named as the normative contract and broader risk/exclusion documents, but neither exists in the authenticated 68-file package. Included READMEs and FAILPOINT-BOUNDARY.md still provide substantial and consistent qualifications.",
+      "security_effect": "Documentation completeness and standalone auditability only; no direct code/claim contradiction was identified.",
+      "evidence": [
+        "findings/F-002.md",
+        "logs/static-source-review.log",
+        "inventory/signed-candidate-files.sha256"
+      ],
+      "next_signed_revision_fix": "Include checksum-bound copies of the referenced documents or update the signed links to point only to documents actually present.",
+      "public_issue_url": null
+    }
+  ],
+  "scope_results": {
+    "archive_and_release_identity": {
+      "status": "pass",
+      "summary": "The zstd stream passed integrity testing; the tar had one expected root, no traversal, duplicate, link, device, or other non-regular member; deterministic ownership/time/modes were correct; extraction was byte-, type-, mode-, size-, and tree-equivalent to the sealed release."
+    },
+    "authentication": {
+      "status": "pass_with_trust_qualification",
+      "algorithm": "ssh-ed25519 OpenSSH SSHSIG",
+      "namespace": "mfenx-validation-candidate",
+      "signer_identity": "mfenx-release",
+      "public_key_fingerprint": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc",
+      "public_key_sha256": "0f7c5f5eacc52b9f5c54eb7a5166e7e8e0a5a5b73d9a23f94dc9e2bdad244426",
+      "allowed_signers_sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+      "alternate_namespaces_rejected": [
+        "mfenx-release",
+        "mfenx-step2-addendum",
+        "mfenx-commercial-release"
+      ],
+      "trusted_channel_key_provenance": "not_established_by_this_review",
+      "summary": "The exact manifest verifies under the packaged policy/key in the candidate namespace. Organizational signer identity, independent key distribution, trusted timestamping, transparency inclusion, and hardware key custody were not established."
+    },
+    "executor": {
+      "status": "pass",
+      "summary": "Strict typed bounded control input, checked geometry/arithmetic, fallible managed buffers, deterministic lane/piece scheduling, wrapping-i32 semantics, no-replace result publication, checkpoint locking/namespace checks, and exact replay were reviewed. Signed product Rust crates forbid unsafe code and contain no product source match for process launch, network sockets/HTTP clients, or dynamic loading. Dependency unsafe code remains outside that source-level prohibition."
+    },
+    "tensor_store": {
+      "status": "pass",
+      "summary": "Canonical manifest bytes, domain-separated BLAKE3 identities, full-chunk authentication before release, handle/geometry binding, bounded reads, checked sizing, fallible reserve, real-directory/symlink checks, create-new staging, hard-link no-clobber publication, file sync, and directory sync were reviewed. Collision resistance and the documented trusted-same-user filesystem boundary remain assumptions."
+    },
+    "standalone_verifier": {
+      "status": "pass_with_low_finding",
+      "summary": "The verifier has self-owned strict wire types, bounded reads, integer-lexeme controls, canonical manifest enforcement, authenticated chunk reads, typed digest/resource rederivation, deterministic claim validation, and full wrapping-i32 replay. It neither imports nor launches the executor. F-001 affects only optional report publication."
+    },
+    "canonicalization": {
+      "status": "pass",
+      "summary": "The release manifest matches the jq -cS integer profile and regenerates exactly. Tensor manifests require exact canonical bytes. Image/result control JSON intentionally accepts value-equivalent whitespace/member ordering but requires strict typed projection and integer lexical form; independently probed negative zero and fractional zero were rejected."
+    },
+    "resource_bounds": {
+      "status": "pass_with_documented_boundary",
+      "hard_limits": {
+        "control_json_bytes": 4194304,
+        "manifest_bytes": 4194304,
+        "chunk_bytes": 16777216,
+        "chunks": 16384,
+        "rank": 32,
+        "lanes": 64,
+        "pieces": 4096
+      },
+      "summary": "Executor and verifier independently derive and check the schema-5 resource certificate. The managed-memory value is a logical allocation/admission certificate, not an OS-enforced RSS, address-space, kernel-cache, or allocator ceiling; denial of service is excluded by the signed threat boundary."
+    },
+    "crash_recovery_and_failpoints": {
+      "status": "pass",
+      "summary": "The 14 pauses require both an exact environment opt-in and a complete hidden CLI binding. Environment-only activation was inert and CLI-only activation failed before execution. An isolated process-group SIGKILL at piece_destination_hard_linked_before_staging_unlink produced wait status 137; restart removed the orphan staging link, deterministically recomputed, published the same output root, and passed standalone exact replay."
+    },
+    "cli_and_filesystem_safety": {
+      "status": "pass_with_low_finding",
+      "summary": "Executor output publication is create-new/no-replace and rejects checkpoint overlap; checkpoint/store paths have documented private-directory constraints. Standalone verifier inputs and store objects reject symlinks and are bounded, subject to documented same-user TOCTOU exclusions. Optional report publication has F-001."
+    },
+    "supply_chain": {
+      "status": "pass_with_residual_risk",
+      "summary": "Rust 1.93.1 is pinned; Cargo locks and registry checksums are signed; offline fmt/clippy/build/test paths succeeded; cargo-audit found no known advisory in all three signed lockfiles using a 2026-08-21 advisory database; the standalone verifier rebuilt byte-identically. Third-party crate source, the Rust toolchain, system linker, libc, libgcc_s, kernel, and hardware remain trust dependencies. Crate source is not vendored, so rebuilds require a pre-populated Cargo cache and are not hermetic."
+    },
+    "binary_hardening": {
+      "status": "pass_with_observations",
+      "summary": "Both signed binaries are x86-64 PIE, have GNU RELRO plus BIND_NOW, non-executable GNU stacks, no RPATH/RUNPATH, and dynamically require only libc and libgcc_s. They are not stripped and embed absolute Rust/Cargo build paths, as the candidate discloses. checksec was unavailable, so observations were derived with file/readelf/ldd/strings."
+    },
+    "threat_model_and_claim_consistency": {
+      "status": "pass_with_informational_finding",
+      "summary": "Claims consistently limit the subject to a signed validation candidate, not final/production/commercial qualification; distinguish BLAKE3 identity from signatures; narrow the replay sense of independence; disclose same-repository/toolchain common-mode risk, missing raw A3 corpus, historical A1/A2 failures, build-path dependence, same-user TOCTOU, non-hermetic dependencies, logical-not-RSS resource accounting, and power-loss boundaries. F-002 records the absent named contract/threat-model documents."
+    }
+  },
+  "executed_checks": [
+    {
+      "name": "archive identity, structure safety, and extraction equivalence",
+      "status": "pass",
+      "logs": [
+        "logs/archive-identity-and-safety.log",
+        "logs/archive-extraction-equivalence.log"
+      ]
+    },
+    {
+      "name": "SSHSIG namespace authentication and packaged static closure verification",
+      "status": "pass",
+      "logs": [
+        "logs/authentication-and-static-verification.log"
+      ]
+    },
+    {
+      "name": "packaged --all validation from archive extraction",
+      "status": "pass_with_observer_wrapper_diagnostic",
+      "logs": [
+        "logs/full-packaged-validation.log"
+      ],
+      "note": "The candidate script printed every terminal PASS and exact hash. Only afterward, the outer zsh observer attempted to assign its reserved read-only variable status and exited with its own diagnostic. The diagnostic is preserved unfiltered and is not a candidate-script failure. Subsequent wrappers used /bin/bash or rc-named variables."
+    },
+    {
+      "name": "Rust fmt and release clippy all targets with -D warnings",
+      "status": "pass",
+      "logs": [
+        "logs/rustfmt-and-clippy.log"
+      ]
+    },
+    {
+      "name": "shellcheck and Python byte compilation",
+      "status": "pass",
+      "logs": [
+        "logs/static-lints.log"
+      ]
+    },
+    {
+      "name": "Cargo advisory audit and dependency inventory",
+      "status": "pass",
+      "logs": [
+        "logs/dependency-advisory-audit.log",
+        "logs/dependency-inventory.log"
+      ]
+    },
+    {
+      "name": "independent failpoint gate and signed-binary SIGKILL/recovery/replay probe",
+      "status": "pass",
+      "logs": [
+        "logs/failpoint-crash-recovery.log",
+        "logs/post-recovery-checkpoint.log"
+      ]
+    },
+    {
+      "name": "verifier report-path and integer canonicalization probe",
+      "status": "pass_with_low_finding",
+      "logs": [
+        "logs/cli-canonicalization-probe.log"
+      ]
+    },
+    {
+      "name": "single disk-sync-heavy missing-receipt source unit test",
+      "status": "incomplete_not_counted",
+      "logs": [
+        "logs/executor-heavy-recovery-test.log"
+      ],
+      "note": "Compilation succeeded. The reviewer interrupted the duplicate test with SIGINT after more than eight minutes predominantly blocked in filesystem journal commits. No assertion failure was observed, but it is not counted as a pass. Proportionate independent coverage is supplied by the completed signed-binary SIGKILL/recovery probe; candidate-preserved prior logs were reviewed only as signed evidence."
+    }
+  ],
+  "source_and_inventory_bindings": {
+    "identity_bindings": {
+      "path": "inventory/identity-bindings.sha256",
+      "sha256": "b3a02d089b5e47356105adfcbd2c25d14ad34361156a2ceccd141cdc9efa27fe",
+      "entries": 8
+    },
+    "reviewed_sources": {
+      "path": "inventory/reviewed-source-files.sha256",
+      "sha256": "aeb616bfe01b94997f0af4fdd23e7bd85ac10780eb0901f691536fe081d047c0",
+      "entries": 32
+    },
+    "signed_candidate_files": {
+      "path": "inventory/signed-candidate-files.sha256",
+      "sha256": "b15f39786c8ced4e214e73e37c6d67e10ac498f5e7d063fc3a7e04ce4c0955b5",
+      "entries": 68
+    },
+    "signed_candidate_tree": {
+      "path": "inventory/signed-candidate-tree.tsv",
+      "sha256": "11c5d9c22585247b02e8add80da15215b02c35c49b8b278511be19bef2dd9656",
+      "entries": 94
+    },
+    "dependencies": {
+      "path": "inventory/dependencies.tsv",
+      "sha256": "53c57cc49651445b71ede3bbdd4289517f77369e7e428c99059ac6c11d63561d",
+      "records_including_header": 363,
+      "registry_records_missing_checksum": 0
+    }
+  },
+  "residual_risks_and_qualifications": [
+    "The SSHSIG was verified with policy/key bytes inside the signed package; independent trusted-channel distribution of the expected fingerprint was not established here.",
+    "The A3 2,989-file, 632,064,312-byte raw adversarial corpus is intentionally absent; only its signed root inventory and summaries are present, so this review could not replay all 214 cases from raw evidence.",
+    "The reference verifier is separate from the executor but shares repository authorship, Rust toolchain, contract interpretation, environment, and project authority; common-mode defects remain possible.",
+    "The executor review build was functionally validated but not byte-identical because signed source embeds absolute build paths; the candidate explicitly does not claim arbitrary-path executor reproducibility.",
+    "No cross-host build/replay, diverse-language verifier, formal verification, fuzz campaign, power-cut hardware test, side-channel analysis, denial-of-service analysis, privileged-race test, key-custody audit, trusted timestamp, or transparency-log proof was performed.",
+    "Internal BLAKE3 and SHA-256 security relies on collision/preimage resistance; storage durability relies on kernel/filesystem/device behavior honoring hard-link, locking, and synchronization semantics."
+  ],
+  "unavailable_tools": [
+    "checksec",
+    "cargo-geiger",
+    "semgrep",
+    "minisign",
+    "cosign",
+    "syft",
+    "grype",
+    "trivy",
+    "osv-scanner",
+    "ruff",
+    "bandit",
+    "pylint",
+    "mypy",
+    "gitleaks",
+    "trufflehog"
+  ],
+  "environment_diagnostics": [
+    "The /tmp tmpfs was 100% full. All substantive scratch/build/test work used TMPDIR=/var/tmp as required.",
+    "The initial archive-inspection here-document failed with ENOSPC because zsh materialized it under /tmp; the error is preserved, and the stored Python command was rerun successfully with TMPDIR=/var/tmp.",
+    "Two review wrappers initially used zsh's reserved read-only variable name status. Both diagnostics are preserved; retries used non-reserved variable names or /bin/bash. The full packaged candidate validation had already reached its terminal PASS before its outer observer diagnostic."
+  ],
+  "evidence_closure": {
+    "root": "evidence/mfenx-independent-code-security-review-20260822-a1",
+    "checksum_file": "SHA256SUMS",
+    "checksum_file_excludes_itself": true,
+    "sealed_read_only": true,
+    "reviewer_signature": null
+  }
+}

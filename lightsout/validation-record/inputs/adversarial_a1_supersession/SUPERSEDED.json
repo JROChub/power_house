@@ -1,0 +1,56 @@
+{
+  "attempts": 214,
+  "candidate": "mfenx-local-v2-adversarial-candidate-20260822-a1",
+  "case_count": 214,
+  "driver_status_counts": {
+    "failed": 64,
+    "passed": 150
+  },
+  "failure_inventory": {
+    "expected_rejection_oracle_mismatch": [
+      "M100-certificate-embedded-resource-certificate-alter-max-managed-bytes-minus-one"
+    ],
+    "hardlink_clone_read_only_parent_permission_errors": {
+      "case_count": 55,
+      "ranges": [
+        "M001-M013",
+        "M066-M083",
+        "M187",
+        "M190",
+        "K001-K022"
+      ]
+    },
+    "preexisting_bytes_unchanged_oracle_mismatch": [
+      "M185-publication-namespace-or-output-result-inside-checkpoint",
+      "M186-publication-namespace-or-output-checkpoint-inside-store",
+      "M188-publication-namespace-or-output-checkpoint-root-symlink",
+      "M189-publication-namespace-or-output-unexpected-checkpoint-entry"
+    ],
+    "recovery_oracle_mismatch": [
+      "M158-plan-checkpoint-plan-alter-plan-removed-after-partial-commit",
+      "M167-piece-checkpoint-piece-durable-piece-without-receipt",
+      "M181-receipt-piece-receipt-missing-receipt-with-durable-piece",
+      "M191-publication-result-commit-orphan-final-tensor-without-result"
+    ]
+  },
+  "independent_validation": {
+    "complete_sweep_evidence": false,
+    "path": "independent-validation.json",
+    "sha256": "b7dcd184553cad123ed834243c69a513f31280e363a061a76d14b565469ff84f",
+    "validated_status_counts": {
+      "failed": 64,
+      "passed": 150
+    }
+  },
+  "reason": "The unfiltered a1 population exposed harness defects. It is retained in full and must never be reused or represented as complete.",
+  "run_id": "2226cea97ec8a0d5e858f06eab4fc6d5721ce7f4a9699937fdf21c671f2748e9",
+  "schema": "mfenx-local-adversarial-superseded-run/v1",
+  "status": "failed_and_superseded",
+  "superseded_by": {
+    "candidate_path": "/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-candidate-20260822-a2",
+    "fresh_run_path": "/home/lexluger/rarcomp_mfenx/evidence/mfenx-local-v2-adversarial-sweep-20260822-a2",
+    "reuse_of_a1_attempts_or_outcomes": false
+  },
+  "superseded_at": "2026-08-22T09:17:12Z",
+  "validation_sha256": "b7dcd184553cad123ed834243c69a513f31280e363a061a76d14b565469ff84f"
+}

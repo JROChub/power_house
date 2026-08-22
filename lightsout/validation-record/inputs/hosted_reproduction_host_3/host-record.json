@@ -1,0 +1,49 @@
+{
+  "capture": {
+    "accepted_binary_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "candidate_identity_sha256": "97b0868b0a6866ab967d241b6f5bd00e53b962aaa3234913a1c272ba7026fa6d",
+    "candidate_release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "checksum_manifest_sha256": "fa7a96e93e1f55be2fc12b23cfdba6c8f6485881b7495e0ab2090c5b65d96a39",
+    "hosted_release_workload_gate_passed": true,
+    "path": "reproduction-capture",
+    "record_schema": "mfenx.step3-hosted-release-run.v1"
+  },
+  "claim_policy": {
+    "individual_record_establishes_three_host_reproduction": false,
+    "requires_signed_aggregate": true,
+    "requires_three_distinct_host_fingerprints": true,
+    "requires_three_distinct_runner_ids": true
+  },
+  "created_at": "2026-08-22T12:03:34Z",
+  "failures": [],
+  "github": {
+    "actions_job_id": 97028509057,
+    "commit": "f7b8b1e9b5dc130b1127411faaa3f86b3cd1dba5",
+    "job_name": "Reproduce host-3",
+    "labels": [
+      "ubuntu-24.04"
+    ],
+    "repository": "JROChub/power_house",
+    "run_attempt": "1",
+    "run_id": "32571937955",
+    "runner_environment": "github-hosted",
+    "runner_id": 1000007423,
+    "runner_name": "GitHub Actions 1000007423"
+  },
+  "host": {
+    "component_hashes": {
+      "actions_job_id": "3905e57245c80f5428e9a583976117237ccb304447770fce83edd17bef02fc70",
+      "boot_id": "33a8012d8343aa81b04c8e9227025dad42bd1f0429e1902e3f24256e86b7e509",
+      "hostname": "b0ab998e07f2356346435e9b40d98a4d3e57e465fbe5f64d60e6541468506b29",
+      "machine_id": "7f4cba9edf4a550b03cf4b2bde1d55bce5e9b4b37b497b56b5ffd8a6b22db84a",
+      "runner_id": "e9bdbfad09c71a34cd3dcf04e65fed6852795f52318cb440ebb4e9b527255594",
+      "runner_name": "42a60462bed0dba9f2f780b089b6a2f85dd26d664e0a5bffe19cc5fd51402ec9"
+    },
+    "fingerprint": "9f78317c8752b6c7c1cbee5ae7b315158af651df281db7eed3189cb90cb7ffba",
+    "raw_host_identifiers_withheld": true
+  },
+  "kind": "host_reproduction",
+  "schema": "mfenx.step3-reproduction.v1",
+  "slot": "host-3",
+  "status": "succeeded"
+}
