@@ -81,9 +81,10 @@ payload="$extract_dir/$archive_root"
   printf 'candidate archive root is absent after extraction\n' >&2
   exit 1
 }
-[[ -f $payload/verify-archive.sh && ! -L $payload/verify-archive.sh ]] || {
-  printf 'candidate archive has no regular verify-archive.sh\n' >&2
-  exit 1
-}
-(cd "$payload" && bash ./verify-archive.sh)
+python3 "$identity_tool" verify-extracted \
+  --identity "$identity" \
+  --root "$payload" \
+  --manifest "$manifest" \
+  --signature "$signature" \
+  --allowed-signers "$allowed_signers"
 printf '%s\n' "$payload"

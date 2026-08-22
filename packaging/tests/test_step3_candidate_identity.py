@@ -57,7 +57,11 @@ class Step3CandidateIdentityTests(unittest.TestCase):
             identity["archive"].update(
                 root="candidate-root",
                 source_subdir="source",
-                manifest_path="dist/candidate.tar.zst",
+                candidate_manifest_path="MANIFEST.json",
+                candidate_signature_path="MANIFEST.json.sig",
+                allowed_signers_path="policy/allowed_signers",
+                executor_path="bin/mfenx-local",
+                verifier_path="bin/mfenx-contract-v1-verifier",
                 sha256="a" * 64,
             )
             identity["manifest"]["sha256"] = "b" * 64
@@ -92,18 +96,107 @@ class Step3CandidateIdentityTests(unittest.TestCase):
                 check=True,
             )
             payload = root / "candidate-root"
-            (payload / "source").mkdir(parents=True)
-            (payload / "source/Cargo.toml").write_text("[workspace]\n", encoding="ascii")
-            verify_script = payload / "verify-archive.sh"
-            verify_script.write_text(
-                "#!/usr/bin/env bash\nset -Eeuo pipefail\nsha256sum -c SHA256SUMS >/dev/null\n",
+            public_fields = private_key.with_suffix(".pub").read_text().split()
+            allowed = root / "allowed_signers"
+            allowed.write_text(
+                f'mfenx-release namespaces="mfenx-validation-candidate" {public_fields[0]} {public_fields[1]}\n',
                 encoding="ascii",
             )
-            (payload / "SHA256SUMS").write_text(
-                f"{digest(verify_script)}  verify-archive.sh\n"
-                f"{digest(payload / 'source/Cargo.toml')}  source/Cargo.toml\n",
+            fingerprint = subprocess.run(
+                ["ssh-keygen", "-lf", str(private_key.with_suffix(".pub"))],
+                check=True,
+                stdout=subprocess.PIPE,
+                text=True,
+            ).stdout.split()[1]
+
+            (payload / "bin").mkdir(parents=True)
+            (payload / "source").mkdir()
+            (payload / "policy").mkdir()
+            executor = payload / "bin/mfenx-local"
+            verifier = payload / "bin/mfenx-contract-v1-verifier"
+            executor.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="ascii")
+            verifier.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="ascii")
+            cargo_manifest = payload / "source/Cargo.toml"
+            cargo_manifest.write_text("[workspace]\n", encoding="ascii")
+            embedded_allowed = payload / "policy/allowed_signers"
+            embedded_allowed.write_bytes(allowed.read_bytes())
+            for path in (executor, verifier):
+                path.chmod(0o555)
+            for path in (cargo_manifest, embedded_allowed):
+                path.chmod(0o444)
+
+            def artifact(path, relative, role, mode):
+                return {
+                    "media_type": "text/plain",
+                    "mode": mode,
+                    "path": relative,
+                    "role": role,
+                    "sha256": digest(path),
+                    "size_bytes": path.stat().st_size,
+                }
+
+            manifest_document = {
+                "schema": "mfenx.validation-candidate-manifest.v1",
+                "release_id": "candidate-a1",
+                "release_class": "validation_candidate",
+                "release_status": "signed_validation_candidate",
+                "signature": {
+                    "signer_identity": "mfenx-release",
+                    "namespace": "mfenx-validation-candidate",
+                    "public_key_fingerprint": fingerprint,
+                    "signature_present": True,
+                },
+                "subject": {
+                    "executor": {"path": "bin/mfenx-local", "sha256": digest(executor)},
+                    "reference_verifier": {
+                        "path": "bin/mfenx-contract-v1-verifier",
+                        "sha256": digest(verifier),
+                    },
+                },
+                "artifacts": [
+                    artifact(executor, "bin/mfenx-local", "candidate_executor_binary", "0555"),
+                    artifact(
+                        verifier,
+                        "bin/mfenx-contract-v1-verifier",
+                        "reference_verifier_binary",
+                        "0555",
+                    ),
+                    artifact(cargo_manifest, "source/Cargo.toml", "candidate_source", "0444"),
+                    artifact(
+                        embedded_allowed,
+                        "policy/allowed_signers",
+                        "signature_verification_policy",
+                        "0444",
+                    ),
+                ],
+            }
+            manifest = root / "MANIFEST.json"
+            manifest.write_text(
+                json.dumps(manifest_document, sort_keys=True, separators=(",", ":")) + "\n",
                 encoding="ascii",
             )
+            subprocess.run(
+                [
+                    "ssh-keygen",
+                    "-Y",
+                    "sign",
+                    "-f",
+                    str(private_key),
+                    "-n",
+                    "mfenx-validation-candidate",
+                    str(manifest),
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            signature = root / "MANIFEST.json.sig"
+            embedded_manifest = payload / "MANIFEST.json"
+            embedded_signature = payload / "MANIFEST.json.sig"
+            embedded_manifest.write_bytes(manifest.read_bytes())
+            embedded_signature.write_bytes(signature.read_bytes())
+            embedded_manifest.chmod(0o444)
+            embedded_signature.chmod(0o444)
+
             uncompressed = root / "candidate.tar"
             subprocess.run(
                 [
@@ -124,50 +217,6 @@ class Step3CandidateIdentityTests(unittest.TestCase):
             subprocess.run(
                 ["zstd", "-q", "-f", str(uncompressed), "-o", str(archive)], check=True
             )
-            manifest = root / "MANIFEST.json"
-            manifest.write_text(
-                json.dumps(
-                    {
-                        "artifacts": [
-                            {
-                                "path": "dist/candidate.tar.zst",
-                                "role": "revisioned_distribution_archive",
-                                "sha256": digest(archive),
-                            }
-                        ]
-                    },
-                    sort_keys=True,
-                    separators=(",", ":"),
-                ),
-                encoding="ascii",
-            )
-            subprocess.run(
-                [
-                    "ssh-keygen",
-                    "-Y",
-                    "sign",
-                    "-f",
-                    str(private_key),
-                    "-n",
-                    "mfenx-validation-candidate",
-                    str(manifest),
-                ],
-                check=True,
-                stdout=subprocess.DEVNULL,
-            )
-            signature = root / "MANIFEST.json.sig"
-            public_fields = private_key.with_suffix(".pub").read_text().split()
-            allowed = root / "allowed_signers"
-            allowed.write_text(
-                f'mfenx-release namespaces="mfenx-validation-candidate" {public_fields[0]} {public_fields[1]}\n',
-                encoding="ascii",
-            )
-            fingerprint = subprocess.run(
-                ["ssh-keygen", "-lf", str(private_key.with_suffix(".pub"))],
-                check=True,
-                stdout=subprocess.PIPE,
-                text=True,
-            ).stdout.split()[1]
 
             identity = json.loads(TEMPLATE.read_text())
             identity.update(enabled=True, release_id="candidate-a1")
@@ -177,7 +226,11 @@ class Step3CandidateIdentityTests(unittest.TestCase):
                 root="candidate-root",
                 sha256=digest(archive),
                 source_subdir="source",
-                manifest_path="dist/candidate.tar.zst",
+                candidate_manifest_path="MANIFEST.json",
+                candidate_signature_path="MANIFEST.json.sig",
+                allowed_signers_path="policy/allowed_signers",
+                executor_path="bin/mfenx-local",
+                verifier_path="bin/mfenx-contract-v1-verifier",
             )
             identity["manifest"].update(
                 url="https://mfenx.com/releases/a1/MANIFEST.json",
@@ -195,8 +248,8 @@ class Step3CandidateIdentityTests(unittest.TestCase):
                 key_fingerprint=fingerprint,
             )
             identity["workload"] = {
-                "executor_sha256": "1" * 64,
-                "verifier_sha256": "2" * 64,
+                "executor_sha256": digest(executor),
+                "verifier_sha256": digest(verifier),
                 "canonical_output_root": "3" * 64,
             }
             identity_path = root / "identity.json"

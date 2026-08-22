@@ -55,6 +55,8 @@ expected_verifier_sha256=$(jq -er '.workload.verifier_sha256' "$identity")
 expected_output_root=$(jq -er '.workload.canonical_output_root' "$identity")
 archive_name=$(jq -er '.archive.name' "$identity")
 archive_root=$(jq -er '.archive.root' "$identity")
+executor_path=$(jq -er '.archive.executor_path' "$identity")
+verifier_path=$(jq -er '.archive.verifier_path' "$identity")
 manifest_name=$(jq -er '.manifest.name' "$identity")
 signature_name=$(jq -er '.signature.name' "$identity")
 allowed_signers_name=$(jq -er '.allowed_signers.name' "$identity")
@@ -63,7 +65,7 @@ allowed_signers_name=$(jq -er '.allowed_signers.name' "$identity")
   exit 2
 }
 
-mkdir -p "$output/inputs" "$output/logs" "$output/install" "$output/run"
+mkdir -p "$output/inputs" "$output/logs" "$output/run"
 stage=initialization
 started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 executor_sha256=
@@ -201,11 +203,9 @@ archive_inventory_verified=true
 payload="$output/extracted/$archive_root"
 [[ -d $payload && ! -L $payload ]]
 
-stage=install_archive
-bash "$payload/install.sh" --destdir "$output/install" --prefix /usr \
-  >"$output/logs/install.stdout.log" 2>"$output/logs/install.stderr.log"
-executor="$output/install/usr/bin/mfenx-local"
-verifier="$output/install/usr/bin/mfenx-contract-v1-verifier"
+stage=resolve_signed_candidate_binaries
+executor="$payload/$executor_path"
+verifier="$payload/$verifier_path"
 [[ -x $executor && -x $verifier && ! -L $executor && ! -L $verifier ]]
 executor_sha256=$(sha256sum "$executor" | awk '{print $1}')
 verifier_sha256=$(sha256sum "$verifier" | awk '{print $1}')

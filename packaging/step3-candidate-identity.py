@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import pathlib
 import re
 import shlex
@@ -25,7 +26,18 @@ KEY_TYPE = re.compile(r"^(?:ssh-(?:ed25519|rsa)|ecdsa-sha2-[A-Za-z0-9@._+-]+)$")
 
 EXPECTED_KEYS = {
     "": {"schema", "enabled", "release_id", "archive", "manifest", "signature", "allowed_signers", "workload"},
-    "archive": {"url", "name", "root", "sha256", "source_subdir", "manifest_path", "manifest_role"},
+    "archive": {
+        "url",
+        "name",
+        "root",
+        "sha256",
+        "source_subdir",
+        "candidate_manifest_path",
+        "candidate_signature_path",
+        "allowed_signers_path",
+        "executor_path",
+        "verifier_path",
+    },
     "manifest": {"url", "name", "sha256"},
     "signature": {"url", "name", "sha256", "principal", "namespace"},
     "allowed_signers": {"url", "name", "sha256", "key_fingerprint"},
@@ -39,7 +51,11 @@ PLACEHOLDER_FIELDS = (
     "archive.root",
     "archive.sha256",
     "archive.source_subdir",
-    "archive.manifest_path",
+    "archive.candidate_manifest_path",
+    "archive.candidate_signature_path",
+    "archive.allowed_signers_path",
+    "archive.executor_path",
+    "archive.verifier_path",
     "manifest.url",
     "manifest.name",
     "manifest.sha256",
@@ -121,8 +137,6 @@ def validate_identity(document: Any, *, require_enabled: bool) -> dict[str, Any]
         raise IdentityError("candidate identity schema is not supported")
     if not isinstance(document.get("enabled"), bool):
         raise IdentityError("candidate identity enabled gate must be boolean")
-    if document["archive"]["manifest_role"] != "revisioned_distribution_archive":
-        raise IdentityError("archive.manifest_role is not the frozen release role")
     if document["signature"]["principal"] != "mfenx-release":
         raise IdentityError("signature.principal must be mfenx-release")
     if document["signature"]["namespace"] != "mfenx-validation-candidate":
@@ -152,10 +166,26 @@ def validate_identity(document: Any, *, require_enabled: bool) -> dict[str, Any]
     archive = document["archive"]
     if not safe_relative(archive["root"], one_component=True):
         raise IdentityError("archive.root must be one safe path component")
-    if not safe_relative(archive["source_subdir"]):
-        raise IdentityError("archive.source_subdir must be a safe relative path")
-    if not safe_relative(archive["manifest_path"]):
-        raise IdentityError("archive.manifest_path must be a safe relative path")
+    for field in (
+        "source_subdir",
+        "candidate_manifest_path",
+        "candidate_signature_path",
+        "allowed_signers_path",
+        "executor_path",
+        "verifier_path",
+    ):
+        if not safe_relative(archive[field]):
+            raise IdentityError(f"archive.{field} must be a safe relative path")
+    if len(
+        {
+            archive["candidate_manifest_path"],
+            archive["candidate_signature_path"],
+            archive["allowed_signers_path"],
+            archive["executor_path"],
+            archive["verifier_path"],
+        }
+    ) != 5:
+        raise IdentityError("candidate archive identity paths must be distinct")
 
     for field in (
         "archive.sha256",
@@ -225,6 +255,69 @@ def signer_fingerprint(key_type: str, key_data: str) -> str:
     return fields[1]
 
 
+def validate_signed_manifest(manifest: Any, identity: dict[str, Any]) -> list[dict[str, Any]]:
+    if not isinstance(manifest, dict):
+        raise IdentityError("candidate manifest must be a JSON object")
+    signature = manifest.get("signature")
+    subject = manifest.get("subject")
+    if (
+        manifest.get("schema") != "mfenx.validation-candidate-manifest.v1"
+        or manifest.get("release_id") != identity["release_id"]
+        or manifest.get("release_class") != "validation_candidate"
+        or manifest.get("release_status") != "signed_validation_candidate"
+        or not isinstance(signature, dict)
+        or signature.get("signer_identity") != identity["signature"]["principal"]
+        or signature.get("namespace") != identity["signature"]["namespace"]
+        or signature.get("public_key_fingerprint")
+        != identity["allowed_signers"]["key_fingerprint"]
+        or signature.get("signature_present") is not True
+        or not isinstance(subject, dict)
+    ):
+        raise IdentityError("signed manifest release or signature policy differs from the frozen identity")
+
+    executor = subject.get("executor")
+    verifier = subject.get("reference_verifier")
+    archive = identity["archive"]
+    workload = identity["workload"]
+    if (
+        not isinstance(executor, dict)
+        or executor.get("path") != archive["executor_path"]
+        or executor.get("sha256") != workload["executor_sha256"]
+        or not isinstance(verifier, dict)
+        or verifier.get("path") != archive["verifier_path"]
+        or verifier.get("sha256") != workload["verifier_sha256"]
+    ):
+        raise IdentityError("signed manifest subject does not bind the frozen executor and verifier")
+
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise IdentityError("candidate manifest has no artifacts array")
+    expected_artifacts = (
+        {
+            "path": archive["executor_path"],
+            "role": "candidate_executor_binary",
+            "sha256": workload["executor_sha256"],
+        },
+        {
+            "path": archive["verifier_path"],
+            "role": "reference_verifier_binary",
+            "sha256": workload["verifier_sha256"],
+        },
+    )
+    for expected in expected_artifacts:
+        matches = [
+            item
+            for item in artifacts
+            if isinstance(item, dict)
+            and all(item.get(field) == value for field, value in expected.items())
+        ]
+        if len(matches) != 1:
+            raise IdentityError(
+                f"candidate manifest does not bind exactly one signed {expected['role']}"
+            )
+    return artifacts
+
+
 def verify_files(args: argparse.Namespace) -> int:
     identity = load_identity(args.identity)
     paths = {
@@ -278,22 +371,7 @@ def verify_files(args: argparse.Namespace) -> int:
         manifest = json.loads(manifest_bytes)
     except (UnicodeError, json.JSONDecodeError) as error:
         raise IdentityError(f"candidate manifest is not valid JSON: {error}") from error
-    artifacts = manifest.get("artifacts") if isinstance(manifest, dict) else None
-    if not isinstance(artifacts, list):
-        raise IdentityError("candidate manifest has no artifacts array")
-    expected = {
-        "path": identity["archive"]["manifest_path"],
-        "role": identity["archive"]["manifest_role"],
-        "sha256": identity["archive"]["sha256"],
-    }
-    matches = [
-        item
-        for item in artifacts
-        if isinstance(item, dict)
-        and all(item.get(field) == value for field, value in expected.items())
-    ]
-    if len(matches) != 1:
-        raise IdentityError("candidate manifest does not bind exactly one frozen archive artifact")
+    validate_signed_manifest(manifest, identity)
 
     report = {
         "schema": "mfenx.step3-candidate-input-verification.v1",
@@ -307,7 +385,110 @@ def verify_files(args: argparse.Namespace) -> int:
         "signature_principal": identity["signature"]["principal"],
         "signature_namespace": identity["signature"]["namespace"],
         "signature_verified": True,
-        "archive_manifest_binding_verified": True,
+        "outer_archive_digest_verified": True,
+        "signed_executor_and_verifier_artifacts_verified": True,
+    }
+    print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
+def verify_extracted(args: argparse.Namespace) -> int:
+    identity = load_identity(args.identity)
+    root = args.root
+    if root.is_symlink() or not root.is_dir():
+        raise IdentityError("extracted candidate root is missing, non-directory, or symlinked")
+    for path in root.rglob("*"):
+        if path.is_symlink() or (not path.is_file() and not path.is_dir()):
+            raise IdentityError(f"extracted candidate contains a special object: {path}")
+
+    archive = identity["archive"]
+    embedded_manifest = root / archive["candidate_manifest_path"]
+    embedded_signature = root / archive["candidate_signature_path"]
+    embedded_allowed_signers = root / archive["allowed_signers_path"]
+    for embedded, supplied, label in (
+        (embedded_manifest, args.manifest, "candidate manifest"),
+        (embedded_signature, args.signature, "candidate signature"),
+        (embedded_allowed_signers, args.allowed_signers, "allowed signers policy"),
+    ):
+        if embedded.is_symlink() or not embedded.is_file():
+            raise IdentityError(f"archive lacks its regular embedded {label}")
+        if sha256_file(embedded) != sha256_file(supplied):
+            raise IdentityError(f"archive embedded {label} differs from the verified external input")
+
+    manifest = json.loads(embedded_manifest.read_bytes())
+    artifacts = validate_signed_manifest(manifest, identity)
+    expected: dict[str, dict[str, Any]] = {}
+    for index, artifact in enumerate(artifacts):
+        if not isinstance(artifact, dict) or set(artifact) != {
+            "media_type",
+            "mode",
+            "path",
+            "role",
+            "sha256",
+            "size_bytes",
+        }:
+            raise IdentityError(f"signed manifest artifact {index} has an unexpected schema")
+        relative = artifact.get("path")
+        if not safe_relative(relative) or relative in expected:
+            raise IdentityError(f"signed manifest artifact {index} has an unsafe or duplicate path")
+        if (
+            artifact.get("mode") not in {"0444", "0555"}
+            or not HEX64.fullmatch(str(artifact.get("sha256")))
+            or not isinstance(artifact.get("size_bytes"), int)
+            or isinstance(artifact.get("size_bytes"), bool)
+            or artifact["size_bytes"] < 0
+        ):
+            raise IdentityError(f"signed manifest artifact {index} metadata is invalid")
+        expected[relative] = artifact
+
+    manifest_relative = archive["candidate_manifest_path"]
+    signature_relative = archive["candidate_signature_path"]
+    if manifest_relative in expected or signature_relative in expected:
+        raise IdentityError("signed manifest improperly enumerates itself or its detached signature")
+    expected_files = set(expected) | {manifest_relative, signature_relative}
+    actual_files = {
+        path.relative_to(root).as_posix(): path
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+    if set(actual_files) != expected_files:
+        missing = sorted(expected_files - set(actual_files))
+        extra = sorted(set(actual_files) - expected_files)
+        raise IdentityError(
+            f"archive file closure differs from the signed candidate closure; missing={missing}, extra={extra}"
+        )
+    for relative, artifact in expected.items():
+        path = actual_files[relative]
+        observed_mode = f"0{path.stat().st_mode & 0o777:03o}"
+        if (
+            sha256_file(path) != artifact["sha256"]
+            or path.stat().st_size != artifact["size_bytes"]
+            or observed_mode != artifact["mode"]
+        ):
+            raise IdentityError(f"archive artifact differs from the signed manifest: {relative}")
+
+    executor = root / archive["executor_path"]
+    verifier = root / archive["verifier_path"]
+    source = root / archive["source_subdir"]
+    if (
+        not os.access(executor, os.X_OK)
+        or sha256_file(executor) != identity["workload"]["executor_sha256"]
+        or not os.access(verifier, os.X_OK)
+        or sha256_file(verifier) != identity["workload"]["verifier_sha256"]
+    ):
+        raise IdentityError("extracted executor or verifier differs from the frozen signed identity")
+    if source.is_symlink() or not source.is_dir() or not (source / "Cargo.toml").is_file():
+        raise IdentityError("archive lacks the frozen candidate source directory")
+    report = {
+        "schema": "mfenx.step3-candidate-archive-closure.v1",
+        "release_id": identity["release_id"],
+        "file_count": len(actual_files),
+        "signed_artifact_count": len(expected),
+        "embedded_signed_inputs_match": True,
+        "exact_signed_file_closure": True,
+        "executor_sha256": sha256_file(executor),
+        "verifier_sha256": sha256_file(verifier),
+        "source_subdir": archive["source_subdir"],
     }
     print(json.dumps(report, sort_keys=True, separators=(",", ":")))
     return 0
@@ -371,6 +552,13 @@ def parser() -> argparse.ArgumentParser:
     verify.add_argument("--signature", required=True, type=pathlib.Path)
     verify.add_argument("--allowed-signers", required=True, type=pathlib.Path)
     verify.set_defaults(function=verify_files)
+    extracted = commands.add_parser("verify-extracted")
+    extracted.add_argument("--identity", required=True, type=pathlib.Path)
+    extracted.add_argument("--root", required=True, type=pathlib.Path)
+    extracted.add_argument("--manifest", required=True, type=pathlib.Path)
+    extracted.add_argument("--signature", required=True, type=pathlib.Path)
+    extracted.add_argument("--allowed-signers", required=True, type=pathlib.Path)
+    extracted.set_defaults(function=verify_extracted)
     members = commands.add_parser("check-members")
     members.add_argument("--identity", required=True, type=pathlib.Path)
     members.add_argument("--members", required=True, type=pathlib.Path)

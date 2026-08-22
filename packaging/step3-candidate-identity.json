@@ -8,8 +8,11 @@
     "root": "__FINAL_CANDIDATE_ARCHIVE_ROOT__",
     "sha256": "__FINAL_CANDIDATE_ARCHIVE_SHA256__",
     "source_subdir": "__FINAL_CANDIDATE_SOURCE_SUBDIR__",
-    "manifest_path": "__FINAL_CANDIDATE_ARCHIVE_MANIFEST_PATH__",
-    "manifest_role": "revisioned_distribution_archive"
+    "candidate_manifest_path": "__FINAL_CANDIDATE_ARCHIVE_MANIFEST_PATH__",
+    "candidate_signature_path": "__FINAL_CANDIDATE_ARCHIVE_SIGNATURE_PATH__",
+    "allowed_signers_path": "__FINAL_CANDIDATE_ARCHIVE_ALLOWED_SIGNERS_PATH__",
+    "executor_path": "__FINAL_CANDIDATE_ARCHIVE_EXECUTOR_PATH__",
+    "verifier_path": "__FINAL_CANDIDATE_ARCHIVE_VERIFIER_PATH__"
   },
   "manifest": {
     "url": "__FINAL_CANDIDATE_MANIFEST_URL__",
