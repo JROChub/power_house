@@ -1,40 +1,40 @@
 {
   "schema": "mfenx.step3-candidate-identity.v1",
-  "enabled": false,
-  "release_id": "__FINAL_CANDIDATE_RELEASE_ID__",
+  "enabled": true,
+  "release_id": "mfenx-local-v2-validation-candidate-20260822-a1",
   "archive": {
-    "url": "__FINAL_CANDIDATE_ARCHIVE_URL__",
-    "name": "__FINAL_CANDIDATE_ARCHIVE_NAME__",
-    "root": "__FINAL_CANDIDATE_ARCHIVE_ROOT__",
-    "sha256": "__FINAL_CANDIDATE_ARCHIVE_SHA256__",
-    "source_subdir": "__FINAL_CANDIDATE_SOURCE_SUBDIR__",
-    "candidate_manifest_path": "__FINAL_CANDIDATE_ARCHIVE_MANIFEST_PATH__",
-    "candidate_signature_path": "__FINAL_CANDIDATE_ARCHIVE_SIGNATURE_PATH__",
-    "allowed_signers_path": "__FINAL_CANDIDATE_ARCHIVE_ALLOWED_SIGNERS_PATH__",
-    "executor_path": "__FINAL_CANDIDATE_ARCHIVE_EXECUTOR_PATH__",
-    "verifier_path": "__FINAL_CANDIDATE_ARCHIVE_VERIFIER_PATH__"
+    "url": "https://mfenx.com/lightsout/candidate/downloads/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst",
+    "name": "mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst",
+    "root": "mfenx-local-v2-validation-candidate-20260822-a1",
+    "sha256": "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+    "source_subdir": "source/mfenx-local-candidate/frozen",
+    "candidate_manifest_path": "VALIDATION-CANDIDATE-MANIFEST.canonical.json",
+    "candidate_signature_path": "VALIDATION-CANDIDATE-MANIFEST.canonical.json.sig",
+    "allowed_signers_path": "policy/allowed_signers",
+    "executor_path": "bin/mfenx-local",
+    "verifier_path": "bin/mfenx-contract-v1-verifier"
   },
   "manifest": {
-    "url": "__FINAL_CANDIDATE_MANIFEST_URL__",
-    "name": "__FINAL_CANDIDATE_MANIFEST_NAME__",
-    "sha256": "__FINAL_CANDIDATE_MANIFEST_SHA256__"
+    "url": "https://mfenx.com/lightsout/candidate/release/VALIDATION-CANDIDATE-MANIFEST.canonical.json",
+    "name": "VALIDATION-CANDIDATE-MANIFEST.canonical.json",
+    "sha256": "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229"
   },
   "signature": {
-    "url": "__FINAL_CANDIDATE_SIGNATURE_URL__",
-    "name": "__FINAL_CANDIDATE_SIGNATURE_NAME__",
-    "sha256": "__FINAL_CANDIDATE_SIGNATURE_SHA256__",
+    "url": "https://mfenx.com/lightsout/candidate/release/VALIDATION-CANDIDATE-MANIFEST.canonical.json.sig",
+    "name": "VALIDATION-CANDIDATE-MANIFEST.canonical.json.sig",
+    "sha256": "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
     "principal": "mfenx-release",
     "namespace": "mfenx-validation-candidate"
   },
   "allowed_signers": {
-    "url": "__FINAL_CANDIDATE_ALLOWED_SIGNERS_URL__",
+    "url": "https://mfenx.com/lightsout/candidate/release/allowed_signers",
     "name": "allowed_signers",
-    "sha256": "__FINAL_CANDIDATE_ALLOWED_SIGNERS_SHA256__",
-    "key_fingerprint": "__FINAL_CANDIDATE_KEY_FINGERPRINT__"
+    "sha256": "67893e2125e9ba75dbc468e749512a4ec0ecb361e3ef3d4befc3702bf428c25e",
+    "key_fingerprint": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc"
   },
   "workload": {
-    "executor_sha256": "__FINAL_CANDIDATE_EXECUTOR_SHA256__",
-    "verifier_sha256": "__FINAL_CANDIDATE_VERIFIER_SHA256__",
-    "canonical_output_root": "__FINAL_CANDIDATE_CANONICAL_OUTPUT_ROOT__"
+    "executor_sha256": "92e48bfe615ad5241202d2e49fac51d52e21d66f3d0c84c273af042d5852dac0",
+    "verifier_sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+    "canonical_output_root": "c4620971a11a6873de7f45f79a93a277fd2cf3f58a89ed4600e6167afed40606"
   }
 }

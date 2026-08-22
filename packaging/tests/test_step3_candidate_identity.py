@@ -27,15 +27,21 @@ def digest(path):
 
 
 class Step3CandidateIdentityTests(unittest.TestCase):
-    def test_checked_in_template_is_disabled_and_cannot_run(self):
-        document = MODULE.load_identity(TEMPLATE, require_enabled=False)
-        self.assertFalse(document["enabled"])
-        with self.assertRaises(MODULE.IdentityError):
-            MODULE.load_identity(TEMPLATE, require_enabled=True)
+    def test_checked_in_identity_is_complete_enabled_and_frozen(self):
+        document = MODULE.load_identity(TEMPLATE, require_enabled=True)
+        self.assertTrue(document["enabled"])
+        self.assertEqual(
+            document["archive"]["sha256"],
+            "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+        )
+        self.assertEqual(
+            document["workload"]["canonical_output_root"],
+            "c4620971a11a6873de7f45f79a93a277fd2cf3f58a89ed4600e6167afed40606",
+        )
 
-    def test_partial_placeholder_replacement_is_rejected(self):
+    def test_placeholder_reintroduced_into_enabled_identity_is_rejected(self):
         document = json.loads(TEMPLATE.read_text())
-        document["release_id"] = "candidate-a1"
+        document["archive"]["sha256"] = "__FINAL_CANDIDATE_ARCHIVE_SHA256__"
         with self.assertRaises(MODULE.IdentityError):
             MODULE.validate_identity(document, require_enabled=False)
 

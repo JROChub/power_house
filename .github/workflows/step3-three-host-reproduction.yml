@@ -1,7 +1,7 @@
 name: Step 3 three-host reproduction evidence
 
-# This workflow is intentionally fail-closed while the checked-in candidate
-# identity has enabled=false and explicit __FINAL_CANDIDATE_* placeholders.
+# The checked-in identity pins one signed candidate tuple whose mfenx.com asset
+# URLs were hash- and signature-verified before activation.
 
 on:
   workflow_dispatch:

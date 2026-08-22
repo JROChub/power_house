@@ -2,11 +2,11 @@
 
 ## Status
 
-The workflow and evidence policy are prepared but have not been pushed or
-dispatched. `packaging/step3-candidate-identity.json` is intentionally disabled
-and contains only `__FINAL_CANDIDATE_*` placeholders. A dispatch cannot pass
-until one reviewed commit installs the complete signed candidate tuple and
-changes `enabled` to `true`.
+The workflow and evidence policy are prepared for manual dispatch.
+`packaging/step3-candidate-identity.json` is enabled and pins the complete
+signed validation-candidate tuple. The four exact assets are deployed at their
+checked-in `mfenx.com` URLs; fresh downloads matched every pinned SHA-256 and
+passed the namespace-restricted SSH signature check.
 
 No three-host reproduction claim exists yet.
 
@@ -19,9 +19,8 @@ verifier digests, and canonical output root. The validator rejects partial
 placeholder replacement, non-`mfenx.com` URLs, unsafe names or paths, malformed
 digests, the wrong signature namespace, and an identity whose gate is disabled.
 
-Before activation, replace every placeholder in that file from the signed
-candidate release record. Do not infer a value from an older release. Required
-assets are:
+The installed identity was populated from the signed candidate release record,
+not from an older release. It binds:
 
 - the candidate archive and its SHA-256;
 - the signed canonical manifest and its SHA-256;
@@ -34,6 +33,15 @@ assets are:
 
 The signature namespace is fixed to `mfenx-validation-candidate` and the
 principal is fixed to `mfenx-release`.
+
+The stable asset mapping is:
+
+```text
+https://mfenx.com/lightsout/candidate/downloads/mfenx-local-v2-validation-candidate-20260822-a1-signed-x86_64-unknown-linux-gnu.tar.zst
+https://mfenx.com/lightsout/candidate/release/VALIDATION-CANDIDATE-MANIFEST.canonical.json
+https://mfenx.com/lightsout/candidate/release/VALIDATION-CANDIDATE-MANIFEST.canonical.json.sig
+https://mfenx.com/lightsout/candidate/release/allowed_signers
+```
 
 ## What each host does
 
@@ -102,5 +110,6 @@ GitHub only accepts `workflow_dispatch` for a workflow present on the default
 branch. The repository must permit artifact attestations and the declared OIDC,
 attestation, Actions-read, and contents-read permissions.
 
-Activation is a separate reviewed action. This preparation did not push,
-dispatch, publish evidence, or establish the claim.
+Merging the workflow and dispatching it are separate operator actions. No claim
+may be published until the workflow has retained and verified all three host
+outcomes and both aggregate attestations.

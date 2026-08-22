@@ -38,8 +38,8 @@ body:
     id: immutable_candidate
     attributes:
       label: Candidate commit and identity digest
-      description: Exact 40-character commit plus SHA-256 of the enabled Step 3 candidate identity file. Leave pending if the final tuple is not yet published.
-      placeholder: pending — final candidate identity has not been enabled
+      description: Exact 40-character default-branch commit plus SHA-256 of the enabled Step 3 candidate identity file.
+      placeholder: 40-character commit; identity SHA-256
     validations:
       required: true
 

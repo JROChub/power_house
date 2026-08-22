@@ -29,15 +29,32 @@ class Step3FoundationAssetTests(unittest.TestCase):
                     all(re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", action) for action in uses), uses
                 )
 
-    def test_candidate_identity_is_complete_placeholder_and_disabled(self):
+    def test_candidate_identity_is_complete_enabled_and_pinned(self):
         identity = json.loads(
             (REPOSITORY / "packaging/step3-candidate-identity.json").read_text()
         )
-        self.assertFalse(identity["enabled"])
+        self.assertTrue(identity["enabled"])
         serialized = json.dumps(identity)
         placeholders = re.findall(r"__FINAL_CANDIDATE_[A-Z0-9_]+__", serialized)
-        self.assertGreaterEqual(len(placeholders), 15)
-        self.assertNotRegex(serialized, r"\b[0-9a-f]{64}\b")
+        self.assertEqual(placeholders, [])
+        self.assertEqual(
+            identity["archive"]["sha256"],
+            "9485bba9d5bb7a10e911db6070fd081f8f6ade2b8894460eea2729fbe868405f",
+        )
+        self.assertEqual(
+            identity["manifest"]["sha256"],
+            "fb4023a172927ba7555376f0217f84c3dd2bcb057ce11d59e7b2697d02ab6229",
+        )
+        self.assertEqual(
+            identity["signature"]["sha256"],
+            "f4ccf040df310dea9820e6ddab2c4c7b3ca0db6caabffc38463859b25a106458",
+        )
+        self.assertEqual(
+            identity["archive"]["url"],
+            "https://mfenx.com/lightsout/candidate/downloads/"
+            "mfenx-local-v2-validation-candidate-20260822-a1-signed-"
+            "x86_64-unknown-linux-gnu.tar.zst",
+        )
 
     def test_reproduction_workflow_uses_attempt_scoped_api_and_attested_claim_gate(self):
         workflow = (REPOSITORY / WORKFLOWS[0]).read_text()

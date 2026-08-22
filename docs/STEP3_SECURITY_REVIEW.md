@@ -3,8 +3,9 @@
 ## Status and boundary
 
 The automated evidence workflow and public human-review request template are
-prepared but have not been pushed or run. The candidate identity is disabled,
-so the workflow cannot analyze or attest an unfrozen release.
+prepared for manual use. The enabled identity pins the signed validation
+candidate and its complete source path. Fresh downloads from every pinned
+`mfenx.com` URL matched the checked-in digests and signature policy.
 
 Automated analysis is not an independent code or security review. An
 independent result requires an unrelated qualified human, conflict disclosure,

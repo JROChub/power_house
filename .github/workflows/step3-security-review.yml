@@ -1,7 +1,7 @@
 name: Step 3 automated security evidence
 
 # Automation in this workflow is never represented as independent human review.
-# The disabled placeholder identity prevents analysis of an unfrozen candidate.
+# The enabled identity pins one signed candidate and its complete source path.
 
 on:
   workflow_dispatch:
