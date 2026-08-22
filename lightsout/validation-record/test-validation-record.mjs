@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
-import { webcrypto } from "node:crypto";
+import { createHash, webcrypto } from "node:crypto";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const lightsout = path.dirname(here);
@@ -14,12 +14,14 @@ const tail = source.indexOf('byId("verify-release").addEventListener');
 assert(tail > 0, "test harness could not isolate browser startup");
 const testSource = source.slice(0, tail) + `
 window.__MFENX_TEST__ = Object.freeze({
+  validationIndexedLocalUrl,
   validateFinalReleaseIndex,
   validatePrepublicationVerification,
   validateFinalStatus,
   validateScalingResults,
   validateFinalSelected,
-  validateFinalRecord
+  validateFinalRecord,
+  validatePostPublicationRetrieval
 });
 `;
 
@@ -56,6 +58,20 @@ const status = readJson("validation-status.json");
 test.validateFinalStatus(status);
 const signedRecord = readJson("release/VALIDATION-RECORD.canonical.json");
 test.validateFinalRecord(signedRecord, index, prepublication);
+const retrieval = readJson("post-publication-retrieval-attestation.json");
+test.validatePostPublicationRetrieval(retrieval, { index });
+assert.equal(retrieval.check_count, 68);
+assert.equal(retrieval.passed, 68);
+assert.equal(retrieval.failed, 0);
+assert.equal(new Set(retrieval.checks.map((row) => row.url)).size, retrieval.checks.length);
+assert.equal(test.validationIndexedLocalUrl(index.web_summary.public_path).pathname, "/lightsout/validation-record/validation-status.json");
+
+const retrievalDigest = createHash("sha256")
+  .update(fs.readFileSync(path.join(here, "post-publication-retrieval-attestation.json")))
+  .digest("hex");
+const pinnedRetrieval = source.match(/retrievalAttestationSha256:\s*"([0-9a-f]{64})"/);
+assert(pinnedRetrieval, "browser source omits a valid retrieval-attestation pin");
+assert.equal(retrievalDigest, pinnedRetrieval[1], "browser retrieval-attestation pin differs from published bytes");
 
 function publicPathFor(role) {
   const entry = byRole.get(role);
@@ -114,6 +130,10 @@ const mutatedScaling = structuredClone(selected.scaling_results);
 mutatedScaling.cells[0].external_executor_wall_ns.median_decimal = "1.0";
 mustReject("scaling-result mutation", () => test.validateScalingResults(mutatedScaling));
 
+const mutatedRetrieval = structuredClone(retrieval);
+mutatedRetrieval.checks[0].observed_sha256 = "0".repeat(64);
+mustReject("live-retrieval mutation", () => test.validatePostPublicationRetrieval(mutatedRetrieval, { index }));
+
 const html = fs.readFileSync(path.join(lightsout, "index.html"), "utf8");
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
 assert.equal(ids.length, new Set(ids).size, "HTML contains duplicate IDs");
@@ -162,4 +182,4 @@ for (const url of index.public_input_evidence_urls) {
   assert(!prohibited.test(url), `public evidence route failed neutral-label gate: ${url}`);
 }
 
-console.log(`PASS Validation Record semantics: ${index.artifact_count} inputs, ${cells.size} scaling cells, 6 negative controls, ${localHrefs.length} local links`);
+console.log(`PASS Validation Record semantics: ${index.artifact_count} inputs, ${cells.size} scaling cells, 7 negative controls, ${retrieval.check_count} live checks, ${localHrefs.length} local links`);

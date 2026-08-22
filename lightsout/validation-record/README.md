@@ -27,3 +27,8 @@ Record, and detached signature are live, run `audit-live-publication.py` with
 their exact SHA-256 identities. That audit refuses redirects and changed bytes
 and creates the first record allowed to state that live HTTPS retrieval
 occurred.
+
+The published retrieval audit completed at `2026-08-22T16:47:14Z`. Its 68
+unique, no-redirect HTTPS checks all passed, and the canonical attestation is
+bound by SHA-256
+`8985eb09d197a8a7e2593d4bddd9c27af1b1c51a09d3505c0a86aba74f869dbe`.

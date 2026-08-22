@@ -102,7 +102,7 @@ const VALIDATION_RECORD = Object.freeze({
   claimLedgerSha256: "3b6f39020bfec3f2c57cd78cc98a23c7af8ee57981a6b2d215b8319ee96de5d8",
   allowedSignersSha256: "a89d2cfd0df61f218abbfddb67c47ab92b951b918d415be2acaff26a0fcc8ced",
   publicKeySha256: "06a51526f40a1e9b71bb08a91746187a5e31e6a2cd7c5b63f060546719f21244",
-  retrievalAttestationSha256: "PENDING_POST_PUBLICATION_RETRIEVAL_SHA256",
+  retrievalAttestationSha256: "8985eb09d197a8a7e2593d4bddd9c27af1b1c51a09d3505c0a86aba74f869dbe",
   releaseId: "mfenx-local-v2-validation-candidate-20260822-a1",
   recordId: "mfenx-local-v2-validation-record-20260822-a1",
   recordNamespace: "mfenx-validation-record",
@@ -296,7 +296,8 @@ function validationIndexedLocalUrl(publicPath) {
   assert(typeof publicPath === "string" && publicPath.length > 0 && !publicPath.includes("\\"), "validation index contains an unsafe public path");
   const normal = /^inputs\/[a-z0-9][a-z0-9_]{1,95}\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(publicPath);
   const existingCandidate = /^\.\.\/candidate\/(?:release|downloads)\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(publicPath);
-  assert(normal || existingCandidate, "validation index contains a path outside its bounded publication routes");
+  const summary = publicPath === "validation-status.json";
+  assert(normal || existingCandidate || summary, "validation index contains a path outside its bounded publication routes: " + publicPath);
   return new URL(publicPath, new URL(VALIDATION_RECORD.root, location.href));
 }
 
@@ -483,7 +484,21 @@ function validatePostPublicationRetrieval(record, pack) {
   assert(record.live_http_retrieval_performed === true && record.live_http_retrieval_claimed === true && record.successes_and_failures_unfiltered === true, "post-publication HTTP retrieval boundary changed");
   assert(record.release_id === VALIDATION_RECORD.releaseId && record.record_id === VALIDATION_RECORD.recordId, "post-publication retrieval subject changed");
   assert(record.record.sha256 === VALIDATION_RECORD.recordSha256 && record.signature.sha256 === VALIDATION_RECORD.recordSignatureSha256 && record.release_index.sha256 === VALIDATION_RECORD.releaseIndexSha256, "post-publication retrieval identities changed");
-  assert(Array.isArray(record.checks) && record.checks.length >= pack.index.artifact_count + 4 && record.checks.every((row) => row.status === "pass" && row.transport === "https" && row.expected_sha256 === row.observed_sha256 && row.expected_size_bytes === row.observed_size_bytes), "post-publication retrieval population changed or contains a failure");
+  assert(Array.isArray(record.checks) && record.checks.length === pack.index.artifact_count + 8 && record.check_count === record.checks.length && record.passed === record.checks.length && record.failed === 0, "post-publication retrieval population changed");
+  assert(record.checks.every((row) => row.status === "pass" && row.transport === "https" && row.http_status === 200 && row.expected_sha256 === row.observed_sha256 && row.expected_size_bytes === row.observed_size_bytes), "post-publication retrieval contains a failure");
+  const retrievedUrls = new Set(record.checks.map((row) => row.url));
+  assert(retrievedUrls.size === record.checks.length && pack.index.public_input_evidence_urls.every((url) => retrievedUrls.has(url)), "post-publication retrieval URL set changed");
+  const canonicalRoot = "https://mfenx.com/lightsout/" + VALIDATION_RECORD.root;
+  for (const url of [
+    pack.index.web_summary.public_url,
+    canonicalRoot + "release-index.json",
+    canonicalRoot + "prepublication-input-retrieval-verification.json",
+    pack.index.planned_validation_record_url,
+    pack.index.planned_signature_url,
+    canonicalRoot + "release/allowed_signers",
+    canonicalRoot + "release/release-signing-key.pub",
+    canonicalRoot + "release/CLAIM_LEDGER.md"
+  ]) assert(retrievedUrls.has(url), "post-publication retrieval omits a required URL");
 }
 
 async function loadValidationRecordPack() {
