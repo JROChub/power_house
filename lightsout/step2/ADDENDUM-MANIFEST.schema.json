@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mfenx.com/schemas/release-addendum-v1.json",
+  "title": "MFENX release addendum v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "addendum_id",
+    "artifact_count",
+    "artifacts",
+    "base_release",
+    "claims",
+    "encoding_profile",
+    "finalized_at_utc",
+    "open_work",
+    "product",
+    "qualifications",
+    "signature"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mfenx.release-addendum.v1"
+    },
+    "addendum_id": {
+      "const": "mfenx-local-v2-20260821-a1-step2-addendum-a1"
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "base_release": {
+      "$ref": "#/$defs/baseRelease"
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "encoding_profile": {
+      "const": "mfenx.json.jq-cS-integer.v1"
+    },
+    "finalized_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "open_work": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/openWork"
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machine_class",
+        "name",
+        "release_label",
+        "target",
+        "version"
+      ],
+      "properties": {
+        "machine_class": {
+          "const": "software_defined_local_supercomputer_v2"
+        },
+        "name": {
+          "const": "rarecomp-mfenx-local"
+        },
+        "release_label": {
+          "const": "MFENX Local v2 Step 2 addendum"
+        },
+        "target": {
+          "const": "x86_64-unknown-linux-gnu"
+        },
+        "version": {
+          "const": "0.1.0"
+        }
+      }
+    },
+    "qualifications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "format",
+        "namespace",
+        "public_key_fingerprint",
+        "signed_object",
+        "signer_identity"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ssh-ed25519"
+        },
+        "format": {
+          "const": "openssh-sshsig"
+        },
+        "namespace": {
+          "const": "mfenx-step2-addendum"
+        },
+        "public_key_fingerprint": {
+          "const": "SHA256:Uhj/Ci2+3KA2JN/H8+Sl6nhAiTeD76zvajqvxLOYTTc"
+        },
+        "signed_object": {
+          "const": "release/mfenx-local-v2-20260821-a1-step2-addendum-a1/ADDENDUM-MANIFEST.canonical.json"
+        },
+        "signer_identity": {
+          "const": "mfenx-release"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "repoPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9._+/@=-]+(?:/[A-Za-z0-9._+@=-]+)*$"
+    },
+    "boundArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "media_type",
+        "path",
+        "role",
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "media_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "baseRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptance_record",
+        "accepted_executor",
+        "accepted_output_root",
+        "manifest",
+        "release_id",
+        "sealed_evidence_inventory",
+        "signature"
+      ],
+      "properties": {
+        "release_id": {
+          "const": "mfenx-local-v2-20260821-a1"
+        },
+        "manifest": {
+          "$ref": "#/$defs/boundArtifact"
+        },
+        "signature": {
+          "$ref": "#/$defs/boundArtifact"
+        },
+        "accepted_executor": {
+          "$ref": "#/$defs/boundArtifact"
+        },
+        "sealed_evidence_inventory": {
+          "$ref": "#/$defs/boundArtifact"
+        },
+        "acceptance_record": {
+          "$ref": "#/$defs/boundArtifact"
+        },
+        "accepted_output_root": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "algorithm",
+            "digest",
+            "source_path"
+          ],
+          "properties": {
+            "algorithm": {
+              "const": "blake3"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "source_path": {
+              "$ref": "#/$defs/repoPath"
+            }
+          }
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "evidence_roles",
+        "metrics",
+        "qualification",
+        "statement",
+        "status"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "pattern": "^S2-CL-(00[1-9]|010)$"
+        },
+        "evidence_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "qualification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "established",
+            "established_with_scope_limits",
+            "plan_only"
+          ]
+        }
+      }
+    },
+    "openWork": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "status",
+        "work_id"
+      ],
+      "properties": {
+        "category": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "status": {
+          "const": "open"
+        },
+        "work_id": {
+          "type": "string",
+          "pattern": "^S2-OPEN-[0-9]{3}$"
+        }
+      }
+    }
+  }
+}

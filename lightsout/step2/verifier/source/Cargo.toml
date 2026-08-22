@@ -1,0 +1,26 @@
+[package]
+name = "mfenx-contract-v1-verifier"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Separate standalone reference verifier for MFENX execution contract v1"
+readme = "README.md"
+
+[dependencies]
+blake3 = "=1.8.6"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.151", features = ["arbitrary_precision"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+panic = "abort"

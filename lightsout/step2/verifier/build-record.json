@@ -1,0 +1,82 @@
+{
+  "schema": "mfenx.verifier-build-record.v1",
+  "record_id": "mfenx-contract-v1-verifier-two-build-20260821-a1",
+  "status": "PASS",
+  "finalized_at_utc": "2026-08-22T00:27:03Z",
+  "canonical_recipe": "standalone_extracted_source_exact_toolchain_release",
+  "scope": {
+    "same_physical_host": true,
+    "distinct_source_directories": true,
+    "distinct_target_directories": true,
+    "shared_registry_cache": true,
+    "cross_host_reproducibility_established": false
+  },
+  "source_sha256": {
+    "Cargo.lock": "8ff9718572b97dbc8d9faa888a5d529eaf84ae3957e1c8b6c0a425a8fa64904d",
+    "Cargo.toml": "38813adb2937d4a1f7d4d14b708e3bff816c7a62779159638f547d035506b6ec",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "README.md": "4b45bf48e2f6f802c3fecf782a12868dd798974f25631099f899a4d82e32d31c",
+    "rust-toolchain.toml": "7134cca955184c22a7374bda78be176b570e6d8b69ee92dc02d5efc3044212e8",
+    "src/lib.rs": "a7a94eaa413d8404c8cb55be8e385baa25a35b2081a20ea717921ae674d19f91",
+    "src/main.rs": "8ecac76a97a7ad6067e3261b7a46885654be63b85938d17ea6fb527e900c1fa0",
+    "SHA256SUMS": "66526aaf501992b896cb42bba066b6a56bc5cc15171581a5e3f91f39b1521e99"
+  },
+  "toolchain": {
+    "rustc": "1.93.1 (01f6ddf7588f42ae2d7eb0a2f21d44e8e96674cf)",
+    "cargo": "1.93.1 (083ac5135f967fd9dc906ab057a2315861c7a80d)",
+    "llvm": "21.1.8",
+    "rustc_executable_sha256": "bd1875234c27f9f0c9f9c700ade69f7e83d25e368f38407d32b4b0e2cbc2426d",
+    "cargo_executable_sha256": "6bbe4f5601b419b69ec2001b5e64c997770f620e1493ad7007b78e505457796f",
+    "cc": "Debian 15.2.0-17",
+    "binutils": "2.46",
+    "glibc": "2.42"
+  },
+  "release_profile": {
+    "codegen_units": 1,
+    "lto": "thin",
+    "panic": "abort"
+  },
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_NET_OFFLINE": "true",
+    "LC_ALL": "C",
+    "SOURCE_DATE_EPOCH": "0",
+    "TZ": "UTC",
+    "rustflags_unset": true,
+    "cargo_encoded_rustflags_unset": true,
+    "tmpdir_under_var_tmp": true
+  },
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--jobs",
+    "1"
+  ],
+  "builds": [
+    {
+      "id": "build-a",
+      "started_at_utc": "2026-08-22T00:08:18Z",
+      "finished_at_utc": "2026-08-22T00:08:59Z",
+      "binary_path": "bin/mfenx-contract-v1-verifier-build-a",
+      "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+      "size_bytes": 998760,
+      "gnu_build_id": "497c3707895d94f5526978fe1a266c0f9ecba024",
+      "exit_status": 0
+    },
+    {
+      "id": "build-b",
+      "started_at_utc": "2026-08-22T00:08:59Z",
+      "finished_at_utc": "2026-08-22T00:09:43Z",
+      "binary_path": "bin/mfenx-contract-v1-verifier-build-b",
+      "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+      "size_bytes": 998760,
+      "gnu_build_id": "497c3707895d94f5526978fe1a266c0f9ecba024",
+      "exit_status": 0
+    }
+  ],
+  "byte_identical": true,
+  "validation_targets_separate_from_preserved_binaries": true
+}
