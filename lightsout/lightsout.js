@@ -90,6 +90,53 @@ const CONTRACT_V1 = Object.freeze({
   ])
 });
 
+const STEP2 = Object.freeze({
+  root: "step2/",
+  transportManifestSha256: "5e04d45c3854b660df3893c114472cabd9bc4e5f908ed760569bee61b472d3ca",
+  addendumManifestSha256: "3b9daa2fd3105e503b109f612b27707c591b13c3e435262c153c0dd6ffd22221",
+  addendumSignatureSha256: "159672f9c03cf834bc062392b4a8ef3948a0035e162a4a17d4360d03535c85d6",
+  publicKeyFingerprint: CONTRACT_V1.publicKeyFingerprint,
+  archiveName: "rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst",
+  files: Object.freeze([
+    "ADDENDUM-MANIFEST.schema.json",
+    "CLAIM_LEDGER.md",
+    "README.md",
+    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst",
+    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256",
+    "release/ADDENDUM-MANIFEST.canonical.json",
+    "release/ADDENDUM-MANIFEST.canonical.json.sig",
+    "release/SIGNING-AUDIT.md",
+    "release/SIGNING.md",
+    "release/allowed_signers",
+    "release/mfenx-local-v2-step2.provenance.intoto.json",
+    "release/mfenx-local-v2-step2.sbom.cdx.json",
+    "release/release-signing-key.pub",
+    "validation/SHA256SUMS",
+    "validation/summary.json",
+    "verifier/audit.json",
+    "verifier/bin/mfenx-contract-v1-verifier",
+    "verifier/build-record.json",
+    "verifier/reports/a-uninterrupted.report.json",
+    "verifier/source/Cargo.lock",
+    "verifier/source/Cargo.toml",
+    "verifier/source/LICENSE",
+    "verifier/source/README.md",
+    "verifier/source/SHA256SUMS",
+    "verifier/source/rust-toolchain.toml",
+    "verifier/source/src/lib.rs",
+    "verifier/source/src/main.rs"
+  ]),
+  sourceFiles: Object.freeze([
+    "Cargo.lock",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+    "rust-toolchain.toml",
+    "src/lib.rs",
+    "src/main.rs"
+  ])
+});
+
 const V2_CONTRACT = Object.freeze({
   acceptanceSchema: 3,
   imageSchema: 3,
@@ -154,7 +201,7 @@ const EXPECTED = Object.freeze({
 
 const CHECKPOINT_ROOT = "checkpoints/killed-and-resumed/";
 const CHECKPOINT_PLAN_PATH = CHECKPOINT_ROOT + "plan.json";
-const state = { loading: false, ready: false, v2: null, v1: null };
+const state = { loading: false, ready: false, v2: null, v1: null, step2: null };
 const byId = (id) => document.getElementById(id);
 
 function assert(condition, message) {
@@ -302,6 +349,27 @@ async function loadContractPack() {
   return { inventory, raw };
 }
 
+async function loadStep2Pack() {
+  const checksumBytes = await fetchBytes(STEP2.root, "SHA256SUMS", 8 * 1024);
+  assert(
+    await sha256(checksumBytes) === STEP2.transportManifestSha256,
+    "Step 2 public-subset checksum index changed"
+  );
+  const inventory = parseManifest(checksumBytes, "Step 2", STEP2.files.length);
+  assert(
+    equalArray([...inventory.keys()].sort(), [...STEP2.files].sort()),
+    "Step 2 public-subset file set changed"
+  );
+
+  const raw = Object.create(null);
+  await Promise.all(STEP2.files.map(async (path) => {
+    const bytes = await fetchBytes(STEP2.root, path);
+    assert(await sha256(bytes) === inventory.get(path), "Step 2 file failed SHA-256: " + path);
+    raw[path] = bytes;
+  }));
+  return { inventory, raw };
+}
+
 function decodeBase64(value, label) {
   try {
     return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
@@ -398,6 +466,212 @@ async function validateContractPack(pack) {
   assert(reproduction.schema === "mfenx.local-reproduction-record.v1" && reproduction.release_id === manifest.release_id && reproduction.status === "PASS", "Contract v1 reproduction identity changed");
   assert(reproduction.scope === "single local release-acceptance reproduction", "Contract v1 reproduction scope changed");
   assert(reproduction.subject.binary_sha256 === provenance.subject[0].digest.sha256, "Contract v1 reproduction/provenance subjects differ");
+}
+
+function validateStep2Manifest(manifest) {
+  assert(isRecord(manifest), "Step 2 addendum manifest is malformed");
+  assert(manifest.schema === "mfenx.release-addendum.v1", "Step 2 addendum schema changed");
+  assert(manifest.addendum_id === "mfenx-local-v2-20260821-a1-step2-addendum-a1", "Step 2 addendum identity changed");
+  assert(manifest.encoding_profile === "mfenx.json.jq-cS-integer.v1", "Step 2 encoding profile changed");
+  assert(Array.isArray(manifest.artifacts) && manifest.artifact_count === 33 && manifest.artifacts.length === 33, "Step 2 signed artifact inventory changed");
+  assert(manifest.product.name === "rarecomp-mfenx-local" && manifest.product.machine_class === V2_CONTRACT.machineClass, "Step 2 product identity changed");
+  assert(manifest.product.target === "x86_64-unknown-linux-gnu" && manifest.product.version === "0.1.0", "Step 2 product target changed");
+  assert(manifest.signature.algorithm === "ssh-ed25519" && manifest.signature.format === "openssh-sshsig", "Step 2 signature algorithm changed");
+  assert(manifest.signature.namespace === "mfenx-step2-addendum" && manifest.signature.signer_identity === "mfenx-release", "Step 2 signature domain changed");
+  assert(manifest.signature.public_key_fingerprint === STEP2.publicKeyFingerprint, "Step 2 manifest key fingerprint changed");
+  assert(manifest.signature.signed_object === "release/mfenx-local-v2-20260821-a1-step2-addendum-a1/ADDENDUM-MANIFEST.canonical.json", "Step 2 signed-object path changed");
+
+  const signedByRole = new Map();
+  const signedPaths = new Set();
+  for (const artifact of manifest.artifacts) {
+    assert(isRecord(artifact) && typeof artifact.path === "string" && typeof artifact.role === "string", "Step 2 signed artifact record is malformed");
+    assertDigest(artifact.sha256, "Step 2 signed artifact digest is malformed");
+    assertSafeInteger(artifact.size_bytes, "Step 2 signed artifact size is malformed", 1);
+    assert(!signedByRole.has(artifact.role), "Step 2 signed artifact role is duplicated");
+    assert(!signedPaths.has(artifact.path), "Step 2 signed artifact path is duplicated");
+    signedByRole.set(artifact.role, artifact);
+    signedPaths.add(artifact.path);
+  }
+
+  const base = manifest.base_release;
+  assert(base.release_id === "mfenx-local-v2-20260821-a1", "Step 2 base release changed");
+  assert(base.manifest.sha256 === CONTRACT_V1.releaseManifestSha256, "Step 2 base manifest changed");
+  assert(base.signature.sha256 === CONTRACT_V1.releaseSignatureSha256, "Step 2 base signature changed");
+  assert(base.sealed_evidence_inventory.sha256 === RELEASES.v2.manifestSha256, "Step 2 base evidence inventory changed");
+  assert(base.accepted_executor.sha256 === "a1043e568704163b9dedf536c5feb60b0b7fd23097a2a8f0504d55d7ddcb1e3c", "Step 2 accepted executor changed");
+  assert(base.accepted_output_root.algorithm === "blake3" && base.accepted_output_root.digest === EXPECTED.outputRoot, "Step 2 accepted output root changed");
+
+  assert(Array.isArray(manifest.claims) && manifest.claims.length === 10, "Step 2 claim count changed");
+  const claims = new Map();
+  for (const claim of manifest.claims) {
+    assert(isRecord(claim) && /^S2-CL-\d{3}$/.test(claim.claim_id), "Step 2 claim record is malformed");
+    assert(!claims.has(claim.claim_id), "Step 2 claim ID is duplicated");
+    claims.set(claim.claim_id, claim);
+  }
+  assert(equalArray([...claims.keys()].sort(), Array.from({ length: 10 }, (_, index) => "S2-CL-" + String(index + 1).padStart(3, "0"))), "Step 2 claim IDs changed");
+
+  const verifierTests = claims.get("S2-CL-003");
+  assert(verifierTests.status === "established" && verifierTests.metrics.unit_tests_passed === 27, "Step 2 verifier-test claim changed");
+  assert(verifierTests.metrics.formal_proof === false && verifierTests.metrics.independent_security_review === false, "Step 2 independent-review boundary changed");
+
+  const scaling = claims.get("S2-CL-005");
+  assert(scaling.status === "plan_only", "Step 2 scaling status changed");
+  assert(scaling.metrics.planned_attempts === 100 && scaling.metrics.executed_attempts === 0, "Step 2 scaling population changed");
+  assert(scaling.metrics.evidence_validation_implemented === false && scaling.metrics.scaling_result_established === false, "Step 2 scaling plan was promoted without evidence");
+
+  const adversarial = claims.get("S2-CL-006");
+  assert(adversarial.status === "plan_only", "Step 2 adversarial status changed");
+  assert(adversarial.metrics.planned_cases === 214 && adversarial.metrics.executed_cases === 0, "Step 2 adversarial population changed");
+  assert(adversarial.metrics.planned_mutations === 192 && adversarial.metrics.planned_kill_windows === 22 && adversarial.metrics.failpoint_required_kill_windows === 14, "Step 2 adversarial design changed");
+  assert(adversarial.metrics.evidence_validation_implemented === false && adversarial.metrics.complete_sweep_established === false, "Step 2 adversarial plan was promoted without evidence");
+
+  const reproducible = claims.get("S2-CL-007");
+  assert(reproducible.status === "established_with_scope_limits", "Step 2 reproducible-build status changed");
+  assert(reproducible.metrics.physical_hosts === 1 && reproducible.metrics.unrelated_machine_reproductions === 0, "Step 2 reproduction host scope changed");
+  assert(reproducible.metrics.clean_remapped_builds === 2 && reproducible.metrics.byte_identical_remapped_builds === 2, "Step 2 remapped-build evidence changed");
+  assert(reproducible.metrics.cross_host_reproducibility_established === false, "Step 2 cross-host reproducibility was promoted without evidence");
+
+  const timing = claims.get("S2-CL-009");
+  assert(timing.status === "established_with_scope_limits", "Step 2 timing status changed");
+  assert(timing.metrics.observations_per_release === 1 && timing.metrics.same_output_root === true, "Step 2 timing sample scope changed");
+  assert(timing.metrics.v1_external_wall_ns === EXPECTED.v1ExternalWallNs && timing.metrics.v2_external_wall_ns === EXPECTED.v2ExternalWallNs, "Step 2 timing observations changed");
+  assert(timing.metrics.wall_time_ratio_rounded_10dp === "49.2271104608", "Step 2 rounded wall-time ratio changed");
+  assert((timing.metrics.v1_external_wall_ns / timing.metrics.v2_external_wall_ns).toFixed(10) === timing.metrics.wall_time_ratio_rounded_10dp, "Step 2 rounded wall-time ratio is inconsistent");
+  assert(!Object.hasOwn(timing.metrics, "wall_time_ratio_decimal"), "Step 2 ratio is mislabeled as exact");
+  assert(timing.statement.includes("rounded to 10 decimal places"), "Step 2 ratio qualification changed");
+  assert(timing.metrics.statistical_distribution === false && timing.metrics.universal_speedup_claim === false && timing.metrics.lane_scaling_result === false, "Step 2 timing observation was generalized");
+
+  const supply = claims.get("S2-CL-010");
+  assert(supply.status === "established_with_scope_limits", "Step 2 supply-chain status changed");
+  assert(supply.metrics.clean_generation_runs === 2 && supply.metrics.normalized_outputs_byte_equal === true, "Step 2 supply-chain generation evidence changed");
+  assert(supply.metrics.slsa_build_level_claimed === false, "Step 2 SLSA level was promoted without evidence");
+
+  const expectedOpenWork = [
+    "commercial_evaluation_and_design_partners",
+    "deeper_sampling_profiles_and_further_optimization",
+    "executed_complete_mutation_and_kill_sweep",
+    "full_execution_lifecycle_verification",
+    "independent_code_and_security_review",
+    "measured_lane_scaling_1_through_16",
+    "real_external_workload",
+    "three_unrelated_machine_reproductions"
+  ];
+  assert(Array.isArray(manifest.open_work) && manifest.open_work.length === expectedOpenWork.length, "Step 2 open-work count changed");
+  assert(manifest.open_work.every((item) => item.status === "open"), "Step 2 open work was promoted");
+  assert(equalArray(manifest.open_work.map((item) => item.category).sort(), expectedOpenWork), "Step 2 open-work categories changed");
+
+  return { signedByRole, claims };
+}
+
+async function validateStep2Pack(pack) {
+  const manifestPath = "release/ADDENDUM-MANIFEST.canonical.json";
+  const signaturePath = "release/ADDENDUM-MANIFEST.canonical.json.sig";
+  assert(pack.inventory.get(manifestPath) === STEP2.addendumManifestSha256, "Step 2 addendum-manifest identity changed");
+  assert(pack.inventory.get(signaturePath) === STEP2.addendumSignatureSha256, "Step 2 detached-signature identity changed");
+  const manifest = parseJson(pack.raw[manifestPath], "Step 2 signed addendum manifest");
+  const validated = validateStep2Manifest(manifest);
+
+  const publicToRole = Object.freeze({
+    "ADDENDUM-MANIFEST.schema.json": "addendum_manifest_schema",
+    "CLAIM_LEDGER.md": "addendum_claim_ledger",
+    "README.md": "addendum_readme",
+    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst": "revisioned_distribution_archive",
+    "downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256": "revisioned_distribution_checksum",
+    "release/SIGNING-AUDIT.md": "addendum_signing_decision_record",
+    "release/SIGNING.md": "addendum_signing_doc",
+    "release/allowed_signers": "signature_verification_policy",
+    "release/mfenx-local-v2-step2.provenance.intoto.json": "step2_provenance",
+    "release/mfenx-local-v2-step2.sbom.cdx.json": "step2_sbom",
+    "release/release-signing-key.pub": "release_public_key",
+    "validation/SHA256SUMS": "revisioned_distribution_validation_inventory",
+    "validation/summary.json": "revisioned_distribution_validation",
+    "verifier/audit.json": "reference_verifier_audit_report",
+    "verifier/bin/mfenx-contract-v1-verifier": "reference_verifier_binary",
+    "verifier/build-record.json": "reference_verifier_build_record",
+    "verifier/reports/a-uninterrupted.report.json": "reference_verifier_w0_report",
+    "verifier/source/SHA256SUMS": "reference_verifier_source_inventory"
+  });
+  for (const [publicPath, role] of Object.entries(publicToRole)) {
+    const artifact = validated.signedByRole.get(role);
+    assert(artifact, "Step 2 signed manifest omits role " + role);
+    assert(pack.inventory.get(publicPath) === artifact.sha256, "Step 2 public copy differs from signed role " + role);
+    assert(pack.raw[publicPath].byteLength === artifact.size_bytes, "Step 2 public copy size differs from signed role " + role);
+  }
+
+  const signatureText = decodeUtf8(pack.raw[signaturePath], "Step 2 detached signature").trim();
+  assert(signatureText.startsWith("-----BEGIN SSH SIGNATURE-----") && signatureText.endsWith("-----END SSH SIGNATURE-----"), "Step 2 detached signature armor changed");
+  const publicKeyText = decodeUtf8(pack.raw["release/release-signing-key.pub"], "Step 2 public key").trim();
+  const publicKeyFields = publicKeyText.split(/\s+/);
+  assert(publicKeyFields.length >= 2 && publicKeyFields[0] === "ssh-ed25519", "Step 2 public key is not OpenSSH Ed25519");
+  const publicKeyBlob = decodeBase64(publicKeyFields[1], "Step 2 public key");
+  const publicKeyDigest = new Uint8Array(await crypto.subtle.digest("SHA-256", publicKeyBlob));
+  assert("SHA256:" + base64WithoutPadding(publicKeyDigest) === STEP2.publicKeyFingerprint, "Step 2 public-key fingerprint changed");
+  const allowedSignerFields = decodeUtf8(pack.raw["release/allowed_signers"], "Step 2 allowed-signers policy").trim().split(/\s+/);
+  assert(
+    allowedSignerFields[0] === "mfenx-release"
+      && allowedSignerFields[1] === "namespaces=\"mfenx-step2-addendum\""
+      && allowedSignerFields[2] === publicKeyFields[0]
+      && allowedSignerFields[3] === publicKeyFields[1],
+    "Step 2 allowed-signers policy does not bind the key and namespace"
+  );
+
+  const sourceInventory = parseManifest(pack.raw["verifier/source/SHA256SUMS"], "Step 2 verifier source", STEP2.sourceFiles.length);
+  assert(equalArray([...sourceInventory.keys()].sort(), [...STEP2.sourceFiles].sort()), "Step 2 verifier source file set changed");
+  for (const sourcePath of STEP2.sourceFiles) {
+    const publicPath = "verifier/source/" + sourcePath;
+    assert(pack.inventory.get(publicPath) === sourceInventory.get(sourcePath), "Step 2 verifier source binding changed: " + sourcePath);
+  }
+
+  const archivePath = "downloads/" + STEP2.archiveName;
+  const archiveChecksumPath = archivePath + ".sha256";
+  assert(
+    parseChecksumRecord(pack.raw[archiveChecksumPath], "Step 2 archive checksum", STEP2.archiveName) === pack.inventory.get(archivePath),
+    "Step 2 archive checksum disagrees with the archive"
+  );
+
+  const schema = parseJson(pack.raw["ADDENDUM-MANIFEST.schema.json"], "Step 2 addendum schema");
+  assert(schema.properties.claims.minItems === 10 && schema.properties.claims.maxItems === 10, "Step 2 schema claim cardinality changed");
+
+  const build = parseJson(pack.raw["verifier/build-record.json"], "Step 2 verifier build record");
+  assert(build.schema === "mfenx.verifier-build-record.v1" && Array.isArray(build.builds) && build.builds.length === 2, "Step 2 verifier build record changed");
+  assert(build.builds.every((item) => item.exit_status === 0 && item.sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier") && item.size_bytes === pack.raw["verifier/bin/mfenx-contract-v1-verifier"].byteLength), "Step 2 verifier builds do not bind the public binary");
+
+  const audit = parseJson(pack.raw["verifier/audit.json"], "Step 2 verifier audit");
+  assert(audit.schema === "mfenx.verifier-audit.v1" && audit.status === "PASS", "Step 2 verifier audit did not pass");
+  assert(audit.canonical_binary.sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier") && audit.canonical_binary.two_clean_builds_byte_identical === true, "Step 2 verifier audit binary changed");
+  assert(audit.validation.release_tests.build_a_passed === 27 && audit.validation.release_tests.build_b_passed === 27 && audit.validation.release_tests.failed === 0, "Step 2 verifier test record changed");
+  assert(audit.scope_limits.includes("not independently governed or externally security certified") && audit.scope_limits.includes("two-build record is same-host, not cross-host"), "Step 2 verifier audit limits changed");
+
+  const w0 = parseJson(pack.raw["verifier/reports/a-uninterrupted.report.json"], "Step 2 verifier W0 report");
+  assert(w0.accepted === true && w0.contract === "mfenx-replay-gated-execution-contract/v1", "Step 2 W0 report was not accepted");
+  assert(w0.identities.output_manifest_root === EXPECTED.outputRoot && w0.arithmetic.values_checked === 3145728 && w0.arithmetic.integer_operations === EXPECTED.usefulOperations, "Step 2 W0 replay scope changed");
+  assert(Object.values(w0.checks).every((value) => value === true), "Step 2 W0 report contains a failed check");
+
+  const validation = parseJson(pack.raw["validation/summary.json"], "Step 2 archive validation");
+  assert(validation.schema === "mfenx.step2-archive-validation.v1" && validation.status === "PASS", "Step 2 archive validation did not pass");
+  assert(validation.archive_name === STEP2.archiveName && validation.archive_sha256 === pack.inventory.get(archivePath), "Step 2 archive validation identity changed");
+  assert(validation.executor_sha256 === manifest.base_release.accepted_executor.sha256 && validation.verifier_sha256 === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 archive contents changed");
+  assert(Object.values(validation.checks).every((value) => value === true), "Step 2 archive validation contains a failed check");
+  assert(validation.experiment_claims.scaling_attempts_executed === 0 && validation.experiment_claims.adversarial_cases_executed === 0, "Step 2 archive validation promoted an unexecuted experiment");
+
+  const sbom = parseJson(pack.raw["release/mfenx-local-v2-step2.sbom.cdx.json"], "Step 2 SBOM");
+  assert(sbom.bomFormat === "CycloneDX" && sbom.specVersion === "1.5", "Step 2 SBOM format changed");
+  assert(sbom.metadata.component.name === "mfenx-local-v2-step2-addendum" && sbom.components.length === 25 && sbom.dependencies.length === 26, "Step 2 SBOM scope changed");
+  const sbomProperties = new Map(sbom.metadata.properties.map((item) => [item.name, item.value]));
+  assert(sbomProperties.get("mfenx:step2:scaling:executed-attempts") === "0" && sbomProperties.get("mfenx:step2:adversarial-sweep:executed-cases") === "0", "Step 2 SBOM experiment scope changed");
+  assert(sbomProperties.get("mfenx:step2:archive:sha256") === pack.inventory.get(archivePath) && sbomProperties.get("mfenx:step2:verifier:sha256") === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 SBOM subjects changed");
+
+  const provenance = parseJson(pack.raw["release/mfenx-local-v2-step2.provenance.intoto.json"], "Step 2 provenance");
+  assert(provenance._type === "https://in-toto.io/Statement/v1" && provenance.predicateType === "https://slsa.dev/provenance/v1", "Step 2 provenance envelope changed");
+  const provenanceSubjects = new Map(provenance.subject.map((item) => [item.annotations["mfenx:role"], item.digest.sha256]));
+  assert(provenanceSubjects.get("accepted_executor") === manifest.base_release.accepted_executor.sha256, "Step 2 provenance executor changed");
+  assert(provenanceSubjects.get("distribution_archive") === pack.inventory.get(archivePath) && provenanceSubjects.get("standalone_verifier") === pack.inventory.get("verifier/bin/mfenx-contract-v1-verifier"), "Step 2 provenance subjects changed");
+  const limitations = provenance.predicate.buildDefinition.externalParameters.limitations;
+  assert(limitations.scalingExecuted === false && limitations.adversarialSweepExecuted === false, "Step 2 provenance promoted unexecuted experiments");
+  assert(limitations.crossHostReproducibilityEstablished === false && limitations.independentAuthorship === false && limitations.independentSecurityAuthority === false, "Step 2 provenance independence limits changed");
+  assert(limitations.slsaBuildLevelClaimed === false && limitations.recordKind === "post-hoc project record", "Step 2 provenance SLSA qualification changed");
+
+  return { manifest, claims: validated.claims, validation, audit };
 }
 
 function setCheck(name, status, text) {
@@ -851,7 +1125,7 @@ function displayComparison(v1, v2) {
   const v2Wall = v2.memory.external_timings["uninterrupted-run"].wall_ns;
   byId("v1-wall").textContent = seconds(v1Wall);
   byId("v2-wall").textContent = seconds(v2Wall);
-  byId("release-speedup").textContent = (v1Wall / v2Wall).toFixed(2) + "×";
+  byId("release-speedup").textContent = (v1Wall / v2Wall).toFixed(10) + "×";
   byId("release-reduction").textContent = (100 * (1 - v2Wall / v1Wall)).toFixed(6) + "% less external wall";
 
   const phases = [
@@ -864,6 +1138,26 @@ function displayComparison(v1, v2) {
     byId("v1-" + name).textContent = seconds(before);
     byId("v2-" + name).textContent = seconds(after);
     byId("ratio-" + name).textContent = (before / after).toFixed(3) + "×";
+  }
+}
+
+function clearStep2(status = "WAITING") {
+  for (const id of ["step2-addendum-status", "step2-verifier-status", "step2-scaling-status", "step2-adversarial-status"]) {
+    const node = byId(id);
+    node.textContent = status;
+    node.className = status === "REJECTED" ? "fail" : "";
+  }
+}
+
+function displayStep2(validated) {
+  const scaling = validated.claims.get("S2-CL-005").metrics;
+  const adversarial = validated.claims.get("S2-CL-006").metrics;
+  byId("step2-addendum-status").textContent = "SIGNED";
+  byId("step2-verifier-status").textContent = "PUBLISHED";
+  byId("step2-scaling-status").textContent = scaling.executed_attempts + " / " + scaling.planned_attempts;
+  byId("step2-adversarial-status").textContent = adversarial.executed_cases + " / " + adversarial.planned_cases;
+  for (const id of ["step2-addendum-status", "step2-verifier-status", "step2-scaling-status", "step2-adversarial-status"]) {
+    byId(id).className = "pass";
   }
 }
 
@@ -941,16 +1235,18 @@ async function loadAndValidate() {
   state.loading = true;
   state.ready = false;
   clearComparison();
-  releaseState("pending", "hashing releases and Contract v1 public files");
+  clearStep2();
+  releaseState("pending", "hashing releases, Contract v1, and Step 2 public files");
   byId("rerun-verification").disabled = true;
   byId("rerun-verification").textContent = "checking…";
-  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison", "trust-pack"]) setCheck(name, "", "checking");
+  for (const name of ["v2-manifest", "v2-pack", "v1-pack", "contract", "comparison", "trust-pack", "step2-pack", "step2-semantics"]) setCheck(name, "", "checking");
 
   try {
-    const [v2Release, v1Release, trustPack] = await Promise.all([
+    const [v2Release, v1Release, trustPack, step2Pack] = await Promise.all([
       loadSelectedRelease("v2", RELEASES.v2),
       loadSelectedRelease("v1", RELEASES.v1),
-      loadContractPack()
+      loadContractPack(),
+      loadStep2Pack()
     ]);
     setCheck("v2-manifest", "pass", RELEASES.v2.manifestEntries.toLocaleString() + " full-capture entries");
     setCheck("v2-pack", "pass", RELEASES.v2.files.length + " / " + RELEASES.v2.files.length + " selected files");
@@ -963,24 +1259,33 @@ async function loadAndValidate() {
     setCheck("comparison", "pass", "same workload / roots / observer");
     await validateContractPack(trustPack);
     setCheck("trust-pack", "pass", CONTRACT_V1.files.length + " signed-bound/public files");
+    setCheck("step2-pack", "pass", STEP2.files.length + " / " + STEP2.files.length + " selected files");
+    const step2 = await validateStep2Pack(step2Pack);
+    setCheck("step2-semantics", "pass", "10 claims / limits enforced");
 
     state.v2 = { release: v2Release, validated: v2 };
     state.v1 = { release: v1Release, validated: v1 };
+    state.step2 = { pack: step2Pack, validated: step2 };
     state.ready = true;
     displayV2(v2);
     displayComparison(v1, v2);
-    byId("verification-copy").textContent = "The selected v2/v1 evidence and the Contract v1 public subset match their pinned SHA-256 inventories, and cross-file semantics passed. The page also checks the release-key fingerprint encoded by the public key. Use OpenSSH and an independently pinned fingerprint to authenticate the detached signature.";
-    releaseState("pass", "release evidence + Contract v1 files verified");
+    displayStep2(step2);
+    byId("verification-copy").textContent = "The selected v2/v1 evidence, Contract v1 subset, and Step 2 subset match pinned SHA-256 inventories and signed-role bindings; cross-file and negative-claim semantics passed. The browser checks signature bytes, namespace policy, and the release-key fingerprint. Use OpenSSH with an independently pinned fingerprint to authenticate signer ownership.";
+    releaseState("pass", "release + Contract v1 + Step 2 files verified");
   } catch (error) {
     state.ready = false;
     state.v2 = null;
     state.v1 = null;
+    state.step2 = null;
     clearComparison();
+    clearStep2("REJECTED");
     byId("release-verdict").textContent = "REJECTED";
     byId("release-verdict").className = "fail";
     setCheck("contract", "fail", "rejected");
     setCheck("comparison", "fail", "not displayed");
     setCheck("trust-pack", "fail", "rejected");
+    setCheck("step2-pack", "fail", "rejected");
+    setCheck("step2-semantics", "fail", "rejected");
     byId("verification-copy").textContent = error.message;
     releaseState("fail", "selected release evidence rejected");
     throw error;
@@ -1009,7 +1314,7 @@ byId("verify-release").addEventListener("click", () => {
 byId("rerun-verification").addEventListener("click", () => loadAndValidate().catch(() => {}));
 byId("copy-commands").addEventListener("click", copyCommands);
 
-window.__MFENX_TEST__ = Object.freeze({ validateV2, validateV1, validateComparison });
+window.__MFENX_TEST__ = Object.freeze({ validateV2, validateV1, validateComparison, validateStep2Manifest });
 updateClock();
 window.setInterval(updateClock, 1000);
 loadAndValidate().catch(() => {});

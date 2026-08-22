@@ -1,0 +1,79 @@
+{
+  "schema": "mfenx.verifier-audit.v1",
+  "audit_id": "mfenx-contract-v1-verifier-20260821-a1",
+  "status": "PASS",
+  "finalized_at_utc": "2026-08-22T00:27:03Z",
+  "contract": "mfenx-replay-gated-execution-contract/v1",
+  "canonical_binary": {
+    "sha256": "f3714660b9deeef3bd8ecef716c40580c7596c0903f05e89d555ed0d32e9b9fa",
+    "size_bytes": 998760,
+    "gnu_build_id": "497c3707895d94f5526978fe1a266c0f9ecba024",
+    "two_clean_builds_byte_identical": true
+  },
+  "dependency_boundary": {
+    "executor_crate_dependency": false,
+    "tensor_store_crate_dependency": false,
+    "executor_process_invocation": false,
+    "unsafe_code": false,
+    "direct_crates": ["blake3", "serde", "serde_json"]
+  },
+  "validation": {
+    "release_tests": {
+      "build_a_passed": 27,
+      "build_b_passed": 27,
+      "failed": 0
+    },
+    "release_clippy_warnings_denied": {
+      "build_a": "PASS",
+      "build_b": "PASS"
+    },
+    "rustfmt": {
+      "build_a": "PASS",
+      "build_b": "PASS"
+    },
+    "sealed_w0_reports": [
+      {
+        "path": "reports/a-uninterrupted.report.json",
+        "sha256": "f5ea1f460c85d7f9743aca960ae3ef33b51fce92f6f82ff6b87e4cfbd4035f54",
+        "accepted": true,
+        "result_blake3": "cd87142ca641bb46881ae87d1e219a17f3b6250fa1593b94371209122c7a1de2"
+      },
+      {
+        "path": "reports/a-resumed.report.json",
+        "sha256": "658cadda6d5c38d0c0ce31b6ab91236df4b74eb2b905767f282812f4b241be55",
+        "accepted": true,
+        "result_blake3": "9137548ea387812a06186d131bc402fa7da1420a93f30081fe444fe5f5f7a62b"
+      },
+      {
+        "path": "reports/b-uninterrupted.report.json",
+        "sha256": "3effb9c69ebc65b7eb28965c11cc26f7d44641864d3c5b09a60623e682e7c9eb",
+        "accepted": true,
+        "result_blake3": "cd87142ca641bb46881ae87d1e219a17f3b6250fa1593b94371209122c7a1de2"
+      },
+      {
+        "path": "reports/b-resumed.report.json",
+        "sha256": "04d57c7ba48fd84ed42c7ec976cc2895d1b65e94c33ed97c6cac43a53282dad9",
+        "accepted": true,
+        "result_blake3": "9137548ea387812a06186d131bc402fa7da1420a93f30081fe444fe5f5f7a62b"
+      }
+    ]
+  },
+  "w0_invariants": {
+    "program_blake3": "02091bb701479b52dcd0543fd27a3441896f45f09fade52baffeec742f409cde",
+    "image_blake3": "4d04ef1086530929226ee9c75356ce6a7230ce55e7220dbb1f380fa1077c07a1",
+    "resource_certificate_blake3": "0c054cd037201279132c838fbae473608a62563da246225bea234b864fbb7218",
+    "output_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c",
+    "values_checked": 3145728,
+    "integer_operations": 352321536,
+    "all_checks_true": true
+  },
+  "scope_limits": [
+    "final image/result/store verification only",
+    "historical checkpoint and SIGKILL event not attested",
+    "same repository, authors, contract specification, language and toolchain",
+    "not independently governed or externally security certified",
+    "one Contract-v1 wrapping-i32 GEMM operation",
+    "two-build record is same-host, not cross-host"
+  ],
+  "diagnostics_retained": true
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "contract": "mfenx-replay-gated-execution-contract/v1",
+  "verifier": "mfenx_contract_v1_reference_verifier_rust_v1",
+  "accepted": true,
+  "identities": {
+    "program_blake3": "02091bb701479b52dcd0543fd27a3441896f45f09fade52baffeec742f409cde",
+    "image_blake3": "4d04ef1086530929226ee9c75356ce6a7230ce55e7220dbb1f380fa1077c07a1",
+    "resource_certificate_blake3": "0c054cd037201279132c838fbae473608a62563da246225bea234b864fbb7218",
+    "result_blake3": "cd87142ca641bb46881ae87d1e219a17f3b6250fa1593b94371209122c7a1de2",
+    "left_manifest_root": "9c2464f3983f92bdbc8e017833cadbe22c10e20cd4e446533676ab7122b0822d",
+    "right_manifest_root": "7812c2477d8c10ef6e3c1b6d6420d6bbcddec78e5a5c6696e807ac423ecd1bd5",
+    "output_manifest_root": "4691a345a8818af410da311bc4d79131dcd093ff47384e71d4832ca08fed638c"
+  },
+  "arithmetic": {
+    "operation": "streamed_i32_gemm",
+    "arithmetic": "ascending_k_wrapping_i32_modulo_2^32",
+    "rows": 3,
+    "inner": 56,
+    "columns": 1048576,
+    "values_checked": 3145728,
+    "integer_operations": 352321536,
+    "pieces_checked": 2,
+    "bytes_checked": 12582912
+  },
+  "admission_input_io": {
+    "requested_bytes": 0,
+    "authenticated_chunk_bytes": 234881696,
+    "chunk_loads": 225,
+    "cache_hits": 0
+  },
+  "reference_replay_input_io": {
+    "requested_bytes": 469762720,
+    "authenticated_chunk_bytes": 469763392,
+    "chunk_loads": 450,
+    "cache_hits": 1
+  },
+  "reference_replay_output_io": {
+    "requested_bytes": 12582912,
+    "authenticated_chunk_bytes": 12582912,
+    "chunk_loads": 12,
+    "cache_hits": 0
+  },
+  "reference_replay_ns": 2235971552,
+  "checks": {
+    "strict_typed_control_json": true,
+    "canonical_manifest_bytes": true,
+    "authenticated_tensor_store": true,
+    "typed_identities": true,
+    "resource_certificate": true,
+    "result_claims": true,
+    "exact_output_replay": true
+  }
+}

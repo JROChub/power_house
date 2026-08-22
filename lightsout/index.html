@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#080b09">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="MFENX Local v2 is a software-defined local supercomputer. Review its ISA 6 CPU execution, authenticated storage, recovery, exact replay, measured performance, and accepted Linux executable.">
+  <meta name="description" content="MFENX Local v2 is a software-defined local supercomputer. Review its signed Step 2 addendum, standalone verifier, revisioned distribution, qualified evidence, and accepted Linux executable.">
   <meta property="og:title" content="MFENX Local v2 / software-defined local supercomputer">
   <meta property="og:description" content="Hash-checked release evidence for real local CPU and storage execution. No browser simulation, VPS, cloud worker, GPU, or network is used by the accepted workload.">
   <meta property="og:url" content="https://mfenx.com/lightsout/">
   <title>MFENX Local v2 / software-defined local supercomputer</title>
   <link rel="canonical" href="https://mfenx.com/lightsout/">
   <link rel="icon" type="image/svg+xml" href="../assets/powerhouse-logo.svg">
-  <link rel="stylesheet" href="lightsout.css?v=8">
+  <link rel="stylesheet" href="lightsout.css?v=9">
 </head>
 <body>
   <div class="grid-field" aria-hidden="true"></div>
@@ -31,7 +31,7 @@
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">MFENX LOCAL V2 / ACCEPTED RELEASE EVIDENCE</p>
+        <p class="eyebrow">MFENX LOCAL V2 / ACCEPTED RELEASE + SIGNED STEP 2 ADDENDUM</p>
         <h1>Software-defined local supercomputer</h1>
         <p class="lede">
           MFENX Local v2 is a compute system that combines an ISA 6 compiler, a
@@ -44,9 +44,16 @@
           workload did not use a browser simulation, VPS, cloud worker, GPU, network
           transport, or custom MFENX silicon.
         </p>
+        <p class="boundary">
+          Step 2 adds a standalone first-party verifier, a revisioned distribution,
+          same-host reproducible-build evidence, an SBOM, and qualified provenance.
+          Its scaling and adversarial harnesses are plans with zero executed results.
+        </p>
         <div class="hero-actions">
           <button class="primary" id="verify-release" type="button">verify selected files</button>
-          <a class="secondary" href="release/bin/mfenx-local" download="mfenx-local">download accepted Linux executable</a>
+          <a class="secondary" href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst" download>download Step 2 archive</a>
+          <a class="secondary" href="step2/verifier/bin/mfenx-contract-v1-verifier" download="mfenx-contract-v1-verifier">download standalone verifier</a>
+          <a class="text-link" href="#step2">Step 2 evidence ↓</a>
           <a class="text-link" href="#contract">Contract v1 ↓</a>
           <a class="text-link" href="#run">usage ↓</a>
         </div>
@@ -148,8 +155,9 @@
       </div>
       <p class="comparison-note">
         This is a same-workload, cross-release, single-run comparison:
-        <code>276.103268901 s ÷ 5.608764486 s</code>. It is not a multi-run benchmark
-        distribution and does not support a universal speedup claim.
+        <code>276.103268901 s ÷ 5.608764486 s</code>. The displayed ratio is
+        <code>49.2271104608×</code>, rounded to 10 decimal places. It is not a multi-run
+        benchmark distribution and does not support a universal speedup claim.
       </p>
       <div class="phase-table" aria-label="Accepted internal phase comparisons">
         <div class="phase-head"><span>accepted phase</span><span>Local v1</span><span>Local v2</span><span>v1 / v2</span></div>
@@ -340,6 +348,8 @@
           <li data-check="contract"><i></i><span>schemas, counters, lanes, memory, recovery, roots, and containment</span><b>waiting</b></li>
           <li data-check="comparison"><i></i><span>same-workload v1/v2 comparator checked before speedup display</span><b>waiting</b></li>
           <li data-check="trust-pack"><i></i><span>Contract v1 public subset and signed-manifest identity</span><b>waiting</b></li>
+          <li data-check="step2-pack"><i></i><span>Step 2 selected public bytes mapped to signed roles and nested source checksums</span><b>waiting</b></li>
+          <li data-check="step2-semantics"><i></i><span>Step 2 limits, open work, SBOM, provenance, verifier, and distribution semantics</span><b>waiting</b></li>
         </ol>
         <div class="verify-action">
           <button id="rerun-verification" type="button">rerun browser checks</button>
@@ -354,6 +364,7 @@
             <a href="release/artifacts/gemm.mfx.json">v2 ISA 6 image</a>
             <a href="release-v1/acceptance.json">preserved v1 acceptance</a>
             <a href="contract-v1/release/RELEASE-MANIFEST.canonical.json">signed release manifest</a>
+            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">signed Step 2 addendum</a>
             <a href="RELEASES.md">selection note</a>
           </div>
         </div>
@@ -402,6 +413,8 @@
             <a href="contract-v1/release/release-signing-key.pub">release public key</a>
             <a href="contract-v1/release/allowed_signers">allowed-signers policy</a>
             <a href="contract-v1/release/SIGNING-AUDIT.md">signing decision and limitations</a>
+            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">Step 2 canonical addendum manifest</a>
+            <a href="step2/release/ADDENDUM-MANIFEST.canonical.json.sig">Step 2 detached signature</a>
           </article>
           <article>
             <span>SUPPLY CHAIN / REPRODUCTION</span>
@@ -433,9 +446,94 @@
       </div>
     </section>
 
+    <section class="step2-section" id="step2" aria-labelledby="step2-title">
+      <header class="section-head">
+        <p>10 / SIGNED STEP 2 ADDENDUM</p>
+        <h2 id="step2-title">What Step 2 establishes</h2>
+        <span>selected public bytes are checked against signed artifact roles; every unexecuted or independent gate remains explicit</span>
+      </header>
+
+      <div class="step2-status" aria-label="Step 2 verification status">
+        <article><span>ADDENDUM</span><b id="step2-addendum-status">WAITING</b><small>domain-separated project-key signature</small></article>
+        <article><span>VERIFIER</span><b id="step2-verifier-status">WAITING</b><small>separate first-party executable and source</small></article>
+        <article><span>SCALING</span><b id="step2-scaling-status">WAITING</b><small>plan only; no scaling result</small></article>
+        <article><span>ADVERSARIAL</span><b id="step2-adversarial-status">WAITING</b><small>plan only; no completed sweep</small></article>
+      </div>
+
+      <div class="step2-claim-grid">
+        <article>
+          <span>STANDALONE VERIFIER</span>
+          <b>Established with boundaries</b>
+          <p>One separately invocable verifier owns its wire types, digest checks, bounded reader, formulas, result checks, and arithmetic replay. Its two frozen builds are byte-identical and each passed 27 tests. It is first-party, not independently authored or governed, and verifies final state rather than the historical kill event.</p>
+        </article>
+        <article>
+          <span>REVISIONED DISTRIBUTION</span>
+          <b>Established for a2</b>
+          <p>The exact signed archive retains the accepted Step 1 executor and adds the standalone verifier and source-only harness materials. Extracted validation passed; unrelated-machine deployment has not been established.</p>
+        </article>
+        <article>
+          <span>REPRODUCIBLE BUILD</span>
+          <b>One host only</b>
+          <p>Two clean path-remapped builds in separate directories on one physical host matched the accepted executor byte-for-byte. Unrelated-machine reproductions: zero. Cross-host and cross-distribution reproducibility: not established.</p>
+        </article>
+        <article>
+          <span>PERFORMANCE OBSERVATION</span>
+          <b>49.2271104608×</b>
+          <p>Rounded to 10 decimal places from one accepted observation per release on the same frozen workload and output root. It is not a statistical distribution, lane-scaling result, universal speedup, or projection to another workload or machine.</p>
+        </article>
+        <article>
+          <span>LANE SCALING</span>
+          <b>Plan only · 0 / 100</b>
+          <p>The source freezes 100 attempts across 1, 2, 4, 8, and 16 lanes. No attempts have run, and the evidence validator required to establish a result is not implemented.</p>
+        </article>
+        <article>
+          <span>MUTATION / KILL SWEEP</span>
+          <b>Plan only · 0 / 214</b>
+          <p>The source enumerates 192 mutations and 22 kill windows. No cases have run, the sweep is not exhaustive, and 14 kill windows still require executor failpoints.</p>
+        </article>
+        <article>
+          <span>INDEPENDENT REVIEW</span>
+          <b>Open</b>
+          <p>No independent code review, security review, authorship, governance, or external security authority is claimed. Three unrelated-machine reproductions also remain open.</p>
+        </article>
+        <article>
+          <span>SUPPLY CHAIN</span>
+          <b>Qualified records</b>
+          <p>The addendum includes CycloneDX dependency metadata and post-hoc in-toto/SLSA-shaped provenance. It is not a binary-composition or operating-system scan, claims no SLSA build level, and was not emitted by an independently controlled builder.</p>
+        </article>
+      </div>
+
+      <div class="step2-publication">
+        <div class="step2-downloads">
+          <span>SELECTED SIGNED-BOUND PUBLIC FILES</span>
+          <h3>Download and inspect</h3>
+          <a href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst" download>revisioned a2 archive</a>
+          <a href="step2/downloads/rarecomp_mfenx-local-supercomputer-v2-step2-a2-0.1.0-x86_64.tar.zst.sha256">archive checksum</a>
+          <a href="step2/verifier/bin/mfenx-contract-v1-verifier" download="mfenx-contract-v1-verifier">standalone verifier binary</a>
+          <a href="step2/verifier/source/README.md">verifier build and usage</a>
+          <a href="step2/verifier/source/SHA256SUMS">verifier source checksums</a>
+          <a href="step2/verifier/audit.json">verifier audit record</a>
+          <a href="step2/verifier/reports/a-uninterrupted.report.json">retained W0 report</a>
+          <a href="step2/validation/summary.json">archive validation summary</a>
+          <a href="step2/release/ADDENDUM-MANIFEST.canonical.json">canonical addendum manifest</a>
+          <a href="step2/release/ADDENDUM-MANIFEST.canonical.json.sig">detached addendum signature</a>
+          <a href="step2/CLAIM_LEDGER.md">signed claim ledger</a>
+          <a href="step2/release/mfenx-local-v2-step2.sbom.cdx.json">Step 2 CycloneDX SBOM</a>
+          <a href="step2/release/mfenx-local-v2-step2.provenance.intoto.json">Step 2 provenance</a>
+          <a href="step2/SHA256SUMS">public-subset checksums</a>
+        </div>
+        <aside class="step2-disclosure">
+          <span>BINARY DISCLOSURE</span>
+          <p>The downloadable ELF verifier and revisioned archive contain embedded compiler source paths, including paths under the build account’s Cargo registry and Rust toolchain directories. These paths are build metadata; no credentials, private key, tokens, or private-key location are included.</p>
+          <p>This site intentionally omits the full diagnostic, reproducible-build, and supply-chain working trees. The signed manifest names the complete evidence routing; this browser verifies the selected public subset and its exact signed bindings.</p>
+          <b>Use OpenSSH with an independently pinned key fingerprint to authenticate the detached signature. Browser checks establish byte and semantic consistency, not signer ownership.</b>
+        </aside>
+      </div>
+    </section>
+
     <section class="run-section" id="run" aria-labelledby="run-title">
       <header class="section-head">
-        <p>10 / LOCAL USAGE</p>
+        <p>11 / LOCAL USAGE</p>
         <h2 id="run-title">Run the accepted executable</h2>
         <span>Linux x86_64 · local CPU and storage · no service, account, VPS, cloud worker, GPU, or network required</span>
       </header>
@@ -476,10 +574,10 @@
 
   <footer>
     <a href="/">MFENX.COM</a>
-    <span>ACCEPTED EVIDENCE + SIGNED CONTRACT V1</span>
+    <span>ACCEPTED EVIDENCE + SIGNED CONTRACT V1 + SIGNED STEP 2 ADDENDUM</span>
     <time id="capture-footer">release evidence pending</time>
   </footer>
 
-  <script src="lightsout.js?v=8" defer></script>
+  <script src="lightsout.js?v=9" defer></script>
 </body>
 </html>
