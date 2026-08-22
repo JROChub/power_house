@@ -66,15 +66,25 @@ class Step3FoundationAssetTests(unittest.TestCase):
         self.assertIn("verify_claim_attestation", workflow)
         self.assertIn("unsigned aggregate must not contain a public claim", policy)
 
-    def test_security_workflow_analyzes_extracted_candidate_source(self):
+    def test_security_workflow_analyzes_recorded_overlay_of_signed_sources(self):
         workflow = (REPOSITORY / WORKFLOWS[1]).read_text()
-        self.assertIn("source-root: candidate-source", workflow)
+        self.assertIn("source-root: candidate-review-source", workflow)
+        self.assertIn("build-mode: none", workflow)
+        self.assertNotIn("build-mode: manual", workflow)
+        self.assertNotIn("cargo build --workspace", workflow)
         self.assertIn("step3-verify-candidate.sh", workflow)
         self.assertIn("source-inventory", workflow)
+        self.assertIn("step3-review-overlay.py create", workflow)
+        self.assertIn("candidate-verifier-source", workflow)
         self.assertNotIn("push:\n", workflow)
-        self.assertIn("independent_code_or_security_review_complete", (
-            REPOSITORY / "packaging/step3-security-review-evidence.py"
-        ).read_text())
+        self.assertIn(
+            "release_source_mutated",
+            (REPOSITORY / "packaging/step3-review-overlay.py").read_text(),
+        )
+        self.assertIn(
+            "independent_code_or_security_review_complete",
+            (REPOSITORY / "packaging/step3-security-review-evidence.py").read_text(),
+        )
 
     def test_issue_form_and_review_schema_are_valid(self):
         issue = yaml.safe_load(
