@@ -107,9 +107,9 @@ impl MultilinearPolynomial {
         for &coord in point {
             let r = coord % field.modulus();
             let mut next = Vec::with_capacity(layer.len() / 2);
-            for chunk in layer.chunks_exact(2) {
-                let v0 = chunk[0];
-                let v1 = chunk[1];
+            let (pairs, remainder) = layer.as_chunks::<2>();
+            debug_assert!(remainder.is_empty());
+            for &[v0, v1] in pairs {
                 let diff = field.sub(v1, v0);
                 let eval = field.add(field.mul(diff, r), v0);
                 next.push(eval);
@@ -147,5 +147,13 @@ mod tests {
         let val = poly.evaluate(&field, &[5, 7]);
         // Evaluate manually: 5 + 2*7 = 19 mod 101
         assert_eq!(val, 19);
+    }
+
+    #[test]
+    fn test_arbitrary_evaluation_preserves_pair_order_across_layers() {
+        let poly = MultilinearPolynomial::from_evaluations(3, (0..8).collect());
+        let field = Field::new(101);
+        // f(x0, x1, x2) = x0 + 2*x1 + 4*x2 for this little-endian table.
+        assert_eq!(poly.evaluate(&field, &[5, 7, 11]), 63);
     }
 }
