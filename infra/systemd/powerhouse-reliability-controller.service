@@ -1,0 +1,42 @@
+[Unit]
+Description=Power House external 72-hour reliability controller
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=powerhouse-campaign
+Group=powerhouse-campaign
+Environment=HOME=/var/lib/powerhouse-reliability-controller
+StateDirectory=powerhouse-reliability-controller
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 /usr/local/lib/powerhouse/reliability_campaign.py run \
+  --config /etc/powerhouse/reliability-campaign.json
+Restart=on-failure
+RestartSec=5
+UMask=0077
+CapabilityBoundingSet=
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProtectSystem=strict
+ProcSubset=pid
+RemoveIPC=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

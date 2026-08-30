@@ -110,6 +110,11 @@ config = {
     "burst_interval_seconds": 3600,
     "burst_requests": 30,
     "recovery_timeout_seconds": 90,
+    "probe_attempts": 3,
+    "probe_retry_delay_seconds": 0.75,
+    "http_timeout_seconds": 6,
+    "ssh_timeout_seconds": 12,
+    "max_parallel_probes": 8,
     "max_rpc_p95_ms": 1000,
     "expected_chain_id": 177155,
     "expected_release": release,
@@ -148,6 +153,10 @@ os.replace(temporary, path)
 PY
 
 python3 -m py_compile "$LIB_DIR/reliability_campaign.py"
+python3 "$LIB_DIR/reliability_campaign.py" preflight \
+  --config "$CONFIG" \
+  --samples 10 \
+  --interval-seconds 2
 systemctl --user daemon-reload
 systemctl --user enable --now powerhouse-reliability-campaign.service
 

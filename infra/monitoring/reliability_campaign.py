@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -37,6 +38,7 @@ CONTROLLER_ACTIVITY_KINDS = {
     "drill_completed",
     "drill_blocked",
     "status_publish_attempt",
+    "status_publish_result",
 }
 FINALIZED_STATE_DIFFERS = "finalized state differs across validators"
 
@@ -216,6 +218,11 @@ class Config:
     burst_interval_seconds: int
     burst_requests: int
     recovery_timeout_seconds: int
+    probe_attempts: int
+    probe_retry_delay_seconds: float
+    http_timeout_seconds: float
+    ssh_timeout_seconds: float
+    max_parallel_probes: int
     max_rpc_p95_ms: float
     expected_chain_id: int
     expected_release: str
@@ -241,6 +248,11 @@ class Config:
             burst_interval_seconds=int(value.get("burst_interval_seconds", 3600)),
             burst_requests=int(value.get("burst_requests", 30)),
             recovery_timeout_seconds=int(value.get("recovery_timeout_seconds", 90)),
+            probe_attempts=int(value.get("probe_attempts", 3)),
+            probe_retry_delay_seconds=float(value.get("probe_retry_delay_seconds", 0.75)),
+            http_timeout_seconds=float(value.get("http_timeout_seconds", 6)),
+            ssh_timeout_seconds=float(value.get("ssh_timeout_seconds", 12)),
+            max_parallel_probes=int(value.get("max_parallel_probes", 8)),
             max_rpc_p95_ms=float(value.get("max_rpc_p95_ms", 1000)),
             expected_chain_id=int(value.get("expected_chain_id", 177155)),
             expected_release=str(value["expected_release"]),
@@ -272,6 +284,16 @@ class Config:
             raise ValueError("burst request count is outside the safe range")
         if not 15 <= self.recovery_timeout_seconds <= 300:
             raise ValueError("recovery timeout is outside the safe range")
+        if not 1 <= self.probe_attempts <= 5:
+            raise ValueError("probe attempts are outside the safe range")
+        if not 0 <= self.probe_retry_delay_seconds <= 5:
+            raise ValueError("probe retry delay is outside the safe range")
+        if not 1 <= self.http_timeout_seconds <= 30:
+            raise ValueError("HTTP timeout is outside the safe range")
+        if not 1 <= self.ssh_timeout_seconds <= 60:
+            raise ValueError("SSH timeout is outside the safe range")
+        if not 3 <= self.max_parallel_probes <= 32:
+            raise ValueError("parallel probe count is outside the safe range")
         if not 50 <= self.max_rpc_p95_ms <= 10_000:
             raise ValueError("RPC p95 threshold is outside the safe range")
         if not re.fullmatch(r"\d+\.\d+\.\d+", self.expected_release):
@@ -295,6 +317,11 @@ class Config:
             "sample_interval_seconds": self.sample_interval_seconds,
             "burst_interval_seconds": self.burst_interval_seconds,
             "burst_requests": self.burst_requests,
+            "probe_attempts": self.probe_attempts,
+            "probe_retry_delay_seconds": self.probe_retry_delay_seconds,
+            "http_timeout_seconds": self.http_timeout_seconds,
+            "ssh_timeout_seconds": self.ssh_timeout_seconds,
+            "max_parallel_probes": self.max_parallel_probes,
             "max_rpc_p95_ms": self.max_rpc_p95_ms,
             "expected_chain_id": self.expected_chain_id,
             "expected_release": self.expected_release,
@@ -346,6 +373,9 @@ class Campaign:
                 state.get("last_sample_unix") or state.get("updated_unix"),
             )
             state.setdefault("controller_busy_windows", 0)
+            state.setdefault("rpc_attempt_errors", 0)
+            state.setdefault("rpc_recoveries", 0)
+            state.setdefault("recovered_probe_attempts", 0)
             self._backfill_controller_gap_state(state)
             return state
         started = time.time()
@@ -366,6 +396,9 @@ class Campaign:
             "max_consecutive_failures": 0,
             "rpc_requests": 0,
             "rpc_errors": 0,
+            "rpc_attempt_errors": 0,
+            "rpc_recoveries": 0,
+            "recovered_probe_attempts": 0,
             "rpc_latencies_ms": [],
             "last_sample": None,
             "last_sample_unix": None,
@@ -498,9 +531,11 @@ class Campaign:
                 raise RuntimeError("another campaign controller is already running")
             yield
 
-    def _ssh(self, node: Node, command: str, timeout: float = 30) -> str:
+    def _ssh(self, node: Node, command: str, timeout: float | None = None) -> str:
+        command_timeout = self.config.ssh_timeout_seconds if timeout is None else timeout
         process = self._run(
-            ["ssh", *self.config.ssh_options, node.target, command], timeout=timeout
+            ["ssh", *self.config.ssh_options, node.target, command],
+            timeout=command_timeout,
         )
         if process.returncode:
             detail = process.stderr.strip() or process.stdout.strip() or "SSH command failed"
@@ -508,19 +543,44 @@ class Campaign:
         return process.stdout
 
     def _http_json(
-        self, url: str, *, data: bytes | None = None, timeout: float = 8
+        self, url: str, *, data: bytes | None = None, timeout: float | None = None
     ) -> tuple[dict, float]:
+        request_timeout = self.config.http_timeout_seconds if timeout is None else timeout
         request = Request(
             url,
             data=data,
             headers={"Content-Type": "application/json"} if data is not None else {},
         )
         started = time.monotonic()
-        with urlopen(request, timeout=timeout) as response:
+        with urlopen(request, timeout=request_timeout) as response:
             value = json.loads(response.read())
             if response.status != 200:
                 raise RuntimeError(f"HTTP {response.status}")
         return value, (time.monotonic() - started) * 1000
+
+    def _probe(self, name: str, operation) -> dict:
+        failures = []
+        for attempt in range(1, self.config.probe_attempts + 1):
+            try:
+                return {
+                    "name": name,
+                    "ok": True,
+                    "value": operation(),
+                    "attempts": attempt,
+                    "attempt_errors": failures,
+                }
+            except Exception as exc:
+                failures.append(str(exc))
+                if attempt < self.config.probe_attempts:
+                    time.sleep(self.config.probe_retry_delay_seconds * attempt)
+        return {
+            "name": name,
+            "ok": False,
+            "value": None,
+            "attempts": self.config.probe_attempts,
+            "attempt_errors": failures,
+            "error": failures[-1] if failures else "probe failed",
+        }
 
     def _rpc(self, method: str) -> tuple[object, float]:
         payload = json.dumps(
@@ -575,15 +635,39 @@ class Campaign:
             "active_alerts": alerts,
         }
 
-    def audit_nodes(self) -> tuple[list[dict], list[str]]:
+    def audit_nodes(self) -> tuple[list[dict], list[str], list[dict]]:
+        outcomes = {}
+        with ThreadPoolExecutor(max_workers=len(self.config.nodes)) as executor:
+            futures = {
+                executor.submit(
+                    self._probe,
+                    f"validator audit {node.name}",
+                    lambda node=node: self.audit_node(node),
+                ): node
+                for node in self.config.nodes
+            }
+            for future in as_completed(futures):
+                node = futures[future]
+                outcomes[node.name] = future.result()
+
         nodes = []
         errors = []
+        recoveries = []
         for node in self.config.nodes:
-            try:
-                nodes.append(self.audit_node(node))
-            except Exception as exc:
-                errors.append(str(exc))
-        return nodes, errors
+            outcome = outcomes[node.name]
+            if outcome["ok"]:
+                nodes.append(outcome["value"])
+                if outcome["attempt_errors"]:
+                    recoveries.append(
+                        {
+                            "probe": outcome["name"],
+                            "attempts": outcome["attempts"],
+                            "errors": outcome["attempt_errors"],
+                        }
+                    )
+            else:
+                errors.append(str(outcome["error"]))
+        return nodes, errors, recoveries
 
     @staticmethod
     def finalized_signatures(nodes: list[dict]) -> set[tuple[object, object]]:
@@ -598,52 +682,110 @@ class Campaign:
     def finalized_states_differ(self, nodes: list[dict]) -> bool:
         return len(nodes) == len(self.config.nodes) and len(self.finalized_signatures(nodes)) != 1
 
-    def collect_stable_validator_audits(self) -> tuple[list[dict], list[str]]:
-        nodes, errors = self.audit_nodes()
+    def collect_stable_validator_audits(self) -> tuple[list[dict], list[str], list[dict]]:
+        nodes, errors, recoveries = self.audit_nodes()
         if not self.finalized_states_differ(nodes):
-            return nodes, errors
+            return nodes, errors, recoveries
 
         for _attempt in range(6):
             time.sleep(2)
-            retry_nodes, retry_errors = self.audit_nodes()
+            retry_nodes, retry_errors, retry_recoveries = self.audit_nodes()
+            recoveries.extend(retry_recoveries)
             if len(retry_nodes) == len(self.config.nodes):
                 nodes = retry_nodes
                 if not self.finalized_states_differ(nodes):
-                    return nodes, errors
+                    return nodes, errors, recoveries
             else:
                 errors.extend(retry_errors)
 
-        return nodes, errors
+        return nodes, errors, recoveries
 
     def collect_sample(self) -> dict:
         errors = []
         latencies = []
-        nodes = []
-        try:
-            status, latency = self._http_json(self.config.status_url)
-            latencies.append(latency)
-        except Exception as exc:
-            status = {}
-            errors.append(f"public status: {exc}")
-        try:
-            intake, latency = self._http_json(self.config.intake_url)
-            latencies.append(latency)
-        except Exception as exc:
-            intake = {}
-            errors.append(f"observer intake: {exc}")
+        rpc_latencies = []
+        probe_recoveries = []
+        tasks = {
+            "status": (
+                "public status",
+                lambda: self._http_json(self.config.status_url),
+            ),
+            "intake": (
+                "observer intake",
+                lambda: self._http_json(self.config.intake_url),
+            ),
+            "eth_chainId": (
+                "RPC eth_chainId",
+                lambda: self._rpc("eth_chainId"),
+            ),
+            "eth_blockNumber": (
+                "RPC eth_blockNumber",
+                lambda: self._rpc("eth_blockNumber"),
+            ),
+            "web3_clientVersion": (
+                "RPC web3_clientVersion",
+                lambda: self._rpc("web3_clientVersion"),
+            ),
+        }
+        outcomes = {}
+        with ThreadPoolExecutor(
+            max_workers=min(self.config.max_parallel_probes, len(tasks) + 1)
+        ) as executor:
+            futures = {
+                executor.submit(self._probe, name, operation): key
+                for key, (name, operation) in tasks.items()
+            }
+            validator_future = executor.submit(self.collect_stable_validator_audits)
+            for future in as_completed(futures):
+                outcomes[futures[future]] = future.result()
+            nodes, audit_errors, audit_recoveries = validator_future.result()
+
+        def consume_http(key: str, error_prefix: str) -> dict:
+            outcome = outcomes[key]
+            if outcome["ok"]:
+                value, latency = outcome["value"]
+                latencies.append(latency)
+                if outcome["attempt_errors"]:
+                    probe_recoveries.append(
+                        {
+                            "probe": outcome["name"],
+                            "attempts": outcome["attempts"],
+                            "errors": outcome["attempt_errors"],
+                        }
+                    )
+                return value
+            errors.append(f"{error_prefix}: {outcome['error']}")
+            return {}
+
+        status = consume_http("status", "public status")
+        intake = consume_http("intake", "observer intake")
         rpc_results = {}
         for method in ("eth_chainId", "eth_blockNumber", "web3_clientVersion"):
-            try:
-                result, latency = self._rpc(method)
+            outcome = outcomes[method]
+            self.state["rpc_requests"] += int(outcome["attempts"])
+            self.state["rpc_attempt_errors"] += len(outcome["attempt_errors"])
+            if outcome["ok"]:
+                result, latency = outcome["value"]
                 rpc_results[method] = result
                 latencies.append(latency)
-                self.state["rpc_requests"] += 1
-            except Exception as exc:
-                errors.append(f"RPC {method}: {exc}")
-                self.state["rpc_requests"] += 1
+                rpc_latencies.append(latency)
+                if outcome["attempt_errors"]:
+                    self.state["rpc_recoveries"] += 1
+                    probe_recoveries.append(
+                        {
+                            "probe": outcome["name"],
+                            "attempts": outcome["attempts"],
+                            "errors": outcome["attempt_errors"],
+                        }
+                    )
+            else:
+                errors.append(f"RPC {method}: {outcome['error']}")
                 self.state["rpc_errors"] += 1
-        nodes, audit_errors = self.collect_stable_validator_audits()
         errors.extend(audit_errors)
+        probe_recoveries.extend(audit_recoveries)
+        self.state["recovered_probe_attempts"] += sum(
+            len(item["errors"]) for item in probe_recoveries
+        )
 
         if status:
             if status.get("status") != "operational":
@@ -656,12 +798,15 @@ class Campaign:
                 errors.append("public validator registry is not verified")
             if status.get("observer_registry", {}).get("verified") is not True:
                 errors.append("public observer registry is not verified")
-        if intake.get("status") != "ok":
+        if intake and intake.get("status") != "ok":
             errors.append("observer intake is not healthy")
         expected_chain = hex(self.config.expected_chain_id)
-        if rpc_results.get("eth_chainId") != expected_chain:
+        if "eth_chainId" in rpc_results and rpc_results["eth_chainId"] != expected_chain:
             errors.append("RPC chain ID differs from campaign chain")
-        if self.config.expected_release not in str(rpc_results.get("web3_clientVersion", "")):
+        if (
+            "web3_clientVersion" in rpc_results
+            and self.config.expected_release not in str(rpc_results["web3_clientVersion"])
+        ):
             errors.append("RPC client release differs from campaign release")
         if len(nodes) == 3:
             for field in (
@@ -688,7 +833,7 @@ class Campaign:
             if active_alerts:
                 errors.append("active Prometheus alerts: " + ", ".join(active_alerts))
 
-        self.state["rpc_latencies_ms"].extend(latencies)
+        self.state["rpc_latencies_ms"].extend(rpc_latencies)
         self.state["rpc_latencies_ms"] = self.state["rpc_latencies_ms"][-10_000:]
         sample = {
             "recorded_at": now_iso(),
@@ -697,6 +842,7 @@ class Campaign:
             "latency_ms": {
                 "last": round(latencies[-1], 3) if latencies else None,
                 "sample_max": round(max(latencies), 3) if latencies else None,
+                "rpc_max": round(max(rpc_latencies), 3) if rpc_latencies else None,
             },
             "network": {
                 "status": status.get("status"),
@@ -713,6 +859,7 @@ class Campaign:
             },
             "rpc": rpc_results,
             "nodes": nodes,
+            "probe_recoveries": probe_recoveries,
         }
         return sample
 
@@ -885,6 +1032,8 @@ class Campaign:
             "rpc": {
                 "requests": int(self.state["rpc_requests"]),
                 "errors": int(self.state["rpc_errors"]),
+                "attempt_errors": int(self.state.get("rpc_attempt_errors", 0)),
+                "recovered_requests": int(self.state.get("rpc_recoveries", 0)),
                 "p50_ms": percentile(latencies, 0.50),
                 "p95_ms": percentile(latencies, 0.95),
                 "p99_ms": percentile(latencies, 0.99),
@@ -916,6 +1065,9 @@ class Campaign:
                 "events": int(self.state["evidence_sequence"]),
                 "head_sha256": self.state["evidence_head"],
                 "final_report_sha256": self.state.get("final_report_sha256"),
+                "recovered_probe_attempts": int(
+                    self.state.get("recovered_probe_attempts", 0)
+                ),
             },
         }
 
@@ -928,7 +1080,6 @@ class Campaign:
 
     def publish(self) -> None:
         destination_dir = str(Path(self.config.publish_path).parent)
-        errors = []
         self.record_event(
             "status_publish_attempt",
             {
@@ -938,7 +1089,8 @@ class Campaign:
         )
         atomic_json(self.state_path, self.state)
         atomic_json(self.public_path, self.public_status(), mode=0o644)
-        for target in self.config.publish_targets:
+
+        def publish_target(target: str) -> None:
             temporary = f"/tmp/{self.state['campaign_id']}.status.json"
             upload = self._run(
                 [
@@ -947,11 +1099,10 @@ class Campaign:
                     str(self.public_path),
                     f"{target}:{temporary}",
                 ],
-                timeout=30,
+                timeout=self.config.ssh_timeout_seconds,
             )
             if upload.returncode:
-                errors.append(f"{target}: status upload failed")
-                continue
+                raise RuntimeError(f"{target}: status upload failed")
             install = self._run(
                 [
                     "ssh",
@@ -965,31 +1116,90 @@ class Campaign:
                         ]
                     ),
                 ],
-                timeout=30,
+                timeout=self.config.ssh_timeout_seconds,
             )
             if install.returncode:
-                errors.append(f"{target}: status install failed")
+                raise RuntimeError(f"{target}: status install failed")
+
+        outcomes = {}
+        with ThreadPoolExecutor(
+            max_workers=min(self.config.max_parallel_probes, len(self.config.publish_targets))
+        ) as executor:
+            futures = {
+                executor.submit(
+                    self._probe,
+                    f"status publication {target}",
+                    lambda target=target: publish_target(target),
+                ): target
+                for target in self.config.publish_targets
+            }
+            for future in as_completed(futures):
+                outcomes[futures[future]] = future.result()
+
+        errors = []
+        target_results = []
+        for target in self.config.publish_targets:
+            outcome = outcomes[target]
+            target_results.append(
+                {
+                    "target": target,
+                    "ok": outcome["ok"],
+                    "attempts": outcome["attempts"],
+                    "recovered_errors": len(outcome["attempt_errors"]),
+                }
+            )
+            if not outcome["ok"]:
+                errors.append(str(outcome["error"]))
+        self.record_event("status_publish_result", {"targets": target_results})
         self.state["last_publish_error"] = "; ".join(errors) if errors else None
         atomic_json(self.state_path, self.state)
 
     def run_burst(self) -> dict:
         latencies = []
         errors = []
+        attempt_errors = 0
+        recovered = 0
         methods = ("eth_chainId", "eth_blockNumber", "web3_clientVersion")
+        requests = [methods[index % len(methods)] for index in range(self.config.burst_requests)]
+        outcomes = {}
+        with ThreadPoolExecutor(
+            max_workers=min(self.config.max_parallel_probes, self.config.burst_requests)
+        ) as executor:
+            futures = {
+                executor.submit(
+                    self._probe,
+                    f"RPC burst {index + 1} {method}",
+                    lambda method=method: self._rpc(method),
+                ): index
+                for index, method in enumerate(requests)
+            }
+            for future in as_completed(futures):
+                outcomes[futures[future]] = future.result()
+
         for index in range(self.config.burst_requests):
-            try:
-                _, latency = self._rpc(methods[index % len(methods)])
+            outcome = outcomes[index]
+            self.state["rpc_requests"] += int(outcome["attempts"])
+            self.state["rpc_attempt_errors"] += len(outcome["attempt_errors"])
+            attempt_errors += len(outcome["attempt_errors"])
+            if outcome["ok"]:
+                _, latency = outcome["value"]
                 latencies.append(latency)
-                self.state["rpc_requests"] += 1
-            except Exception as exc:
-                errors.append(str(exc))
-                self.state["rpc_requests"] += 1
+                if outcome["attempt_errors"]:
+                    recovered += 1
+                    self.state["rpc_recoveries"] += 1
+                    self.state["recovered_probe_attempts"] += len(
+                        outcome["attempt_errors"]
+                    )
+            else:
+                errors.append(str(outcome["error"]))
                 self.state["rpc_errors"] += 1
         self.state["rpc_latencies_ms"].extend(latencies)
         self.state["rpc_latencies_ms"] = self.state["rpc_latencies_ms"][-10_000:]
         result = {
             "requests": self.config.burst_requests,
             "errors": len(errors),
+            "attempt_errors": attempt_errors,
+            "recovered_requests": recovered,
             "error_detail": errors[:5],
             "p95_ms": percentile(latencies, 0.95),
             "max_ms": round(max(latencies), 3) if latencies else None,
@@ -1155,6 +1365,38 @@ class Campaign:
         self.state["phase"] = "soak"
         self.save()
         return drill
+
+    def preflight(self, samples: int, interval_seconds: float) -> dict:
+        results = []
+        started = time.monotonic()
+        for index in range(samples):
+            sample_started = time.monotonic()
+            sample = self.collect_sample()
+            results.append(
+                {
+                    "sample": index + 1,
+                    "ok": sample["ok"],
+                    "clean": sample["ok"] and not sample.get("probe_recoveries"),
+                    "errors": sample["errors"],
+                    "duration_ms": round((time.monotonic() - sample_started) * 1000, 3),
+                    "rpc": sample["rpc"],
+                    "network": sample["network"],
+                    "probe_recoveries": sample.get("probe_recoveries", []),
+                }
+            )
+            if index + 1 < samples:
+                time.sleep(interval_seconds)
+        return {
+            "ok": all(result["clean"] for result in results),
+            "samples": samples,
+            "successful": sum(1 for result in results if result["ok"]),
+            "failed": sum(1 for result in results if not result["ok"]),
+            "recovered": sum(
+                1 for result in results if result["ok"] and not result["clean"]
+            ),
+            "elapsed_seconds": round(time.monotonic() - started, 3),
+            "results": results,
+        }
 
     def add_manual_drill(self, kind: str) -> dict:
         if kind not in DRILL_TYPES:
@@ -1555,6 +1797,10 @@ def parser() -> argparse.ArgumentParser:
     ):
         item = sub.add_parser(command)
         item.add_argument("--config", type=Path, required=True)
+    preflight = sub.add_parser("preflight")
+    preflight.add_argument("--config", type=Path, required=True)
+    preflight.add_argument("--samples", type=int, default=10, choices=range(3, 61))
+    preflight.add_argument("--interval-seconds", type=float, default=2.0)
     drill = sub.add_parser("drill")
     drill.add_argument("kind", choices=sorted(DRILL_TYPES))
     drill.add_argument("--config", type=Path, required=True)
@@ -1563,7 +1809,18 @@ def parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = parser().parse_args()
-    campaign = Campaign(Config.load(args.config))
+    config = Config.load(args.config)
+
+    if args.command == "preflight":
+        if not 0 <= args.interval_seconds <= 60:
+            raise ValueError("preflight interval is outside the safe range")
+        with tempfile.TemporaryDirectory(prefix="powerhouse-reliability-preflight-") as temp:
+            campaign = Campaign(replace(config, state_dir=Path(temp)))
+            result = campaign.preflight(args.samples, args.interval_seconds)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0 if result["ok"] else 1
+
+    campaign = Campaign(config)
 
     def stop(_signal, _frame):
         campaign.stopping = True

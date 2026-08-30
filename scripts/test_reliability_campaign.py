@@ -44,6 +44,11 @@ def config_value(base: Path) -> dict:
         "burst_interval_seconds": 10,
         "burst_requests": 3,
         "recovery_timeout_seconds": 15,
+        "probe_attempts": 3,
+        "probe_retry_delay_seconds": 0,
+        "http_timeout_seconds": 2,
+        "ssh_timeout_seconds": 2,
+        "max_parallel_probes": 8,
         "max_rpc_p95_ms": 1000,
         "expected_chain_id": 177155,
         "expected_release": "0.3.24",
@@ -141,6 +146,77 @@ def main() -> None:
         assert status["network"]["validators_healthy"] == 3
         assert status["evidence"]["events"] >= 1
         assert status["acceptance"]["max_rpc_p95_ms"] == 1000
+
+        healthy_http = campaign._http_json
+        rpc_calls = {"eth_chainId": 0}
+
+        def transient_rpc(url, data=None, timeout=None):
+            if data is not None and json.loads(data)["method"] == "eth_chainId":
+                rpc_calls["eth_chainId"] += 1
+                if rpc_calls["eth_chainId"] == 1:
+                    raise TimeoutError("transient read timeout")
+            return healthy_http(url, data=data, timeout=timeout)
+
+        campaign._http_json = transient_rpc
+        recovered = campaign.collect_sample()
+        assert recovered["ok"] is True
+        assert campaign.state["rpc_errors"] == 0
+        assert campaign.state["rpc_attempt_errors"] == 1
+        assert campaign.state["rpc_recoveries"] == 1
+        assert any(
+            item["probe"] == "RPC eth_chainId" and item["attempts"] == 2
+            for item in recovered["probe_recoveries"]
+        )
+        campaign._http_json = healthy_http
+
+        node_calls = {"validator-3": 0}
+
+        def transient_node(node):
+            if node.name == "validator-3":
+                node_calls["validator-3"] += 1
+                if node_calls["validator-3"] == 1:
+                    raise TimeoutError("transient SSH timeout")
+            return fake_node(node.name)
+
+        campaign.audit_node = transient_node
+        recovered_node = campaign.collect_sample()
+        assert recovered_node["ok"] is True
+        assert [node["name"] for node in recovered_node["nodes"]] == [
+            "validator-1",
+            "validator-2",
+            "validator-3",
+        ]
+        assert any(
+            item["probe"] == "validator audit validator-3" and item["attempts"] == 2
+            for item in recovered_node["probe_recoveries"]
+        )
+        campaign.audit_node = lambda node: fake_node(node.name)
+
+        before_preflight_samples = campaign.state["sample_count"]
+        preflight = campaign.preflight(3, 0)
+        assert preflight["ok"] is True
+        assert preflight["successful"] == 3
+        assert preflight["recovered"] == 0
+        assert campaign.state["sample_count"] == before_preflight_samples
+
+        confirmed_value = config_value(base / "confirmed-failure")
+        confirmed_path = base / "confirmed-failure.json"
+        confirmed_path.write_text(json.dumps(confirmed_value))
+        confirmed = module.Campaign(module.Config.load(confirmed_path))
+        install_fakes(confirmed)
+        confirmed_http = confirmed._http_json
+
+        def exhausted_rpc(url, data=None, timeout=None):
+            if data is not None and json.loads(data)["method"] == "eth_chainId":
+                raise TimeoutError("confirmed read timeout")
+            return confirmed_http(url, data=data, timeout=timeout)
+
+        confirmed._http_json = exhausted_rpc
+        exhausted = confirmed.collect_sample()
+        assert exhausted["ok"] is False
+        assert exhausted["errors"] == ["RPC eth_chainId: confirmed read timeout"]
+        assert confirmed.state["rpc_errors"] == 1
+        assert confirmed.state["rpc_attempt_errors"] == 3
 
         before_samples = campaign.state["sample_count"]
         campaign.state["last_controller_event_unix"] -= 20
@@ -499,6 +575,13 @@ def main() -> None:
     assert "ProtectSystem=strict" in unit
     assert "ProtectHome=read-only" in unit
     assert "ReadWritePaths=%h/.local/state/powerhouse/reliability" in unit
+    controller_unit = (
+        ROOT / "infra" / "systemd" / "powerhouse-reliability-controller.service"
+    ).read_text()
+    assert "User=powerhouse-campaign" in controller_unit
+    assert "StateDirectory=powerhouse-reliability-controller" in controller_unit
+    assert "ProtectSystem=strict" in controller_unit
+    assert "Restart=on-failure" in controller_unit
     subprocess.run(["node", "--check", str(ROOT / "publicpower" / "campaign.js")], check=True)
     print("test_reliability_campaign: PASS")
 
