@@ -1,14 +1,19 @@
 # Power-House Operations Guide
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
+
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> These commands operate the legacy crate runtime in an explicitly configured
+> environment. They are not deployment instructions for the separately
+> maintained MFENX Native 2026 validator runtime.
 
 This guide documents the retained boot-node, JULIAN network, and blob-service
-operations in v0.4.0. For the current three-validator native RPC topology and
-public HTTPS edge, use
+operations in v0.4.1. For current network identity, the three validator
+processes on one host, and the public HTTPS endpoints, use
 [Production RPC Deployment](production_rpc_deployment.md). Commands here
 assume explicit operator control so each change remains auditable.
 
-The production public service is named **LAX MFENX RPC**.
+The retired public service was named **LAX MFENX RPC**.
 
 ## 1. Requirements
 

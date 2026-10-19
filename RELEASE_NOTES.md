@@ -1,4 +1,40 @@
-# Release Notes
+**Release Notes**
+
+**v0.4.1 - 2026-10-18**
+
+- Added an immutable `VerifiedRootprint` view that binds a checked graph to its
+  canonical replay state. Memory Capsule and Observatory checks can reuse it
+  without unchecked fingerprints, stale caches, or repeated artifact hashing.
+- Removed duplicate artifact verification within Rootprint validation and
+  unnecessary parent-artifact clones when creating branches.
+- Reject exhausted branch sequence numbers before mutation instead of
+  inserting branches with invalid parent ordering.
+- Branch equivalence verifies graph integrity before comparing fingerprints
+  in both Rust and Python. The Python SDK enforces the same unsigned 64-bit
+  sequence bounds and rejects overflow before insertion.
+- Extended the RPC publication gate with expected-genesis binding, bounded
+  responses, strict response IDs, and optional wallet account/fee/sync checks.
+- Updated compatible dependencies with published security fixes and moved the
+  optional HTTP client to reqwest 0.12, removing the old rustls 0.21 dependency.
+- Reject compressed guest ELF sections and loadable memory above 64 MiB before
+  invoking the pinned RISC Zero loader. Canonical uncompressed guest identity
+  is unchanged. Remaining upstream dependency advisories and their scope are
+  recorded in `benchmarks/v0.4.1/dependency-audit-scope.json`; these changes do
+  not establish a clean all-dependency audit.
+- Updated current network metadata to chain 2026092601 and the `/2026/` routes.
+  Prior benchmark evidence remains explicitly bound to retired chain 177155.
+  The running validator is the separately released `20261008.3` runtime.
+- Marked bundled chain-177155 interfaces as historical and disabled retired
+  registration and telemetry requests; current wallet setup is linked directly.
+- Updated fixed-size polynomial iteration and atomic peer accounting for current
+  Clippy while retaining compatibility with the pinned Rust 1.93.1 proof host.
+  The peer counter retains its saturating atomic update under contention.
+- Pinned the container builder to Rust 1.93.1 and added image-build and CLI checks
+  before release. Operator guides distinguish retained local-development tools
+  from the separate current validator deployment.
+- Added graph reuse, mutation rejection, overflow, RPC boundary tests and a
+  reproducible Observatory verification benchmark. Core identity formats remain
+  unchanged; semantic packets remain outside proof validity.
 
 ## v0.4.0 - 2026-07-28
 

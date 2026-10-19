@@ -201,6 +201,50 @@ class PowerHouseSdkTests(unittest.TestCase):
         self.assertTrue(equivalent(graph, left, right))
         verify_rootprint(graph)
 
+    def test_rootprint_equivalence_rejects_forged_fingerprints(self):
+        root_artifact = create_artifact({}, "test/v1", {}, {"value": 0})
+        child_artifact = create_artifact({}, "test/v1", {}, {"value": 1})
+        graph = new_rootprint("root", root_artifact)
+        root = graph["root_branch"]
+        child = fork(graph, root, "child", child_artifact)
+        self.assertFalse(equivalent(graph, root, child))
+        graph["branches"][child]["artifact"]["phx_fingerprint"] = (
+            root_artifact["phx_fingerprint"]
+        )
+        with self.assertRaisesRegex(PowerHouseError, "core fingerprint mismatch"):
+            equivalent(graph, root, child)
+
+    def test_rootprint_sequence_overflow_does_not_mutate_graph(self):
+        artifact = create_artifact({}, "test/v1", {}, {})
+        graph = new_rootprint("root", artifact)
+        root = graph["root_branch"]
+        left = fork(graph, root, "left", artifact)
+        right = fork(graph, root, "right", artifact)
+        graph["branches"][left]["sequence"] = 2**64 - 1
+        verify_rootprint(graph)
+        before = copy.deepcopy(graph)
+        with self.assertRaisesRegex(PowerHouseError, "branch sequence exhausted"):
+            fork(graph, left, "overflow", artifact)
+        self.assertEqual(graph, before)
+        with self.assertRaisesRegex(PowerHouseError, "branch sequence exhausted"):
+            merge(graph, left, right, "overflow", artifact)
+        self.assertEqual(graph, before)
+
+    def test_rootprint_sequence_matches_rust_uint64_type(self):
+        artifact = create_artifact({}, "test/v1", {}, {})
+        graph = new_rootprint("root", artifact)
+        root = graph["root_branch"]
+        child = fork(graph, root, "child", artifact)
+        for invalid in (-1, 2**64, True, 1.0, "1", None):
+            with self.subTest(sequence=invalid):
+                malformed = copy.deepcopy(graph)
+                malformed["branches"][child]["sequence"] = invalid
+                with self.assertRaisesRegex(PowerHouseError, "unsigned 64-bit"):
+                    verify_rootprint(malformed)
+        graph["branches"][root]["sequence"] = False
+        with self.assertRaisesRegex(PowerHouseError, "unsigned 64-bit"):
+            verify_rootprint(graph)
+
     def test_identity_operations_and_replay_are_deterministic(self):
         root_artifact = create_artifact(
             {"source": "python-identity"},

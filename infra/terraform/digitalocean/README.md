@@ -1,11 +1,17 @@
 # DigitalOcean Terraform
 
-This module declares the three-region MFENX validator topology, global RPC
-load balancer, health-aware routing, and deny-by-default firewall.
+This module retains the retired chain `177155` three-region validator design,
+global RPC load balancer, health-aware routing, and deny-by-default firewall.
 
-It is suitable for a new environment. The production resources already exist,
-so import them before the first plan. Never run `terraform apply` against
-production until `terraform plan` reports no replacement or destruction.
+MFENX Native 2026 uses chain `2026092601` with three validator processes on one
+host and a separately maintained runtime. This module does not describe or
+manage that deployment. See [current network deployment scope](../../../docs/production_rpc_deployment.md).
+
+For a new isolated environment, review its own resource names, chain identity,
+DNS, and access rules first. The import IDs below are historical examples from
+the retired deployment; they are not an inventory of existing production
+resources. Use only independently verified IDs for an environment you manage,
+and review `terraform plan` for replacement or destruction before applying it.
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars

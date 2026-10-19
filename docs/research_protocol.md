@@ -1,6 +1,6 @@
 # Research Protocol
 
-Status: active research and evidence protocol for Power House v0.4.0.
+Status: active research and evidence protocol for Power House v0.4.1.
 
 This document turns Power-House development into a falsifiable research
 program. Scale demonstrations remain useful, but exponent size alone is not a

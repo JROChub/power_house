@@ -25,6 +25,7 @@ ACTIVE_DOCS = [
     "docs/memory_conformance.md",
     "docs/network_roadmap.md",
     "docs/node_operator.md",
+    "docs/observer_registry.md",
     "docs/ops.md",
     "docs/orbital_observatory.md",
     "docs/pha_spec.md",
@@ -32,6 +33,7 @@ ACTIVE_DOCS = [
     "docs/production_rpc_deployment.md",
     "docs/provenance_security.md",
     "docs/research_protocol.md",
+    "docs/reliability_campaign.md",
     "docs/rootprint.md",
     "docs/rpc_operations.md",
     "docs/sdk.md",
@@ -47,6 +49,18 @@ ACTIVE_DOCS = [
     "docs/validator_registry.md",
     "docs/verification_guide.md",
     "sdk/python/README.md",
+]
+HISTORICAL_NETWORK_DOCS = [
+    "docs/rpc_operations.md",
+    "docs/ops.md",
+    "docs/node_operator.md",
+    "docs/observer_registry.md",
+    "docs/validator_registry.md",
+    "docs/reliability_campaign.md",
+]
+CURRENT_NETWORK_DOCS = [
+    "docs/network_roadmap.md",
+    "docs/production_rpc_deployment.md",
 ]
 
 
@@ -122,17 +136,65 @@ def main() -> int:
         f"Current release: **{release}**" in read("README.md"),
         "README current release is missing or stale",
     )
+    for service, color in [("crates.io", "orange"), ("docs.rs", "blue")]:
+        require(
+            errors,
+            f"https://img.shields.io/badge/{service}-{release}-{color}"
+            in read("README.md"),
+            f"README {service} version badge is missing or stale",
+        )
     require(
         errors,
-        read("RELEASE_NOTES.md").startswith(f"# Release Notes\n\n## {release} "),
+        f"https://docs.rs/power_house/{version}/power_house/" in read("README.md"),
+        "README versioned API documentation link is missing or stale",
+    )
+    require(
+        errors,
+        read("RELEASE_NOTES.md").startswith(f"**Release Notes**\n\n**{release} "),
         "release notes do not start with the current release",
     )
 
     for path in ACTIVE_DOCS:
         require(errors, release in read(path) or version in read(path), f"{path} is stale")
+    for path in HISTORICAL_NETWORK_DOCS:
+        opening = "\n".join(read(path).splitlines()[:12])
+        require(
+            errors,
+            "177155" in opening
+            and release in opening
+            and re.search(r"\b(?:historical|retired)\b", opening, re.IGNORECASE)
+            is not None,
+            f"{path} does not identify its retired network scope near the beginning",
+        )
+    for path in CURRENT_NETWORK_DOCS:
+        opening = "\n".join(read(path).splitlines()[:24])
+        require(
+            errors,
+            "2026092601" in opening
+            and "https://rpc.mfenx.com/2026/" in opening
+            and "177155" in opening
+            and "retired" in opening.lower(),
+            f"{path} does not distinguish the current network from retired chain 177155 near the beginning",
+        )
 
     website = read("publicpower/index.html")
     require(errors, website.count(release) >= 2, "website release labels are stale")
+    require(
+        errors,
+        re.findall(r"<b>slbit (\d+\.\d+\.\d+)</b>", read("publicpower/slbit.html"))
+        == [cargo["dev-dependencies"]["slbit"]],
+        "website slbit crate label differs from the conformance dependency",
+    )
+    app = read("publicpower/app.js")
+    for pattern, label in [
+        (r"\bSFCS v(\d+\.\d+\.\d+) READY\b", "SFCS status"),
+        (r"\bUse the Rust v(\d+\.\d+\.\d+) verifier\b", "Rust verifier guidance"),
+    ]:
+        require(
+            errors,
+            re.findall(pattern, app) == [version],
+            f"website {label} version is missing or stale",
+        )
     require(
         errors,
         f"ARG POWER_HOUSE_VERSION={version}" in read("Dockerfile"),
@@ -174,19 +236,23 @@ def main() -> int:
     require(
         errors,
         benchmark.get("environment", {}).get("endpoint")
-        == network.get("rpc", {}).get("canonicalUrl"),
-        "RPC benchmark endpoint differs",
+        == "https://rpc.mfenx.com"
+        and network.get("benchmarkScope") == "retired-chain-177155",
+        "historical RPC benchmark must remain explicitly scoped to the retired chain",
     )
-    require(errors, network.get("chainId") == 177155, "network chain ID differs")
+    require(errors, network.get("chainId") == 2026092601, "network chain ID differs")
+    require(errors, network.get("previousChainId") == 177155, "retired chain identity is missing")
+    require(errors, network.get("genesisHash") == "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e", "network genesis differs")
+    require(errors, network.get("rpc", {}).get("canonicalUrl") == "https://rpc.mfenx.com/2026/", "canonical RPC URL differs")
     require(
         errors,
-        network.get("rpc", {}).get("name") == "LAX MFENX RPC",
+        network.get("rpc", {}).get("name") == "MFENX Native 2026 RPC",
         "public RPC name differs",
     )
     require(
         errors,
         network.get("rpc", {}).get("chainListUrl")
-        == "https://rpc.mfenx.com",
+        == "https://rpc.mfenx.com/2026/",
         "ChainList RPC URL differs",
     )
 

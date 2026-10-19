@@ -1,0 +1,49 @@
+{
+  "schema": "power-house/wallet-rpc-observation/v1",
+  "observed_at_utc": "2026-10-19",
+  "scope": "read-only endpoint observation; not proof of transaction finality or wallet-vendor support",
+  "result": {
+    "addresses": [
+      "159.223.198.220"
+    ],
+    "block_hash": "0x9d19646681f254020bf16f043e8033e98de04fb8a9bc2d9545818c28ee6ce7a9",
+    "block_number": 36,
+    "chain_id": 2026092601,
+    "client": "mfenx-validator/0.1.0/quorum-rpc",
+    "cors": "*",
+    "genesis_hash": "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e",
+    "host": "rpc.mfenx.com",
+    "network_id": 2026092601,
+    "url": "https://rpc.mfenx.com/2026/",
+    "wallet_methods_checked": [
+      "eth_syncing",
+      "eth_getBalance",
+      "eth_getTransactionCount",
+      "eth_gasPrice",
+      "eth_maxPriorityFeePerGas",
+      "eth_feeHistory"
+    ]
+  },
+  "alternate_endpoint_observation": {
+    "addresses": [
+      "159.223.198.220"
+    ],
+    "block_hash": "0xf2c70f9c3086cac51375879075480dcbfe21de764347477517ce347ad87ee9e1",
+    "block_number": 37,
+    "chain_id": 2026092601,
+    "client": "mfenx-validator/0.1.0/quorum-rpc",
+    "cors": "*",
+    "genesis_hash": "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e",
+    "host": "license.mfenx.com",
+    "network_id": 2026092601,
+    "url": "https://license.mfenx.com/network/2026/",
+    "wallet_methods_checked": [
+      "eth_syncing",
+      "eth_getBalance",
+      "eth_getTransactionCount",
+      "eth_gasPrice",
+      "eth_maxPriorityFeePerGas",
+      "eth_feeHistory"
+    ]
+  }
+}

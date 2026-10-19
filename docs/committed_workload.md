@@ -1,6 +1,6 @@
 # Externally Committed Sparse Workload
 
-Status: active format guide for Power House v0.4.0.
+Status: active format guide for Power House v0.4.1.
 
 Power-House can now bind a sum-check certificate to a separately supplied
 sparse polynomial file.

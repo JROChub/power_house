@@ -1,8 +1,8 @@
 # SFCS Whole-Program Private VM
 
-Status: implemented release surface for Power House v0.4.0.
+Status: implemented release surface for Power House v0.4.1.
 
-Power House v0.4.0 adds an opt-in whole-program private execution backend
+Power House provides an opt-in whole-program private execution backend
 through the `sfcs-risc0` feature. It accepts a RISC Zero program binary,
 executes it with private input, verifies a real cryptographic receipt, binds
 the deterministic public statement into SFCS and `.pha`, creates Rootprint
@@ -11,6 +11,15 @@ for offline Memory Capsule verification.
 
 This document distinguishes that authoritative whole-program path from the
 older scoped `sfcs-zk` compatibility profiles.
+
+Guest admission in v0.4.1 rejects compressed sections in both ELF components
+before image loading or debug inspection. The sum of their loadable segment
+sizes, including zero-filled memory, is limited to 64 MiB. The serialized
+program remains limited to 64 MiB. These checks prevent a small input from
+requesting unbounded decompression or image allocation; they do not impose a
+bound on the memory required to generate a cryptographic proof. Programs with
+compressed sections or larger declared loadable images must be rebuilt within
+these admission limits.
 
 ## Whole-Program Proof Boundary
 

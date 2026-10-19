@@ -1,15 +1,22 @@
 # MFENX Network Load Testing
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
 Run read-only public RPC tests before transaction tests. Never direct an
 unbounded load generator at production.
+
+The load command below is for a separately configured test deployment.
+MFENX Native 2026 uses chain `2026092601` and a rate-limited public RPC; the
+retired chain `177155` load profiles do not establish its capacity. Use the
+bounded identity and wallet probe in
+[Production RPC Deployment](production_rpc_deployment.md) for a current
+public endpoint check.
 
 ## RPC Baseline
 
 ```bash
 python3 scripts/rpc_load_test.py \
-  https://rpc.mfenx.com \
+  https://rpc.example.org \
   --duration 45 \
   --concurrency 6 \
   --max-error-rate 0 \
@@ -20,8 +27,9 @@ The report includes requests per second, status/error counts, and p50/p95/p99
 latency. HTTP `429` responses are intentional edge throttling and still count
 against the error gate. Repeat from at least three external regions.
 
-The June 12, 2026 single-origin production run sustained 69.114 requests per
-second with zero errors and 106.354 ms p95 latency. A higher profile passed
+The June 12, 2026 single-origin production run on retired chain `177155`
+sustained 69.114 requests per second with zero errors and 106.354 ms p95 latency.
+A higher profile passed
 the 0.5% error gate at 91.51 requests per second and 192.992 ms p95. Unpaced
 overload reached the configured edge limit and returned HTTP `429`.
 The complete measured report is in

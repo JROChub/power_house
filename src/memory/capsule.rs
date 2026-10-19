@@ -451,14 +451,22 @@ impl MemoryCapsule {
         }
         let core_valid = true;
 
-        if policy.require_rootprint {
-            self.lineage.rootprint.verify().map_err(|error| {
+        let verified_graph = self.lineage.rootprint.verified().map_err(|error| {
+            if policy.require_rootprint {
                 MemoryError::rejected(
                     RejectionTrace::new("rootprint", "ROOTPRINT_INVALID", error.to_string())
                         .at("/lineage/rootprint")
                         .boundary(core_valid, false),
                 )
-            })?;
+            } else {
+                MemoryError::rejected(
+                    RejectionTrace::new("replay", "REPLAY_FAILED", error.to_string())
+                        .at("/lineage/rootprint")
+                        .boundary(core_valid, false),
+                )
+            }
+        })?;
+        if policy.require_rootprint {
             if !self
                 .lineage
                 .rootprint
@@ -478,13 +486,7 @@ impl MemoryCapsule {
             rootprint_valid = true;
         }
 
-        let replay_state = self.lineage.rootprint.replay().map_err(|error| {
-            MemoryError::rejected(
-                RejectionTrace::new("replay", "REPLAY_FAILED", error.to_string())
-                    .at("/lineage/rootprint")
-                    .boundary(core_valid, rootprint_valid),
-            )
-        })?;
+        let replay_state = verified_graph.state();
         if policy.require_replay
             && replay_state.state_fingerprint != self.replay.replay.expected.replay_fingerprint
         {
@@ -503,7 +505,7 @@ impl MemoryCapsule {
 
         if let Some(semantics) = &self.semantics {
             if let Some(sidecar) = &semantics.sidecar {
-                sidecar.verify(&self.lineage.rootprint).map_err(|error| {
+                sidecar.verify_verified(&verified_graph).map_err(|error| {
                     MemoryError::rejected(
                         RejectionTrace::new("sidecar", "SIDECAR_INVALID", error.to_string())
                             .at("/semantics/sidecar")

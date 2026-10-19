@@ -1,18 +1,26 @@
 {
-  "chainId": 177155,
-  "chainName": "MFENX Power House",
+  "chainId": 2026092601,
+  "chainName": "MFENX Native 2026",
   "explorer": null,
   "nativeCurrency": {
     "decimals": 18,
     "name": "JULIAN",
     "symbol": "JULIAN"
   },
-  "release": "0.4.0",
+  "release": "0.4.1",
   "benchmarkReport": "benchmarks/v0.3.2/rpc-report.json",
   "rpc": {
-    "canonicalUrl": "https://rpc.mfenx.com",
-    "chainListUrl": "https://rpc.mfenx.com",
-    "name": "LAX MFENX RPC"
+    "canonicalUrl": "https://rpc.mfenx.com/2026/",
+    "chainListUrl": "https://rpc.mfenx.com/2026/",
+    "alternateUrl": "https://license.mfenx.com/network/2026/",
+    "name": "MFENX Native 2026 RPC"
   },
-  "statusUrl": "https://mfenx.com/status.html"
+  "statusUrl": "https://mfenx.com/status.html",
+  "previousChainId": 177155,
+  "historyId": "mfenx-native-2026-09-27",
+  "genesisHash": "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e",
+  "benchmarkScope": "retired-chain-177155",
+  "walletSetupUrl": "https://mfenx.com/status.html#wallet-title",
+  "iconUrl": "https://mfenx.com/assets/mfenx-network.png",
+  "validatorRelease": "20261008.3"
 }

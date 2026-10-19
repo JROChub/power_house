@@ -3,7 +3,7 @@
 //! Sidecars bind visualization packets to a verified Rootprint replay state
 //! without changing `.pha` fingerprints, branch IDs, replay, or proof validity.
 
-use crate::provenance::{Rootprint, RootprintError};
+use crate::provenance::{Rootprint, RootprintError, VerifiedRootprint};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -70,19 +70,30 @@ impl ObservatorySidecar {
     /// This method does not interpret packet semantics and never changes the
     /// result of Rootprint or `.pha` verification.
     pub fn verify(&self, graph: &Rootprint) -> Result<(), ObservatoryError> {
+        self.verify_verified(&graph.verified().map_err(ObservatoryError::Rootprint)?)
+    }
+
+    /// Verifies a sidecar against an already verified immutable graph view.
+    ///
+    /// Reuses the graph's checked replay state. Packet bodies remain opaque;
+    /// their semantic authority is not promoted to proof validity.
+    pub fn verify_verified(
+        &self,
+        verified: &VerifiedRootprint<'_>,
+    ) -> Result<(), ObservatoryError> {
         if self.schema != OBSERVATORY_SIDECAR_SCHEMA_V1 {
             return Err(ObservatoryError::UnsupportedSchema(self.schema.clone()));
         }
         validate_sha256(&self.rootprint_state_fingerprint)?;
         validate_sha256(&self.sidecar_sha256)?;
-        let replay = graph.replay().map_err(ObservatoryError::Rootprint)?;
+        let replay = verified.state();
         if replay.state_fingerprint != self.rootprint_state_fingerprint {
             return Err(ObservatoryError::RootprintBindingMismatch {
-                expected: replay.state_fingerprint,
+                expected: replay.state_fingerprint.clone(),
                 found: self.rootprint_state_fingerprint.clone(),
             });
         }
-        self.validate_node_references(graph)?;
+        self.validate_node_references(verified.graph())?;
         let expected = self.calculate_sha256()?;
         if expected != self.sidecar_sha256 {
             return Err(ObservatoryError::SidecarDigestMismatch {

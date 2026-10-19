@@ -1,6 +1,6 @@
 # Sovereign Fractal Computation Substrate
 
-Status: active SFCS implementation reference for Power House v0.4.0.
+Status: active SFCS implementation reference for Power House v0.4.1.
 
 SFCS is the path for making the Rootprint-fractal graph the native
 representation, execution environment, and proof substrate for Power House

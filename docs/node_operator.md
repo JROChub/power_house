@@ -1,9 +1,17 @@
 # MFENX Node Operator Guide
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
-This guide starts a public observer. Validator admission additionally requires
-a consensus identity approved by the active membership policy.
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> Public observer and validator enrollment on MFENX Native 2026 is disabled.
+> This guide documents retained tooling for isolated or explicitly configured
+> environments; its retired bootstrap addresses do not join the current chain.
+> See [Production RPC Deployment](production_rpc_deployment.md) for current
+> network identity, runtime, endpoints, and topology.
+
+In a deployment using this retained runtime, an observer verifies and relays
+data. Validator admission additionally requires a consensus identity approved
+by that deployment's membership policy.
 
 ## Requirements
 
@@ -19,14 +27,14 @@ unless a firewall and authenticated reverse proxy explicitly protect them.
 ## Install
 
 ```bash
-cargo install power_house --version 0.4.0 --features net --locked
+cargo install power_house --version 0.4.1 --features net --locked
 julian --version
 ```
 
 Or use the release container:
 
 ```bash
-docker pull ghcr.io/jrochub/power_house:0.4.0
+docker pull ghcr.io/jrochub/power_house:0.4.1
 ```
 
 ## Create An Identity
@@ -41,8 +49,8 @@ julian key-info "$HOME/.powerhouse/node.key" --json
 Never send the private key. Share only the peer ID and public key when
 requesting validator admission.
 
-For a public observer to appear on mfenx.com without validator admission, use
-the guided observer setup:
+For an observer in an explicitly configured deployment of the retained runtime,
+use the guided observer setup:
 
 ```bash
 julian observer setup \
@@ -55,14 +63,15 @@ julian observer setup \
   --output observer.registration.json
 ```
 
-The public observer registry requires a matching live
+The retained observer registry requires a matching live
 `powerhouse_node_identity` metric before the observer is counted. See
-[Public Observer Registry](observer_registry.md). Submit the signed registration
-at `https://mfenx.com/register.html`, or use:
+[Public Observer Registry](observer_registry.md). The former registration page
+at `https://mfenx.com/register.html` is retired. Only submit to an intake operated
+for your explicitly configured environment:
 
 ```bash
-julian observer submit observer.registration.json
-julian observer status <tracking-id>
+julian observer submit observer.registration.json --intake-url <INTAKE_URL>
+julian observer status <tracking-id> --intake-url <INTAKE_URL>
 ```
 
 Only the signed registration is uploaded. The private node key remains local.
@@ -99,6 +108,10 @@ after policy admission and a matching live identity health check. See
 [Signed Validator Registry](validator_registry.md).
 
 ## Start An Observer
+
+This is the historical startup example. Its bootstrap hosts belong to the
+retired deployment; replace them with your own environment's authenticated
+bootstrap addresses before running it.
 
 ```bash
 julian net start \

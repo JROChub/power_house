@@ -7,7 +7,7 @@ pub use pha::{EmbeddedProof, ExternalProofAttachment, PhaArtifact, PhaError, PHA
 pub use rootprint::{
     equivalent as equivalent_rootprints, merge as merge_rootprints, replay as replay_rootprint,
     try_equivalent as try_equivalent_rootprints, Rootprint, RootprintBranch, RootprintError,
-    RootprintId, RootprintReplayBranch, RootprintState, ROOTPRINT_SCHEMA_V1,
+    RootprintId, RootprintReplayBranch, RootprintState, VerifiedRootprint, ROOTPRINT_SCHEMA_V1,
 };
 
 /// Creates or extends a Rootprint graph with a verified Power House artifact.

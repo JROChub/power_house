@@ -1,9 +1,17 @@
 # MFENX Stable Public Network Roadmap
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
 The target is a public network that fails predictably, recovers automatically,
 and exposes enough evidence for operators and users to determine its state.
+
+MFENX Native 2026 currently uses chain `2026092601`, RPC
+`https://rpc.mfenx.com/2026/`, and the separately maintained `20261008.3`
+validator runtime. Its three validator processes share one host. Chain `177155`
+is retired. The three-region design and June acceptance evidence below belong
+to that retired deployment, not the current topology. See
+[Production RPC Deployment](production_rpc_deployment.md) for current identity
+checks and [network status](https://mfenx.com/status.html) for live observations.
 
 ## Phase 1: Infrastructure Stabilization
 
@@ -16,12 +24,13 @@ and exposes enough evidence for operators and users to determine its state.
 | Monitoring | Prometheus, Alertmanager, blackbox exporter, node exporter, Grafana | Prometheus targets and Alertmanager test alert |
 | Deployment documentation | Sealed bundle, rolling deploy, Terraform, recovery runbooks | Rebuild a disposable environment from docs |
 
-The public service name is **LAX MFENX RPC**. The canonical edge is
-`https://rpc.mfenx.com`, which is also the submitted ChainList endpoint.
+The retired public service was named **LAX MFENX RPC** and used
+`https://rpc.mfenx.com`. Its former ChainList entry is deprecated.
 
 ### Production Verification
 
-The v0.3.2 production acceptance run on June 12, 2026 verified:
+The v0.3.2 production acceptance run on June 12, 2026 verified the retired
+chain `177155` deployment:
 
 - three active validators in `nyc3`, `sfo3`, and `ams3`;
 - six validator peer connections and identical finalized state;
@@ -72,8 +81,10 @@ Every release must pass:
 ```bash
 python3 scripts/check_release_consistency.py
 cargo publish --dry-run --locked
-python3 scripts/check_rpc.py https://rpc.mfenx.com \
-  --expected-chain-id 177155 --require-cors
+python3 scripts/check_rpc.py https://rpc.mfenx.com/2026/ \
+  --expected-chain-id 2026092601 \
+  --expected-genesis 0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e \
+  --wallet-checks --require-cors
 ```
 
 The release version must agree across Cargo, Cargo.lock, Python, active guides,

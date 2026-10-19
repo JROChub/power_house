@@ -1,10 +1,10 @@
-FROM rust:1.88-bookworm AS builder
+FROM rust:1.93.1-bookworm AS builder
 WORKDIR /app
 COPY . .
 RUN cargo build --release --locked --features net --bin julian
 
 FROM debian:bookworm-slim
-ARG POWER_HOUSE_VERSION=0.4.0
+ARG POWER_HOUSE_VERSION=0.4.1
 LABEL org.opencontainers.image.title="Power House" \
   org.opencontainers.image.version="${POWER_HOUSE_VERSION}" \
   org.opencontainers.image.source="https://github.com/JROChub/power_house"

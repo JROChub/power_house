@@ -121,6 +121,38 @@ pub struct Rootprint {
     pub branches: BTreeMap<String, RootprintBranch>,
 }
 
+/// A verified graph and its canonical replay state, bound by an immutable borrow.
+///
+/// Construct with [`Rootprint::verified`]. The graph cannot be mutated while this
+/// view is in use, so consumers may reuse verification without a stale cache or
+/// an unchecked caller-supplied fingerprint. Serialization cannot forge a view.
+///
+/// ```compile_fail
+/// use power_house::provenance::Rootprint;
+/// fn mutate_while_verified(graph: &mut Rootprint) {
+///     let verified = graph.verified().unwrap();
+///     graph.branches.clear();
+///     println!("{}", verified.state().state_fingerprint);
+/// }
+/// ```
+#[derive(Debug)]
+pub struct VerifiedRootprint<'a> {
+    graph: &'a Rootprint,
+    state: RootprintState,
+}
+
+impl<'a> VerifiedRootprint<'a> {
+    /// Returns the exact graph checked when this view was created.
+    pub fn graph(&self) -> &'a Rootprint {
+        self.graph
+    }
+
+    /// Returns the canonical replay result without rehashing graph artifacts.
+    pub fn state(&self) -> &RootprintState {
+        &self.state
+    }
+}
+
 impl Rootprint {
     /// Creates a Rootprint graph from one verified Power House artifact.
     pub fn new(label: impl Into<String>, artifact: PhaArtifact) -> Result<Self, RootprintError> {
@@ -169,14 +201,18 @@ impl Rootprint {
         artifact: PhaArtifact,
     ) -> Result<String, RootprintError> {
         artifact.verify().map_err(RootprintError::Pha)?;
-        let parent = self.navigate(parent)?.clone();
+        let parent = self.navigate(parent)?;
+        let sequence = parent
+            .sequence
+            .checked_add(1)
+            .ok_or_else(|| RootprintError::InvalidGraph("branch sequence exhausted".to_string()))?;
         let label = normalized_label(label.into())?;
-        let parents = vec![parent.id];
+        let parents = vec![parent.id.clone()];
         let id = calculate_branch_id(&label, &parents, &artifact)?;
         self.insert_branch(RootprintBranch {
             id: id.clone(),
             label,
-            sequence: parent.sequence.saturating_add(1),
+            sequence,
             parents,
             artifact,
         })?;
@@ -192,19 +228,24 @@ impl Rootprint {
         artifact: PhaArtifact,
     ) -> Result<String, RootprintError> {
         artifact.verify().map_err(RootprintError::Pha)?;
-        let left = self.navigate(left)?.clone();
-        let right = self.navigate(right)?.clone();
+        let left = self.navigate(left)?;
+        let right = self.navigate(right)?;
         if left.id == right.id {
-            return Err(RootprintError::DuplicateMergeParent(left.id));
+            return Err(RootprintError::DuplicateMergeParent(left.id.clone()));
         }
+        let sequence = left
+            .sequence
+            .max(right.sequence)
+            .checked_add(1)
+            .ok_or_else(|| RootprintError::InvalidGraph("branch sequence exhausted".to_string()))?;
         let label = normalized_label(label.into())?;
-        let mut parents = vec![left.id, right.id];
+        let mut parents = vec![left.id.clone(), right.id.clone()];
         parents.sort();
         let id = calculate_branch_id(&label, &parents, &artifact)?;
         self.insert_branch(RootprintBranch {
             id: id.clone(),
             label,
-            sequence: left.sequence.max(right.sequence).saturating_add(1),
+            sequence,
             parents,
             artifact,
         })?;
@@ -215,6 +256,7 @@ impl Rootprint {
     ///
     /// External proof attachments are ignored.
     pub fn equivalent(&self, left: &str, right: &str) -> Result<bool, RootprintError> {
+        self.verify()?;
         let left = self.navigate(left)?;
         let right = self.navigate(right)?;
         Ok(left.artifact.phx_fingerprint == right.artifact.phx_fingerprint)
@@ -223,6 +265,17 @@ impl Rootprint {
     /// Reconstructs the graph's canonical logical state.
     pub fn replay(&self) -> Result<RootprintState, RootprintError> {
         replay(self)
+    }
+
+    /// Verifies once and creates a reusable, immutable graph/replay view.
+    ///
+    /// This checks core provenance integrity, not external proof soundness.
+    pub fn verified(&self) -> Result<VerifiedRootprint<'_>, RootprintError> {
+        self.verify()?;
+        Ok(VerifiedRootprint {
+            graph: self,
+            state: replay_verified(self)?,
+        })
     }
 
     /// Returns whether another graph reconstructs the same logical state.
@@ -252,7 +305,7 @@ impl Rootprint {
                     branch.id
                 )));
             }
-            branch.artifact.verify().map_err(RootprintError::Pha)?;
+            // calculate_id verifies the artifact before binding its fingerprint.
             let expected = branch.calculate_id()?;
             if expected != branch.id {
                 return Err(RootprintError::BranchIdMismatch {
@@ -384,7 +437,11 @@ pub fn merge(left: Rootprint, right: Rootprint) -> Result<Rootprint, RootprintEr
 
 /// Reconstructs canonical logical state from a valid Rootprint graph.
 pub fn replay(graph: &Rootprint) -> Result<RootprintState, RootprintError> {
-    graph.verify()?;
+    Ok(graph.verified()?.state)
+}
+
+// Only called after graph verification; kept private to prevent bypasses.
+fn replay_verified(graph: &Rootprint) -> Result<RootprintState, RootprintError> {
     let mut ordered: Vec<&RootprintBranch> = graph.branches.values().collect();
     ordered.sort_by(|left, right| {
         left.sequence

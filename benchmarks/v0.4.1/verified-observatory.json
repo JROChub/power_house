@@ -1,0 +1,13 @@
+{
+  "schema": "power-house/verified-observatory-benchmark/v1",
+  "observed_at": "2026-10-19",
+  "compiler": "rustc 1.93.1",
+  "profile": "release",
+  "method": "One observed run per path in the same executable; 513 branches with 4096-byte payloads, 16 checks of one sidecar. Reused time includes initial graph verification. Not a throughput or statistical estimate.",
+  "command": "cargo run --release --locked --example verified_observatory_benchmark",
+  "branches": 513,
+  "independent_us": 314837,
+  "replay_fingerprint": "sha256:005622c663e9a3882c731e46e6bba3ca98ef4ebf85d308319182adfd87e5086b",
+  "reused_including_verification_us": 20538,
+  "sidecars": 16
+}

@@ -71,7 +71,9 @@ jobs:
           python3 scripts/check_rustdoc_links.py
 
       - name: Test default targets
-        run: cargo test --all-targets --locked
+        run: |
+          cargo test --all-targets --locked
+          cargo test --doc --locked
 
       - name: Test network targets
         run: cargo test --all-targets --features net --locked
@@ -159,6 +161,57 @@ jobs:
           python3 scripts/soundness_budget.py \
             --field 18446744073709551557 \
             --repetitions 3
+
+  container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build release container without publishing
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: power-house:ci
+          cache-from: type=gha,scope=power-house-container
+          cache-to: type=gha,mode=max,scope=power-house-container
+
+      - name: Verify container version, network CLI and Rootprint conformance
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          import tomllib
+          from pathlib import Path
+
+          version = tomllib.loads(Path("Cargo.toml").read_text())["package"]["version"]
+          image = "power-house:ci"
+          labels = json.loads(subprocess.check_output([
+              "docker", "image", "inspect", image, "--format", "{{json .Config.Labels}}",
+          ], text=True))
+          assert labels["org.opencontainers.image.version"] == version
+          run = [
+              "docker", "run", "--rm", "--network=none", "--read-only",
+              "--cap-drop=ALL", "--security-opt=no-new-privileges",
+          ]
+          actual = subprocess.check_output([*run, image, "--version"], text=True).strip()
+          assert actual == f"julian {version}", actual
+          help_text = subprocess.check_output([*run, image, "net", "--help"], text=True)
+          assert "verify-envelope" in help_text
+          fixture_mount = f"type=bind,src={Path.cwd() / 'conformance'},dst=/conformance,readonly"
+          subprocess.run([
+              *run, "--mount", fixture_mount, image, "rootprint", "verify",
+              "/conformance/pha-v1/rootprint-valid.json",
+          ], check=True)
+          print(f"Container version, network CLI and Rootprint conformance passed: {version}")
+          PY
 
   sfcs-risc0:
     runs-on: ubuntu-latest

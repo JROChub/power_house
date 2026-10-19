@@ -12,7 +12,7 @@ use crate::memory::{MemoryCapsule, MemoryVerificationPolicy};
 use crate::provenance::{ExternalProofAttachment, PhaArtifact, PhaError};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use bincode::Options;
-use object::{Object, ObjectSection};
+use object::{Object, ObjectSection, ObjectSegment};
 use risc0_binfmt::ProgramBinary;
 use risc0_zkvm::sha::Digestible;
 use risc0_zkvm::{
@@ -32,6 +32,7 @@ const PROGRAM_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs-risc0-private-vm:v1:prog
 const JOURNAL_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs-risc0-private-vm:v1:journal\0";
 const RECEIPT_DIGEST_DOMAIN: &[u8] = b"power-house:sfcs-risc0-private-vm:v1:receipt\0";
 const MAX_PROGRAM_BYTES: usize = 64 * 1024 * 1024;
+const MAX_IMAGE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_RECEIPT_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_JOURNAL_BYTES: usize = 16 * 1024 * 1024;
 const MAX_EMBEDDED_BASE64_BYTES: usize = (MAX_PROGRAM_BYTES * 4 / 3) + 8;
@@ -423,11 +424,14 @@ impl ProgramBinding {
                 "guest program binary exceeds {MAX_PROGRAM_BYTES} bytes"
             )));
         }
+        let binary = ProgramBinary::decode(program_binary)
+            .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+        validate_guest_elfs(&binary)?;
         let image_id = compute_image_id(program_binary)
             .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
         let image_id_text = format!("risc0:{image_id}");
         let program_digest = sha256_domain(PROGRAM_DIGEST_DOMAIN, program_binary);
-        let graph = graph_from_program(program_binary, &image_id_text, &program_digest)?;
+        let graph = graph_from_program(&binary, &image_id_text, &program_digest)?;
         let graph_digest = graph.fractal_digest()?;
         Ok(Self {
             image_id,
@@ -439,13 +443,42 @@ impl ProgramBinding {
     }
 }
 
+fn validate_guest_elfs(binary: &ProgramBinary<'_>) -> Result<(), SfcsRisc0Error> {
+    // The pinned backend can decompress ELF sections without a bounded output.
+    // Reject them before image loading, debug inspection, or graph construction.
+    let mut image_bytes = 0_u64;
+    for (component, elf) in [("user", binary.user_elf), ("kernel", binary.kernel_elf)] {
+        let file = object::File::parse(elf)
+            .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+        for segment in file.segments() {
+            image_bytes = image_bytes.checked_add(segment.size()).ok_or_else(|| {
+                SfcsRisc0Error::LimitExceeded("guest loadable memory size overflow".to_string())
+            })?;
+            if image_bytes > MAX_IMAGE_BYTES {
+                return Err(SfcsRisc0Error::LimitExceeded(format!(
+                    "guest loadable memory exceeds {MAX_IMAGE_BYTES} bytes"
+                )));
+            }
+        }
+        for section in file.sections() {
+            let range = section
+                .compressed_file_range()
+                .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+            if range.format != object::CompressionFormat::None {
+                return Err(SfcsRisc0Error::InvalidProgram(format!(
+                    "{component} ELF contains a compressed section"
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn graph_from_program(
-    program_binary: &[u8],
+    binary: &ProgramBinary<'_>,
     image_id: &str,
     program_digest: &str,
 ) -> Result<SfcsGraph, SfcsRisc0Error> {
-    let binary = ProgramBinary::decode(program_binary)
-        .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
     let mut graph = SfcsGraph::new(Vec::new());
     let root = SfcsNode::new("guest_image", SfcsOp::Input, Vec::new())
         .with_label("RISC Zero guest image")
@@ -463,7 +496,7 @@ fn graph_from_program(
             SfcsRisc0Error::InvalidProgram(format!("{component} ELF has no .text section"))
         })?;
         let text_bytes = text
-            .uncompressed_data()
+            .data()
             .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
         if text_bytes.is_empty() {
             return Err(SfcsRisc0Error::InvalidProgram(format!(

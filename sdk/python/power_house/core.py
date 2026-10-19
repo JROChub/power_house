@@ -199,6 +199,19 @@ def _validate_rootprint_id(value: Any) -> None:
         raise PowerHouseError(f"invalid Rootprint identifier: {value}")
 
 
+def _validate_branch_sequence(value: Any) -> int:
+    if type(value) is not int or not 0 <= value <= 2**64 - 1:
+        raise PowerHouseError("branch sequence must be an unsigned 64-bit integer")
+    return value
+
+
+def _next_branch_sequence(*parents: Any) -> int:
+    sequence = max(_validate_branch_sequence(parent) for parent in parents)
+    if sequence == 2**64 - 1:
+        raise PowerHouseError("branch sequence exhausted")
+    return sequence + 1
+
+
 def new_rootprint(label: str, artifact: Dict[str, Any]) -> Dict[str, Any]:
     """Create a Rootprint graph from a verified artifact."""
     label = _normalize_label(label)
@@ -244,6 +257,7 @@ def fork(
 ) -> str:
     """Append a one-parent branch and return its deterministic ID."""
     parent_branch = navigate(graph, parent)
+    sequence = _next_branch_sequence(parent_branch.get("sequence"))
     label = _normalize_label(label)
     artifact = copy.deepcopy(artifact)
     parents = [parent_branch["id"]]
@@ -253,7 +267,7 @@ def fork(
     graph["branches"][branch_id] = {
         "id": branch_id,
         "label": label,
-        "sequence": parent_branch["sequence"] + 1,
+        "sequence": sequence,
         "parents": parents,
         "artifact": artifact,
     }
@@ -272,6 +286,9 @@ def merge(
     right_branch = navigate(graph, right)
     if left_branch["id"] == right_branch["id"]:
         raise PowerHouseError("merge parents resolve to the same branch")
+    sequence = _next_branch_sequence(
+        left_branch.get("sequence"), right_branch.get("sequence")
+    )
     label = _normalize_label(label)
     artifact = copy.deepcopy(artifact)
     parents = sorted([left_branch["id"], right_branch["id"]])
@@ -281,7 +298,7 @@ def merge(
     graph["branches"][branch_id] = {
         "id": branch_id,
         "label": label,
-        "sequence": max(left_branch["sequence"], right_branch["sequence"]) + 1,
+        "sequence": sequence,
         "parents": parents,
         "artifact": artifact,
     }
@@ -289,7 +306,8 @@ def merge(
 
 
 def equivalent(graph: Dict[str, Any], left: str, right: str) -> bool:
-    """Compare branch core identities while ignoring EPA."""
+    """Compare verified branch core identities while ignoring EPA."""
+    verify_rootprint(graph)
     return (
         navigate(graph, left)["artifact"]["phx_fingerprint"]
         == navigate(graph, right)["artifact"]["phx_fingerprint"]
@@ -304,8 +322,12 @@ def verify_rootprint(graph: Dict[str, Any]) -> None:
     root_id = graph.get("root_branch")
     if not isinstance(branches, dict) or root_id not in branches:
         raise PowerHouseError("Rootprint root branch is missing")
+    sequences = {
+        key: _validate_branch_sequence(branch.get("sequence"))
+        for key, branch in branches.items()
+    }
     root = branches[root_id]
-    if root.get("sequence") != 0 or root.get("parents") != []:
+    if sequences[root_id] != 0 or root.get("parents") != []:
         raise PowerHouseError("root branch must have sequence 0 and no parents")
 
     for key, branch in branches.items():
@@ -321,7 +343,7 @@ def verify_rootprint(graph: Dict[str, Any]) -> None:
             raise PowerHouseError("non-root branch has no parent")
         for parent_id in parents:
             parent = branches.get(parent_id)
-            if parent is None or parent["sequence"] >= branch["sequence"]:
+            if parent is None or sequences[parent_id] >= sequences[key]:
                 raise PowerHouseError("branch does not follow its parent")
     reachable = {root_id}
     while True:

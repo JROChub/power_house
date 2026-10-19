@@ -1,10 +1,33 @@
 # LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
-The retired VPS hosts should not be restored. Replace them with a reproducible
-three-validator deployment whose membership, keys, genesis balances, service
-configuration, and public edge are independently verifiable.
+Current network identity is chain **2026092601**, with RPC
+`https://rpc.mfenx.com/2026/`, alternate
+`https://license.mfenx.com/network/2026/`, and setup at
+`https://mfenx.com/status.html#wallet-title`. The running `20261008.3` validator
+release has three processes on one host. The multi-host architecture and
+provisioning commands below are a deployment design, not a description of that
+running topology. Chain 177155 and its root RPC endpoint remain retired.
+
+Verify the current endpoint without signing or submitting a transaction:
+
+```bash
+python3 scripts/check_rpc.py https://rpc.mfenx.com/2026/ \
+  --expected-chain-id 2026092601 \
+  --expected-genesis 0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e \
+  --wallet-checks --require-cors --json
+```
+
+This binds the response to the expected history and checks pending-account,
+fee-history and synchronization methods. It is an observation, not a consensus
+proof or a guarantee of wallet-vendor indexing.
+
+The retired VPS hosts should not be restored. The retained commands below
+describe a reproducible three-validator environment using this crate's legacy
+runtime. They are not an upgrade or migration procedure for the current public
+ledger. A new environment needs its own reviewed membership, keys, genesis,
+chain identity, and endpoints before any provisioning command is applied.
 
 ## Target architecture
 
@@ -38,8 +61,8 @@ local `doctl` context:
 doctl auth init --context mfenx-production
 ```
 
-Verify the new account, its three-Droplet limit, regions, size, SSH key, and
-empty resource inventory:
+For a new isolated environment, verify the account, applicable resource limits,
+regions, size, SSH key, and existing resource inventory:
 
 ```bash
 scripts/digitalocean_rpc_preflight.sh
@@ -155,7 +178,7 @@ restarts one validator at a time, waits for RPC health, verifies
 Allow validator-tag traffic to TCP `9090`, `9100`, `9101`, and `9195`, then run:
 
 ```bash
-POWER_HOUSE_RELEASE=0.4.0 \
+POWER_HOUSE_RELEASE=0.4.1 \
 SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
 scripts/deploy_monitoring_stack.sh \
   root@<validator-1-ipv4> \
@@ -188,17 +211,18 @@ signatures and live identity metrics, then publishes `observer_peers`,
 `public_peer_connections`, and observer Prometheus discovery independently from
 validator quorum.
 
-The status API also serves `/observer-probe`. The registration page and
+The retained status API also serves `/observer-probe`. Its registration page and
 `julian observer doctor` use this route to test an operator's public metrics
-and p2p ports from the production edge. The probe refuses private or local
+and p2p ports from the configured edge. The probe refuses private or local
 targets, follows no redirects, and never receives a private key.
 
-Direct admission is available through `POST /observer-registrations`, with
+The retained intake supports admission through `POST /observer-registrations`, with
 tracking at `GET /observer-registrations/<tracking-id>`. Nginx enforces body,
 request-rate, and connection limits before the intake service applies its own
 persisted duplicate/replay controls.
 
-Public observers bootstrap through the dedicated observer bootnode layer:
+The retired deployment used these observer bootstrap addresses. They are
+historical identifiers, not current public bootstrap hosts:
 
 ```text
 /ip4/159.203.109.128/tcp/7002/p2p/12D3KooWMCyR9gXPXCGAMNCVJDKbisohRRq8oaTHNiR91HZ67cSR
@@ -206,29 +230,32 @@ Public observers bootstrap through the dedicated observer bootnode layer:
 /ip4/164.92.150.22/tcp/7002/p2p/12D3KooWFNv4sZfDKypMeWqRetghHxXzkhPTc4PvynDZKSETJqd8
 ```
 
-The DigitalOcean firewall permits TCP `7002` publicly for observer bootnodes.
-Validator TCP `7001` remains restricted to the validator tag.
+The retained firewall design permits TCP `7002` publicly for observer bootnodes
+and restricts validator TCP `7001` to the validator tag. MFENX Native 2026 does
+not expose the observer enrollment flow described above.
 
 The corresponding Terraform declaration is under
 [`infra/terraform/digitalocean`](../infra/terraform/digitalocean/README.md).
 
 ## Publish DNS and verify
 
-DigitalOcean then manages the Global Load Balancer's A/AAAA records and TLS
-certificate without moving the website or mail records. Wait for delegation,
-domain validation, and managed TLS to become active. Then run:
+In a separately configured environment, DigitalOcean manages its Global Load
+Balancer's A/AAAA records and TLS certificate. Use that environment's own
+domain and chain ID; the retired public RPC root must not be republished as
+MFENX Native 2026. After delegation, domain validation, and managed TLS are
+active, run:
 
 ```bash
 python3 scripts/check_rpc.py \
-  https://rpc.mfenx.com \
-  --expected-chain-id 177155 \
+  https://rpc.example.org \
+  --expected-chain-id <CHAIN_ID> \
   --require-cors
 ```
 
-Update ChainList only after this probe passes from an independent network.
-The public display name is **LAX MFENX RPC**. Publish
-`https://rpc.mfenx.com` in ChainList. Do not advertise an alternate hostname
-until its DNS, managed TLS, health check, and publication probe all pass.
+Publish a new network's metadata only after its identity-bound probe passes
+from an independent network. MFENX Native 2026 uses the `/2026/` endpoints
+listed at the top of this guide; the retired chain's ChainList metadata and
+benchmark evidence must remain scoped to chain `177155`.
 
 ## Protocol limitation
 

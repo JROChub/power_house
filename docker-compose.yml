@@ -1,6 +1,10 @@
+# Local development example for this crate's retained native-transfer runtime.
+# Chain 177155 is retired; this single-node instance does not join or replace
+# MFENX Native 2026 (2026092601), whose validator runtime is maintained separately.
+# See docs/production_rpc_deployment.md for current public network identity.
 services:
   node:
-    image: ghcr.io/jrochub/power_house:0.4.0
+    image: ghcr.io/jrochub/power_house:0.4.1
     build: .
     command:
       [

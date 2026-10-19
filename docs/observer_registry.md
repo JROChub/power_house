@@ -1,11 +1,18 @@
 # Public Observer Registry
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
-The public observer registry is the permissionless monitoring layer for nodes
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> The registry, bootstrap hosts, intake routes, and website behavior below
+> describe the retired deployment. MFENX Native 2026 has no public observer
+> or validator enrollment. Use [current network status](https://mfenx.com/status.html)
+> and [Production RPC Deployment](production_rpc_deployment.md) for its identity
+> and separately maintained runtime.
+
+The retained observer registry implements a permissionless monitoring layer for nodes
 that verify or relay public network data without joining validator quorum. It
-lets mfenx.com show public observers independently from the signed validator
-mesh.
+let the retired website show public observers independently from the signed
+validator mesh.
 
 An observer can increase the public observer count only after all of these
 checks pass:
@@ -24,8 +31,8 @@ finality, or local verification outcomes.
 
 ## Public Status Fields
 
-`https://rpc.mfenx.com/network-status.json` separates consensus and public
-observer telemetry:
+The retired `https://rpc.mfenx.com/network-status.json` feed separated consensus
+and public observer telemetry using these fields:
 
 - `peer_connections`: legacy validator mesh link observations.
 - `validator_peer_links`: explicit validator mesh link observations.
@@ -101,24 +108,24 @@ TCP 9102 -> observer machine TCP 9102
 local/private addresses. They can work on the operator machine, but they cannot
 be used for public registry admission.
 
-The signed JSON can be submitted directly at `https://mfenx.com/register.html`.
-The page sends only the signed public registration. It never asks for or reads
-the private key.
+The former `https://mfenx.com/register.html` intake is retired. Its historical
+flow sent only the signed public registration and never read the private key.
 
-The CLI performs the same direct submission and prints a tracking ID:
+For a separately configured deployment of this retained runtime, the CLI can
+submit to that deployment's intake and print a tracking ID:
 
 ```bash
-julian observer submit mynode.observer.registration.json
-julian observer status <tracking-id>
+julian observer submit mynode.observer.registration.json --intake-url <INTAKE_URL>
+julian observer status <tracking-id> --intake-url <INTAKE_URL>
 ```
 
 Use `--no-upload` to validate and package the registration without submitting
-it. Use `--intake-url` with either command when testing a non-production intake
-service.
+it. The default intake belongs to the retired deployment; use `--intake-url`
+with either command for your explicitly configured environment.
 
 ## Admission API
 
-The production edge exposes:
+The retained intake implementation exposes these routes when deployed:
 
 ```text
 POST /observer-registrations
