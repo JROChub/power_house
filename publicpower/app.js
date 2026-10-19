@@ -1316,7 +1316,7 @@ function createOrbitalLabels() {
     const code = document.createElement("b");
     const role = document.createElement("small");
     code.textContent = city.code;
-    role.textContent = networkCityIndexes.includes(index) ? "VALIDATOR" : "CITY";
+    role.textContent = networkCityIndexes.includes(index) ? "LEGACY NODE" : "CITY";
     copy.append(code, role);
     label.append(reticle, copy);
     label.hidden = true;
@@ -1381,7 +1381,7 @@ function updateOrbitalLabels() {
     const selected = index === state.activeCity;
     const relevant = selected || networkCityIndexes.includes(index);
     label.classList.toggle("selected", selected);
-    const roleText = selected ? "SELECTED" : "VALIDATOR";
+    const roleText = selected ? "SELECTED" : "LEGACY NODE";
     if (role.textContent !== roleText) role.textContent = roleText;
     cityMarkers[index].getWorldPosition(labelWorldPosition);
     labelSurfaceNormal.copy(labelWorldPosition).normalize();
@@ -3994,32 +3994,25 @@ async function verifyPortalInput() {
   }
 }
 
-async function refreshNetworkStatus() {
-  try {
-    const response = await fetch("https://rpc.mfenx.com/network-status.json", {
-      cache: "no-store",
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-
-    const networkState = data.status || "degraded";
-    const healthy = Number(data.validators_healthy) || 0;
-    document.body.dataset.network = networkState;
-    el.networkState.textContent = networkState.toUpperCase();
-    el.networkConsoleState.textContent = networkState.toUpperCase();
-    el.networkBlock.textContent = Number(data.block_height).toLocaleString("en-US");
-    el.networkValidators.textContent = `${healthy} / ${Number(data.validators_total) || 0}`;
-    const validatorLinks = Number(data.validator_peer_links ?? data.peer_connections) || 0;
-    el.networkPeers.textContent = validatorLinks.toLocaleString("en-US");
-    updateObserverLayer(data);
-    updateNetworkNodeStates(healthy);
-  } catch {
-    document.body.dataset.network = "unknown";
-    el.networkState.textContent = "FEED CHECK";
-    el.networkConsoleState.textContent = "FEED CHECK";
-    updateObserverLayer({});
-    updateNetworkNodeStates(0);
-  }
+function refreshNetworkStatus() {
+  // This bundled topology belongs to retired chain 177155. Current network
+  // status and wallet setup are maintained at https://mfenx.com/status.html.
+  document.body.dataset.network = "retired";
+  el.networkState.textContent = "RETIRED";
+  el.networkConsoleState.textContent = "ARCHIVED";
+  el.networkBlock.textContent = "ARCHIVED";
+  el.networkValidators.textContent = "--";
+  el.networkPeers.textContent = "--";
+  updateObserverLayer({});
+  el.networkObservers.textContent = "--";
+  el.observerCount.textContent = "--";
+  el.observerLinks.textContent = "--";
+  el.observerState.textContent = "RETIRED";
+  el.observerRegistry.textContent = "CLOSED";
+  updateNetworkNodeStates(0);
+  [el.nodeSfoState, el.nodeNycState, el.nodeAmsState].forEach((field) => {
+    field.textContent = "RETIRED";
+  });
 }
 
 async function copyText(value, successMessage) {
@@ -4390,7 +4383,6 @@ function init() {
   updateAstronomy();
   refreshNetworkStatus();
   window.setInterval(updateAstronomy, 1000);
-  window.setInterval(refreshNetworkStatus, 15_000);
   initScene();
   if (bootstrapInput.pendingVerify) {
     window.requestAnimationFrame(() => {

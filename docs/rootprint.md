@@ -1,6 +1,29 @@
 # Rootprint v1
 
-Status: normative for Power House v0.4.0.
+Status: normative for Power House v0.4.1.
+
+For repeated inspections, `Rootprint::verified()` returns an immutable borrowed
+view containing the verified graph and canonical replay state. Use
+`view.state()` for replay identity and `sidecar.verify_verified(&view)` for
+multiple Observatory packets. The graph cannot be mutated while the view is
+used, and the view has no public unchecked constructor or deserializer.
+Artifact and graph checks occur when the view is created; sidecar checks still
+validate every binding, branch reference and sidecar digest. External proof
+soundness remains a separate verification boundary.
+
+```rust
+use power_house::provenance::{PhaArtifact, Rootprint};
+use power_house::ObservatorySidecar;
+use serde_json::json;
+use std::collections::BTreeMap;
+let artifact = PhaArtifact::new(json!({}), "example/v1", json!({}), json!({}))?;
+let graph = Rootprint::new("root", artifact)?;
+let sidecar = ObservatorySidecar::new(&graph, BTreeMap::new())?;
+let verified = graph.verified()?;
+sidecar.verify_verified(&verified)?;
+println!("{}", verified.state().state_fingerprint);
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
 
 Rootprint is the primary Power House provenance workflow. It is a deterministic
 directed acyclic graph whose nodes carry `.pha` artifacts and whose edges record

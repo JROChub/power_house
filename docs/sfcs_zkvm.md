@@ -1,8 +1,8 @@
 # SFCS Whole-Program Private VM
 
-Status: implemented release surface for Power House v0.4.0.
+Status: implemented release surface for Power House v0.4.1.
 
-Power House v0.4.0 adds an opt-in whole-program private execution backend
+Power House v0.4.1 adds an opt-in whole-program private execution backend
 through the `sfcs-risc0` feature. It accepts a RISC Zero program binary,
 executes it with private input, verifies a real cryptographic receipt, binds
 the deterministic public statement into SFCS and `.pha`, creates Rootprint

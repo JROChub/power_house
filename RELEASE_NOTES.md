@@ -1,4 +1,27 @@
-# Release Notes
+**Release Notes**
+
+**v0.4.1 - 2026-10-18**
+
+- Added an immutable `VerifiedRootprint` view that binds a checked graph to its
+  canonical replay state. Memory Capsule and Observatory checks can reuse it
+  without unchecked fingerprints, stale caches, or repeated artifact hashing.
+- Removed duplicate artifact verification within Rootprint validation and
+  unnecessary parent-artifact clones when creating branches.
+- Reject exhausted branch sequence numbers before mutation instead of
+  inserting branches with invalid parent ordering.
+- Branch equivalence verifies graph integrity before comparing fingerprints
+  in both Rust and Python. The Python SDK enforces the same unsigned 64-bit
+  sequence bounds and rejects overflow before insertion.
+- Extended the RPC publication gate with expected-genesis binding, bounded
+  responses, strict response IDs, and optional wallet account/fee/sync checks.
+- Updated current network metadata to chain 2026092601 and the `/2026/` routes.
+  Prior benchmark evidence remains explicitly bound to retired chain 177155.
+  The running validator is the separately released `20261008.3` runtime.
+- Marked bundled chain-177155 interfaces as historical and disabled retired
+  registration and telemetry requests; current wallet setup is linked directly.
+- Added graph reuse, mutation rejection, overflow, RPC boundary tests and a
+  reproducible Observatory verification benchmark. Core identity formats remain
+  unchanged; semantic packets remain outside proof validity.
 
 ## v0.4.0 - 2026-07-28
 

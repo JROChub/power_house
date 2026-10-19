@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050807">
-  <meta name="description" content="Live 72-hour reliability and controlled failure campaign for the MFENX Power House network.">
-  <title>MFENX Reliability Campaign</title>
+  <meta name="description" content="Archived reliability campaign interface for retired MFENX chain 177155. Current network status is maintained separately.">
+  <title>MFENX Retired Reliability Campaign</title>
   <link rel="icon" href="assets/powerhouse-logo.png">
   <link rel="preload" href="assets/earth-night.jpg" as="image">
   <link rel="stylesheet" href="campaign.css?v=20260708-finality-evidence1">
@@ -13,26 +13,30 @@
 <body>
   <div class="earth-field" aria-hidden="true"></div>
   <header>
-    <a class="brand" href="status.html">
+    <a class="brand" href="https://mfenx.com/status.html">
       <img src="assets/powerhouse-logo.png" alt="">
       <span><b>MFENX</b><small>RELIABILITY CONTROL</small></span>
     </a>
-    <div class="campaign-clock"><span>UTC</span><b id="utc-clock">--:--:--</b></div>
+    <div class="campaign-clock"><span>CHAIN 177155</span><b id="utc-clock">RETIRED</b></div>
   </header>
 
   <main>
     <section class="campaign-hero" aria-labelledby="campaign-title">
       <div>
-        <span class="eyebrow">CHAIN 177155 / EXTERNAL CONTROL PLANE</span>
-        <h1 id="campaign-title">72-HOUR RELIABILITY CAMPAIGN</h1>
-        <div class="campaign-state"><i></i><b id="campaign-state">CONNECTING</b><span id="campaign-phase">TELEMETRY HANDSHAKE</span></div>
+        <span class="eyebrow">RETIRED CHAIN 177155 / HISTORICAL CAMPAIGN</span>
+        <h1 id="campaign-title">RELIABILITY CAMPAIGN ARCHIVE</h1>
+        <div class="campaign-state"><i></i><b id="campaign-state">ARCHIVED</b><span id="campaign-phase">NO LIVE CAMPAIGN</span></div>
       </div>
+      <p>This interface belongs to retired chain 177155. It does not measure the current MFENX Native 2026 chain. <a href="https://mfenx.com/status.html">View current network status</a>.</p>
+    </section>
+
+    <details>
+      <summary>Archived dashboard layout (no telemetry loaded)</summary>
       <dl class="hero-time">
         <div><dt>ELAPSED</dt><dd id="elapsed">--:--:--</dd></div>
         <div><dt>REMAINING</dt><dd id="remaining">--:--:--</dd></div>
         <div><dt>COMPLETION</dt><dd id="ends-at">--</dd></div>
       </dl>
-    </section>
 
     <section class="progress-band" aria-label="Campaign completion">
       <div><span>CAMPAIGN PROGRESS</span><b id="progress-value">0.000%</b></div>
@@ -41,8 +45,8 @@
     </section>
 
     <section class="acceptance-gates" aria-label="Campaign acceptance gates">
-      <div class="acceptance-lead"><span>LIVE ACCEPTANCE</span><b id="acceptance-state">EVALUATING</b></div>
-      <div><span>UPTIME</span><b id="acceptance-uptime">100.00000%</b></div>
+      <div class="acceptance-lead"><span>ARCHIVED ACCEPTANCE</span><b id="acceptance-state">NOT LOADED</b></div>
+      <div><span>UPTIME</span><b id="acceptance-uptime">--</b></div>
       <div><span>RPC ERRORS</span><b id="acceptance-errors">0 REQUIRED</b></div>
       <div><span>RPC P95</span><b id="acceptance-latency">&le; 1,000 MS</b></div>
       <div><span>DRILL FAILURES</span><b id="acceptance-drills">0 REQUIRED</b></div>
@@ -55,7 +59,7 @@
     </section>
 
     <section class="telemetry" aria-label="Reliability telemetry">
-      <article><span>MEASURED UPTIME</span><b id="uptime">COLLECTING</b><small>SUCCESSFUL EXTERNAL SAMPLES</small></article>
+      <article><span>MEASURED UPTIME</span><b id="uptime">NOT LOADED</b><small>SUCCESSFUL EXTERNAL SAMPLES</small></article>
       <article><span>SAMPLES</span><b id="samples">0</b><small id="sample-detail">0 FAILED</small></article>
       <article><span>RPC P95</span><b id="rpc-p95">-- MS</b><small id="rpc-detail">0 REQUESTS / 0 ERRORS</small></article>
       <article><span>VALIDATORS</span><b id="validators">-- / --</b><small>HASH + FINALITY CONSENSUS</small></article>
@@ -69,7 +73,7 @@
         <div><span>RECENT</span><b id="failure-summary">0</b></div>
       </div>
       <ol id="failure-list">
-        <li class="clear"><i></i><span><b>NO FAILED SAMPLES RECORDED</b><small>THE CURRENT CAMPAIGN IS CLEAN</small></span><strong>CLEAR</strong></li>
+        <li class="clear"><i></i><span><b>NO ARCHIVED SAMPLES LOADED</b><small>NO LIVE CAMPAIGN RUNNING</small></span><strong>--</strong></li>
       </ol>
     </section>
 
@@ -79,23 +83,24 @@
         <div><span>COMPLETED</span><b id="drill-summary">0 / 0</b></div>
       </div>
       <ol id="drill-list">
-        <li class="awaiting"><i></i><span><b>AWAITING CAMPAIGN STATE</b><small>DRILL SCHEDULE NOT YET PUBLISHED</small></span><strong>--</strong></li>
+        <li class="awaiting"><i></i><span><b>ARCHIVED CAMPAIGN LAYOUT</b><small>NO ARCHIVED DRILL DATA LOADED</small></span><strong>--</strong></li>
       </ol>
     </section>
 
     <section class="evidence-band" aria-label="Campaign evidence integrity">
-      <div><span>EVIDENCE HEAD</span><code id="evidence-head">AWAITING FIRST EVENT</code></div>
-      <div><span>FINAL REPORT</span><code id="report-hash">PENDING CAMPAIGN COMPLETION</code></div>
+      <div><span>EVIDENCE HEAD</span><code id="evidence-head">NOT LOADED</code></div>
+      <div><span>FINAL REPORT</span><code id="report-hash">NOT LOADED</code></div>
       <time id="updated-at">NOT YET UPDATED</time>
     </section>
 
+    </details>
+
     <footer>
-      <a href="status.html">NETWORK STATUS</a>
-      <a href="https://rpc.mfenx.com/network-status.json">LIVE STATUS API</a>
+      <a href="https://mfenx.com/status.html">NETWORK STATUS</a>
+      <a href="https://mfenx.com/status.html#wallet-title">CURRENT WALLET SETUP</a>
       <a href="https://github.com/JROChub/power_house/blob/main/docs/reliability_campaign.md">CAMPAIGN METHOD</a>
       <a href="https://github.com/JROChub/power_house/blob/main/docs/incident_response.md">INCIDENT PROCESS</a>
     </footer>
   </main>
-  <script src="campaign.js?v=20260708-finality-evidence1" defer></script>
 </body>
 </html>

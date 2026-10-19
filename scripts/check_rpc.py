@@ -17,6 +17,7 @@ from typing import Any
 HASH_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")
 QUANTITY_RE = re.compile(r"^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$")
 TEST_ORIGIN = "https://mfenx.com"
+MAX_RESPONSE_BYTES = 1024 * 1024
 
 
 class RpcCheckError(RuntimeError):
@@ -61,7 +62,11 @@ def rpc_call(
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            raw = response.read()
+            if response.geturl() != url:
+                raise RpcCheckError(f"{method}: RPC redirected to a different URL")
+            raw = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(raw) > MAX_RESPONSE_BYTES:
+                raise RpcCheckError(f"{method}: response exceeds the byte limit")
             headers = response.headers
     except urllib.error.HTTPError as exc:
         detail = exc.read(512).decode("utf-8", errors="replace")
@@ -76,9 +81,9 @@ def rpc_call(
         raise RpcCheckError(f"{method}: response must be a JSON object")
     if document.get("jsonrpc") != "2.0":
         raise RpcCheckError(f"{method}: missing JSON-RPC 2.0 marker")
-    if document.get("id") != request_id:
+    if type(document.get("id")) is not int or document["id"] != request_id:
         raise RpcCheckError(f"{method}: response ID does not match request")
-    if document.get("error") is not None:
+    if "error" in document:
         raise RpcCheckError(f"{method}: RPC error: {document['error']}")
     if "result" not in document:
         raise RpcCheckError(f"{method}: response has no result")
@@ -108,7 +113,13 @@ def run_check(
     expected_chain_id: int,
     timeout: float,
     require_cors: bool,
+    expected_genesis: str | None = None,
+    wallet_checks: bool = False,
 ) -> dict[str, Any]:
+    if expected_chain_id <= 0 or not 0 < timeout <= 120:
+        raise RpcCheckError("chain ID must be positive and timeout must be between 0 and 120 seconds")
+    if expected_genesis is not None:
+        require_hash(expected_genesis, "expected genesis")
     parsed, addresses = resolve_endpoint(url)
     client, first_headers = rpc_call(url, "web3_clientVersion", [], 1, timeout)
     if not isinstance(client, str) or not client.strip():
@@ -154,7 +165,7 @@ def run_check(
             "latest block response is inconsistent with eth_blockNumber"
         )
 
-    return {
+    result = {
         "url": url,
         "host": parsed.hostname,
         "addresses": addresses,
@@ -165,6 +176,39 @@ def run_check(
         "block_hash": block["hash"],
         "cors": first_headers.get("Access-Control-Allow-Origin"),
     }
+    if expected_genesis is not None:
+        genesis = rpc_call(url, "eth_getBlockByNumber", ["0x0", False], 7, timeout)[0]
+        if not isinstance(genesis, dict) or genesis.get("number") != "0x0" or genesis.get("hash") != expected_genesis:
+            raise RpcCheckError("genesis mismatch: endpoint is not the expected network history")
+        result["genesis_hash"] = expected_genesis
+    if wallet_checks:
+        if rpc_call(url, "eth_syncing", [], 8, timeout)[0] is not False:
+            raise RpcCheckError("eth_syncing: wallet endpoint is not ready")
+        address = "0x" + "0" * 40
+        methods = [
+            ("eth_getBalance", [address, "pending"]),
+            ("eth_getTransactionCount", [address, "pending"]),
+            ("eth_gasPrice", []),
+            ("eth_maxPriorityFeePerGas", []),
+        ]
+        for request_id, (method, params) in enumerate(methods, 9):
+            parse_quantity(rpc_call(url, method, params, request_id, timeout)[0], method)
+        history = rpc_call(url, "eth_feeHistory", ["0x1", "latest", [50]], 13, timeout)[0]
+        if not isinstance(history, dict):
+            raise RpcCheckError("eth_feeHistory: expected an object")
+        parse_quantity(history.get("oldestBlock"), "fee history oldestBlock")
+        fees, ratios, rewards = (history.get(key) for key in ("baseFeePerGas", "gasUsedRatio", "reward"))
+        if not isinstance(fees, list) or len(fees) != 2:
+            raise RpcCheckError("eth_feeHistory: expected two base fees")
+        for fee in fees:
+            parse_quantity(fee, "fee history baseFeePerGas")
+        if not isinstance(ratios, list) or len(ratios) != 1 or type(ratios[0]) not in (int, float) or not 0 <= ratios[0] <= 1:
+            raise RpcCheckError("eth_feeHistory: invalid gasUsedRatio")
+        if not isinstance(rewards, list) or len(rewards) != 1 or not isinstance(rewards[0], list) or len(rewards[0]) != 1:
+            raise RpcCheckError("eth_feeHistory: invalid reward dimensions")
+        parse_quantity(rewards[0][0], "fee history reward")
+        result["wallet_methods_checked"] = ["eth_syncing", *[method for method, _ in methods], "eth_feeHistory"]
+    return result
 
 
 def parser() -> argparse.ArgumentParser:
@@ -172,7 +216,9 @@ def parser() -> argparse.ArgumentParser:
         description="Validate DNS, JSON-RPC identity, latest-block integrity, and CORS"
     )
     cli.add_argument("url", help="public HTTP(S) JSON-RPC URL")
-    cli.add_argument("--expected-chain-id", type=int, default=177155)
+    cli.add_argument("--expected-chain-id", type=int, default=2026092601)
+    cli.add_argument("--expected-genesis", help="pin the expected genesis block hash")
+    cli.add_argument("--wallet-checks", action="store_true", help="validate sync, pending account, and fee-history methods without submitting transactions")
     cli.add_argument("--timeout", type=float, default=10.0)
     cli.add_argument("--require-cors", action="store_true")
     cli.add_argument("--json", action="store_true", dest="json_output")
@@ -187,6 +233,8 @@ def main(argv: list[str] | None = None) -> int:
             expected_chain_id=args.expected_chain_id,
             timeout=args.timeout,
             require_cors=args.require_cors,
+            expected_genesis=args.expected_genesis,
+            wallet_checks=args.wallet_checks,
         )
     except RpcCheckError as exc:
         print(f"RPC CHECK FAILED: {exc}", file=sys.stderr)

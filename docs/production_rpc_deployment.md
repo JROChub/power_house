@@ -1,6 +1,27 @@
 # LAX MFENX RPC Production Deployment
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
+
+Current network identity is chain **2026092601**, with RPC
+`https://rpc.mfenx.com/2026/`, alternate
+`https://license.mfenx.com/network/2026/`, and setup at
+`https://mfenx.com/status.html#wallet-title`. The running `20261008.3` validator
+release has three processes on one host. The multi-host architecture and
+provisioning commands below are a deployment design, not a description of that
+running topology. Chain 177155 and its root RPC endpoint remain retired.
+
+Verify the current endpoint without signing or submitting a transaction:
+
+```bash
+python3 scripts/check_rpc.py https://rpc.mfenx.com/2026/ \
+  --expected-chain-id 2026092601 \
+  --expected-genesis 0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e \
+  --wallet-checks --require-cors --json
+```
+
+This binds the response to the expected history and checks pending-account,
+fee-history and synchronization methods. It is an observation, not a consensus
+proof or a guarantee of wallet-vendor indexing.
 
 The retired VPS hosts should not be restored. Replace them with a reproducible
 three-validator deployment whose membership, keys, genesis balances, service
@@ -155,7 +176,7 @@ restarts one validator at a time, waits for RPC health, verifies
 Allow validator-tag traffic to TCP `9090`, `9100`, `9101`, and `9195`, then run:
 
 ```bash
-POWER_HOUSE_RELEASE=0.4.0 \
+POWER_HOUSE_RELEASE=0.4.1 \
 SSH_OPTS="-F /dev/null -o StrictHostKeyChecking=accept-new" \
 scripts/deploy_monitoring_stack.sh \
   root@<validator-1-ipv4> \

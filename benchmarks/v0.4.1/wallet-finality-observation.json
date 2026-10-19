@@ -1,0 +1,54 @@
+{
+  "schema": "mfenx/wallet-finality-check/v1",
+  "observed_at": "2026-10-19T00:34:20.682735+00:00",
+  "chain_id": 2026092601,
+  "genesis_hash": "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e",
+  "rpc_urls": [
+    "https://rpc.mfenx.com/2026/",
+    "https://license.mfenx.com/network/2026/"
+  ],
+  "before_height": 36,
+  "receipt": {
+    "blockHash": "0xf2c70f9c3086cac51375879075480dcbfe21de764347477517ce347ad87ee9e1",
+    "blockNumber": "0x25",
+    "contractAddress": null,
+    "cumulativeGasUsed": "0x5208",
+    "effectiveGasPrice": "0x0",
+    "from": "0x62cbcd2a1e4910635155b451b933744a1b26ca64",
+    "gasUsed": "0x5208",
+    "logs": [],
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "status": "0x1",
+    "to": "0x62cbcd2a1e4910635155b451b933744a1b26ca64",
+    "transactionHash": "0x53c71c9051ab19f0b80536b571253a9925d423fbe7635bf8292128f0d6c08320",
+    "transactionIndex": "0x0",
+    "type": "0x2"
+  },
+  "address": "0x62CBCD2A1E4910635155b451b933744A1b26CA64",
+  "value_transferred_wei": "0",
+  "fee_paid_wei": "0",
+  "nonce_advanced": true,
+  "both_rpc_receipts_match": true,
+  "existing_contract_value": 42,
+  "validator_receipt_observations": [
+    {
+      "port": 8545,
+      "block_hash": "0xf2c70f9c3086cac51375879075480dcbfe21de764347477517ce347ad87ee9e1",
+      "transaction_hash": "0x53c71c9051ab19f0b80536b571253a9925d423fbe7635bf8292128f0d6c08320",
+      "status": "0x1"
+    },
+    {
+      "port": 8546,
+      "block_hash": "0xf2c70f9c3086cac51375879075480dcbfe21de764347477517ce347ad87ee9e1",
+      "transaction_hash": "0x53c71c9051ab19f0b80536b571253a9925d423fbe7635bf8292128f0d6c08320",
+      "status": "0x1"
+    },
+    {
+      "port": 8547,
+      "block_hash": "0xf2c70f9c3086cac51375879075480dcbfe21de764347477517ce347ad87ee9e1",
+      "transaction_hash": "0x53c71c9051ab19f0b80536b571253a9925d423fbe7635bf8292128f0d6c08320",
+      "status": "0x1"
+    }
+  ],
+  "fault_domain": "Three validator processes on one host; this observation does not establish independent-host fault tolerance."
+}

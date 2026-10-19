@@ -124,7 +124,7 @@ def main() -> int:
     )
     require(
         errors,
-        read("RELEASE_NOTES.md").startswith(f"# Release Notes\n\n## {release} "),
+        read("RELEASE_NOTES.md").startswith(f"**Release Notes**\n\n**{release} "),
         "release notes do not start with the current release",
     )
 
@@ -174,19 +174,23 @@ def main() -> int:
     require(
         errors,
         benchmark.get("environment", {}).get("endpoint")
-        == network.get("rpc", {}).get("canonicalUrl"),
-        "RPC benchmark endpoint differs",
+        == "https://rpc.mfenx.com"
+        and network.get("benchmarkScope") == "retired-chain-177155",
+        "historical RPC benchmark must remain explicitly scoped to the retired chain",
     )
-    require(errors, network.get("chainId") == 177155, "network chain ID differs")
+    require(errors, network.get("chainId") == 2026092601, "network chain ID differs")
+    require(errors, network.get("previousChainId") == 177155, "retired chain identity is missing")
+    require(errors, network.get("genesisHash") == "0x3b0b36b6acdcc5f0d7a1e38dd6621c58a9546a0e1a98cb58911b7646a0de5e8e", "network genesis differs")
+    require(errors, network.get("rpc", {}).get("canonicalUrl") == "https://rpc.mfenx.com/2026/", "canonical RPC URL differs")
     require(
         errors,
-        network.get("rpc", {}).get("name") == "LAX MFENX RPC",
+        network.get("rpc", {}).get("name") == "MFENX Native 2026 RPC",
         "public RPC name differs",
     )
     require(
         errors,
         network.get("rpc", {}).get("chainListUrl")
-        == "https://rpc.mfenx.com",
+        == "https://rpc.mfenx.com/2026/",
         "ChainList RPC URL differs",
     )
 

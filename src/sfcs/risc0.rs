@@ -423,11 +423,14 @@ impl ProgramBinding {
                 "guest program binary exceeds {MAX_PROGRAM_BYTES} bytes"
             )));
         }
+        let binary = ProgramBinary::decode(program_binary)
+            .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+        validate_uncompressed_elfs(&binary)?;
         let image_id = compute_image_id(program_binary)
             .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
         let image_id_text = format!("risc0:{image_id}");
         let program_digest = sha256_domain(PROGRAM_DIGEST_DOMAIN, program_binary);
-        let graph = graph_from_program(program_binary, &image_id_text, &program_digest)?;
+        let graph = graph_from_program(&binary, &image_id_text, &program_digest)?;
         let graph_digest = graph.fractal_digest()?;
         Ok(Self {
             image_id,
@@ -439,13 +442,31 @@ impl ProgramBinding {
     }
 }
 
+fn validate_uncompressed_elfs(binary: &ProgramBinary<'_>) -> Result<(), SfcsRisc0Error> {
+    // The pinned backend can decompress ELF sections without a bounded output.
+    // Reject them before image loading, debug inspection, or graph construction.
+    for (component, elf) in [("user", binary.user_elf), ("kernel", binary.kernel_elf)] {
+        let file = object::File::parse(elf)
+            .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+        for section in file.sections() {
+            let range = section
+                .compressed_file_range()
+                .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
+            if range.format != object::CompressionFormat::None {
+                return Err(SfcsRisc0Error::InvalidProgram(format!(
+                    "{component} ELF contains a compressed section"
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn graph_from_program(
-    program_binary: &[u8],
+    binary: &ProgramBinary<'_>,
     image_id: &str,
     program_digest: &str,
 ) -> Result<SfcsGraph, SfcsRisc0Error> {
-    let binary = ProgramBinary::decode(program_binary)
-        .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
     let mut graph = SfcsGraph::new(Vec::new());
     let root = SfcsNode::new("guest_image", SfcsOp::Input, Vec::new())
         .with_label("RISC Zero guest image")
@@ -463,7 +484,7 @@ fn graph_from_program(
             SfcsRisc0Error::InvalidProgram(format!("{component} ELF has no .text section"))
         })?;
         let text_bytes = text
-            .uncompressed_data()
+            .data()
             .map_err(|error| SfcsRisc0Error::InvalidProgram(error.to_string()))?;
         if text_bytes.is_empty() {
             return Err(SfcsRisc0Error::InvalidProgram(format!(

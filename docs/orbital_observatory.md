@@ -1,6 +1,6 @@
 # MFENX Orbital Observatory
 
-Release surface: Power House v0.4.0.
+Release surface: Power House v0.4.1.
 
 `mfenx.com` presents Power House as an interactive planetary proof
 observatory. It combines live celestial telemetry, world time, published proof
@@ -49,7 +49,7 @@ The six instrument modes are:
    deterministic fingerprint, branch ID, ordering, reachability, and canonical
    replay checks. The same mode separately verifies and renders the published
    `slbit` semantic sidecar.
-2. An SFCS v0.4.0 deterministic browser identity bridge that verifies graph,
+2. An SFCS v0.4.1 deterministic browser identity bridge that verifies graph,
    execution trace, synthesis, `.pha`, branch ID, and replay binding. The
    interface explicitly distinguishes this public browser path from
    authoritative whole-program RISC Zero receipt verification performed by
@@ -100,7 +100,7 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in the
   a local RootID, and confirms every instrument close control remains inside
   the viewport.
 
-## v0.4.0 Composition
+## v0.4.1 Composition
 
 The main field now reserves the right side of the viewport for the globe and
 its state-driven orbital geometry. The proof statement and actions occupy a

@@ -1,8 +1,8 @@
-# Power House
+**Power House**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/JROChub/power_house/ci.yml?branch=main&label=CI)](https://github.com/JROChub/power_house/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/badge/crates.io-v0.4.0-orange)](https://crates.io/crates/power_house)
-[![docs.rs](https://img.shields.io/badge/docs.rs-v0.4.0-blue)](https://docs.rs/power_house/0.4.0/power_house/)
+[![crates.io](https://img.shields.io/badge/crates.io-v0.4.1-orange)](https://crates.io/crates/power_house)
+[![docs.rs](https://img.shields.io/badge/docs.rs-v0.4.1-blue)](https://docs.rs/power_house/0.4.1/power_house/)
 [![license](https://img.shields.io/crates/l/power_house)](LICENSE)
 
 Power House is a deterministic verification and provenance system for portable
@@ -35,10 +35,15 @@ offline-verifiable bundle.
 `slbit` is the independent semantic layer: it shows what verified proof memory
 means without changing core proof identity.
 
-Current release: **v0.4.0**
+Current release: **v0.4.1**
 
-Production reliability evidence is published on the dedicated
-[72-hour campaign page](https://mfenx.com/campaign.html).
+Version 0.4.1 introduces `Rootprint::verified()`, an immutable borrow that
+retains the verified replay state for subsequent Observatory checks. Memory
+Capsule verification reuses this state instead of repeatedly hashing the same
+artifacts. Branch equivalence validates the graph before comparing identities;
+fork and merge reject sequence overflow before changing it. The
+[release measurements](benchmarks/v0.4.1/verified-observatory.json) record a
+reproducible repeated-sidecar workload.
 
 The primary workflow is **Power House Identity + Rootprint**:
 
@@ -69,7 +74,7 @@ The primary workflow is **Power House Identity + Rootprint**:
 - **Observatory sidecars** optionally bind human-readable semantic packets to
   verified Rootprint replay state without changing proof identity.
 
-## Quick Start
+**Quick Start**
 
 ```bash
 cargo add power_house
@@ -125,7 +130,7 @@ julian memory replay earth-001.phm
 julian memory challenge earth-001.phm --all
 ```
 
-## Human-Observable Proofs
+**Human-Observable Proofs**
 
 [`slbit`](https://crates.io/crates/slbit) is an independent zero-dependency
 crate for luminous claims, semantic transcripts, and visualization packets.
@@ -224,7 +229,7 @@ See the [Power House + slbit Observatory guide](docs/slbit.md) for the complete
 Rust workflow, schemas, trust boundary, browser rendering, and conformance
 vectors.
 
-## Verification Profiles
+**Verification Profiles**
 
 | Profile | Public statement | Verifier path | Reproduce |
 | --- | --- | --- | --- |
@@ -240,7 +245,7 @@ Here `n` is the number of variables and `I` is the number of nonzero variable
 incidences. The proof modes operate on compact algebraic descriptions and do
 not allocate the expanded Boolean hypercube.
 
-## Core Formats
+**Core Formats**
 
 | Format | Purpose |
 | --- | --- |
@@ -259,7 +264,7 @@ Rust and Python consume the same canonical vectors under `conformance/`.
 Mutation tests require core changes to reject while proving that EPA mutation
 does not alter Power House core validity.
 
-## Reproduce
+**Reproduce**
 
 ```bash
 cargo fmt --check
@@ -288,7 +293,7 @@ python3 scripts/soundness_budget.py
 The complete procedure and expected rejection behavior are documented in the
 [Verification Guide](docs/verification_guide.md).
 
-## Primary Rust APIs
+**Primary Rust APIs**
 
 - [`Identity`](https://docs.rs/power_house/latest/power_house/identity/struct.Identity.html):
   immutable `.pha` and Rootprint identity abstraction.
@@ -371,7 +376,7 @@ The complete procedure and expected rejection behavior are documented in the
 - [`ValidatorRegistry`](https://docs.rs/power_house/latest/power_house/net/validator_registry/struct.ValidatorRegistry.html):
   signed identity admission and monitoring discovery records.
 
-## Python SDK
+**Python SDK**
 
 The bundled zero-dependency Python SDK defaults to pure Power House + Rootprint:
 
@@ -396,7 +401,7 @@ from power_house.external import attach_external_proof
 
 See [SDKs](docs/sdk.md) for installation and interoperability tests.
 
-## Network And RPC
+**Network And RPC**
 
 The optional `net` feature enables libp2p transport, signed envelopes, data
 availability services, governance policies, stake accounting, migration tools,
@@ -404,17 +409,29 @@ and a quorum-finalized native JSON-RPC lane.
 
 | Public network | Value |
 | --- | --- |
-| RPC name | **LAX MFENX RPC** |
-| Chain ID | `177155` (`0x2b403`) |
-| Canonical endpoint | `https://rpc.mfenx.com` |
-| ChainList endpoint | `https://rpc.mfenx.com` |
-| Status | `https://mfenx.com/status.html` |
+| Network | MFENX Native 2026 |
+| Chain ID | `2026092601` (`0x78c3b839`) |
+| Canonical endpoint | `https://rpc.mfenx.com/2026/` |
+| Alternate endpoint | `https://license.mfenx.com/network/2026/` |
+| Native currency | JULIAN, 18 decimals |
+| Status and wallet setup | <https://mfenx.com/status.html#wallet-title> |
 
-The production edge uses health-aware global routing across validators in
-New York, San Francisco, and Amsterdam. Public traffic is rate-limited at
-Nginx and removed from a backend automatically when `/healthz` fails. Signed
-validator registrations bind each admitted public key to its derived peer ID
-and live identity metrics; validator totals are not inferred from peer links.
+Chain `177155` is retired. The current network has a distinct genesis and
+ledger; its identity, routes, and genesis hash are recorded in
+[`configs/network.json`](configs/network.json). Historical benchmark and
+reliability reports for the retired chain do not establish performance or
+availability for the current deployment.
+
+The deployed validator runtime is release `20261008.3`, maintained separately
+from this crate. Its three validator processes share one host and require a
+quorum of two. That configuration demonstrates replica agreement but does not
+provide independent host or regional fault tolerance. The recorded
+[transaction check](benchmarks/v0.4.1/wallet-finality-observation.json) confirms
+one successful zero-value transaction through both public endpoints; it is
+an observation of finality, not a sustained reliability measurement.
+
+The command below starts a local development node from this crate. It does
+not join or replace the separately deployed public validator runtime.
 
 ```bash
 julian net start \
@@ -424,15 +441,17 @@ julian net start \
   --listen /ip4/0.0.0.0/tcp/7001 \
   --policy ./configs/governance.stake.json \
   --quorum 2 \
-  --evm-chain-id 177155 \
+  --evm-chain-id 31337 \
   --evm-rpc-listen 127.0.0.1:8545 \
   --key ed25519://<seed>
 ```
 
 Use `scripts/test_native_rpc_cluster.sh` to verify replica finality and
-`scripts/check_rpc.py` to run the external publication gate.
+`scripts/check_rpc.py` to run the external publication gate. For the current
+public network, supply the genesis hash from `configs/network.json` with
+`--expected-genesis` and enable `--wallet-checks --require-cors`.
 
-## Documentation
+**Documentation**
 
 Start with the [Documentation Index](docs/README.md).
 
@@ -458,7 +477,7 @@ Start with the [Documentation Index](docs/README.md).
 - [Orbital Observatory](docs/orbital_observatory.md)
 - [v0.3.0 Benchmark Report](benchmarks/v0.3.0/report.json)
 
-## Public Surfaces
+**Public Surfaces**
 
 - API documentation: <https://docs.rs/power_house>
 - Package: <https://crates.io/crates/power_house>
@@ -466,7 +485,7 @@ Start with the [Documentation Index](docs/README.md).
 - Public verifier: <https://mfenx.com>
 - Network status: <https://mfenx.com/status.html>
 
-## License
+**License**
 
 Power House v0.3.6 and later is licensed under
 [AGPL-3.0-only](LICENSE). Earlier releases retain their original licenses; see

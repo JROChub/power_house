@@ -1,6 +1,7 @@
 #![cfg(feature = "sfcs-risc0")]
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use object::{Object, ObjectSection};
 use power_house::{
     provenance::Rootprint, verify_sfcs_risc0_private_vm_capsule,
     verify_sfcs_risc0_private_vm_embedding, MemoryCapsuleBuilder, MemoryVerificationPolicy,
@@ -129,6 +130,30 @@ fn program_projection_is_deterministic_and_content_bound() {
     assert!(SfcsRisc0PrivateVmProof::program_graph(&changed)
         .map(|graph| graph.fractal_digest().unwrap())
         .map_or(true, |digest| digest != first_digest));
+}
+
+#[test]
+fn compressed_executable_sections_are_rejected_without_expansion() {
+    let mut changed = GUEST_PROGRAM.to_vec();
+    let binary = risc0_binfmt::ProgramBinary::decode(&changed).unwrap();
+    let elf = binary.user_elf;
+    assert_eq!(&elf[..6], b"\x7fELF\x01\x01", "fixture must be ELF32 LE");
+    let user_start = elf.as_ptr() as usize - changed.as_ptr() as usize;
+    let table = u32::from_le_bytes(elf[32..36].try_into().unwrap()) as usize;
+    let entry_size = u16::from_le_bytes(elf[46..48].try_into().unwrap()) as usize;
+    let file = object::File::parse(elf).unwrap();
+    let text = file.section_by_name(".text").unwrap();
+    let flags_offset = user_start + table + text.index().0 * entry_size + 8;
+    let data_offset = user_start + text.file_range().unwrap().0 as usize;
+    let flags = u32::from_le_bytes(changed[flags_offset..flags_offset + 4].try_into().unwrap());
+    changed[flags_offset..flags_offset + 4].copy_from_slice(&(flags | 0x800).to_le_bytes());
+    // An ELF32 compression header advertising 4 GiB must never trigger a decoder.
+    changed[data_offset..data_offset + 4].copy_from_slice(&2_u32.to_le_bytes());
+    changed[data_offset + 4..data_offset + 8].copy_from_slice(&u32::MAX.to_le_bytes());
+    changed[data_offset + 8..data_offset + 12].copy_from_slice(&1_u32.to_le_bytes());
+    let error = SfcsRisc0PrivateVmProof::program_graph(&changed).unwrap_err();
+    assert!(matches!(error, SfcsRisc0Error::InvalidProgram(_)));
+    assert!(error.to_string().contains("compressed section"));
 }
 
 #[test]
