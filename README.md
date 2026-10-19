@@ -43,7 +43,9 @@ Capsule verification reuses this state instead of repeatedly hashing the same
 artifacts. Branch equivalence validates the graph before comparing identities;
 fork and merge reject sequence overflow before changing it. The
 [release measurements](benchmarks/v0.4.1/verified-observatory.json) record a
-reproducible repeated-sidecar workload.
+reproducible repeated-sidecar workload. The
+[dependency assessment](benchmarks/v0.4.1/dependency-audit-scope.json) records
+applied security updates, remaining upstream advisories, and their scope.
 
 The primary workflow is **Power House Identity + Rootprint**:
 

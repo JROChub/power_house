@@ -1,0 +1,385 @@
+{
+  "schema": "power-house/dependency-audit-scope/v1",
+  "observed_at_utc": "2026-10-19T00:58:44.409400+00:00",
+  "scope": "Read-only native Linux cargo tree --offline --locked --edges normal,build for default/net/sfcs/sfcs-risc0/all-features and local pinned source inspection; not a complete exploitability proof or clean security audit.",
+  "baseline": {
+    "sha256": "91ab9d2ea5342981c4c8184cbc563fb4bad91a3b32c5f22da36d713ea1d99296",
+    "vulnerability_package_advisory_matches": 33,
+    "vulnerable_package_versions": 16,
+    "warnings": {
+      "unmaintained": 6,
+      "unsound": 5,
+      "yanked": 1
+    }
+  },
+  "current_lock_sha256": "86fc51f97d88ef7098b73382e978b270ec146791968e7e2b600515061b9e69eb",
+  "changed_affected_packages": [
+    {
+      "package": "bytes",
+      "previous_version": "1.11.0",
+      "current_lock_versions": [
+        "1.12.1"
+      ]
+    },
+    {
+      "package": "crossbeam-epoch",
+      "previous_version": "0.9.18",
+      "current_lock_versions": [
+        "0.9.21"
+      ]
+    },
+    {
+      "package": "h2",
+      "previous_version": "0.3.27",
+      "current_lock_versions": [
+        "0.4.20"
+      ]
+    },
+    {
+      "package": "h2",
+      "previous_version": "0.4.15",
+      "current_lock_versions": [
+        "0.4.20"
+      ]
+    },
+    {
+      "package": "quinn-proto",
+      "previous_version": "0.11.13",
+      "current_lock_versions": [
+        "0.11.19"
+      ]
+    },
+    {
+      "package": "ruint",
+      "previous_version": "1.19.0",
+      "current_lock_versions": [
+        "1.20.1"
+      ]
+    },
+    {
+      "package": "rustls",
+      "previous_version": "0.21.12",
+      "current_lock_versions": [
+        "0.23.46"
+      ]
+    },
+    {
+      "package": "rustls",
+      "previous_version": "0.23.35",
+      "current_lock_versions": [
+        "0.23.46"
+      ]
+    },
+    {
+      "package": "rustls-webpki",
+      "previous_version": "0.101.7",
+      "current_lock_versions": [
+        "0.103.15"
+      ]
+    },
+    {
+      "package": "rustls-webpki",
+      "previous_version": "0.103.8",
+      "current_lock_versions": [
+        "0.103.15"
+      ]
+    },
+    {
+      "package": "time",
+      "previous_version": "0.3.44",
+      "current_lock_versions": [
+        "0.3.55"
+      ]
+    }
+  ],
+  "residual_vulnerabilities": [
+    {
+      "package": "hickory-proto",
+      "version": "0.25.2",
+      "ids": [
+        "RUSTSEC-2026-0118",
+        "RUSTSEC-2026-0119"
+      ],
+      "active_profiles": [],
+      "assessment": "Resolved in Cargo.lock through optional libp2p DNS/mDNS; absent from normal/build dependency trees for all declared Power House features on native Linux. DNSSEC/encoding advisories remain in full lock audit.",
+      "sources": [
+        {
+          "file": "Cargo.toml",
+          "line": 130
+        }
+      ],
+      "resolution": "Requires upstream libp2p dependency change; do not enable DNS/mDNS without reassessment.",
+      "advisories": [
+        "https://rustsec.org/advisories/RUSTSEC-2026-0118.html",
+        "https://rustsec.org/advisories/RUSTSEC-2026-0119.html"
+      ]
+    },
+    {
+      "package": "tracing-subscriber",
+      "version": "0.2.25",
+      "ids": [
+        "RUSTSEC-2025-0055"
+      ],
+      "active_profiles": [
+        "default",
+        "net",
+        "sfcs",
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "Active through ark-relations with default-features=false; fmt/ANSI formatting feature is not enabled even in all-features tree. Advisory logging path is not enabled by this package feature set.",
+      "sources": [
+        {
+          "crate": "ark-relations@0.4.0",
+          "file": "Cargo.toml",
+          "line": 51
+        },
+        {
+          "crate": "ark-relations@0.5.1",
+          "file": "Cargo.toml",
+          "line": 60
+        }
+      ],
+      "resolution": "Upgrade arkworks only as a separately validated proof compatibility migration; downstream feature unification could change applicability.",
+      "advisories": [
+        "https://rustsec.org/advisories/RUSTSEC-2025-0055.html"
+      ]
+    },
+    {
+      "package": "rsa",
+      "version": "0.9.10",
+      "ids": [
+        "RUSTSEC-2023-0071"
+      ],
+      "active_profiles": [
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "RISC Zero includes rzup for installed prover lookup. Inspected RISC Zero call sites use Rzup::new/get_version_dir; Power House does not use RSA private-key signing/decryption. rzup distribution verification uses a public key. No patch listed.",
+      "sources": [
+        {
+          "crate": "risc0-zkvm@3.0.6",
+          "file": "src/host/client/prove/mod.rs",
+          "line": 266
+        },
+        {
+          "crate": "rzup@0.5.2",
+          "file": "src/distribution/signature.rs",
+          "line": 87
+        }
+      ],
+      "resolution": "Preserve pinned proof backend; reassess any added rzup publishing/private-key operations.",
+      "advisories": [
+        "https://rustsec.org/advisories/RUSTSEC-2023-0071.html"
+      ]
+    },
+    {
+      "package": "ruzstd",
+      "version": "0.7.3",
+      "ids": [
+        "RUSTSEC-2026-0344"
+      ],
+      "active_profiles": [
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "Transitive decompressor still present via pinned RISC Zero and addr2line. Power House now rejects all compressed sections in both user/kernel ELF components before compute_image_id, graph construction or proving. Aggregate PT_LOAD memory is capped at 64 MiB before the upstream loader allocates zero-fill. These are entry-point mitigations, not a patched upstream crate.",
+      "sources": [
+        {
+          "file": "src/sfcs/risc0.rs",
+          "line": 428
+        },
+        {
+          "file": "src/sfcs/risc0.rs",
+          "line": 446
+        },
+        {
+          "file": "tests/sfcs_risc0.rs",
+          "line": 136
+        },
+        {
+          "file": "tests/sfcs_risc0.rs",
+          "line": 160
+        },
+        {
+          "crate": "risc0-zkvm@3.0.6",
+          "file": "src/host/server/exec/profiler.rs",
+          "line": 291
+        },
+        {
+          "crate": "risc0-binfmt@3.0.5",
+          "file": "src/elf.rs",
+          "line": 95
+        }
+      ],
+      "resolution": "Keep mitigation/regression tests and pinned guest identity; upgrade object/addr2line/RISC Zero through separately validated backend migration.",
+      "advisories": [
+        "https://rustsec.org/advisories/RUSTSEC-2026-0344.html"
+      ]
+    },
+    {
+      "package": "zip",
+      "version": "2.4.2",
+      "ids": [
+        "RUSTSEC-2026-0369",
+        "RUSTSEC-2026-0368",
+        "RUSTSEC-2026-0367"
+      ],
+      "active_profiles": [
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "RISC Zero recursion reads entries by_name/read_exact from an embedded archive whose SHA256 is checked at build time. Inspected code does not call filesystem extract APIs implicated in symlink/permissions advisories.",
+      "sources": [
+        {
+          "crate": "risc0-circuit-recursion@4.0.5",
+          "file": "src/prove/zkr.rs",
+          "line": 21
+        },
+        {
+          "crate": "risc0-circuit-recursion@4.0.5",
+          "file": "src/prove/zkr.rs",
+          "line": 47
+        },
+        {
+          "crate": "risc0-circuit-recursion@4.0.5",
+          "file": "build.rs",
+          "line": 35
+        }
+      ],
+      "resolution": "No forced ZIP major update; preserve pinned recursion artifacts and recheck upstream backend upgrades.",
+      "advisories": [
+        "https://rustsec.org/advisories/RUSTSEC-2026-0369.html",
+        "https://rustsec.org/advisories/RUSTSEC-2026-0368.html",
+        "https://rustsec.org/advisories/RUSTSEC-2026-0367.html"
+      ]
+    }
+  ],
+  "warning_scope": [
+    {
+      "package": "lru",
+      "version": "0.7.8",
+      "kind": "unsound",
+      "id": "RUSTSEC-2026-0253",
+      "active_profiles": [
+        "net",
+        "all-features"
+      ],
+      "assessment": "reed-solomon-erasure 6 cache uses get/put with Vec<usize> keys and Arc<Matrix> values; no pop/pop_entry call found in its source. Advisory panic safety path is not called by the inspected consumer; patched 0.18.2 is not semver compatible.",
+      "sources": [
+        {
+          "crate": "reed-solomon-erasure@6.0.0",
+          "file": "src/core.rs",
+          "line": 349
+        },
+        {
+          "crate": "reed-solomon-erasure@6.0.0",
+          "file": "src/core.rs",
+          "line": 704
+        },
+        {
+          "crate": "reed-solomon-erasure@6.0.0",
+          "file": "src/core.rs",
+          "line": 728
+        }
+      ]
+    },
+    {
+      "package": "atomic-polyfill",
+      "version": "1.0.3",
+      "kind": "unmaintained",
+      "id": "RUSTSEC-2023-0089",
+      "active_profiles": [],
+      "assessment": "Target-specific heapless dependency retained in lock; absent in inspected native Linux normal/build trees."
+    },
+    {
+      "package": "bincode",
+      "version": "1.3.3",
+      "kind": "unmaintained",
+      "id": "RUSTSEC-2025-0141",
+      "active_profiles": [
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "Receipt serialization dependency. Maintenance warning remains; changing encoding requires deliberate proof/receipt compatibility validation."
+    },
+    {
+      "package": "derivative",
+      "version": "2.2.0",
+      "kind": "unmaintained",
+      "id": "RUSTSEC-2024-0388",
+      "active_profiles": [
+        "default",
+        "net",
+        "sfcs",
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "Arkworks proc-macro dependency; maintenance warning remains. Do not force breaking cryptographic stack migration merely to clear warning."
+    },
+    {
+      "package": "instant",
+      "version": "0.1.13",
+      "kind": "unmaintained",
+      "id": "RUSTSEC-2024-0384",
+      "active_profiles": [
+        "net",
+        "all-features"
+      ],
+      "assessment": "Via reed-solomon-erasure parking_lot 0.11; maintenance warning remains."
+    },
+    {
+      "package": "paste",
+      "version": "1.0.15",
+      "kind": "unmaintained",
+      "id": "RUSTSEC-2024-0436",
+      "active_profiles": [
+        "default",
+        "net",
+        "sfcs",
+        "sfcs-risc0",
+        "all-features"
+      ],
+      "assessment": "Arkworks proc-macro dependency; maintenance warning remains."
+    }
+  ],
+  "additional_compatible_warning_fixes": [
+    {
+      "package": "anyhow",
+      "old": "1.0.100",
+      "patched": ">=1.0.103",
+      "current_lock_versions": [
+        "1.0.104"
+      ]
+    },
+    {
+      "package": "event-listener",
+      "old": "5.4.1",
+      "patched": ">=5.4.2",
+      "current_lock_versions": [
+        "5.4.2"
+      ]
+    }
+  ],
+  "limits": [
+    "This assessment records the checked lockfile and enabled native Linux profiles; cargo audit still returns a nonzero status for the documented upstream advisories.",
+    "Target-specific dependency reachability and downstream Cargo feature unification can differ.",
+    "RISC Zero/arkworks/receipt protocol versions and guest identity were not changed by this review."
+  ],
+  "release_audit": {
+    "command": "cargo audit --json",
+    "exit_status": 1,
+    "report_sha256": "b9c3181fb113174ab6f3ad8ecfbd4ec9cd93e092666140a0ddef646c405273c4",
+    "vulnerability_package_advisory_matches": 8,
+    "vulnerable_package_versions": 5,
+    "warnings": {
+      "unmaintained": 5,
+      "unsound": 1
+    },
+    "database": {
+      "advisory-count": 1338,
+      "last-commit": null,
+      "last-updated": null
+    }
+  }
+}
