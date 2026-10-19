@@ -14,6 +14,12 @@
   sequence bounds and rejects overflow before insertion.
 - Extended the RPC publication gate with expected-genesis binding, bounded
   responses, strict response IDs, and optional wallet account/fee/sync checks.
+- Updated compatible dependencies with published security fixes and moved the
+  optional HTTP client to reqwest 0.12, removing the old rustls 0.21 dependency.
+- Reject compressed guest ELF sections and loadable memory above 64 MiB before
+  invoking the pinned RISC Zero loader. Canonical uncompressed guest identity
+  is unchanged. Upstream dependency advisories remain under documented scope
+  assessment; these changes do not establish a clean all-dependency audit.
 - Updated current network metadata to chain 2026092601 and the `/2026/` routes.
   Prior benchmark evidence remains explicitly bound to retired chain 177155.
   The running validator is the separately released `20261008.3` runtime.

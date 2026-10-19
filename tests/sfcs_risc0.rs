@@ -157,6 +157,26 @@ fn compressed_executable_sections_are_rejected_without_expansion() {
 }
 
 #[test]
+fn oversized_zero_fill_is_rejected_before_image_allocation() {
+    let mut changed = GUEST_PROGRAM.to_vec();
+    let binary = risc0_binfmt::ProgramBinary::decode(&changed).unwrap();
+    let elf = binary.user_elf;
+    assert_eq!(&elf[..6], b"\x7fELF\x01\x01", "fixture must be ELF32 LE");
+    let user_start = elf.as_ptr() as usize - changed.as_ptr() as usize;
+    let table = u32::from_le_bytes(elf[28..32].try_into().unwrap()) as usize;
+    let entry_size = u16::from_le_bytes(elf[42..44].try_into().unwrap()) as usize;
+    let count = u16::from_le_bytes(elf[44..46].try_into().unwrap()) as usize;
+    let load = (0..count)
+        .map(|index| user_start + table + index * entry_size)
+        .find(|&offset| changed[offset..offset + 4] == 1_u32.to_le_bytes())
+        .expect("guest fixture must have a loadable segment");
+    changed[load + 20..load + 24].copy_from_slice(&(65_u32 * 1024 * 1024).to_le_bytes());
+    let error = SfcsRisc0PrivateVmProof::program_graph(&changed).unwrap_err();
+    assert!(matches!(error, SfcsRisc0Error::LimitExceeded(_)));
+    assert!(error.to_string().contains("loadable memory"));
+}
+
+#[test]
 fn receipt_verifies_offline_inside_rootprint_memory_capsule() {
     let proof = real_proof();
     let artifact = proof.to_pha_artifact("private-sum", GUEST_PROGRAM).unwrap();
