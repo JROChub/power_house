@@ -26,6 +26,12 @@
   The running validator is the separately released `20261008.3` runtime.
 - Marked bundled chain-177155 interfaces as historical and disabled retired
   registration and telemetry requests; current wallet setup is linked directly.
+- Updated fixed-size polynomial iteration and atomic peer accounting for current
+  Clippy while retaining compatibility with the pinned Rust 1.93.1 proof host.
+  The peer counter retains its saturating atomic update under contention.
+- Pinned the container builder to Rust 1.93.1 and added image-build and CLI checks
+  before release. Operator guides distinguish retained local-development tools
+  from the separate current validator deployment.
 - Added graph reuse, mutation rejection, overflow, RPC boundary tests and a
   reproducible Observatory verification benchmark. Core identity formats remain
   unchanged; semantic packets remain outside proof validity.

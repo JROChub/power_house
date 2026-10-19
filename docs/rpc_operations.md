@@ -2,14 +2,21 @@
 
 Release scope: Power House v0.4.1.
 
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> The commands below describe this crate's native-transfer runtime for isolated
+> development or explicitly configured deployments. They do not join or replace
+> MFENX Native 2026, whose separately deployed runtime is `20261008.3`.
+> See [Production RPC Deployment](production_rpc_deployment.md) for its current
+> identity, endpoints, and topology.
+
 Power-House exposes a native-transfer JSON-RPC lane whose blocks and account
 state are finalized by the configured validator quorum. Chain ID `177155` is
-the default production identity.
+the retained runtime's legacy default, not the current public network identity.
 
-The public service name is **LAX MFENX RPC**. Its canonical health-checked edge
-and submitted ChainList endpoint is `https://rpc.mfenx.com`.
+The retired public service was named **LAX MFENX RPC** and used
+`https://rpc.mfenx.com`. That endpoint must not be used for current wallet setup.
 
-For the three-validator production topology, sealed configuration generator,
+For the retained three-region deployment design, sealed configuration generator,
 generic deployment command, TLS edge, and cloud readiness gate, see
 [`production_rpc_deployment.md`](production_rpc_deployment.md).
 
@@ -83,7 +90,8 @@ receipt block, block hash, balances, and successful receipt.
 
 ## Publication gate
 
-Run the repository probe from an independent machine:
+For an isolated deployment of this retained runtime, run the repository probe
+from an independent machine with that deployment's endpoint and chain ID:
 
 ```bash
 python3 scripts/check_rpc.py \

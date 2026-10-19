@@ -19,9 +19,7 @@ This index is the authoritative map for Power House v0.4.1 documentation.
 | [Provenance Security Model](provenance_security.md) | Integrity boundary, assumptions, mutation behavior, and EPA isolation |
 | [SDKs](sdk.md) | Rust and Python interfaces and cross-language interoperability |
 | [JULIAN Protocol](../JULIAN_PROTOCOL.md) | Transcript anchoring, quorum reconciliation, and network architecture |
-| [Stable Public Network Roadmap](network_roadmap.md) | Production topology, completion evidence, and remaining decentralization work |
-| [Signed Validator Registry](validator_registry.md) | Identity-bound validator enrollment, health reconciliation, and dynamic monitoring discovery |
-| [Public Observer Registry](observer_registry.md) | Permissionless observer enrollment, identity health checks, and public peer telemetry |
+| [Stable Public Network Roadmap](network_roadmap.md) | Current deployment limits, retired-chain evidence, and remaining decentralization work |
 
 ## Proof Systems And Formats
 
@@ -35,19 +33,21 @@ This index is the authoritative map for Power House v0.4.1 documentation.
 
 ## Operations
 
-- [RPC Operations](rpc_operations.md)
-- [Production RPC Deployment](production_rpc_deployment.md)
-- [Network Operations](ops.md)
-- [Node Operator Guide](node_operator.md)
+- [Production RPC Deployment](production_rpc_deployment.md): current network identity checks and retained deployment design
 - [Incident Response](incident_response.md)
 - [Load Testing](load_testing.md)
-- [72-Hour Reliability Campaign](reliability_campaign.md)
 - [Testnet to Mainnet](testnet_mainnet.md)
 - [Orbital Observatory](orbital_observatory.md)
 
 Operational commands must be tested against the release identified at the top
 of each active guide. Secrets, access tokens, private keys, and unredacted
 production configuration must never be committed.
+
+MFENX Native 2026 uses chain `2026092601` and separately maintained validator
+runtime `20261008.3`. Its three validator processes share one host; public
+observer and validator enrollment is disabled. Retained chain `177155` tooling
+does not join or replace that deployment. Current status and wallet setup are
+at [mfenx.com/status.html](https://mfenx.com/status.html).
 
 ## Benchmarks And Conformance
 
@@ -59,6 +59,12 @@ production configuration must never be committed.
 - [`conformance/v1`](../conformance/v1): sparse proof vectors
 - [`benchmarks/v0.3.0/report.json`](../benchmarks/v0.3.0/report.json):
   measured v0.3.0 report
+- [`benchmarks/v0.4.1/verified-observatory.json`](../benchmarks/v0.4.1/verified-observatory.json):
+  one measured workload comparing independent and reused graph verification
+- [`benchmarks/v0.4.1/wallet-finality-observation.json`](../benchmarks/v0.4.1/wallet-finality-observation.json):
+  one finalized zero-value transaction observed through both current endpoints
+- [`benchmarks/v0.4.1/dependency-audit-scope.json`](../benchmarks/v0.4.1/dependency-audit-scope.json):
+  dependency updates, remaining advisories, and assessed scope
 - [`benchmarks/README.md`](../benchmarks/README.md): benchmark reproduction
 
 Timing reports are environment-specific measurements. Protocol complexity and
@@ -66,9 +72,15 @@ verification scope are defined in the corresponding specifications.
 
 ## Historical Material
 
-The following documents are retained for traceability and are not the current
-release specification or deployment authority:
+The following documents describe retired deployments or retained tooling.
+They are not authority for the current public validator deployment:
 
+- [Retained RPC Operations](rpc_operations.md)
+- [Retained Network Operations](ops.md)
+- [Retained Node Operator Guide](node_operator.md)
+- [Retained Signed Validator Registry](validator_registry.md)
+- [Retained Public Observer Registry](observer_registry.md)
+- [Retired 72-Hour Reliability Campaign](reliability_campaign.md)
 - [Power-House Protocol Manual v0.1.57](book_of_power.md)
 - [Training Binder v0.1.54](training_binder.md)
 - [v0.1.54 Design Plan](roadmap_v0.1.54.md)

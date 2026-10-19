@@ -2,6 +2,13 @@
 
 Release scope: Power House v0.4.1.
 
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> The registry and monitoring schema below belong to the retained crate runtime.
+> They do not enroll validators on MFENX Native 2026, where public enrollment is
+> disabled and the validator runtime is maintained separately. See
+> [Production RPC Deployment](production_rpc_deployment.md) for current network
+> identity, endpoints, and topology.
+
 The validator registry replaces hardcoded monitoring totals with signed,
 policy-admitted, live identity checks. It controls monitoring discovery and
 public health reporting. It does not rewrite an existing chain's persisted

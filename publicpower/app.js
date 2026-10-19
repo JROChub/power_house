@@ -94,7 +94,7 @@ const modes = {
     detail:
       "This browser verifies the public fractal identity projection. The published Rust verifier performs authoritative RISC0 receipt verification.",
     button: "RUN IDENTITY BRIDGE",
-    status: "SFCS v0.4.0 READY",
+    status: "SFCS v0.4.1 READY",
     downloadHref: "https://github.com/JROChub/power_house/blob/main/docs/sfcs_zkvm.md",
     color: 0x7df4ff,
     unit: "RECEIPT",
@@ -3374,7 +3374,7 @@ async function runSfcsFractal() {
     completeRun(finalDigest.slice(7), "SFCS IDENTITY OK");
     el.verificationTitle.textContent = "SFCS public identity projection committed";
     el.verificationDetail.textContent =
-      "Browser-local graph, execution, synthesis, .pha, branch, and replay checks passed. Use the Rust v0.4.0 verifier for cryptographic receipt verification.";
+      "Browser-local graph, execution, synthesis, .pha, branch, and replay checks passed. Use the Rust v0.4.1 verifier for cryptographic receipt verification.";
   } catch (error) {
     setSfcsWidgetState("invalid", {
       statusLabel: "REJECTED",

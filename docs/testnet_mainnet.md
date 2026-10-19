@@ -2,9 +2,11 @@
 
 Release scope: Power House v0.4.1.
 
-Chain metadata currently identifies chain `177155` as active. Future mainnet
-launches or incompatible resets must use this process rather than silently
-replacing state behind an existing chain ID.
+Current network metadata identifies MFENX Native 2026 as chain `2026092601`;
+chain `177155` is retired. The current deployment runs three validator
+processes on one host and does not satisfy the independent-host entry criteria
+below. Future mainnet launches or incompatible resets must use this process
+rather than silently replacing state behind an existing chain ID.
 
 ## Entry Criteria
 

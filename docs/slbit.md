@@ -1,12 +1,12 @@
 # Power House + slbit Observatory
 
-Status: active integration guide for Power House v0.4.1 and slbit v3.1.1.
+Status: active integration guide for Power House v0.4.1 and slbit v3.1.2.
 
 Power House 0.4.1 can verify multiple sidecars against one `Rootprint::verified()`
 view with `ObservatorySidecar::verify_verified`. This reuses core validation
 without trusting a caller-supplied digest or permitting mutation of the checked
-graph. SLBIT 3.1.1 additionally replaces recursive graph traversal and copied
-shortest-path prefixes with iterative, bounded-memory algorithms.
+graph. SLBIT 3.1.1 introduced iterative graph traversal and predecessor-based
+shortest paths; the current integration uses SLBIT 3.1.2 with those improvements.
 
 Power House and `slbit` are independent technologies:
 

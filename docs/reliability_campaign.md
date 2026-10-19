@@ -1,13 +1,20 @@
 # 72-Hour Reliability Campaign
 
-Release scope: Power House v0.4.0.
+Release scope: Power House v0.4.1.
 
-The production reliability campaign is controlled from an external machine,
+> Historical chain 177155 tooling retained in Power House v0.4.1.
+> This controller and its three-region drills describe the retired deployment.
+> Its reports do not establish availability for MFENX Native 2026, whose three
+> validator processes share one host. Do not run these drills against that
+> separately maintained runtime. See [Production RPC Deployment](production_rpc_deployment.md).
+
+The retained reliability campaign is controlled from an external machine,
 not from the validator cluster. It measures the public edge and all three
 validators, records a SHA-256 hash-chained evidence journal, publishes a
 sanitized live state to every region, and ends automatically after 72 hours.
 
-Live state is rendered at [mfenx.com/campaign.html](https://mfenx.com/campaign.html).
+The former [campaign page](https://mfenx.com/campaign.html) is retired.
+[Current network status](https://mfenx.com/status.html) is published separately.
 
 ## Safety Invariants
 

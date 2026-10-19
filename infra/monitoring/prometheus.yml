@@ -1,3 +1,7 @@
+# Historical chain 177155 monitoring template for the retained crate runtime.
+# The RPC root and observer intake targets below are retired. Configure targets
+# for your own environment before use; this is not the current MFENX Native 2026
+# monitoring configuration. See docs/production_rpc_deployment.md for its scope.
 global:
   scrape_interval: 15s
   evaluation_interval: 15s

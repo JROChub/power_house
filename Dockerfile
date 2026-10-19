@@ -1,4 +1,4 @@
-FROM rust:1.88-bookworm AS builder
+FROM rust:1.93.1-bookworm AS builder
 WORKDIR /app
 COPY . .
 RUN cargo build --release --locked --features net --bin julian

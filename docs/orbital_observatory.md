@@ -2,9 +2,11 @@
 
 Release surface: Power House v0.4.1.
 
-`mfenx.com` presents Power House as an interactive planetary proof
-observatory. It combines live celestial telemetry, world time, published proof
-artifacts, and browser-side verification in one static deployment.
+The bundled `publicpower/` reference interface presents Power House as an
+interactive planetary proof observatory. It combines celestial telemetry,
+world time, published proof artifacts, and browser-side verification. The
+current `mfenx.com` deployment is maintained separately in
+[`JROChub/mfenx-site`](https://github.com/JROChub/mfenx-site).
 
 ## World observatory
 
@@ -22,15 +24,15 @@ The astronomy model provides:
 - an adjustable 48-hour celestial timeline,
 - 19 searchable IANA time-zone clocks,
 - an altitude-position solar track,
-- live LAX MFENX RPC block, validator, and peer telemetry,
-- selectable `sfo3`, `nyc3`, and `ams3` regional quorum controls.
+- an archived chain `177155` network display with current status links,
+- selectable historical `sfo3`, `nyc3`, and `ams3` region markers.
 
 City markers and proof-orbit beacons are selectable directly on the globe.
 The globe supports pointer rotation, wheel zoom, touch input, keyboard
 rotation, keyboard zoom, explicit zoom controls, orbital reset, and
 one-command focus on the selected city. The active city adds a surface halo
-and radial signal beam. Production validator regions are connected by animated
-great-circle routes.
+and radial signal beam. Historical validator regions are connected by animated
+great-circle routes; they do not depict the current single-host deployment.
 
 The scene also renders a proof-reactive point shell and field rings. Their
 color follows the selected proof mode, while their density and scale respond
@@ -91,8 +93,9 @@ BLAKE2b workload commitment checks, and algebraic replay as documented in the
 - Exact artifact-length checks reject truncated or expanded release data
   before hashing.
 - Date and time formatters are cached per IANA zone.
-- The public status feed refreshes every 15 seconds without blocking local
-  proof verification.
+- Retired network telemetry requests are disabled. Current status and wallet
+  setup link to `https://mfenx.com/status.html` independently of local proof
+  verification.
 - CI validates every control-to-DOM binding and recomputes the size and
   SHA-256 digest of all five bundled public artifacts.
 - Release validation renders the live Three.js canvas in desktop and mobile
@@ -115,8 +118,11 @@ interaction plane and keeps the active close control inside the viewport.
 
 ## Deployment
 
-The static site is stored under `publicpower/` and deployed from the
-`gh-pages` branch. `publicpower/CNAME` maps GitHub Pages to `mfenx.com`.
+The reference interface is stored under `publicpower/`. Its retained
+`CNAME` and earlier `gh-pages` deployment describe historical hosting. Current
+`mfenx.com` publication uses the separately validated
+[`mfenx-site` repository](https://github.com/JROChub/mfenx-site); changes to this
+crate's bundled interface do not deploy that site.
 
 Release artifacts, the canonical Rootprint vector, and its non-core semantic
 sidecar are bundled under `publicpower/artifacts/` so the browser can verify
