@@ -179,6 +179,12 @@ def main() -> int:
 
     website = read("publicpower/index.html")
     require(errors, website.count(release) >= 2, "website release labels are stale")
+    require(
+        errors,
+        re.findall(r"<b>slbit (\d+\.\d+\.\d+)</b>", read("publicpower/slbit.html"))
+        == [cargo["dev-dependencies"]["slbit"]],
+        "website slbit crate label differs from the conformance dependency",
+    )
     app = read("publicpower/app.js")
     for pattern, label in [
         (r"\bSFCS v(\d+\.\d+\.\d+) READY\b", "SFCS status"),

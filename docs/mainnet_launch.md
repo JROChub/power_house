@@ -1,10 +1,9 @@
 # POWER_HOUSE MAINNET LAUNCH – OPERATIONS GUIDE
 Doc version: v0.1.54
 
-> Historical two-boot deployment guide. Do not use it as the v0.3.1 production
-> authority. Current validator and RPC deployment procedures are in
-> [Production RPC Deployment](production_rpc_deployment.md) and
-> [RPC Operations](rpc_operations.md).
+> Historical two-boot deployment guide. Do not use it as the current production
+> authority. The current deployment is described in
+> [Production RPC Deployment](production_rpc_deployment.md).
 
 This guide promotes your current two‑boot topology (boot1, boot2) to an open, public mainnet without manual peer approvals. It preserves uptime, removes trust boundaries, and keeps the network observable and maintainable.
 

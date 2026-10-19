@@ -2,8 +2,8 @@
 Doc version: v0.1.54
 
 > Historical training snapshot. This binder preserves v0.1.54 exercises and is
-> not the current v0.3.1 operator runbook. See [Documentation](README.md) and
-> [Network Operations](ops.md).
+> not the current operator runbook. See [Documentation](README.md) and
+> [Production RPC Deployment](production_rpc_deployment.md).
 
 This binder distills the mandatory drills called out across `book_of_power.md`. Work through each section, initial in the signature block, and archive the completed packet with your ledger logs.
 

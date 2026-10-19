@@ -1,7 +1,7 @@
 # Power-House v0.1.54 Design Plan
 
 > Historical design record. This plan is retained for release traceability and
-> does not describe the current v0.3.1 implementation. See
+> does not describe the current implementation. See
 > [Documentation](README.md).
 
 Objective
