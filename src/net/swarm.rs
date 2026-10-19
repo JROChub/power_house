@@ -1676,11 +1676,18 @@ impl Metrics {
     }
 
     fn peer_disconnected(&self) {
-        let _ = self
-            .connected_peers
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
-                Some(value.saturating_sub(1))
-            });
+        let mut value = self.connected_peers.load(Ordering::Relaxed);
+        loop {
+            match self.connected_peers.compare_exchange_weak(
+                value,
+                value.saturating_sub(1),
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => return,
+                Err(current) => value = current,
+            }
+        }
     }
 
     fn inc_anchors_received(&self) {
@@ -3605,6 +3612,28 @@ mod tests {
         assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
         metrics.peer_connected();
         metrics.peer_disconnected();
+        assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
+    }
+
+    #[test]
+    fn concurrent_peer_disconnects_preserve_count() {
+        let metrics = Metrics::default();
+        let workers = 8;
+        let disconnects_per_worker = 1_000;
+        metrics
+            .connected_peers
+            .store(workers * disconnects_per_worker, Ordering::Relaxed);
+        let start = std::sync::Barrier::new(workers as usize);
+        std::thread::scope(|scope| {
+            for _ in 0..workers {
+                scope.spawn(|| {
+                    start.wait();
+                    for _ in 0..disconnects_per_worker {
+                        metrics.peer_disconnected();
+                    }
+                });
+            }
+        });
         assert_eq!(metrics.connected_peers.load(Ordering::Relaxed), 0);
     }
 

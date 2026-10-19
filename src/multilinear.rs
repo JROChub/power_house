@@ -107,7 +107,7 @@ impl MultilinearPolynomial {
         for &coord in point {
             let r = coord % field.modulus();
             let mut next = Vec::with_capacity(layer.len() / 2);
-            for chunk in layer.chunks_exact(2) {
+            for chunk in layer.as_chunks::<2>().0 {
                 let v0 = chunk[0];
                 let v1 = chunk[1];
                 let diff = field.sub(v1, v0);
